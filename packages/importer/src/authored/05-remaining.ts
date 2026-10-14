@@ -259,11 +259,22 @@ export const remaining: AuthoredAttributes = {
     },
   },
   "Swarming Gloomveil": {
-    verified: true,
+    verified: false,
     card: {
       goAgain: { conditions: ["played_or_created_aura_this_turn"] },
+      conditionalBonuses: [
+        {
+          effect: "plus_power",
+          amount: 1,
+          conditions: ["played_or_created_2_or_more_auras_this_turn"],
+        },
+        {
+          effect: "arcane_cant_be_prevented",
+          conditions: ["played_or_created_3_or_more_auras_this_turn"],
+        },
+      ],
       notes:
-        "With 2 or more auras played or created this turn, +1 power; with 3 or more, when it hits they can't prevent your arcane damage this turn.",
+        "The thresholds stack: with 3 or more auras it has go again, +1 power and the arcane effect.",
     },
   },
   "Vantage Point": {
@@ -279,11 +290,15 @@ export const remaining: AuthoredAttributes = {
     },
   },
   "Machinations of Dominion": {
-    verified: true,
+    verified: false,
     card: {
-      grantsGoAgain: "next_runeblade_attack_action",
-      notes:
-        "That attack also gets overpower; its go again only applies if you've played or created an aura this turn.",
+      conditionalBonuses: [
+        { effect: "overpower", grantedTo: "next_runeblade_attack_action" },
+      ],
+      grantsGoAgain: {
+        to: "next_runeblade_attack_action",
+        conditions: ["played_or_created_aura_this_turn"],
+      },
     },
   },
 
