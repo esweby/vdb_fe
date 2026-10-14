@@ -568,6 +568,54 @@ describe("describeAttributes", () => {
     ]);
   });
 
+  it("describes batch 5 patterns", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        tutors: [
+          {
+            target: { group: "runeblade_non_attack_action" },
+            to: "hand",
+            trigger: "on_play",
+            conditions: ["discarded_attack_action"],
+          },
+        ],
+        arcaneDamage: [
+          { amount: 2, trigger: "your_end_phase" },
+          {
+            amount: 1,
+            trigger: "on_attack",
+            grantedTo: "all_attack_actions_this_turn",
+          },
+        ],
+        disrupts: [
+          {
+            action: "discard",
+            from: "hand",
+            amount: 1,
+            target: "defending_hero",
+            trigger: "on_hit",
+            grantedTo: "next_runeblade_attack_action",
+          },
+        ],
+        costReductions: [
+          {
+            amount: "per_runechant",
+            grantedTo: "next_runeblade_attack_action",
+          },
+        ],
+        goAgain: { conditions: ["x_is_2_or_more"] },
+      }),
+    ).toEqual([
+      "Deals 2 arcane damage at the beginning of your end phase.",
+      "Your attack action cards this turn get: deals 1 arcane damage when it attacks.",
+      "Your next Runeblade attack action card this turn gets: the defending hero discards 1 card when it hits.",
+      "Searches your deck for a Runeblade non-attack action card and puts it into your hand when played, if you discarded an attack action card.",
+      "Your next Runeblade attack action card this turn gets: costs {r} less for each Runechant you control.",
+      "Gets go again, if X is 2 or more.",
+    ]);
+  });
+
   it("describes cards a card works with", () => {
     expect(
       describeAttributes({
