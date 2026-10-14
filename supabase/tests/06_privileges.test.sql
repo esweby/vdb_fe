@@ -2,7 +2,7 @@
 -- authenticated by default (local stacks do), so every grant must be explicit.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(28);
+select plan(30);
 
 -- Public reference data: readable by everyone
 select table_privs_are('public', t, 'anon', array['SELECT'], 'anon can only read ' || t)
@@ -12,11 +12,12 @@ select table_privs_are('public', t, 'authenticated', array['SELECT'], 'signed-in
 
 -- Private tables: nothing for anon
 select table_privs_are('public', t, 'anon', array[]::text[], 'anon has no access to ' || t)
-  from unnest(array['profiles', 'rater_weights', 'card_scores', 'card_reviews', 'decks', 'deck_cards', 'deck_loadouts', 'loadout_cards']) t;
+  from unnest(array['profiles', 'rater_weights', 'card_scores', 'card_reviews', 'decks', 'deck_cards', 'deck_loadouts', 'loadout_cards', 'job_nonces']) t;
 
 -- Signed-in users: row level security decides which rows
 select table_privs_are('public', t, 'authenticated', array['SELECT', 'INSERT', 'UPDATE', 'DELETE'], 'signed-in users manage their own ' || t)
   from unnest(array['card_scores', 'card_reviews', 'decks', 'deck_cards', 'deck_loadouts', 'loadout_cards']) t;
+select table_privs_are('public', 'job_nonces', 'authenticated', array[]::text[], 'signed-in users have no access to job_nonces');
 select table_privs_are('public', t, 'authenticated', array['SELECT'], 'signed-in users can read (and only column-update) ' || t)
   from unnest(array['profiles', 'rater_weights']) t;
 
