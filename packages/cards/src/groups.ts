@@ -10,6 +10,8 @@ export const CARD_GROUPS = [
   "runeblade_non_attack_action",
   "rune_gate",
   "banishes_from_hand",
+  "rewards_shadow_banish",
+  "rewards_runeblade_banish",
 ] as const;
 
 export type CardGroup = (typeof CARD_GROUPS)[number];
@@ -41,10 +43,7 @@ export function groupsOf(card: GroupableCard): CardGroup[] {
 
 /** Groups derived from (authored) attributes rather than card facts. */
 export function attributeGroups(
-  attributes: Pick<
-    AuthoredCardAttributes,
-    "banishesOwn" | "banishesSelf" | "disrupts"
-  >,
+  attributes: AuthoredCardAttributes,
 ): CardGroup[] {
   const fromHand =
     attributes.banishesOwn?.some((b) => b.from === "hand") ||
@@ -53,5 +52,14 @@ export function attributeGroups(
       (d) =>
         d.action === "banish" && d.from === "hand" && d.target === "each_hero",
     );
-  return fromHand ? ["banishes_from_hand"] : [];
+  const groups: CardGroup[] = fromHand ? ["banishes_from_hand"] : [];
+  // Any effect, anywhere on the card, that depends on what was banished.
+  const json = JSON.stringify(attributes);
+  if (json.includes('"banished_card_is_shadow"')) {
+    groups.push("rewards_shadow_banish");
+  }
+  if (json.includes('"banished_card_is_runeblade"')) {
+    groups.push("rewards_runeblade_banish");
+  }
+  return groups;
 }

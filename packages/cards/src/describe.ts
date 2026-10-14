@@ -57,6 +57,7 @@ const CONDITION_TEXT: Record<Condition, string> = {
   defending_hero_has_soul_cards: "the defending hero has cards in their soul",
   usurped_this_turn: "you've usurped this turn",
   it_defended: "it defended",
+  banished_a_card: "you banished a card this way",
   played_card_from_banish_this_turn:
     "you've played a card from your banished zone this turn",
 };
@@ -139,6 +140,8 @@ const GROUP_TEXT: Record<CardGroup, string> = {
   runeblade_non_attack_action: "a Runeblade non-attack action card",
   rune_gate: "a Rune Gate card",
   banishes_from_hand: "a card that banishes from hand",
+  rewards_shadow_banish: "a card that rewards banishing a Shadow card",
+  rewards_runeblade_banish: "a card that rewards banishing a Runeblade card",
 };
 
 const GROUP_PLURAL: Record<CardGroup, string> = {
@@ -148,6 +151,8 @@ const GROUP_PLURAL: Record<CardGroup, string> = {
   runeblade_non_attack_action: "Runeblade non-attack action cards",
   rune_gate: "Rune Gate cards",
   banishes_from_hand: "cards that banish from hand",
+  rewards_shadow_banish: "cards that reward banishing a Shadow card",
+  rewards_runeblade_banish: "cards that reward banishing a Runeblade card",
 };
 
 const refText = (ref: CardRef) =>
@@ -255,6 +260,17 @@ export function describeAttributes(attributes: CardAttributes): string[] {
     lines.push(
       `Lets you play ${refText(e.target)} from your banished zone this turn${ifConditions(e.conditions)}.`,
     );
+  }
+
+  for (const b of attributes.conditionalBonuses ?? []) {
+    const what = {
+      plus_power: `Gets +${b.amount} power`,
+      plus_defense: `Gets +${b.amount} defense`,
+      dominate: "Gets dominate",
+      overpower: "Gets overpower",
+      draw: `You draw ${b.amount} ${b.amount === 1 ? "card" : "cards"}`,
+    }[b.effect];
+    lines.push(`${what}${ifConditions(b.conditions)}.`);
   }
 
   if (attributes.playableFromBanish) {

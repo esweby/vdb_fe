@@ -76,7 +76,7 @@ describe("reviewSheet", () => {
 
   it("shows each card's groups, including banishes_from_hand", () => {
     expect(sheet).toMatch(
-      /\| Become the Shadow Lord \| 3 \|[^\n]*\| runeblade_non_attack_action, banishes_from_hand \|/,
+      /\| Become the Shadow Lord \| 3 \|[^\n]*\| runeblade_non_attack_action, banishes_from_hand, rewards_runeblade_banish \|/,
     );
   });
 

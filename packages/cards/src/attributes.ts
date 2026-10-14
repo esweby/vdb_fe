@@ -49,6 +49,7 @@ export const CONDITIONS = [
   "usurped_this_turn",
   "played_card_from_banish_this_turn",
   "it_defended",
+  "banished_a_card",
 ] as const;
 
 export const BANISH_ZONES = [
@@ -171,6 +172,27 @@ export const faceDownSchema = z.strictObject({
   optional: z.boolean().optional(),
 });
 
+export const BONUS_EFFECTS = [
+  "plus_power",
+  "plus_defense",
+  "dominate",
+  "overpower",
+  "draw",
+] as const;
+
+const NUMERIC_BONUSES = new Set(["plus_power", "plus_defense", "draw"]);
+
+/** A bonus the card gets (or you get) when its conditions are met. */
+export const conditionalBonusSchema = z
+  .strictObject({
+    effect: z.enum(BONUS_EFFECTS),
+    amount: amount.optional(),
+    conditions: z.array(z.enum(CONDITIONS)).min(1),
+  })
+  .refine((b) => !NUMERIC_BONUSES.has(b.effect) || b.amount !== undefined, {
+    message: "plus_power, plus_defense and draw need an amount",
+  });
+
 export const arcaneDamageSchema = z.strictObject({
   amount,
   trigger,
@@ -187,6 +209,7 @@ export const authoredAttributesSchema = z.strictObject({
   playableFromBanish: z.strictObject({ conditions }).optional(),
   arcaneDamage: z.array(arcaneDamageSchema).optional(),
   costReducedPerRunechant: z.boolean().optional(),
+  conditionalBonuses: z.array(conditionalBonusSchema).optional(),
   /** Destroyed or banished when used (one-shot equipment). */
   oneUse: z.boolean().optional(),
   /** Turns cards in your banished zone face-down (manages blood debt; removes Gate targets). */
