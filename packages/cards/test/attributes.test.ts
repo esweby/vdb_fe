@@ -164,6 +164,35 @@ describe("authoredAttributesSchema", () => {
     ).toBe(true);
   });
 
+  it("accepts equipment patterns", () => {
+    expect(
+      authoredAttributesSchema.safeParse({
+        oneUse: true,
+        turnsBanishedFaceDown: [
+          { which: "blood_debt", amount: 1, trigger: "activated" },
+        ],
+        banishesSelf: [{ trigger: "would_be_dealt_damage", optional: true }],
+        grantsGoAgain: "target_attack_action",
+        disrupts: [
+          {
+            action: "discard",
+            from: "hand",
+            amount: 1,
+            target: "attacking_hero",
+            trigger: "on_defend",
+          },
+        ],
+        arcaneDamage: [
+          {
+            amount: 1,
+            trigger: "on_hit",
+            conditions: ["played_card_from_banish_this_turn"],
+          },
+        ],
+      }).success,
+    ).toBe(true);
+  });
+
   it("accepts cards a card works with", () => {
     expect(
       authoredAttributesSchema.safeParse({

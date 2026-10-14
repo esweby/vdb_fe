@@ -7,6 +7,7 @@ const generated = {
   hasUsurp: false,
   hasRuneGate: false,
   isGateTarget: false,
+  canAttack: false,
   groups: [],
   specialization: null,
 };

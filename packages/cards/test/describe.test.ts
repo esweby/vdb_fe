@@ -7,6 +7,7 @@ const generated = {
   hasUsurp: false,
   hasRuneGate: false,
   isGateTarget: false,
+  canAttack: false,
   groups: [],
   specialization: null,
 };
@@ -105,6 +106,7 @@ describe("describeAttributes", () => {
         hasUsurp: true,
         hasRuneGate: true,
         isGateTarget: false,
+        canAttack: false,
         groups: [],
         specialization: "Viserai",
         playableFromBanish: {},
@@ -439,6 +441,45 @@ describe("describeAttributes", () => {
       }),
     ).toEqual([
       "Your next attack action card this turn gets: costs X{r} less.",
+    ]);
+  });
+
+  it("describes equipment patterns", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        canAttack: true,
+        oneUse: true,
+        turnsBanishedFaceDown: [
+          { which: "blood_debt", amount: 1, trigger: "activated" },
+        ],
+        banishesSelf: [{ trigger: "would_be_dealt_damage", optional: true }],
+        grantsGoAgain: "target_attack_action",
+        disrupts: [
+          {
+            action: "discard",
+            from: "hand",
+            amount: 1,
+            target: "attacking_hero",
+            trigger: "on_defend",
+          },
+        ],
+        arcaneDamage: [
+          {
+            amount: 1,
+            trigger: "on_hit",
+            conditions: ["played_card_from_banish_this_turn"],
+          },
+        ],
+      }),
+    ).toEqual([
+      "Weapon attack: triggers your Runechants.",
+      "May banish itself when you would be dealt damage.",
+      "Deals 1 arcane damage when it hits, if you've played a card from your banished zone this turn.",
+      "The attacking hero discards 1 card when it defends.",
+      "Turns 1 blood debt card in your banished zone face-down when activated.",
+      "Target attack action card gets go again.",
+      "One use: destroyed or banished when used.",
     ]);
   });
 
