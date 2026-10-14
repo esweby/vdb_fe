@@ -3,7 +3,7 @@ import type { AuthoredAttributes } from "../map.ts";
 
 export const examples: AuthoredAttributes = {
   "Become the Shadow Lord": {
-    verified: false,
+    verified: true,
     card: {
       banishesOwn: [{ from: "hand", trigger: "on_play" }],
       tokens: [

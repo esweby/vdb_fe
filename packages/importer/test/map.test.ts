@@ -103,6 +103,8 @@ describe("toImportCards", () => {
       hasBloodDebt: false,
       hasUsurp: false,
       hasRuneGate: false,
+      isGateTarget: false,
+      groups: ["runeblade_non_attack_action"],
       specialization: null,
     });
     expect(card("Grimoire of the Haunt").attributes).toMatchObject({
@@ -111,6 +113,13 @@ describe("toImportCards", () => {
     expect(card("Deathly Delight").attributes).toMatchObject({
       hasRuneGate: true,
     });
+  });
+
+  it("marks blood debt action cards as Gate targets", () => {
+    expect(card("Deathly Delight").attributes.isGateTarget).toBe(true);
+    expect(card("Abyssal Bite").attributes.isGateTarget).toBe(true);
+    expect(card("Grimoire of the Haunt").attributes.isGateTarget).toBe(false);
+    expect(card("Become the Shadow Lord").attributes.isGateTarget).toBe(false);
   });
 
   it("detects Viserai specializations", () => {
@@ -197,6 +206,38 @@ describe("authored attributes", () => {
         },
       }),
     ).toThrow(/pitch 1/);
+  });
+
+  it("rejects references to cards that aren't imported", () => {
+    expect(() =>
+      toImportCards(entries, {
+        "Become the Shadow Lord": {
+          verified: false,
+          card: {
+            enablesPlayFromBanish: [{ target: { card: "Darkest Hourr" } }],
+          },
+        },
+      }),
+    ).toThrow(/Darkest Hourr/);
+  });
+
+  it("accepts references to imported cards", () => {
+    expect(() =>
+      toImportCards(entries, {
+        "Become the Shadow Lord": {
+          verified: false,
+          card: {
+            tutors: [
+              {
+                target: { card: "Nebula Blade" },
+                to: "hand",
+                trigger: "on_play",
+              },
+            ],
+          },
+        },
+      }),
+    ).not.toThrow();
   });
 
   it("rejects authored attributes outside the vocabulary, naming the card", () => {

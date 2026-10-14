@@ -1,6 +1,7 @@
 // Maps dataset entries (one per name + pitch) to our cards and variants.
 import {
   authoredAttributesSchema,
+  groupsOf,
   type AuthoredCardAttributes,
   type CardAttributes,
   type GeneratedAttributes,
@@ -62,12 +63,19 @@ function toTypeKey(mainType: string, subtypes: string[]): string {
 function generatedAttributes(
   keywords: string[],
   specialization: string | null,
+  type: string,
+  groups: GeneratedAttributes["groups"],
 ): GeneratedAttributes {
+  const hasBloodDebt = keywords.includes("Blood Debt");
   return {
     hasGoAgain: keywords.includes("Go again"),
-    hasBloodDebt: keywords.includes("Blood Debt"),
+    hasBloodDebt,
     hasUsurp: keywords.includes("Usurp"),
     hasRuneGate: keywords.includes("Rune Gate"),
+    // Gate to i'Arathael: "play target action card with blood debt from your banished zone".
+    isGateTarget:
+      hasBloodDebt && (type === "action" || type === "attack_action"),
+    groups,
     specialization,
   };
 }
@@ -110,7 +118,7 @@ export function toImportCards(
       );
   }
 
-  return [...groups.entries()].map(([name, group]) => {
+  const cards = [...groups.entries()].map(([name, group]) => {
     const first = group[0]!;
     const { mainType, classes, talents, subtypes } = classifyTypes(first.types);
     const keywords = [...new Set(group.flatMap((e) => e.card_keywords))].sort();
@@ -148,7 +156,18 @@ export function toImportCards(
       keywords,
       text: texts.size === 1 ? first.functional_text_plain || null : null,
       attributes: {
-        ...generatedAttributes(keywords, specializationOf(first)),
+        ...generatedAttributes(
+          keywords,
+          specializationOf(first),
+          toTypeKey(mainType!, subtypes),
+          groupsOf({
+            name,
+            type: toTypeKey(mainType!, subtypes),
+            subtypes,
+            classes,
+            keywords,
+          }),
+        ),
         ...(entry?.card ? validated(name, "card", entry.card) : {}),
         // Authored conditional go again means the keyword isn't natural go again.
         ...(entry?.card?.goAgain ? { hasGoAgain: false } : {}),
@@ -157,4 +176,30 @@ export function toImportCards(
       variants,
     };
   });
+
+  checkReferences(cards);
+  return cards;
+}
+
+/** Every card named in a tutor or play-from-banish enabler must be an imported card. */
+function checkReferences(cards: ImportCard[]): void {
+  const names = new Set(cards.map((c) => c.name));
+  for (const card of cards) {
+    for (const attributes of [
+      card.attributes,
+      ...card.variants.map((v) => v.attributes),
+    ]) {
+      const refs = [
+        ...(attributes.tutors ?? []).map((t) => t.target),
+        ...(attributes.enablesPlayFromBanish ?? []).map((e) => e.target),
+      ];
+      for (const ref of refs) {
+        if ("card" in ref && !names.has(ref.card)) {
+          throw new Error(
+            `"${card.name}" references "${ref.card}", which isn't an imported card`,
+          );
+        }
+      }
+    }
+  }
 }

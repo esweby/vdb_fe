@@ -134,12 +134,12 @@ export const runechantCreators: AuthoredAttributes = {
     },
   },
   "Douse in Runeblood": {
-    verified: false,
+    verified: true,
     card: {
       tokens: [{ token: "runechant", amount: "X", trigger: "on_attack" }],
-      goAgain: {},
+      goAgain: { conditions: ["created_3_or_more_runechants"] },
       notes:
-        "X is the number of non-attack action cards you've played this turn. Gets go again if 3 or more Runechants are created this way.",
+        "X is the number of non-attack action cards you've played this turn.",
     },
   },
   "Dread Triptych": {
@@ -163,7 +163,7 @@ export const runechantCreators: AuthoredAttributes = {
     },
   },
   "Embrace Ursur": {
-    verified: false,
+    verified: true,
     card: {
       banishesOwn: [{ from: "hand", trigger: "on_attack", optional: true }],
       tokens: [
@@ -189,8 +189,12 @@ export const runechantCreators: AuthoredAttributes = {
     verified: true,
     card: {
       tokens: [{ token: "runechant", amount: 1, trigger: "on_play" }],
-      notes:
-        "Also gives the next attack action card you rune gate this turn +3/+2/+1 power (red/yellow/blue).",
+      supports: [
+        {
+          target: { group: "rune_gate" },
+          note: "+3/+2/+1 power to the next one you rune gate this turn",
+        },
+      ],
     },
   },
   "Forbidden Harvest": {
@@ -206,7 +210,7 @@ export const runechantCreators: AuthoredAttributes = {
     card: {
       playableFromBanish: {},
       tokens: [{ token: "runechant", amount: 1, trigger: "on_play" }],
-      notes: "Can be played as an instant if a hero has lost life this turn.",
+      instantSpeed: { conditions: ["hero_lost_life_this_turn"] },
     },
   },
   "Haunting Rendition": {
@@ -272,7 +276,7 @@ export const runechantCreators: AuthoredAttributes = {
     },
   },
   "Mauvrion Skies": {
-    verified: false,
+    verified: true,
     card: { grantsGoAgain: "next_runeblade_attack_action" },
     variants: {
       1: {
@@ -308,11 +312,10 @@ export const runechantCreators: AuthoredAttributes = {
     },
   },
   "Meat and Greet": {
-    verified: false,
+    verified: true,
     card: {
       tokens: [{ token: "runechant", amount: 1, trigger: "on_hit" }],
-      goAgain: { conditions: ["dealt_arcane_damage_this_turn"] },
-      notes: "The arcane damage must have been dealt to an opposing hero.",
+      goAgain: { conditions: ["dealt_arcane_damage_to_opponent_this_turn"] },
     },
   },
   "Mordred Tide": {
@@ -534,9 +537,17 @@ export const runechantCreators: AuthoredAttributes = {
   "Runic Reclamation": {
     verified: true,
     card: {
+      disrupts: [
+        {
+          action: "destroy",
+          from: "auras",
+          amount: 1,
+          target: "defending_hero",
+          trigger: "on_hit",
+        },
+      ],
       tokens: [{ token: "runechant", amount: 1, trigger: "on_hit" }],
-      notes:
-        "Only if it destroys an aura the hit hero controls. No condition exists for opponent auras yet.",
+      notes: "The Runechant only comes if the aura is destroyed.",
     },
   },
   "Sigil of Deadwood": {
@@ -571,8 +582,9 @@ export const runechantCreators: AuthoredAttributes = {
           grantedTo: "next_attack_action",
         },
       ],
+      costReductions: [{ amount: "X", grantedTo: "next_attack_action" }],
       notes:
-        "Costs destroying X Runechants. The next attack action card also costs {x} less, gets +X power and overpower.",
+        "Costs destroying X Runechants. The next attack action card also gets +X power and overpower.",
     },
   },
   "Sonata Fantasmia": {

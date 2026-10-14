@@ -6,6 +6,8 @@ const generated = {
   hasBloodDebt: false,
   hasUsurp: false,
   hasRuneGate: false,
+  isGateTarget: false,
+  groups: [],
   specialization: null,
 };
 
@@ -102,6 +104,8 @@ describe("describeAttributes", () => {
         hasBloodDebt: true,
         hasUsurp: true,
         hasRuneGate: true,
+        isGateTarget: false,
+        groups: [],
         specialization: "Viserai",
         playableFromBanish: {},
         notes: "Unsure whether the Gate is optional.",
@@ -110,7 +114,7 @@ describe("describeAttributes", () => {
       "Viserai specialization.",
       "Can be played from your banished zone.",
       "Usurp.",
-      "Rune Gate.",
+      "Rune Gate: if you control at least as many Runechants as its cost, you may play it from your banished zone without paying its cost.",
       "Go again.",
       "Blood debt.",
       "Note: Unsure whether the Gate is optional.",
@@ -190,9 +194,35 @@ describe("describeAttributes", () => {
     ).toEqual(["Gets go again, if the banished card is Shadow."]);
   });
 
-  it("describes conditional go again whose condition is only in the notes", () => {
-    expect(describeAttributes({ ...generated, goAgain: {} })).toEqual([
-      "Gets go again under a condition (see note).",
+  it("describes Gate targets and cards that reward being played from banish", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        isGateTarget: true,
+        rewardsPlayFromBanish: true,
+      }),
+    ).toEqual([
+      "Can be played from your banished zone with a Gate.",
+      "Is better when played from your banished zone.",
+    ]);
+  });
+
+  it("describes the new go again conditions", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        goAgain: {
+          conditions: [
+            "dealt_damage_to_defending_hero_this_turn",
+            "dealt_arcane_damage_to_opponent_this_turn",
+            "created_3_or_more_runechants",
+            "paid_optional_additional_cost",
+            "defending_hero_has_soul_cards",
+          ],
+        },
+      }),
+    ).toEqual([
+      "Gets go again, if you've dealt damage to the defending hero this turn and you've dealt arcane damage to an opponent this turn and it created 3 or more Runechants and you paid its optional additional cost and the defending hero has cards in their soul.",
     ]);
   });
 
@@ -223,6 +253,202 @@ describe("describeAttributes", () => {
     ).toEqual([
       "Your next Shadow attack this turn gets: creates 1 Gate to i'Arathael when it hits.",
     ]);
+  });
+
+  it("describes cards that banish themselves", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        banishesSelf: [
+          { trigger: "would_go_to_graveyard" },
+          { trigger: "activated" },
+          {
+            trigger: "combat_chain_closes",
+            optional: true,
+            conditions: ["hero_lost_life_this_turn"],
+          },
+        ],
+      }),
+    ).toEqual([
+      "Banishes itself instead of going to your graveyard.",
+      "Banishes itself when activated.",
+      "May banish itself when the combat chain closes, if a hero has lost life this turn.",
+    ]);
+  });
+
+  it("describes disruption, naming who is affected", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        disrupts: [
+          {
+            action: "banish",
+            from: "hand",
+            amount: 1,
+            target: "each_hero",
+            trigger: "on_play",
+          },
+          {
+            action: "banish",
+            from: "arsenal",
+            amount: "all",
+            target: "defending_hero",
+            trigger: "on_hit",
+          },
+          {
+            action: "banish",
+            from: "deck_top",
+            amount: 1,
+            target: "opponent",
+            trigger: "on_play",
+          },
+          {
+            action: "banish",
+            from: "graveyard",
+            amount: 2,
+            target: "opponent",
+            trigger: "on_play",
+            optional: true,
+          },
+          {
+            action: "banish",
+            from: "soul",
+            amount: 1,
+            target: "defending_hero",
+            trigger: "on_hit",
+          },
+          {
+            action: "discard",
+            from: "hand",
+            amount: 1,
+            target: "defending_hero",
+            trigger: "on_hit",
+            conditions: ["dealt_arcane_damage_this_turn"],
+          },
+          {
+            action: "destroy",
+            from: "auras",
+            amount: 1,
+            target: "defending_hero",
+            trigger: "on_hit",
+            optional: true,
+          },
+        ],
+      }),
+    ).toEqual([
+      "Each hero (you included) banishes 1 card from their hand when played.",
+      "The defending hero banishes all cards from their arsenal when it hits.",
+      "An opponent banishes the top card of their deck when played.",
+      "May make an opponent banish 2 cards from their graveyard when played.",
+      "The defending hero banishes 1 card from their soul when it hits.",
+      "The defending hero discards 1 card when it hits, if you've dealt arcane damage this turn.",
+      "May make the defending hero destroy 1 aura they control when it hits.",
+    ]);
+  });
+
+  it("describes conditional instant speed", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        instantSpeed: { conditions: ["hero_lost_life_this_turn"] },
+      }),
+    ).toEqual([
+      "Can be played as an instant, if a hero has lost life this turn.",
+    ]);
+  });
+
+  it("describes go again granted to banished cards and matching colours", () => {
+    expect(
+      describeAttributes({ ...generated, grantsGoAgain: "banished_card" }),
+    ).toEqual(["The card banished this way gets go again."]);
+    expect(
+      describeAttributes({
+        ...generated,
+        grantsGoAgain: "card_in_banished_zone_matching_pitch",
+      }),
+    ).toEqual([
+      "A card of this card's colour in your banished zone gets go again.",
+    ]);
+    expect(
+      describeAttributes({
+        ...generated,
+        grantsGoAgain: "next_action_card_matching_pitch",
+      }),
+    ).toEqual([
+      "Your next action card of this card's colour this turn gets go again.",
+    ]);
+  });
+
+  it("describes tutors, play-from-banish enablers and sinchants", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        tutors: [
+          {
+            target: { group: "runechant_aura" },
+            to: "arena",
+            trigger: "on_attack",
+            conditions: ["played_from_banish"],
+            optional: true,
+          },
+          {
+            target: { card: "Darkest Hour" },
+            to: "banished",
+            trigger: "on_hit",
+          },
+          {
+            target: { group: "runeblade_attack_action" },
+            to: "hand",
+            trigger: "on_play",
+          },
+        ],
+        enablesPlayFromBanish: [{ target: { group: "runechant_aura" } }],
+      }),
+    ).toEqual([
+      "May search your deck for a Runechant aura (sinchant) and put it into the arena when it attacks, if it was played from your banished zone.",
+      "Searches your deck for Darkest Hour and banishes it when it hits.",
+      "Searches your deck for a Runeblade attack action card and puts it into your hand when played.",
+      "Lets you play a Runechant aura (sinchant) from your banished zone this turn.",
+    ]);
+    expect(
+      describeAttributes({
+        ...generated,
+        groups: ["runechant_aura", "runeblade_aura"],
+      }),
+    ).toEqual(["Is a Runechant aura (sinchant)."]);
+  });
+
+  it("describes Usurp the Shadow Throne's usurp condition", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        costReductions: [{ amount: 6, conditions: ["usurped_this_turn"] }],
+        playableFromBanish: { conditions: ["usurped_this_turn"] },
+      }),
+    ).toEqual([
+      "Can be played from your banished zone, if you've usurped this turn.",
+      "Costs 6{r} less, if you've usurped this turn.",
+    ]);
+  });
+
+  it("describes a cost reduction granted to your next attack", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        costReductions: [{ amount: "X", grantedTo: "next_attack_action" }],
+      }),
+    ).toEqual([
+      "Your next attack action card this turn gets: costs X{r} less.",
+    ]);
+  });
+
+  it("describes cards a card works with", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        supports: [{ target: { group: "rune_gate" } }],
+      }),
+    ).toEqual(["Works with Rune Gate cards."]);
   });
 
   it("describes nothing for a plain card", () => {

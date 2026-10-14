@@ -70,6 +70,108 @@ describe("authoredAttributesSchema", () => {
     ).toBe(true);
   });
 
+  it("accepts cards that banish themselves", () => {
+    expect(
+      authoredAttributesSchema.safeParse({
+        banishesSelf: [
+          { trigger: "would_go_to_graveyard" },
+          { trigger: "activated" },
+          { trigger: "combat_chain_closes", optional: true },
+        ],
+      }).success,
+    ).toBe(true);
+  });
+
+  it("accepts disruption and conditional instant speed", () => {
+    expect(
+      authoredAttributesSchema.safeParse({
+        disrupts: [
+          {
+            action: "banish",
+            from: "hand",
+            amount: 1,
+            target: "each_hero",
+            trigger: "on_play",
+          },
+          {
+            action: "banish",
+            from: "arsenal",
+            amount: "all",
+            target: "defending_hero",
+            trigger: "on_hit",
+          },
+          {
+            action: "discard",
+            from: "hand",
+            amount: 1,
+            target: "defending_hero",
+            trigger: "on_hit",
+            conditions: ["dealt_arcane_damage_this_turn"],
+          },
+          {
+            action: "destroy",
+            from: "auras",
+            amount: 1,
+            target: "defending_hero",
+            trigger: "on_hit",
+            optional: true,
+          },
+        ],
+        instantSpeed: { conditions: ["hero_lost_life_this_turn"] },
+      }).success,
+    ).toBe(true);
+  });
+
+  it("accepts tutors and play-from-banish enablers that reference groups or cards", () => {
+    expect(
+      authoredAttributesSchema.safeParse({
+        tutors: [
+          {
+            target: { group: "runechant_aura" },
+            to: "arena",
+            trigger: "on_attack",
+            conditions: ["played_from_banish"],
+            optional: true,
+          },
+          {
+            target: { card: "Darkest Hour" },
+            to: "banished",
+            trigger: "on_hit",
+          },
+        ],
+        enablesPlayFromBanish: [{ target: { group: "runechant_aura" } }],
+      }).success,
+    ).toBe(true);
+  });
+
+  it("accepts conditional cost reductions", () => {
+    expect(
+      authoredAttributesSchema.safeParse({
+        costReductions: [
+          { amount: 6, conditions: ["usurped_this_turn"] },
+          { amount: 2, conditions: ["played_from_banish"] },
+        ],
+        playableFromBanish: { conditions: ["usurped_this_turn"] },
+      }).success,
+    ).toBe(true);
+  });
+
+  it("accepts a cost reduction granted to your next attack", () => {
+    expect(
+      authoredAttributesSchema.safeParse({
+        costReductions: [{ amount: "X", grantedTo: "next_attack_action" }],
+      }).success,
+    ).toBe(true);
+  });
+
+  it("accepts cards a card works with", () => {
+    expect(
+      authoredAttributesSchema.safeParse({
+        supports: [{ target: { group: "rune_gate" } }],
+      }).success,
+    ).toBe(true);
+  });
+
   it("accepts conditional and granted go again", () => {
     expect(
       authoredAttributesSchema.safeParse({
@@ -77,13 +179,75 @@ describe("authoredAttributesSchema", () => {
         grantsGoAgain: "next_runeblade_attack_action",
       }).success,
     ).toBe(true);
-    expect(authoredAttributesSchema.safeParse({ goAgain: {} }).success).toBe(
-      true,
-    );
+    expect(
+      authoredAttributesSchema.safeParse({ rewardsPlayFromBanish: true })
+        .success,
+    ).toBe(true);
   });
 
   it.each([
     ["an unknown grantsGoAgain", { grantsGoAgain: "every_card" }],
+    ["go again without a condition", { goAgain: {} }],
+    [
+      "a cost reduction without a condition",
+      { costReductions: [{ amount: 2 }] },
+    ],
+    [
+      "an unknown card group",
+      { enablesPlayFromBanish: [{ target: { group: "sinchants" } }] },
+    ],
+    [
+      "a reference to both a group and a card",
+      {
+        enablesPlayFromBanish: [
+          { target: { group: "runechant_aura", card: "Runechant of Lust" } },
+        ],
+      },
+    ],
+    ["instant speed without a condition", { instantSpeed: {} }],
+    [
+      "an unknown disruption target",
+      {
+        disrupts: [
+          {
+            action: "banish",
+            from: "hand",
+            amount: 1,
+            target: "everyone",
+            trigger: "on_play",
+          },
+        ],
+      },
+    ],
+    [
+      "discarding from somewhere other than hand",
+      {
+        disrupts: [
+          {
+            action: "discard",
+            from: "arsenal",
+            amount: 1,
+            target: "defending_hero",
+            trigger: "on_hit",
+          },
+        ],
+      },
+    ],
+    [
+      "destroying something other than auras",
+      {
+        disrupts: [
+          {
+            action: "destroy",
+            from: "hand",
+            amount: 1,
+            target: "defending_hero",
+            trigger: "on_hit",
+          },
+        ],
+      },
+    ],
+    ["go again with an empty condition list", { goAgain: { conditions: [] } }],
     ["an unknown key inside goAgain", { goAgain: { always: true } }],
     [
       "an unknown grantedTo",

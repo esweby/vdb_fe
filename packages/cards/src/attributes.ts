@@ -2,6 +2,7 @@
 // It describes effects, it doesn't implement game rules. Extend it in small, tested changes
 // when a card can't be described (see docs/attribute-vocabulary.md).
 import { z } from "zod";
+import { CARD_GROUPS, type CardGroup } from "./groups.ts";
 
 export const TOKENS = ["runechant", "gate", "eloquence"] as const;
 
@@ -16,6 +17,7 @@ export const TRIGGERS = [
   "on_leave_arena",
   "on_destroyed",
   "on_usurped",
+  "would_go_to_graveyard",
   "start_of_turn",
   "start_of_action_phase",
   "combat_chain_closes",
@@ -38,6 +40,12 @@ export const CONDITIONS = [
   "top_card_matches_pitch",
   "destroyed_own_aura",
   "hero_lost_life_this_turn",
+  "dealt_damage_to_defending_hero_this_turn",
+  "dealt_arcane_damage_to_opponent_this_turn",
+  "created_3_or_more_runechants",
+  "paid_optional_additional_cost",
+  "defending_hero_has_soul_cards",
+  "usurped_this_turn",
 ] as const;
 
 export const BANISH_ZONES = ["hand", "deck_top", "graveyard"] as const;
@@ -47,12 +55,78 @@ export const GRANTED_TO = [
   "next_attack_action",
   "next_runeblade_attack_action",
   "next_shadow_attack",
+  "banished_card",
+  "card_in_banished_zone_matching_pitch",
+  "next_action_card_matching_pitch",
 ] as const;
 
 const amount = z.union([z.number().int().positive(), z.literal("X")]);
 const trigger = z.enum(TRIGGERS);
 const conditions = z.array(z.enum(CONDITIONS)).optional();
 const grantedTo = z.enum(GRANTED_TO).optional();
+
+/** A reference to a group of cards or one named card. */
+export const cardRefSchema = z.union([
+  z.strictObject({ group: z.enum(CARD_GROUPS) }),
+  z.strictObject({ card: z.string().min(1) }),
+]);
+
+export const TUTOR_DESTINATIONS = ["hand", "arena", "banished"] as const;
+
+export const tutorSchema = z.strictObject({
+  target: cardRefSchema,
+  to: z.enum(TUTOR_DESTINATIONS),
+  trigger,
+  conditions,
+  optional: z.boolean().optional(),
+});
+
+export const playFromBanishEnablerSchema = z.strictObject({
+  target: cardRefSchema,
+  conditions,
+});
+
+/** Who a disruption effect hits. `each_hero` includes you. */
+export const DISRUPT_TARGETS = [
+  "opponent",
+  "defending_hero",
+  "each_hero",
+] as const;
+export const DISRUPT_ZONES = [
+  "hand",
+  "arsenal",
+  "deck_top",
+  "graveyard",
+  "soul",
+  "auras",
+] as const;
+
+const disruptionCommon = {
+  amount: z.union([amount, z.literal("all")]),
+  target: z.enum(DISRUPT_TARGETS),
+  trigger,
+  conditions,
+  optional: z.boolean().optional(),
+};
+
+/** Effects on opponents' cards (or every hero's). */
+export const disruptionSchema = z.discriminatedUnion("action", [
+  z.strictObject({
+    action: z.literal("banish"),
+    from: z.enum(DISRUPT_ZONES),
+    ...disruptionCommon,
+  }),
+  z.strictObject({
+    action: z.literal("discard"),
+    from: z.literal("hand"),
+    ...disruptionCommon,
+  }),
+  z.strictObject({
+    action: z.literal("destroy"),
+    from: z.literal("auras"),
+    ...disruptionCommon,
+  }),
+]);
 
 export const tokenCreationSchema = z.strictObject({
   token: z.enum(TOKENS),
@@ -69,6 +143,12 @@ export const ownBanishSchema = z.strictObject({
   optional: z.boolean().optional(),
 });
 
+export const selfBanishSchema = z.strictObject({
+  trigger,
+  conditions,
+  optional: z.boolean().optional(),
+});
+
 export const arcaneDamageSchema = z.strictObject({
   amount,
   trigger,
@@ -80,11 +160,42 @@ export const arcaneDamageSchema = z.strictObject({
 export const authoredAttributesSchema = z.strictObject({
   tokens: z.array(tokenCreationSchema).optional(),
   banishesOwn: z.array(ownBanishSchema).optional(),
+  /** The card banishes itself (feeds Gates and play-from-banish). */
+  banishesSelf: z.array(selfBanishSchema).optional(),
   playableFromBanish: z.strictObject({ conditions }).optional(),
   arcaneDamage: z.array(arcaneDamageSchema).optional(),
   costReducedPerRunechant: z.boolean().optional(),
+  /** Fixed cost reductions, each with the condition that unlocks it. */
+  costReductions: z
+    .array(
+      z
+        .strictObject({ amount, conditions, grantedTo })
+        .refine((c) => (c.conditions?.length ?? 0) > 0 || c.grantedTo, {
+          message: "A cost reduction needs a condition or a grantedTo",
+        }),
+    )
+    .optional(),
+  disrupts: z.array(disruptionSchema).optional(),
+  /** Searches your deck for a group or named card. */
+  tutors: z.array(tutorSchema).optional(),
+  /** Lets a group or named card be played from your banished zone this turn. */
+  enablesPlayFromBanish: z.array(playFromBanishEnablerSchema).optional(),
+  /** Cards this card works with that no other attribute links (e.g. "the next card you rune gate"). */
+  supports: z
+    .array(
+      z.strictObject({ target: cardRefSchema, note: z.string().optional() }),
+    )
+    .optional(),
+  /** "You may play this as though it were an instant", with its condition. */
+  instantSpeed: z
+    .strictObject({ conditions: z.array(z.enum(CONDITIONS)).min(1) })
+    .optional(),
   /** Conditional go again. Replaces the dataset's "Go again" keyword, which can't tell. */
-  goAgain: z.strictObject({ conditions }).optional(),
+  goAgain: z
+    .strictObject({ conditions: z.array(z.enum(CONDITIONS)).min(1) })
+    .optional(),
+  /** The card gets better when played from your banished zone (e.g. with a Gate). */
+  rewardsPlayFromBanish: z.boolean().optional(),
   /** Gives go again to a later card. */
   grantsGoAgain: z.enum(GRANTED_TO).optional(),
   /** Doubts or context for the reviewer. Shown on the review sheet. */
@@ -98,6 +209,10 @@ export interface GeneratedAttributes {
   hasBloodDebt: boolean;
   hasUsurp: boolean;
   hasRuneGate: boolean;
+  /** A blood debt action card, so a Gate to i'Arathael can play it from banish. */
+  isGateTarget: boolean;
+  /** Groups the card belongs to (see groups.ts). */
+  groups: CardGroup[];
   /** Hero named in "<Hero> Specialization", or null. */
   specialization: string | null;
 }
@@ -109,5 +224,9 @@ export type GrantedTo = (typeof GRANTED_TO)[number];
 export type TokenCreation = z.infer<typeof tokenCreationSchema>;
 export type OwnBanish = z.infer<typeof ownBanishSchema>;
 export type ArcaneDamage = z.infer<typeof arcaneDamageSchema>;
+export type SelfBanish = z.infer<typeof selfBanishSchema>;
+export type Disruption = z.infer<typeof disruptionSchema>;
+export type CardRef = z.infer<typeof cardRefSchema>;
+export type Tutor = z.infer<typeof tutorSchema>;
 export type AuthoredCardAttributes = z.infer<typeof authoredAttributesSchema>;
 export type CardAttributes = GeneratedAttributes & AuthoredCardAttributes;
