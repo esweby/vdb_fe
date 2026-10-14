@@ -3,5 +3,8 @@
 import { normalise, SCORING_VERSION } from "@vdb/scoring";
 
 Deno.serve(() => {
-  return Response.json({ scoringVersion: SCORING_VERSION, normalised: normalise(80) });
+  return Response.json({
+    scoringVersion: SCORING_VERSION,
+    normalised: normalise(80),
+  });
 });

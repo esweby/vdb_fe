@@ -17,8 +17,18 @@ describe("describeAttributes", () => {
         hasGoAgain: true,
         banishesOwn: [{ from: "hand", trigger: "on_play" }],
         tokens: [
-          { token: "runechant", amount: 1, trigger: "on_play", conditions: ["banished_card_is_runeblade"] },
-          { token: "gate", amount: 1, trigger: "on_play", conditions: ["banished_card_is_shadow"] },
+          {
+            token: "runechant",
+            amount: 1,
+            trigger: "on_play",
+            conditions: ["banished_card_is_runeblade"],
+          },
+          {
+            token: "gate",
+            amount: 1,
+            trigger: "on_play",
+            conditions: ["banished_card_is_shadow"],
+          },
         ],
       }),
     ).toEqual([
@@ -54,7 +64,10 @@ describe("describeAttributes", () => {
           {
             amount: 1,
             trigger: "on_attack",
-            conditions: ["pitched_non_attack_action", "dealt_arcane_damage_this_turn"],
+            conditions: [
+              "pitched_non_attack_action",
+              "dealt_arcane_damage_this_turn",
+            ],
           },
         ],
       }),
@@ -67,8 +80,12 @@ describe("describeAttributes", () => {
     expect(
       describeAttributes({
         ...generated,
-        banishesOwn: [{ from: "deck_top", trigger: "on_attack", optional: true }],
-        playableFromBanish: { conditions: ["played_non_attack_action_this_turn"] },
+        banishesOwn: [
+          { from: "deck_top", trigger: "on_attack", optional: true },
+        ],
+        playableFromBanish: {
+          conditions: ["played_non_attack_action_this_turn"],
+        },
         costReducedPerRunechant: true,
       }),
     ).toEqual([
@@ -104,8 +121,17 @@ describe("describeAttributes", () => {
     expect(
       describeAttributes({
         ...generated,
-        tokens: [{ token: "runechant", amount: 3, trigger: "on_hit", grantedTo: "next_runeblade_attack_action" }],
-        arcaneDamage: [{ amount: 1, trigger: "on_attack", grantedTo: "next_attack_action" }],
+        tokens: [
+          {
+            token: "runechant",
+            amount: 3,
+            trigger: "on_hit",
+            grantedTo: "next_runeblade_attack_action",
+          },
+        ],
+        arcaneDamage: [
+          { amount: 1, trigger: "on_attack", grantedTo: "next_attack_action" },
+        ],
       }),
     ).toEqual([
       "Your next Runeblade attack action card this turn gets: creates 3 Runechants when it hits.",
@@ -118,9 +144,18 @@ describe("describeAttributes", () => {
       describeAttributes({
         ...generated,
         tokens: [
-          { token: "runechant", amount: 1, trigger: "your_attack_action_played" },
+          {
+            token: "runechant",
+            amount: 1,
+            trigger: "your_attack_action_played",
+          },
           { token: "runechant", amount: 2, trigger: "your_attack_action_hits" },
-          { token: "runechant", amount: 4, trigger: "on_play", conditions: ["played_attack_action_this_turn"] },
+          {
+            token: "runechant",
+            amount: 4,
+            trigger: "on_play",
+            conditions: ["played_attack_action_this_turn"],
+          },
         ],
       }),
     ).toEqual([

@@ -5,7 +5,12 @@ import {
   type CardAttributes,
   type GeneratedAttributes,
 } from "@vdb/cards";
-import { classifyTypes, isViseraiLegal, specializationOf, type DatasetCard } from "./classify.ts";
+import {
+  classifyTypes,
+  isViseraiLegal,
+  specializationOf,
+  type DatasetCard,
+} from "./classify.ts";
 
 export interface AuthoredEntry {
   /** Has a player checked these attributes? */
@@ -49,11 +54,15 @@ export function parseStat(value: string): number | null {
 }
 
 function toTypeKey(mainType: string, subtypes: string[]): string {
-  if (mainType === "Action" && subtypes.includes("Attack")) return "attack_action";
+  if (mainType === "Action" && subtypes.includes("Attack"))
+    return "attack_action";
   return mainType.toLowerCase().replace(/[\s-]+/g, "_");
 }
 
-function generatedAttributes(keywords: string[], specialization: string | null): GeneratedAttributes {
+function generatedAttributes(
+  keywords: string[],
+  specialization: string | null,
+): GeneratedAttributes {
   return {
     hasGoAgain: keywords.includes("Go again"),
     hasBloodDebt: keywords.includes("Blood Debt"),
@@ -63,27 +72,42 @@ function generatedAttributes(keywords: string[], specialization: string | null):
   };
 }
 
-function validated(name: string, where: string, value: unknown): AuthoredCardAttributes {
+function validated(
+  name: string,
+  where: string,
+  value: unknown,
+): AuthoredCardAttributes {
   const result = authoredAttributesSchema.safeParse(value);
   if (!result.success) {
-    throw new Error(`Authored attributes for "${name}" (${where}) don't match the vocabulary: ${result.error.message}`);
+    throw new Error(
+      `Authored attributes for "${name}" (${where}) don't match the vocabulary: ${result.error.message}`,
+    );
   }
   return result.data;
 }
 
 /** A variant's full attributes: the card's, with the variant's overrides replacing matching keys. */
-export function variantAttributes(card: ImportCard, variant: ImportVariant): CardAttributes {
+export function variantAttributes(
+  card: ImportCard,
+  variant: ImportVariant,
+): CardAttributes {
   return { ...card.attributes, ...variant.attributes };
 }
 
-export function toImportCards(entries: DatasetCard[], authored: AuthoredAttributes): ImportCard[] {
+export function toImportCards(
+  entries: DatasetCard[],
+  authored: AuthoredAttributes,
+): ImportCard[] {
   const groups = new Map<string, DatasetCard[]>();
   for (const entry of entries.filter(isViseraiLegal)) {
     groups.set(entry.name, [...(groups.get(entry.name) ?? []), entry]);
   }
 
   for (const name of Object.keys(authored)) {
-    if (!groups.has(name)) throw new Error(`Authored attributes for "${name}", which isn't an imported card`);
+    if (!groups.has(name))
+      throw new Error(
+        `Authored attributes for "${name}", which isn't an imported card`,
+      );
   }
 
   return [...groups.entries()].map(([name, group]) => {
@@ -107,7 +131,10 @@ export function toImportCards(entries: DatasetCard[], authored: AuthoredAttribut
 
     for (const [pitch, attributes] of Object.entries(entry?.variants ?? {})) {
       const variant = variants.find((v) => v.pitch === Number(pitch));
-      if (!variant) throw new Error(`Authored attributes for "${name}" pitch ${pitch}, which doesn't exist`);
+      if (!variant)
+        throw new Error(
+          `Authored attributes for "${name}" pitch ${pitch}, which doesn't exist`,
+        );
       variant.attributes = validated(name, `pitch ${pitch}`, attributes);
     }
 

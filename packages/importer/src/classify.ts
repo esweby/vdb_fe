@@ -84,9 +84,15 @@ const VISERAI_TALENTS = new Set(["Shadow"]);
 const NEVER_IN_DECK = new Set(["Hero", "Demi-Hero", "Token", "Macro"]);
 
 export function classifyTypes(types: string[]): ClassifiedTypes {
-  const result: ClassifiedTypes = { mainType: null, classes: [], talents: [], subtypes: [] };
+  const result: ClassifiedTypes = {
+    mainType: null,
+    classes: [],
+    talents: [],
+    subtypes: [],
+  };
   for (const type of types) {
-    if (CARD_TYPES.has(type) && result.mainType === null) result.mainType = type;
+    if (CARD_TYPES.has(type) && result.mainType === null)
+      result.mainType = type;
     else if (CLASSES.has(type)) result.classes.push(type);
     else if (TALENTS.has(type)) result.talents.push(type);
     else result.subtypes.push(type);
@@ -96,7 +102,11 @@ export function classifyTypes(types: string[]): ClassifiedTypes {
 
 /** Hero named in "<Hero> Specialization" on the card, or null. */
 export function specializationOf(card: DatasetCard): string | null {
-  return /\b([A-Z][\w']+) Specialization\b/.exec(card.functional_text_plain ?? "")?.[1] ?? null;
+  return (
+    /\b([A-Z][\w']+) Specialization\b/.exec(
+      card.functional_text_plain ?? "",
+    )?.[1] ?? null
+  );
 }
 
 export function isViseraiLegal(card: DatasetCard): boolean {
@@ -106,5 +116,8 @@ export function isViseraiLegal(card: DatasetCard): boolean {
   const { mainType, classes, talents } = classifyTypes(card.types);
   if (mainType === null || NEVER_IN_DECK.has(mainType)) return false;
   if (classes.length === 0 && talents.length === 0) return false;
-  return classes.every((c) => VISERAI_CLASSES.has(c)) && talents.every((t) => VISERAI_TALENTS.has(t));
+  return (
+    classes.every((c) => VISERAI_CLASSES.has(c)) &&
+    talents.every((t) => VISERAI_TALENTS.has(t))
+  );
 }

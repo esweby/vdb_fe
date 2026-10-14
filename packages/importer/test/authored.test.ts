@@ -11,7 +11,8 @@ describe("authored batches", () => {
     describe(batch, () => {
       for (const [name, entry] of Object.entries(entries)) {
         it(`${name} matches the vocabulary`, () => {
-          if (entry.card) expect(authoredAttributesSchema.parse(entry.card)).toBeTruthy();
+          if (entry.card)
+            expect(authoredAttributesSchema.parse(entry.card)).toBeTruthy();
           for (const v of Object.values(entry.variants ?? {})) {
             expect(authoredAttributesSchema.parse(v)).toBeTruthy();
           }

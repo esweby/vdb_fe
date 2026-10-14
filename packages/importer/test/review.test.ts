@@ -10,28 +10,47 @@ const cards = toImportCards(entries, {
     verified: false,
     card: {
       banishesOwn: [{ from: "hand", trigger: "on_play" }],
-      tokens: [{ token: "runechant", amount: 1, trigger: "on_play", conditions: ["banished_card_is_runeblade"] }],
+      tokens: [
+        {
+          token: "runechant",
+          amount: 1,
+          trigger: "on_play",
+          conditions: ["banished_card_is_runeblade"],
+        },
+      ],
       notes: "Check | escaping.",
     },
   },
   "Arcane Cussing": {
     verified: false,
     variants: {
-      1: { tokens: [{ token: "runechant", amount: 3, trigger: "on_leave_arena" }] },
-      2: { tokens: [{ token: "runechant", amount: 2, trigger: "on_leave_arena" }] },
-      3: { tokens: [{ token: "runechant", amount: 1, trigger: "on_leave_arena" }] },
+      1: {
+        tokens: [{ token: "runechant", amount: 3, trigger: "on_leave_arena" }],
+      },
+      2: {
+        tokens: [{ token: "runechant", amount: 2, trigger: "on_leave_arena" }],
+      },
+      3: {
+        tokens: [{ token: "runechant", amount: 1, trigger: "on_leave_arena" }],
+      },
     },
   },
 });
-const pick = (...names: string[]) => cards.filter((c) => names.includes(c.name));
+const pick = (...names: string[]) =>
+  cards.filter((c) => names.includes(c.name));
 
 describe("reviewSheet", () => {
-  const sheet = reviewSheet("Runechant creators", pick("Become the Shadow Lord", "Arcane Cussing"));
+  const sheet = reviewSheet(
+    "Runechant creators",
+    pick("Become the Shadow Lord", "Arcane Cussing"),
+  );
 
   it("has a title, instructions and a table header", () => {
     expect(sheet).toMatch(/^# Review: Runechant creators\n/);
     expect(sheet).toContain("OK");
-    expect(sheet).toContain("| Card | Pitch | Card text | Draft says | Notes |");
+    expect(sheet).toContain(
+      "| Card | Pitch | Card text | Draft says | Notes |",
+    );
   });
 
   it("puts the plain-English draft next to the card text", () => {
@@ -56,6 +75,8 @@ describe("reviewSheet", () => {
   });
 
   it("lists cards in alphabetical order", () => {
-    expect(sheet.indexOf("Arcane Cussing")).toBeLessThan(sheet.indexOf("Become the Shadow Lord"));
+    expect(sheet.indexOf("Arcane Cussing")).toBeLessThan(
+      sheet.indexOf("Become the Shadow Lord"),
+    );
   });
 });

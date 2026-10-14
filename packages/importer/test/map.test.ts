@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { DatasetCard } from "../src/classify.ts";
-import { parseStat, toImportCards, type AuthoredAttributes } from "../src/map.ts";
+import {
+  parseStat,
+  toImportCards,
+  type AuthoredAttributes,
+} from "../src/map.ts";
 import fixture from "./fixtures/cards.json" with { type: "json" };
 
 const entries = fixture as DatasetCard[];
@@ -33,7 +37,9 @@ describe("toImportCards", () => {
     const c = card("Become the Shadow Lord");
     expect(c.externalId).toBe("Become the Shadow Lord");
     expect(c.variants.map((v) => v.externalId)).toEqual(
-      entries.filter((e) => e.name === "Become the Shadow Lord").map((e) => e.unique_id),
+      entries
+        .filter((e) => e.name === "Become the Shadow Lord")
+        .map((e) => e.unique_id),
     );
   });
 
@@ -47,7 +53,12 @@ describe("toImportCards", () => {
       keywords: ["Go again"],
     });
     expect(c.variants).toHaveLength(1);
-    expect(c.variants[0]).toMatchObject({ pitch: 3, cost: 0, power: null, defense: 3 });
+    expect(c.variants[0]).toMatchObject({
+      pitch: 3,
+      cost: 0,
+      power: null,
+      defense: 3,
+    });
   });
 
   it("maps attack actions", () => {
@@ -65,18 +76,25 @@ describe("toImportCards", () => {
   });
 
   it("maps equipment with its slot", () => {
-    expect(card("Grimoire of the Haunt")).toMatchObject({ type: "equipment", subtypes: ["Off-Hand"] });
+    expect(card("Grimoire of the Haunt")).toMatchObject({
+      type: "equipment",
+      subtypes: ["Off-Hand"],
+    });
   });
 
   it("orders variants by pitch", () => {
-    expect(card("Arcane Cussing").variants.map((v) => v.pitch)).toEqual([1, 2, 3]);
+    expect(card("Arcane Cussing").variants.map((v) => v.pitch)).toEqual([
+      1, 2, 3,
+    ]);
   });
 
   it("keeps text on each variant, and on the card only when every variant shares it", () => {
     const cussing = card("Arcane Cussing");
     expect(cussing.text).toBeNull();
     expect(new Set(cussing.variants.map((v) => v.text)).size).toBe(3);
-    expect(card("Become the Shadow Lord").text).toContain("Banish a card from your hand");
+    expect(card("Become the Shadow Lord").text).toContain(
+      "Banish a card from your hand",
+    );
   });
 
   it("generates keyword attributes", () => {
@@ -87,12 +105,18 @@ describe("toImportCards", () => {
       hasRuneGate: false,
       specialization: null,
     });
-    expect(card("Grimoire of the Haunt").attributes).toMatchObject({ hasBloodDebt: true });
-    expect(card("Deathly Delight").attributes).toMatchObject({ hasRuneGate: true });
+    expect(card("Grimoire of the Haunt").attributes).toMatchObject({
+      hasBloodDebt: true,
+    });
+    expect(card("Deathly Delight").attributes).toMatchObject({
+      hasRuneGate: true,
+    });
   });
 
   it("detects Viserai specializations", () => {
-    expect(card("Arknight Shard").attributes).toMatchObject({ specialization: "Viserai" });
+    expect(card("Arknight Shard").attributes).toMatchObject({
+      specialization: "Viserai",
+    });
   });
 
   it("marks generated-only attributes as unverified", () => {
@@ -109,8 +133,16 @@ describe("authored attributes", () => {
     "Arcane Cussing": {
       verified: false,
       variants: {
-        1: { tokens: [{ token: "runechant", amount: 3, trigger: "on_leave_arena" }] },
-        3: { tokens: [{ token: "runechant", amount: 1, trigger: "on_leave_arena" }] },
+        1: {
+          tokens: [
+            { token: "runechant", amount: 3, trigger: "on_leave_arena" },
+          ],
+        },
+        3: {
+          tokens: [
+            { token: "runechant", amount: 1, trigger: "on_leave_arena" },
+          ],
+        },
       },
     },
   };
@@ -137,21 +169,29 @@ describe("authored attributes", () => {
   });
 
   it("rejects authored attributes for a card that isn't imported, to catch typos", () => {
-    expect(() => toImportCards(entries, { "Become the Shadow Lrod": { verified: false } })).toThrow(
-      /Become the Shadow Lrod/,
-    );
+    expect(() =>
+      toImportCards(entries, { "Become the Shadow Lrod": { verified: false } }),
+    ).toThrow(/Become the Shadow Lrod/);
   });
 
   it("rejects authored variant attributes for a pitch the card doesn't have", () => {
     expect(() =>
-      toImportCards(entries, { "Become the Shadow Lord": { verified: false, variants: { 1: { costReducedPerRunechant: true } } } }),
+      toImportCards(entries, {
+        "Become the Shadow Lord": {
+          verified: false,
+          variants: { 1: { costReducedPerRunechant: true } },
+        },
+      }),
     ).toThrow(/pitch 1/);
   });
 
   it("rejects authored attributes outside the vocabulary, naming the card", () => {
     expect(() =>
       toImportCards(entries, {
-        "Become the Shadow Lord": { verified: false, card: { canBanishFromHand: true } as never },
+        "Become the Shadow Lord": {
+          verified: false,
+          card: { canBanishFromHand: true } as never,
+        },
       }),
     ).toThrow(/Become the Shadow Lord/);
   });

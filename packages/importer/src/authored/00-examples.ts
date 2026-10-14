@@ -7,8 +7,18 @@ export const examples: AuthoredAttributes = {
     card: {
       banishesOwn: [{ from: "hand", trigger: "on_play" }],
       tokens: [
-        { token: "runechant", amount: 1, trigger: "on_play", conditions: ["banished_card_is_runeblade"] },
-        { token: "gate", amount: 1, trigger: "on_play", conditions: ["banished_card_is_shadow"] },
+        {
+          token: "runechant",
+          amount: 1,
+          trigger: "on_play",
+          conditions: ["banished_card_is_runeblade"],
+        },
+        {
+          token: "gate",
+          amount: 1,
+          trigger: "on_play",
+          conditions: ["banished_card_is_shadow"],
+        },
       ],
     },
   },
