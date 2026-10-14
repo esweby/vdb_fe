@@ -137,6 +137,29 @@ describe("ScoreEditor", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("doesn't repeat the dimension name visibly under its heading", () => {
+    render(<Harness />);
+    const gate = screen.getByRole("group", { name: "Gate creation" });
+    expect(within(gate).getAllByText("Gate creation")).toHaveLength(1);
+    expect(
+      within(gate).getByRole("slider", { name: "Gate creation" }),
+    ).toBeInTheDocument();
+  });
+
+  it("labels split sliders with just the side or pitch", async () => {
+    render(<Harness />);
+    await userEvent
+      .setup()
+      .click(
+        screen.getByRole("checkbox", { name: "Same score for both sides" }),
+      );
+    const gate = screen.getByRole("group", { name: "Gate creation" });
+    expect(within(gate).getByText("Forsaken")).toBeInTheDocument();
+    expect(
+      within(gate).getByRole("slider", { name: "Gate creation, Forsaken" }),
+    ).toBeInTheDocument();
+  });
+
   it("starts split by side when the preference says so", () => {
     render(
       <ScoreEditor
