@@ -89,13 +89,16 @@ describe("authoredAttributesSchema", () => {
         grantsGoAgain: "next_runeblade_attack_action",
       }).success,
     ).toBe(true);
-    expect(authoredAttributesSchema.safeParse({ goAgain: {} }).success).toBe(
-      true,
-    );
+    expect(
+      authoredAttributesSchema.safeParse({ rewardsPlayFromBanish: true })
+        .success,
+    ).toBe(true);
   });
 
   it.each([
     ["an unknown grantsGoAgain", { grantsGoAgain: "every_card" }],
+    ["go again without a condition", { goAgain: {} }],
+    ["go again with an empty condition list", { goAgain: { conditions: [] } }],
     ["an unknown key inside goAgain", { goAgain: { always: true } }],
     [
       "an unknown grantedTo",
