@@ -78,9 +78,10 @@ These three tasks go first because any of them could change the plan.
 
 ### M3: Scoring logic (3–4 days)
 
-- [ ] `packages/scoring`: resolving each scorer's score through the levels (variant + side → variant → card + side → card), top-level blank = 0 on reviewed cards, fringe default, rating count vs. total weight.
-- [ ] Unit tests for every rule in README "Reviews and blank scores", including the red-80-yellow-blank trap and the fringe card with a single rating.
-- [ ] Community score Edge Function: reads scores, reviews and weights, writes `community_scores` with a `scores_version`.
+- [x] `packages/scoring`: resolving each scorer's score through the levels (variant + side → variant → card + side → card), top-level blank = 0 on reviewed cards, fringe default, rating count vs. total weight. Drafts (cards not marked reviewed) don't count; only scorer, curator and admin roles count.
+- [x] Unit tests for every rule in README "Reviews and blank scores", including the red-80-yellow-blank trap and the fringe card with a single rating.
+- [x] Community score Edge Function (`supabase/functions/community-scores`): reads scores, reviews and weights with the service role, computes with `@vdb/scoring`, and swaps in `community_scores` atomically through `replace_community_scores` (service role only, pgTAP tested). Verified end to end locally against hand-calculated results.
+- [ ] Decide when the job runs: after each "Mark reviewed" (the app calls the function), on a schedule (pg_cron), or both.
 
 **Done when:** tests cover every rule, and the job produces correct community scores for a hand-built test fixture.
 
