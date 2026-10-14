@@ -58,7 +58,7 @@ export function supabaseDeckRepository(client: SupabaseClient): DeckRepository {
       const { data, error } = await client
         .from("decks")
         .select(
-          "id, name, updatedAt:updated_at, cards:deck_cards(variantId:variant_id, quantity, sideboard)",
+          "id, name, updatedAt:updated_at, pitchTargets:pitch_targets, cards:deck_cards(variantId:variant_id, quantity, sideboard)",
         )
         .eq("id", id)
         .maybeSingle();
@@ -85,6 +85,16 @@ export function supabaseDeckRepository(client: SupabaseClient): DeckRepository {
         .from("decks")
         .update({ updated_at: new Date().toISOString() })
         .eq("id", deckId);
+    },
+    async setPitchTargets(deckId, targets) {
+      const { error } = await client
+        .from("decks")
+        .update({
+          pitch_targets: targets,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", deckId);
+      if (error) throw error;
     },
     async getFormatRules() {
       const { data, error } = await client

@@ -138,3 +138,85 @@
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
+
+.analysis {
+  display: grid;
+  grid-template-columns: minmax(16rem, 22rem) minmax(0, 1fr);
+  gap: 3rem;
+  align-items: start;
+  margin: 1rem 0 0.5rem;
+  padding: 1rem 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+@media (max-width: 800px) {
+  .analysis {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+  }
+}
+.analysis h2 {
+  font-size: 1.1rem;
+  margin: 0 0 0.5rem;
+}
+.pitchRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.2rem 0;
+}
+.pitchText {
+  min-width: 6.5rem;
+  font-variant-numeric: tabular-nums;
+}
+.bar {
+  flex: 1;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+.bar > span {
+  display: block;
+  height: 100%;
+  background: var(--pitch);
+}
+.target input {
+  font: inherit;
+  width: 4.5rem;
+  padding: 0.15rem 0.35rem;
+  border: 1px solid var(--border);
+  border-radius: 0.3rem;
+  background: none;
+  color: var(--fg);
+}
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.dimensions {
+  overflow-x: auto;
+}
+.dimensions table {
+  border-collapse: collapse;
+  width: 100%;
+  font-variant-numeric: tabular-nums;
+}
+.dimensions th,
+.dimensions td {
+  padding: 0.25rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+  text-align: right;
+}
+.dimensions th:first-child {
+  text-align: left;
+}
+.dimensions thead th {
+  font-size: 0.85em;
+  color: var(--muted);
+  font-weight: 600;
+}

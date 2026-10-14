@@ -4,7 +4,8 @@ import type { CardSummary, VariantSummary } from "../cards/cardRepository.ts";
 import { useCards } from "../cards/useCards.ts";
 import { useServices } from "../servicesContext.ts";
 import { Tag, TextField } from "../ui/index.ts";
-import type { Deck, DeckCard } from "./deckRepository.ts";
+import { DeckAnalysisPanel } from "./DeckAnalysisPanel.tsx";
+import type { Deck, DeckCard, PitchTargets } from "./deckRepository.ts";
 import {
   deckCounts,
   deckProblems,
@@ -91,6 +92,18 @@ export function DeckPage() {
     }
   }
 
+  async function setPitchTargets(targets: PitchTargets) {
+    if (!deck) return;
+    const previous = deck;
+    setDeck({ ...deck, pitchTargets: targets });
+    try {
+      await decks.setPitchTargets(deck.id, targets);
+    } catch (e) {
+      setDeck(previous);
+      setError(`Couldn't save: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }
+
   const inPool = (variantId: string) =>
     deck?.cards.find((c) => c.variantId === variantId);
 
@@ -154,6 +167,12 @@ export function DeckPage() {
             ))}
           </ul>
         ))}
+
+      <DeckAnalysisPanel
+        entries={entries}
+        pitchTargets={deck.pitchTargets ?? {}}
+        onTargetsChange={(t) => void setPitchTargets(t)}
+      />
 
       <div className={styles.editor}>
         <div className={styles.pool}>
