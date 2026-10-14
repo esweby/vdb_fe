@@ -1,6 +1,8 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { useServices } from "../services.tsx";
+import { Button, TextField } from "../ui/index.ts";
+import styles from "./SignInPage.module.css";
 
 export function SignInPage() {
   const { auth } = useServices();
@@ -27,42 +29,41 @@ export function SignInPage() {
   }
 
   return (
-    <>
+    <div className={styles.page}>
       <h1>{mode === "signIn" ? "Sign in" : "Create an account"}</h1>
       <form onSubmit={submit}>
-        <label>
-          Email
-          <input
-            type="email"
-            autoComplete="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </label>
-        <label>
-          Password
-          <input
-            type="password"
-            autoComplete={
-              mode === "signIn" ? "current-password" : "new-password"
-            }
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </label>
-        {error && <p role="alert">{error}</p>}
-        <button type="submit" disabled={busy}>
+        <TextField
+          label="Email"
+          type="email"
+          autoComplete="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <TextField
+          label="Password"
+          type="password"
+          autoComplete={mode === "signIn" ? "current-password" : "new-password"}
+          required
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        {error && (
+          <p role="alert" className={styles.error}>
+            {error}
+          </p>
+        )}
+        <Button type="submit" variant="primary" disabled={busy}>
           {mode === "signIn" ? "Sign in" : "Create account"}
-        </button>
+        </Button>
       </form>
-      <button
-        type="button"
+      <Button
+        variant="ghost"
+        className={styles.switch}
         onClick={() => setMode(mode === "signIn" ? "signUp" : "signIn")}
       >
         {mode === "signIn" ? "Create an account instead" : "Sign in instead"}
-      </button>
-    </>
+      </Button>
+    </div>
   );
 }

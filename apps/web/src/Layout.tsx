@@ -4,6 +4,7 @@ import { selectCanScore, selectIsSignedIn } from "./auth/authSlice.ts";
 import type { RootState } from "./store.ts";
 import { useServices } from "./services.tsx";
 import styles from "./Layout.module.css";
+import { Button } from "./ui/index.ts";
 
 export function Layout() {
   const signedIn = useSelector((s: RootState) => selectIsSignedIn(s));
@@ -23,9 +24,9 @@ export function Layout() {
           {signedIn && <Link to="/decks">Decks</Link>}
           {signedIn && <Link to="/account">Account</Link>}
           {signedIn ? (
-            <button type="button" onClick={() => void auth.signOut()}>
+            <Button variant="ghost" onClick={() => void auth.signOut()}>
               Sign out
-            </button>
+            </Button>
           ) : (
             <Link to="/sign-in">Sign in</Link>
           )}

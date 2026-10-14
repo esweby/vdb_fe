@@ -1,0 +1,144 @@
+.button {
+  font: inherit;
+  padding: 0.4rem 0.9rem;
+  border-radius: 0.4rem;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--fg);
+  cursor: pointer;
+}
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.button:focus-visible,
+.input:focus-visible,
+.slider:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-fg);
+}
+.ghost {
+  border-color: transparent;
+}
+.danger {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+.label {
+  font-weight: 600;
+}
+.input {
+  font: inherit;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  background: var(--bg);
+  color: var(--fg);
+}
+.input[aria-invalid="true"] {
+  border-color: var(--danger);
+}
+.error {
+  margin: 0;
+  color: var(--danger);
+}
+.hint {
+  margin: 0;
+  color: var(--muted);
+}
+
+.sliderRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.slider {
+  flex: 1;
+  accent-color: var(--accent);
+}
+.slider[data-unset="true"] {
+  opacity: 0.35;
+}
+.sliderValue {
+  min-width: 4.5rem;
+  color: var(--muted);
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.table th,
+.table td {
+  text-align: left;
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+}
+.caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: 0.5rem;
+}
+.empty {
+  color: var(--muted);
+}
+
+.tag {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  font-size: 0.85em;
+}
+.tagAccent {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 0.45);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+.dialog {
+  background: var(--bg);
+  color: var(--fg);
+  border-radius: 0.6rem;
+  padding: 1rem 1.25rem;
+  width: min(36rem, 100%);
+  max-height: 90vh;
+  overflow: auto;
+}
+.dialogHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+.dialogHeader h2 {
+  margin: 0;
+}
+.dialogActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}

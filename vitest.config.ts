@@ -6,10 +6,7 @@ export default defineConfig({
       {
         test: {
           name: "packages",
-          include: [
-            "packages/**/*.test.ts",
-            "supabase/functions/**/*.test.ts",
-          ],
+          include: ["packages/**/*.test.ts", "supabase/functions/**/*.test.ts"],
           // Integration tests need a running database; they run in CI's db-test job.
           exclude: [...configDefaults.exclude, "**/*.integration.test.ts"],
         },
