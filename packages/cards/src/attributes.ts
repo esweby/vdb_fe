@@ -82,12 +82,17 @@ export const authoredAttributesSchema = z.strictObject({
   playableFromBanish: z.strictObject({ conditions }).optional(),
   arcaneDamage: z.array(arcaneDamageSchema).optional(),
   costReducedPerRunechant: z.boolean().optional(),
+  /** Conditional go again. Replaces the dataset's "Go again" keyword, which can't tell. */
+  goAgain: z.strictObject({ conditions }).optional(),
+  /** Gives go again to a later card. */
+  grantsGoAgain: z.enum(GRANTED_TO).optional(),
   /** Doubts or context for the reviewer. Shown on the review sheet. */
   notes: z.string().optional(),
 });
 
 /** Attributes the importer derives from the dataset. */
 export interface GeneratedAttributes {
+  /** Natural (unconditional) go again. False when authored `goAgain` says it's conditional. */
   hasGoAgain: boolean;
   hasBloodDebt: boolean;
   hasUsurp: boolean;

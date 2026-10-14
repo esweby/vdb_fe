@@ -70,7 +70,21 @@ describe("authoredAttributesSchema", () => {
     ).toBe(true);
   });
 
+  it("accepts conditional and granted go again", () => {
+    expect(
+      authoredAttributesSchema.safeParse({
+        goAgain: { conditions: ["banished_card_is_shadow"] },
+        grantsGoAgain: "next_runeblade_attack_action",
+      }).success,
+    ).toBe(true);
+    expect(authoredAttributesSchema.safeParse({ goAgain: {} }).success).toBe(
+      true,
+    );
+  });
+
   it.each([
+    ["an unknown grantsGoAgain", { grantsGoAgain: "every_card" }],
+    ["an unknown key inside goAgain", { goAgain: { always: true } }],
     [
       "an unknown grantedTo",
       {

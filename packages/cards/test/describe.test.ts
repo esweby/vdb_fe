@@ -180,6 +180,33 @@ describe("describeAttributes", () => {
     ]);
   });
 
+  it("describes conditional go again instead of natural go again", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        hasGoAgain: true,
+        goAgain: { conditions: ["banished_card_is_shadow"] },
+      }),
+    ).toEqual(["Gets go again, if the banished card is Shadow."]);
+  });
+
+  it("describes conditional go again whose condition is only in the notes", () => {
+    expect(describeAttributes({ ...generated, goAgain: {} })).toEqual([
+      "Gets go again under a condition (see note).",
+    ]);
+  });
+
+  it("describes granted go again", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        grantsGoAgain: "next_runeblade_attack_action",
+      }),
+    ).toEqual([
+      "Your next Runeblade attack action card this turn gets go again.",
+    ]);
+  });
+
   it("describes nothing for a plain card", () => {
     expect(describeAttributes(generated)).toEqual([]);
   });

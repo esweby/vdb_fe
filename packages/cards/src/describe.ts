@@ -117,7 +117,19 @@ export function describeAttributes(attributes: CardAttributes): string[] {
     lines.push("Costs {r} less for each Runechant you control.");
   if (attributes.hasUsurp) lines.push("Usurp.");
   if (attributes.hasRuneGate) lines.push("Rune Gate.");
-  if (attributes.hasGoAgain) lines.push("Go again.");
+  if (attributes.goAgain) {
+    const conditions = attributes.goAgain.conditions;
+    lines.push(
+      conditions?.length
+        ? `Gets go again${ifConditions(conditions)}.`
+        : "Gets go again under a condition (see note).",
+    );
+  } else if (attributes.hasGoAgain) {
+    lines.push("Go again.");
+  }
+  if (attributes.grantsGoAgain) {
+    lines.push(`${GRANTED_TEXT[attributes.grantsGoAgain]} go again.`);
+  }
   if (attributes.hasBloodDebt) lines.push("Blood debt.");
   if (attributes.notes) lines.push(`Note: ${attributes.notes}`);
 

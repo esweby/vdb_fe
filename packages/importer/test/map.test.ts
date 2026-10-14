@@ -168,6 +168,20 @@ describe("authored attributes", () => {
     });
   });
 
+  it("treats authored conditional go again as not natural go again", () => {
+    const cards = toImportCards(entries, {
+      "Become the Shadow Lord": {
+        verified: false,
+        card: { goAgain: { conditions: ["banished_card_is_shadow"] } },
+      },
+    });
+    const card = cards.find((c) => c.name === "Become the Shadow Lord")!;
+    expect(card.attributes.hasGoAgain).toBe(false);
+    expect(card.attributes.goAgain).toEqual({
+      conditions: ["banished_card_is_shadow"],
+    });
+  });
+
   it("rejects authored attributes for a card that isn't imported, to catch typos", () => {
     expect(() =>
       toImportCards(entries, { "Become the Shadow Lrod": { verified: false } }),
