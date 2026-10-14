@@ -506,11 +506,16 @@ profiles         (id → auth.users, role, preferences jsonb)
 rater_weights    (user_id → auth.users, rating_weight default 1.0)
                  -- a separate table so it can be admin-only; never returned to non-admins or used client-side
 app_settings     (key, value jsonb)                      -- fringe_default, fringe_k, min_rating_count
-cards            (id, name, type, subtypes text[], classes text[], text,
-                  attributes jsonb, fringe boolean default false)
+cards            (id, external_id, name, type, subtypes text[], classes text[], talents text[],
+                  keywords text[], text null, attributes jsonb, attributes_verified,
+                  fringe boolean default false, hidden boolean default false)
+                 -- text is null when variants' text differs
                  -- type: action | attack_action | instant | weapon | equipment | ...
                  -- subtypes include the equipment slot and weapon handedness
-variants        (id, card_id, pitch null, defense null, power null, ...)
+variants         (id, card_id, external_id, pitch null, cost null, power null, defense null,
+                  text, attributes jsonb)
+                 -- text and attributes per pitch: variants can differ (e.g. "create 3/2/1 Runechants");
+                 -- variant attributes are merged over the card's
 score_dimensions (id, key, label)
 card_scores      (user_id, card_id, variant_id null, side null, dimension_id, score 0–100)
                  -- variant_id null = card level; side null = both sides

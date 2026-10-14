@@ -1,4 +1,8 @@
 {
   "extends": "./tsconfig.base.json",
-  "include": ["packages/*/src"]
+  "compilerOptions": {
+    "resolveJsonModule": true,
+    "types": ["node"]
+  },
+  "include": ["packages/*/src", "packages/*/test", "packages/*/*.config.ts", "vitest.config.ts"]
 }

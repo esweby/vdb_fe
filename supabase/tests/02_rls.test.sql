@@ -30,8 +30,8 @@ insert into public.deck_cards (deck_id, variant_id, quantity)
 
 -- Anonymous visitors
 set local role anon;
-select is((select count(*)::int from public.cards), 1, 'anon can read cards');
-select is((select count(*)::int from public.community_scores), 1, 'anon can read community scores');
+select is((select count(*)::int from public.cards where external_id = 'ext-card-1'), 1, 'anon can read cards');
+select is((select count(*)::int from public.community_scores where card_id = '10000000-0000-0000-0000-000000000001'), 1, 'anon can read community scores');
 select is((select count(*)::int from public.card_scores), 0, 'anon cannot read individual scores');
 reset role;
 
@@ -80,7 +80,7 @@ select results_eq(
 select is((select count(*)::int from public.profiles), 1, 'users only see their own profile');
 select is((select count(*)::int from public.rater_weights), 0, 'users cannot see rating weights');
 select results_eq(
-  $$with u as (update public.cards set fringe = true returning 1) select count(*)::int from u$$,
+  $$with u as (update public.cards set fringe = true where external_id = 'ext-card-1' returning 1) select count(*)::int from u$$,
   array[0], 'users cannot flag fringe cards'
 );
 select is((select count(*)::int from public.decks), 1, 'users see their own decks');
@@ -101,7 +101,7 @@ select throws_ok(
   '42501', null, 'other users cannot add cards to a deck'
 );
 select results_eq(
-  $$with u as (update public.cards set fringe = true returning 1) select count(*)::int from u$$,
+  $$with u as (update public.cards set fringe = true where external_id = 'ext-card-1' returning 1) select count(*)::int from u$$,
   array[0], 'scorers cannot flag fringe cards'
 );
 reset role;
@@ -110,11 +110,11 @@ reset role;
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000c0","role":"authenticated"}', true);
 select results_eq(
-  $$with u as (update public.cards set fringe = true returning 1) select count(*)::int from u$$,
+  $$with u as (update public.cards set fringe = true where external_id = 'ext-card-1' returning 1) select count(*)::int from u$$,
   array[1], 'curators can flag fringe cards'
 );
 select throws_ok(
-  $$update public.cards set name = 'Renamed'$$,
+  $$update public.cards set name = 'Renamed' where external_id = 'ext-card-1'$$,
   '42501', null, 'curators cannot change other card facts'
 );
 select is((select count(*)::int from public.rater_weights), 0, 'curators cannot see rating weights');
