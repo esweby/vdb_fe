@@ -435,3 +435,81 @@
 .curveCount {
   text-align: right;
 }
+
+/* Card view */
+.viewToggle {
+  display: inline-flex;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  overflow: hidden;
+}
+.viewToggle button {
+  font: inherit;
+  font-size: 0.85em;
+  padding: 0.3rem 0.75rem;
+  border: none;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+.viewToggle button[aria-pressed="true"] {
+  background: var(--fg);
+  color: var(--bg, #fff);
+}
+.viewToggle button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.tileColumns {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+.tileColumns .section h2 {
+  margin-top: 0;
+}
+.tileColumns .gearColumn {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 1.5rem 2rem;
+}
+.tiles {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: 0.75rem;
+}
+.gearColumn .tiles {
+  grid-template-columns: repeat(auto-fill, 9.5rem);
+}
+.tileControls {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.tileControls button {
+  font: inherit;
+  min-width: 1.6rem;
+  height: 1.6rem;
+  border: 1px solid var(--border);
+  border-radius: 0.3rem;
+  background: var(--bg, #fff);
+  color: var(--fg);
+  cursor: pointer;
+}
+.tileControls button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Weapons and equipment: one row across the top in card view. */
+.tileColumns .section:first-child .tiles {
+  grid-auto-flow: column;
+  grid-template-columns: none;
+  grid-auto-columns: 9.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}
