@@ -14,3 +14,8 @@
   margin-bottom: 0.75rem;
   color: var(--muted);
 }
+.stats {
+  list-style: none;
+  padding: 0;
+  color: var(--muted);
+}

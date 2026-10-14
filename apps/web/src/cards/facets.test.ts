@@ -44,4 +44,18 @@ describe("card facets", () => {
       "Nebula Blade",
     ]);
   });
+
+  it("filters by cost, power and defense, matching any pitch", () => {
+    expect(names({ power: { "4": "include" } })).toEqual(["Hocus Pocus"]);
+    expect(names({ power: { le2: "include" } })).toEqual([
+      "Hocus Pocus",
+      "Nebula Blade",
+    ]);
+    expect(names({ defense: { "3": "include" } })).toEqual([
+      "Become the Shadow Lord",
+      "Fate Foreseen",
+      "Hocus Pocus",
+    ]);
+    expect(names({ cost: { "0": "exclude" } })).toEqual(["Nebula Blade"]);
+  });
 });

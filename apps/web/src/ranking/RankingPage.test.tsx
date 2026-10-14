@@ -108,7 +108,7 @@ describe("ranking page", () => {
       .click(
         within(
           screen.getByRole("complementary", { name: "Filters" }),
-        ).getByRole("button", { name: /^Shadow,/ }),
+        ).getByRole("button", { name: /^Include Shadow,/ }),
       );
     expect(rankedNames()).toEqual(["Become the Shadow Lord"]);
   });
