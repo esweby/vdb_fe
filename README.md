@@ -27,7 +27,7 @@ The supporting tokens used in this deck:
 
 # Application
 
-The application is a deck building tool for Viserai in **Classic Constructed**. It only includes cards Viserai can use. A smaller card pool lets the user experience focus on more granular deck building tools and simulators.
+The application is a deck building tool for Viserai in **Classic Constructed**. It only includes cards Viserai can use. A smaller card pool (about 630 distinct cards, most of them generic) lets the user experience focus on more granular deck building tools and simulators.
 
 The core of the application is a scoring and synergy system built around Viserai's goals. User scores are collected into a community view, and individuals can also work from their own scores, or from a blend of the two.
 
@@ -49,11 +49,11 @@ Card data comes in three kinds, and each is kept separate:
 
 | Kind | Example | Stored in |
 | --- | --- | --- |
-| **Facts**: objective, entered by us | type, pitch, defense, `hasBloodDebt`, tokens created and under which conditions | `cards` / `printings` tables |
+| **Facts**: objective, entered by us | type, pitch, defense, `hasBloodDebt`, tokens created and under which conditions | `cards` / `variants` tables |
 | **Opinions**: one per user, per card, per dimension | "I rate this 80 for Gate creation" | `card_scores` table |
 | **Aggregates**: calculated | community score, number of ratings | `community_scores` table, written by a scheduled job |
 
-A card has the facts shared by all its versions, and one or more **printings** for the facts that differ between versions (usually pitch). A non-exhaustive example:
+A card has the facts shared by all its versions, and one or more **variants** for the facts that differ between versions (usually pitch). They're called variants, not printings, because the card dataset uses "printing" for a physical print run, such as an edition or foil. A non-exhaustive example:
 
 ```TypeScript
 enum Condition {
@@ -93,7 +93,7 @@ const becomeTheShadowLord: Card = {
     whileInBanish: { canPlay: false, conditions: [] },
   },
 
-  printings: [{ pitch: 3, defense: 3 }],
+  variants: [{ pitch: 3, defense: 3 }],
 };
 ```
 
@@ -116,7 +116,7 @@ Weapons and equipment are a first-class part of the design, not an add-on. Viser
 
 | Area | How weapons and equipment are handled |
 | --- | --- |
-| **Card facts** | Every card has a `type` (action, attack action, instant, weapon, equipment, …) and `subtypes`, which include the slot (head, chest, arms, legs, off-hand) and handedness for weapons. Pitch, defense and power are nullable on printings, because not every card type has them. |
+| **Card facts** | Every card has a `type` (action, attack action, instant, weapon, equipment, …) and `subtypes`, which include the slot (head, chest, arms, legs, off-hand) and handedness for weapons. Pitch, defense and power are nullable on variants, because not every card type has them. |
 | **Decks** | A deck is a **card pool** (every card the player brings, including weapons, equipment and sideboard cards) plus one or more **loadouts**. A loadout is what starts a game: the main deck, the weapons and one equipment piece per slot. **A loadout is always a subset of the pool**: no loadout can contain more copies of a card than the pool has. Removing a card from the pool removes it from every loadout. Adding a card to the pool adds it to the default loadout, unless it's marked as a sideboard card. In FaB terms, the pool is the registered deck plus sideboard. Phase one creates one loadout per deck automatically, and choosing between several loadouts can come later without a schema change. |
 | **Scoring** | Weapons and equipment are scored on the same dimensions, with the same side rules, as any other card. |
 | **Suggested core** | Weapons and equipment don't take up deck space, so they don't compete with deck cards. They're ranked separately, by slot, and the top option for each slot is suggested. |
@@ -148,29 +148,30 @@ Format rules, such as pool size, deck size and how many weapons a hero can carry
 
 #### Reviews and blank scores
 
-A **review** means "I have looked at this whole card": every dimension, every printing, both sides. A card is either reviewed by a scorer or it isn't. Reviews aren't recorded per printing or per side.
+A **review** means "I have looked at this whole card": every dimension, every variant, both sides. A card is either reviewed by a scorer or it isn't. Reviews aren't recorded per variant or per side.
 
 **Reviewing is an explicit action, separate from saving.** Saving scores saves work in progress. A scorer can work through a card over several sessions, and nothing they save counts toward community scores yet. When they're done, they press **Mark reviewed**. Only then do their scores for that card count, with blanks resolved as below. Without this, saving a single score would quietly turn every other dimension into a 0.
 
-Before confirming, **Mark reviewed** shows a summary of what every printing and side will resolve to on every dimension, with the source of each value: set, inherited from the level above, "not relevant", or blank (counts as 0). Zeros that come from a blank are highlighted. This catches the common trap where a scorer rates the red printing 80, leaves yellow and blue blank, and never set a card-level score, so yellow and blue would count as 0. The summary offers a one-click fix: copy a score to the other printings, set a card-level score for them to inherit, or confirm the zeros.
+Before confirming, **Mark reviewed** shows a summary of what every variant and side will resolve to on every dimension, with the source of each value: set, inherited from the level above, "not relevant", or blank (counts as 0). Zeros that come from a blank are highlighted. This catches the common trap where a scorer rates the red variant 80, leaves yellow and blue blank, and never set a card-level score, so yellow and blue would count as 0. The summary offers a one-click fix: copy a score to the other variants, set a card-level score for them to inherit, or confirm the zeros.
 
 After a card is reviewed, changes to its scores apply immediately, and the card stays reviewed.
 
 Scores can be given at four levels, from most specific to least:
 
-1. printing + side
-2. printing
+1. variant + side
+2. variant
 3. card + side
 4. card (the top level)
 
 The rules:
 
-- **A blank uses the level above it.** If a scorer gives the card one Gate creation score and leaves the printings blank, every printing uses the card score.
+- **A blank uses the level above it.** If a scorer gives the card one Gate creation score and leaves the variants blank, every variant uses the card score.
 - **A blank at the top level, on a reviewed card, is a 0.** The scorer looked at the card and decided it doesn't matter there. The UI shows it as "not relevant".
 - **Lower levels have an explicit "not relevant" button**, which writes a 0. This is for a scorer who splits a card because one side doesn't care about it. They press "not relevant" on that side. Leaving the side blank means "same as the card".
-- **Each scorer's score is resolved first, then averaged.** For each scorer, the app finds the score that applies to a given printing, side and dimension using the rules above. The community score is the weighted average of those resolved scores. A 0 counts with the scorer's full weight, because a 0 is a rating like any other.
+- **Each scorer's score is resolved first, then averaged.** For each scorer, the app finds the score that applies to a given variant, side and dimension using the rules above. The community score is the weighted average of those resolved scores. A 0 counts with the scorer's full weight, because a 0 is a rating like any other.
 - **Throughout the scoring UI, inherited values are shown.** Each blank cell shows the value it will inherit and where it comes from, greyed out, so inheriting and 0 are never confused.
-- **A card nobody has reviewed is unknown.** It gets no score, is left out of the suggested core and shows an "unreviewed" badge. A "needs review" list shows scorers which cards are left to cover.
+- **A card nobody has reviewed is unknown.** It gets no score, is left out of the suggested core and shows an "unreviewed" badge. A "needs review" list shows scorers which cards are left to cover. It lists Runeblade and Shadow cards first, then generics.
+- **Generic cards surface on their own.** Most of the pool is generic. Scorers aren't expected to review every generic card. They'll score the generics they actually build with, and those rise in the rankings while unreviewed generics stay out. Clearly irrelevant generics, such as old equipment, can be hidden later with a flag on `cards`.
 
 #### Why unreviewed cards have no default score
 
@@ -213,7 +214,7 @@ Fringe is one flag per card, and the default is applied in the same way to each 
 
 #### Other scoring notes
 
-- **Printings and pitch variants.** Pitch variants usually differ in value, so scores can be set per printing. For cards whose effect doesn't change between pitches, a single card-level score covers every printing. Some cards are only printed in one colour, so they only have one printing.
+- **Pitch variants.** Pitch variants usually differ in value, so scores can be set per variant. For cards whose effect doesn't change between pitches, a single card-level score covers every variant. Some cards are only printed in one colour, so they only have one variant.
 - **Deck-dependent value.** Some cards vary in value with the deck's makeup, which static scores can't capture. This is handled by deck analysis (see Utilities), not by the scores.
 
 ### Hero sides
@@ -293,7 +294,7 @@ The user's priorities are a weight for each dimension, for example `{ runechantC
 
 From there the user can add the core to a deck, or ignore it and build manually. Either way, the deck builder shows the deck's totals for each dimension as it changes.
 
-The hero's card pool is small, so the ranking runs in the browser. Changing a priority recalculates instantly, with no backend call.
+The hero's card pool is around 1,000 variants (about 630 distinct cards), which is still small enough for the ranking to run in the browser. Changing a priority recalculates instantly, with no backend call.
 
 ## Utilities
 
@@ -428,7 +429,7 @@ Illustrative examples (the logic still needs checking by a player):
 
 | Filters | Steps |
 | --- | --- |
-| Specific card or printing | Draw N |
+| Specific card or variant | Draw N |
 | Card fact (blood debt, creates Runechants, creates Gates, go again…) | Pitch a card matching a filter |
 | Class (Shadow, Runeblade, generic) | Put a card matching a filter in arsenal |
 | Card type (attack action, non-attack action, instant, weapon, equipment…) | Block with N cards (lowest score first) |
@@ -507,19 +508,19 @@ cards            (id, name, type, subtypes text[], classes text[], text,
                   attributes jsonb, fringe boolean default false)
                  -- type: action | attack_action | instant | weapon | equipment | ...
                  -- subtypes include the equipment slot and weapon handedness
-printings        (id, card_id, pitch null, defense null, power null, ...)
+variants        (id, card_id, pitch null, defense null, power null, ...)
 score_dimensions (id, key, label)
-card_scores      (user_id, card_id, printing_id null, side null, dimension_id, score 0–100)
-                 -- printing_id null = card level; side null = both sides
+card_scores      (user_id, card_id, variant_id null, side null, dimension_id, score 0–100)
+                 -- variant_id null = card level; side null = both sides
                  -- an explicit "not relevant" is stored as score 0
                  -- a missing row uses the level above (see Reviews and blank scores)
-                 -- UNIQUE NULLS NOT DISTINCT (user_id, card_id, printing_id, side, dimension_id)
+                 -- UNIQUE NULLS NOT DISTINCT (user_id, card_id, variant_id, side, dimension_id)
                  --   one row per scope; NULLS NOT DISTINCT (Postgres 15+) makes two card-level
                  --   rows for the same dimension a conflict, which a plain UNIQUE would allow
-                 -- printing_id must belong to card_id (check via foreign key on (card_id, printing_id))
+                 -- variant_id must belong to card_id (check via foreign key on (card_id, variant_id))
 card_reviews     (user_id, card_id, reviewed_at)
                  -- PRIMARY KEY (user_id, card_id)
-                 -- written only by "Mark reviewed"; covers every printing and both sides
+                 -- written only by "Mark reviewed"; covers every variant and both sides
                  -- no rows for a card = unreviewed
 card_synergies   (user_id, from_card_id, to_card_id, weight, note null)
                  -- directed: "from helps to"; a two-way relationship is two rows
@@ -530,18 +531,18 @@ synergy_feedback (user_id, rule_id, from_card_id, to_card_id, verdict, weight nu
                  --   reweight: the edge uses this weight (weight required)
                  -- enforced with a CHECK constraint
 decks            (id, user_id, name, ...)
-deck_cards       (deck_id, printing_id, quantity, sideboard boolean default false)
+deck_cards       (deck_id, variant_id, quantity, sideboard boolean default false)
                  -- the card pool, incl. weapons and equipment
 deck_loadouts    (id, deck_id, name, is_default)
-loadout_cards    (loadout_id, printing_id, quantity)
+loadout_cards    (loadout_id, variant_id, quantity)
                  -- main deck + weapons + equipment for one game; a subset of the pool
 scenarios        (id, user_id, name, definition jsonb, definition_version,
                   visibility default 'private')
                  -- visibility: private | link | library (library set by curators only)
-community_scores (card_id, printing_id null, side null, dimension_id,
+community_scores (card_id, variant_id null, side null, dimension_id,
                   score, rating_count, total_weight, scores_version, computed_at)
                  -- written by the community score job
-                 -- UNIQUE NULLS NOT DISTINCT (card_id, printing_id, side, dimension_id)
+                 -- UNIQUE NULLS NOT DISTINCT (card_id, variant_id, side, dimension_id)
                  -- rating_count = people; total_weight includes the fringe default
 scenario_results (id, scenario_id, user_id, deck_snapshot jsonb, definition jsonb,
                   definition_version, seed, runs, settings jsonb, scores_version,
@@ -565,13 +566,13 @@ The goal is one complete loop: **accurate cards → scoring → community scores
 
 **Card data is budgeted separately: about 1 week.** It's the largest hidden task. To keep it manageable:
 
-- **Import base facts from an existing dataset**: name, type, subtypes, classes, text, and each printing's pitch, cost, power and defense. An open community dataset such as `the-fab-cube/flesh-and-blood-cards` on GitHub is the first candidate. Check its licence and how current it is before relying on it, and expect some cleanup.
+- **Import base facts from an existing dataset**: name, type, subtypes, classes, text, and each variant's pitch, cost, power and defense. An open community dataset such as `the-fab-cube/flesh-and-blood-cards` on GitHub is the first candidate. Check its licence and how current it is before relying on it, and expect some cleanup.
 - **Hand-author only what's specific to Viserai**: `attributes` such as tokens created, conditions and blood debt.
 - **Have a player check the result**, especially the conditions.
 
 **If the budget runs out, ship a smaller working loop** rather than dragging all of phase one over the finish line. In priority order:
 
-1. Accurate card and printing data
+1. Accurate card and variant data
 2. Personal scoring with clear review semantics
 3. Community scores
 4. Ranking by priorities
@@ -583,7 +584,7 @@ Never cut corners on the scoring model to hit the date. Cut interface features i
 
 - Supabase
   - Tables listed above, with row level security
-  - Load the relevant cards and printings with accurate facts, **including weapons and equipment** with their types and slots
+  - Load the relevant cards and variants with accurate facts, **including weapons and equipment** with their types and slots
   - Community score job
 - Frontend
   - Basic internal component library and navigation
@@ -609,7 +610,7 @@ Never cut corners on the scoring model to hit the date. Cut interface features i
 **Exit criteria**
 
 1. **Phase one ships to the scoring group first.** They use it to score cards.
-2. **Public launch requires the coverage pass**: the scoring group has reviewed most cards, so "Ranked by your priorities" isn't empty on day one. Unreviewed cards are left out of the ranking. The exact coverage threshold is decided by the scoring group.
+2. **Public launch requires the coverage pass**: the scoring group has reviewed most Runeblade and Shadow cards, plus the generics they actually use, so "Ranked by your priorities" isn't empty on day one. Unreviewed cards are left out of the ranking. The exact coverage threshold is decided by the scoring group.
 
 ## Phase Two
 

@@ -25,7 +25,7 @@ Checked the `the-fab-cube/flesh-and-blood-cards` dataset.
 
 - **Example card checked.** Become the Shadow Lord is a blue-only Shadow Runeblade Action: cost 0, pitch 3, defense 3, Go again. That matches the README example.
 
-**Proposed response to the pool size:** all ~1,000 entries are imported, but scoring and attribute authoring start with a **focus pool**: every Runeblade and Shadow card, plus generics a curator adds. Every other generic card is imported and searchable, but stays out of the "needs review" list until a curator adds it. Since unreviewed cards are already left out of the ranking, this changes nothing in the design. It only adds an `in_focus_pool` flag on `cards`.
+**Response to the pool size (decided):** import everything. There's no focus pool flag. Generics surface on their own: scorers score the generics they actually build with, and unreviewed ones stay out of the ranking. The "needs review" list and attribute authoring put Runeblade and Shadow cards first. Clearly irrelevant generics, such as old equipment, can be hidden later with a flag.
 
 ## Milestones
 
@@ -45,7 +45,7 @@ These three tasks go first because any of them could change the plan.
 
 ### M1: Schema and security (3–4 days)
 
-- [ ] Migrations for every phase one table in the README (with the `variants` rename and `in_focus_pool`).
+- [ ] Migrations for every phase one table in the README.
 - [ ] Constraints: `UNIQUE NULLS NOT DISTINCT` on `card_scores` and `community_scores`; `variant` belongs to `card`; the `synergy_feedback` CHECK; loadout quantities ≤ pool quantities.
 - [ ] Row level security for each role: user, scorer, curator, admin. `rating_weight` is readable by admins only.
 - [ ] Seed the draft score dimensions.
@@ -58,10 +58,10 @@ These three tasks go first because any of them could change the plan.
 - [ ] Importer: reads the pinned dataset commit and upserts `cards` and `variants`, using the dataset's `unique_id` as a stable external ID. Safe to re-run.
 - [ ] Legality filter, with the result checked by a player.
 - [ ] Map dataset fields to ours: types → `type`, `subtypes`, `classes`; keywords → `hasGoAgain` and similar. Generate as many `attributes` as possible from the data.
-- [ ] Hand-author the Viserai-specific `attributes` (`tokens`, `conditions`, blood debt and so on) for the focus pool, Runeblade and Shadow cards first.
+- [ ] Hand-author the Viserai-specific `attributes` (`tokens`, `conditions`, blood debt and so on), Runeblade and Shadow cards first, generics as needed.
 - [ ] A player checks a sample of authored attributes, and every condition.
 
-**Done when:** every legal card is in the database, weapons and equipment have their slots, and every focus pool card has checked attributes.
+**Done when:** every legal card is in the database, weapons and equipment have their slots, and every Runeblade and Shadow card has checked attributes.
 
 ### M3: Scoring logic (3–4 days)
 
@@ -81,10 +81,10 @@ These three tasks go first because any of them could change the plan.
 
 ### M5: Card table and scoring UI (4–5 days)
 
-- [ ] Card table: search, filters (pitch, type, class, dimension), sorting, focus pool toggle.
+- [ ] Card table: search, filters (pitch, type, class, dimension), sorting.
 - [ ] Card page: every dimension, the "Same score for both sides" toggle (default from preferences), per-variant scores, "not relevant", inherited values greyed in.
 - [ ] Save as draft, and **Mark reviewed** with the summary and one-click fixes.
-- [ ] "Needs review" list (focus pool only).
+- [ ] "Needs review" list, Runeblade and Shadow cards first.
 
 **Done when:** a scorer can review a card from start to finish, and the community score updates.
 
@@ -118,11 +118,17 @@ If time runs out, ship in this order and stop where the budget ends. Never cut t
 ## Exit criteria
 
 1. Ships to the scoring group, who use it to score.
-2. Public launch once the scoring group has reviewed most of the focus pool. They decide the exact threshold.
+2. Public launch once the scoring group has reviewed most Runeblade and Shadow cards, plus the generics they use. They decide the exact threshold.
 
-## Decisions needed
+## Decisions (14 Oct 2026)
 
-- [ ] Rename `printings` → `variants` (recommended).
-- [ ] Focus pool approach for scoring and attributes (recommended).
-- [ ] OK to build on the pre-release `usurp-the-shadow-throne` branch, pinned, until it merges?
-- [ ] Importer language: TypeScript (shares `packages/cards` types) or Go (good practice for the later Go work, and reads JSON easily).
+- Rename `printings` → `variants`: **yes** (done in README).
+- No focus pool flag: generics surface on their own; trim irrelevant generics later.
+- Build on the pinned pre-release `usurp-the-shadow-throne` branch until it merges: **yes**.
+- Importer language: **TypeScript**.
+
+## Supabase setup (current state)
+
+- GitHub integration is connected to `esweby/vdb_fe`, working directory `.`.
+- "Deploy to production" is **off**. Branching (preview databases per pull request) needs the Pro plan, so it isn't available.
+- Workflow until then: develop and test migrations against the local Supabase stack. Turn on "Deploy to production" with `main` as the production branch once the first migrations are ready, so merging to `main` applies them.
