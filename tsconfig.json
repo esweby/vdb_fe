@@ -5,6 +5,7 @@
     "types": ["node"]
   },
   "include": [
+    "supabase/functions/*/auth*.ts",
     "packages/*/src",
     "packages/*/test",
     "packages/*/*.config.ts",

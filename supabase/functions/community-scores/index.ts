@@ -3,14 +3,36 @@
 // The logic lives in @vdb/scoring; this function only fetches, computes and saves.
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 import { buildScoringInput, computeCommunityScores } from "@vdb/scoring";
+import { authorizeJobCaller } from "./auth.ts";
 
 const PAGE = 1000;
 
-Deno.serve(async () => {
+Deno.serve(async (request) => {
   const db = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
+
+  const auth = await authorizeJobCaller({
+    authorization: request.headers.get("Authorization"),
+    serverKeys: [
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
+      Deno.env.get("SUPABASE_SECRET_KEY"),
+    ],
+    getUserRole: async (token) => {
+      const { data } = await db.auth.getUser(token);
+      if (!data.user) return null;
+      const { data: profile } = await db
+        .from("profiles")
+        .select("role")
+        .eq("id", data.user.id)
+        .single();
+      return (profile?.role as string | undefined) ?? null;
+    },
+  });
+  if (!auth.ok) {
+    return Response.json({ error: "Not allowed" }, { status: auth.status });
+  }
 
   // PostgREST returns at most 1,000 rows per request, so page through every table.
   const all = async (table: string, columns: string) => {
