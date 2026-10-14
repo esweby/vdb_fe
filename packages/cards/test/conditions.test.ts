@@ -1,4 +1,4 @@
-// UNVERIFIED (README "Floor, ceiling and overall"): which cards get floor and ceiling ratings.
+// Checked by the maintainer, 15 Oct 2026 (README "Floor, ceiling and overall"): which cards get floor and ceiling ratings.
 // A card has conditions when any recorded effect has a condition, or happens on a hit.
 import { describe, expect, it } from "vitest";
 import type { CardAttributes } from "../src/attributes.ts";

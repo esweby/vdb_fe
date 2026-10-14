@@ -1,4 +1,4 @@
-// UNVERIFIED (README "Floor, ceiling and overall"): whether a card gets floor and ceiling
+// Checked by the maintainer, 15 Oct 2026 (README "Floor, ceiling and overall"): whether a card gets floor and ceiling
 // ratings. A card has conditions when any recorded effect has a condition, or happens on a
 // hit (a blocked attack doesn't get it). Effects given to a later card without a condition
 // don't count. Cards without authored attributes have none, so they're asked overall only;
