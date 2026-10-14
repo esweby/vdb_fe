@@ -228,6 +228,17 @@ describe("deck page", () => {
         .getAllByRole("article")
         .map((a) => a.getAttribute("aria-label")),
     ).toEqual(["Nebula Blade", "Crown of Seeds", "Arcane Lantern"]);
+    // The art box names the slot, so it isn't lost when the type line is cut off.
+    expect(
+      within(
+        within(row).getByRole("article", { name: "Crown of Seeds" }),
+      ).getByText("Head"),
+    ).toBeInTheDocument();
+    expect(
+      within(
+        within(row).getByRole("article", { name: "Nebula Blade" }),
+      ).getByText("Sword · 2H"),
+    ).toBeInTheDocument();
     const deck = screen.getByRole("region", { name: "Deck" });
     expect(
       row.compareDocumentPosition(deck) & Node.DOCUMENT_POSITION_FOLLOWING,

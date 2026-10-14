@@ -13,6 +13,7 @@ import {
   deckProblems,
   sectionOf,
   slotOf,
+  SLOTS,
   variantName,
   PITCH_NAMES,
   type DeckEntry,
@@ -242,6 +243,14 @@ export function DeckPage() {
                 }
               >
                 <PoolSection
+                  title="Weapons and equipment"
+                  entries={[...ofSection("weapon"), ...ofSection("equipment")]}
+                  order="gear"
+                  copyLimit={copyLimit}
+                  view={view}
+                  onSet={(card) => void setCard(card)}
+                />
+                <PoolSection
                   title="Deck"
                   heading={`Deck ${counts.deck}${rules ? ` / ${rules.deckMin}` : ""}`}
                   entries={ofSection("deck")}
@@ -249,22 +258,6 @@ export function DeckPage() {
                   view={view}
                   onSet={(card) => void setCard(card)}
                 />
-                <div className={styles.gearColumn}>
-                  <PoolSection
-                    title="Weapons"
-                    entries={ofSection("weapon")}
-                    copyLimit={copyLimit}
-                    view={view}
-                    onSet={(card) => void setCard(card)}
-                  />
-                  <PoolSection
-                    title="Equipment"
-                    entries={ofSection("equipment")}
-                    copyLimit={copyLimit}
-                    view={view}
-                    onSet={(card) => void setCard(card)}
-                  />
-                </div>
                 <PoolSection
                   title="Sideboard"
                   entries={entries.filter((e) => e.sideboard)}
@@ -360,14 +353,20 @@ function PoolSection(props: {
   entries: DeckEntry[];
   copyLimit: number;
   view: View;
+  /** "pitch": red, yellow, blue, then no pitch. "gear": weapons, then equipment by slot. */
+  order?: "pitch" | "gear";
   onSet: (card: DeckCard) => void;
 }) {
   const { title, entries, copyLimit, view, onSet } = props;
-  // Red, yellow, blue, then cards without pitch; alphabetical within each.
-  const pitchOrder = (e: DeckEntry) => e.variant.pitch ?? 99;
+  const rank = (e: DeckEntry) =>
+    props.order === "gear"
+      ? sectionOf(e.card) === "weapon"
+        ? -1
+        : SLOTS.indexOf(slotOf(e.card) ?? "Off-Hand")
+      : (e.variant.pitch ?? 99);
+  // Alphabetical within each pitch (or slot).
   const sorted = [...entries].sort(
-    (a, b) =>
-      pitchOrder(a) - pitchOrder(b) || a.card.name.localeCompare(b.card.name),
+    (a, b) => rank(a) - rank(b) || a.card.name.localeCompare(b.card.name),
   );
   const total = entries.reduce((n, e) => n + e.quantity, 0);
 
