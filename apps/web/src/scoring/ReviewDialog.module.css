@@ -1,0 +1,27 @@
+.fixes {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 0.75rem;
+}
+.table caption {
+  text-align: left;
+  font-weight: 600;
+}
+.table th,
+.table td {
+  text-align: left;
+  padding: 0.2rem 0.4rem;
+  border-bottom: 1px solid var(--border);
+  font-weight: normal;
+}
+.blank {
+  color: var(--danger);
+  font-weight: 600;
+}
