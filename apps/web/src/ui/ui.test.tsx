@@ -2,7 +2,16 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { Button, Dialog, Slider, Table, Tag, TextField } from "./index.ts";
+import {
+  Button,
+  Dialog,
+  Pagination,
+  pageItems,
+  Slider,
+  Table,
+  Tag,
+  TextField,
+} from "./index.ts";
 
 describe("Button", () => {
   it("is a non-submitting button by default and calls onClick", async () => {
@@ -203,5 +212,40 @@ describe("Slider scale on a wide range", () => {
       "80",
       "100",
     ]);
+  });
+});
+
+describe("pageItems", () => {
+  it("lists every page when there are few", () => {
+    expect(pageItems(1, 5)).toEqual([1, 2, 3, 4, 5]);
+  });
+
+  it("keeps the first, last and neighbouring pages, with gaps", () => {
+    expect(pageItems(6, 12)).toEqual([1, "…", 5, 6, 7, "…", 12]);
+    expect(pageItems(1, 12)).toEqual([1, 2, "…", 12]);
+    expect(pageItems(12, 12)).toEqual([1, "…", 11, 12]);
+  });
+});
+
+describe("Pagination", () => {
+  it("marks the current page, and moves with Previous, Next and page numbers", async () => {
+    const onChange = vi.fn();
+    render(<Pagination page={2} pageCount={3} onChange={onChange} />);
+    const nav = screen.getByRole("navigation", { name: "Pages" });
+    expect(nav).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Page 2" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Next page" }));
+    await user.click(screen.getByRole("button", { name: "Previous page" }));
+    await user.click(screen.getByRole("button", { name: "Page 3" }));
+    expect(onChange.mock.calls.map((c) => c[0])).toEqual([3, 1, 3]);
+  });
+
+  it("shows nothing when there's only one page", () => {
+    render(<Pagination page={1} pageCount={1} onChange={() => {}} />);
+    expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
   });
 });
