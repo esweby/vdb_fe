@@ -15,10 +15,13 @@ export const TRIGGERS = [
   "on_banished",
   "on_leave_arena",
   "on_destroyed",
+  "on_usurped",
   "start_of_turn",
   "start_of_action_phase",
   "combat_chain_closes",
   "activated",
+  "your_attack_action_played",
+  "your_attack_action_hits",
 ] as const;
 
 /** What has to be true for an effect to happen. */
@@ -27,6 +30,7 @@ export const CONDITIONS = [
   "banished_card_is_shadow",
   "pitched_attack_action",
   "pitched_non_attack_action",
+  "played_attack_action_this_turn",
   "played_non_attack_action_this_turn",
   "dealt_arcane_damage_this_turn",
   "played_or_created_aura_this_turn",
@@ -38,15 +42,20 @@ export const CONDITIONS = [
 
 export const BANISH_ZONES = ["hand", "deck_top", "graveyard"] as const;
 
+/** The effect is given to a later card rather than happening on this one. */
+export const GRANTED_TO = ["next_attack_action", "next_runeblade_attack_action"] as const;
+
 const amount = z.union([z.number().int().positive(), z.literal("X")]);
 const trigger = z.enum(TRIGGERS);
 const conditions = z.array(z.enum(CONDITIONS)).optional();
+const grantedTo = z.enum(GRANTED_TO).optional();
 
 export const tokenCreationSchema = z.strictObject({
   token: z.enum(TOKENS),
   amount,
   trigger,
   conditions,
+  grantedTo,
 });
 
 export const ownBanishSchema = z.strictObject({
@@ -60,6 +69,7 @@ export const arcaneDamageSchema = z.strictObject({
   amount,
   trigger,
   conditions,
+  grantedTo,
 });
 
 /** Attributes written by hand (src/authored in the importer). */
@@ -86,6 +96,7 @@ export interface GeneratedAttributes {
 export type Token = (typeof TOKENS)[number];
 export type Trigger = (typeof TRIGGERS)[number];
 export type Condition = (typeof CONDITIONS)[number];
+export type GrantedTo = (typeof GRANTED_TO)[number];
 export type TokenCreation = z.infer<typeof tokenCreationSchema>;
 export type OwnBanish = z.infer<typeof ownBanishSchema>;
 export type ArcaneDamage = z.infer<typeof arcaneDamageSchema>;

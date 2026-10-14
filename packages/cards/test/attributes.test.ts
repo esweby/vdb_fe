@@ -19,7 +19,33 @@ describe("authoredAttributesSchema", () => {
     ).toBe(true);
   });
 
+  it("accepts effects granted to your next attack", () => {
+    expect(
+      authoredAttributesSchema.safeParse({
+        tokens: [{ token: "runechant", amount: 3, trigger: "on_hit", grantedTo: "next_runeblade_attack_action" }],
+      }).success,
+    ).toBe(true);
+  });
+
+  it("accepts triggers from your other attacks and the attack-action condition", () => {
+    expect(
+      authoredAttributesSchema.safeParse({
+        tokens: [
+          { token: "runechant", amount: 1, trigger: "your_attack_action_played" },
+          { token: "runechant", amount: 2, trigger: "your_attack_action_hits" },
+          {
+            token: "runechant",
+            amount: 4,
+            trigger: "on_play",
+            conditions: ["played_attack_action_this_turn", "played_non_attack_action_this_turn"],
+          },
+        ],
+      }).success,
+    ).toBe(true);
+  });
+
   it.each([
+    ["an unknown grantedTo", { tokens: [{ token: "runechant", amount: 1, trigger: "on_hit", grantedTo: "any_card" }] }],
     ["an unknown key", { canBanishFromHand: true }],
     ["an unknown token", { tokens: [{ token: "aura", amount: 1, trigger: "on_play" }] }],
     ["an unknown trigger", { tokens: [{ token: "runechant", amount: 1, trigger: "whenever" }] }],

@@ -1,5 +1,5 @@
 // Plain-English descriptions of attributes, for review sheets and card pages.
-import type { CardAttributes, Condition, Token, Trigger } from "./attributes.ts";
+import type { CardAttributes, Condition, GrantedTo, Token, Trigger } from "./attributes.ts";
 
 const TRIGGER_TEXT: Record<Trigger, string> = {
   on_play: "when played",
@@ -10,10 +10,13 @@ const TRIGGER_TEXT: Record<Trigger, string> = {
   on_banished: "when it's banished",
   on_leave_arena: "when it leaves the arena",
   on_destroyed: "when it's destroyed",
+  on_usurped: "when it's usurped",
   start_of_turn: "at the start of your turn",
   start_of_action_phase: "at the start of your action phase",
   combat_chain_closes: "when the combat chain closes",
   activated: "when activated",
+  your_attack_action_played: "when you play an attack action card",
+  your_attack_action_hits: "when an attack action card you control hits",
 };
 
 const CONDITION_TEXT: Record<Condition, string> = {
@@ -21,6 +24,7 @@ const CONDITION_TEXT: Record<Condition, string> = {
   banished_card_is_shadow: "the banished card is Shadow",
   pitched_attack_action: "an attack action card was pitched to play it",
   pitched_non_attack_action: "a non-attack action card was pitched to play it",
+  played_attack_action_this_turn: "you've played an attack action card this turn",
   played_non_attack_action_this_turn: "you've played a non-attack action card this turn",
   dealt_arcane_damage_this_turn: "you've dealt arcane damage this turn",
   played_or_created_aura_this_turn: "you've played or created an aura this turn",
@@ -42,6 +46,16 @@ const BANISH_TEXT = {
   graveyard: "a card from your graveyard",
 } as const;
 
+const GRANTED_TEXT: Record<GrantedTo, string> = {
+  next_attack_action: "Your next attack action card this turn gets",
+  next_runeblade_attack_action: "Your next Runeblade attack action card this turn gets",
+};
+
+/** "Creates 1 Runechant…" or, when granted, "Your next … gets: creates 1 Runechant…". */
+function effect(text: string, grantedTo: GrantedTo | undefined): string {
+  return grantedTo ? `${GRANTED_TEXT[grantedTo]}: ${text[0]!.toLowerCase()}${text.slice(1)}` : text;
+}
+
 function ifConditions(conditions: Condition[] | undefined): string {
   return conditions?.length ? `, if ${conditions.map((c) => CONDITION_TEXT[c]).join(" and ")}` : "";
 }
@@ -59,11 +73,11 @@ export function describeAttributes(attributes: CardAttributes): string[] {
   for (const t of attributes.tokens ?? []) {
     const [one, many] = TOKEN_TEXT[t.token];
     const name = t.amount === 1 ? one : many;
-    lines.push(`Creates ${t.amount} ${name} ${TRIGGER_TEXT[t.trigger]}${ifConditions(t.conditions)}.`);
+    lines.push(effect(`Creates ${t.amount} ${name} ${TRIGGER_TEXT[t.trigger]}${ifConditions(t.conditions)}.`, t.grantedTo));
   }
 
   for (const d of attributes.arcaneDamage ?? []) {
-    lines.push(`Deals ${d.amount} arcane damage ${TRIGGER_TEXT[d.trigger]}${ifConditions(d.conditions)}.`);
+    lines.push(effect(`Deals ${d.amount} arcane damage ${TRIGGER_TEXT[d.trigger]}${ifConditions(d.conditions)}.`, d.grantedTo));
   }
 
   if (attributes.playableFromBanish) {
