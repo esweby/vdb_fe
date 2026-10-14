@@ -148,6 +148,19 @@ Scorers are volunteers. If the app feels like a prototype they won't engage, and
 
 **Done when:** a new scorer can review 10 cards without asking how, and the maintainer would be happy to show the app to the scoring group.
 
+### Scoring model change (15 Oct 2026)
+
+Agreed with the maintainer before scoring started: three ratings (**floor, ceiling, overall**) replace the six draft dimensions, and one **risk** setting replaces per-dimension priorities. See README "Floor, ceiling and overall" and "Suggested core". This changes M3 (resolution: a blank floor or ceiling resolves as overall) and M6 (ranking by risk tilt). Old scores, reviews and community scores were dropped, not migrated.
+
+Open for the scoring group:
+
+- [ ] The slider wording for floor, ceiling and overall.
+- [ ] Risk preset values (Consistent −0.5, Balanced 0, High-roll 0.5).
+- [ ] Whether to show the floor–ceiling spread only above a rating-count threshold.
+- [ ] Check the `hasConditions` rule (UNVERIFIED): which cards get floor and ceiling.
+
+Later (not in the first change): roles and role ranges as deck targets, payoff attributes, deck mechanic totals from attribute counts (the deck page shows average ratings as a stopgap), enables traverse as a synergy edge.
+
 ## Cut line
 
 If time runs out, ship in this order and stop where the budget ends. Never cut the scoring model; cut interface features instead.

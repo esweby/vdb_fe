@@ -173,3 +173,35 @@ describe("Dialog", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });
+
+describe("Slider scale on a wide range", () => {
+  it("labels every other step when there would be more than 11 labels", () => {
+    render(
+      <Slider
+        label="Risk"
+        min={-100}
+        max={100}
+        value={0}
+        onChange={() => {}}
+      />,
+    );
+    const labels = [
+      ...screen.getByTestId("slider-scale").querySelectorAll("span"),
+    ]
+      .map((t) => t.textContent)
+      .filter(Boolean);
+    expect(labels).toEqual([
+      "-100",
+      "-80",
+      "-60",
+      "-40",
+      "-20",
+      "0",
+      "20",
+      "40",
+      "60",
+      "80",
+      "100",
+    ]);
+  });
+});

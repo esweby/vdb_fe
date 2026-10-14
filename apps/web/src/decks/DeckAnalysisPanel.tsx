@@ -74,7 +74,7 @@ export function DeckAnalysisPanel(props: {
           dimensions,
           community: data.community,
           mine: data.mine,
-          priorities: {},
+          risk: 0,
           sourceBlend: 100,
           sideFocus: 50,
           minRatingCount: data.minRatingCount,
@@ -169,11 +169,11 @@ export function DeckAnalysisPanel(props: {
 
         {data && data.dimensions.length > 0 && (
           <section className={styles.dimensions}>
-            <h2>Dimensions</h2>
-            <table aria-label="Dimensions">
+            <h2>Ratings</h2>
+            <table aria-label="Ratings">
               <thead>
                 <tr>
-                  <th scope="col">Dimension</th>
+                  <th scope="col">Rating</th>
                   <th scope="col">Cards</th>
                   <th scope="col">Red</th>
                   <th scope="col">Yellow</th>
@@ -197,7 +197,8 @@ export function DeckAnalysisPanel(props: {
               </tbody>
             </table>
             <p className={styles.muted}>
-              Cards scoring above 0, by pitch. Weapons and equipment are counted
+              Deck cards rated above 0, by pitch, with their average rating. A
+              stopgap until roles replace it. Weapons and equipment are counted
               as always available.
               {analysis.unscored > 0 &&
                 ` ${analysis.unscored} deck ${analysis.unscored === 1 ? "card has" : "cards have"} no scores yet.`}
