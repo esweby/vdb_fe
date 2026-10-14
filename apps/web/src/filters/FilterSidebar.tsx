@@ -22,7 +22,8 @@ const plural = (n: number) => `${n} ${n === 1 ? "card" : "cards"}`;
 
 /**
  * Ecommerce-style facet sidebar. Each value cycles neutral → include (green) → exclude (red).
- * Counts show how many results you'd get by including that value.
+ * Counts show how many results you'd get by including that value. Selections stay
+ * highlighted in place; each group has its own Clear.
  */
 export function FilterSidebar<T>(props: {
   items: T[];
@@ -50,40 +51,8 @@ export function FilterSidebar<T>(props: {
     onChange(next);
   };
 
-  const active = facets.flatMap((f) =>
-    f.values
-      .filter((v) => state[f.id]?.[v.id])
-      .map((v) => ({ facet: f, value: v, choice: state[f.id]![v.id]! })),
-  );
-
   return (
     <aside className={styles.sidebar} aria-label="Filters">
-      {active.length > 0 && (
-        <div className={styles.active}>
-          {active.map(({ facet, value, choice }) => {
-            const label = `${choice === "include" ? "Include" : "Exclude"}: ${value.label}`;
-            return (
-              <button
-                key={`${facet.id}:${value.id}`}
-                type="button"
-                className={`${styles.chip} ${styles[choice]}`}
-                aria-label={`Remove ${label}`}
-                onClick={() => set(facet.id, value.id, undefined)}
-              >
-                {label} ×
-              </button>
-            );
-          })}
-          <button
-            type="button"
-            className={styles.clear}
-            onClick={() => onChange({})}
-          >
-            Clear all filters
-          </button>
-        </div>
-      )}
-
       {facets.map((facet) => {
         const shown = facet.values.filter(
           (v) => (totals[facet.id]?.[v.id] ?? 0) > 0 || state[facet.id]?.[v.id],
@@ -98,6 +67,23 @@ export function FilterSidebar<T>(props: {
               <span className={styles.mode}>
                 {facet.mode === "any" ? "any" : "all"}
               </span>
+              {selected > 0 && (
+                <button
+                  type="button"
+                  className={styles.clearGroup}
+                  aria-label={`Clear ${facet.label}`}
+                  onClick={(e) => {
+                    // Inside <summary>: don't also toggle the group open or closed.
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const next = { ...state };
+                    delete next[facet.id];
+                    onChange(next);
+                  }}
+                >
+                  Clear
+                </button>
+              )}
             </summary>
             <ul>
               {shown.map((v) => {

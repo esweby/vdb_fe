@@ -85,6 +85,7 @@ export function CardsPage() {
       {status === "loaded" && (
         <FilteredLayout
           state={filters.state}
+          onClear={() => filters.setState({})}
           sidebar={
             <FilterSidebar
               items={searched}

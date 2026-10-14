@@ -7,6 +7,8 @@ import styles from "./FilteredLayout.module.css";
 export function FilteredLayout(props: {
   state: FilterState;
   sidebar: ReactNode;
+  /** Clears every filter; shown in a fixed status line so nothing shifts. */
+  onClear: () => void;
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -21,7 +23,23 @@ export function FilteredLayout(props: {
       <div className={`${styles.sidebar} ${open ? styles.open : ""}`}>
         {props.sidebar}
       </div>
-      <div className={styles.results}>{props.children}</div>
+      <div className={styles.results}>
+        <p className={styles.status}>
+          {n === 0
+            ? "No filters"
+            : `${n} ${n === 1 ? "filter" : "filters"} active`}
+          {n > 0 && (
+            <button
+              type="button"
+              className={styles.clearAll}
+              onClick={props.onClear}
+            >
+              Clear all filters
+            </button>
+          )}
+        </p>
+        {props.children}
+      </div>
     </div>
   );
 }

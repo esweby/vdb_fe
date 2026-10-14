@@ -159,6 +159,7 @@ export function RankingPage() {
       <h1>Ranking</h1>
       <FilteredLayout
         state={filterState}
+        onClear={() => update({}, {})}
         sidebar={
           <FilterSidebar
             items={items}
