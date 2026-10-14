@@ -5,5 +5,8 @@
   "scripts": {
     "import": "node src/cli.ts",
     "test:integration": "vitest run --config vitest.integration.config.ts"
+  },
+  "dependencies": {
+    "postgres": "^3.4.9"
   }
 }

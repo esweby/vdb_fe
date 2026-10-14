@@ -61,9 +61,9 @@ These three tasks go first because any of them could change the plan.
 
 ### M2: Card data (≈1 week, separate budget)
 
-- [ ] Importer: reads the pinned dataset commit and upserts `cards` and `variants`, using the dataset's `unique_id` as a stable external ID. Safe to re-run.
-- [ ] Legality filter, with the result checked by a player.
-- [ ] Map dataset fields to ours: types → `type`, `subtypes`, `classes`; keywords → `hasGoAgain` and similar. Generate as many `attributes` as possible from the data.
+- [x] Importer (`packages/importer`, `npm run import -w @vdb/importer`): downloads the pinned dataset commit, upserts `cards` (keyed by name) and `variants` (keyed by the dataset's `unique_id`). Safe to re-run; keeps `fringe` and `hidden`. Refuses a non-local database without `--yes-remote`.
+- [ ] Legality filter (`src/classify.ts`), **to be checked by a player**. First run: 633 cards, 1,047 variants (173 action, 224 attack action, 34 instant, 19 defense reaction, 7 attack reaction, 7 block, 9 resource, 9 weapons, 151 equipment).
+- [x] Map dataset fields to ours: types → `type`, `subtypes`, `classes`, `talents`; keywords → `hasGoAgain`, `hasBloodDebt`. Text and attributes are stored per variant as well, because pitch variants can differ (e.g. "create 3/2/1 Runechants").
 - [ ] Hand-author the Viserai-specific `attributes` (`tokens`, `conditions`, blood debt and so on), Runeblade and Shadow cards first, generics as needed.
 - [ ] A player checks a sample of authored attributes, and every condition.
 
