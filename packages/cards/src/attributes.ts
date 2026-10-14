@@ -168,10 +168,11 @@ export const authoredAttributesSchema = z.strictObject({
   /** Fixed cost reductions, each with the condition that unlocks it. */
   costReductions: z
     .array(
-      z.strictObject({
-        amount,
-        conditions: z.array(z.enum(CONDITIONS)).min(1),
-      }),
+      z
+        .strictObject({ amount, conditions, grantedTo })
+        .refine((c) => (c.conditions?.length ?? 0) > 0 || c.grantedTo, {
+          message: "A cost reduction needs a condition or a grantedTo",
+        }),
     )
     .optional(),
   disrupts: z.array(disruptionSchema).optional(),

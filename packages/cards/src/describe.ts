@@ -245,7 +245,12 @@ export function describeAttributes(attributes: CardAttributes): string[] {
     );
   }
   for (const c of attributes.costReductions ?? []) {
-    lines.push(`Costs ${c.amount}{r} less${ifConditions(c.conditions)}.`);
+    lines.push(
+      effect(
+        `Costs ${c.amount}{r} less${ifConditions(c.conditions)}.`,
+        c.grantedTo,
+      ),
+    );
   }
   if (attributes.costReducedPerRunechant)
     lines.push("Costs {r} less for each Runechant you control.");
