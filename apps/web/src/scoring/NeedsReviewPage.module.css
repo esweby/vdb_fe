@@ -1,0 +1,14 @@
+.section {
+  margin-bottom: 1.5rem;
+}
+.count {
+  color: var(--muted);
+  font-weight: normal;
+}
+.list {
+  columns: 16rem;
+  padding-left: 1.25rem;
+}
+.done {
+  color: var(--muted);
+}

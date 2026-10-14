@@ -98,11 +98,11 @@ These three tasks go first because any of them could change the plan.
 
 ### M5: Card table and scoring UI (4–5 days)
 
-- [ ] Card table: search, filters (pitch, type, class, dimension), sorting.
-- [ ] Card page: every dimension, the "Same score for both sides" toggle (default from preferences), per-variant scores, "not relevant", inherited values greyed in.
-- [ ] Save as draft, and **Mark reviewed** with the summary and one-click fixes.
-- [ ] After **Mark reviewed**, call the `community-scores` function so community scores update straight away.
-- [ ] "Needs review" list, Runeblade and Shadow cards first.
+- [x] Card table: search, filters (pitch, type, class), sorting. Dimension filters come with community scores in M6.
+- [x] Card page: text, plain-English attributes (incl. per pitch), every dimension, the "Same score for both sides" toggle (default from preferences), per-pitch scores, "not relevant", inherited values shown.
+- [x] Scores save as they're set (drafts until reviewed); **Mark reviewed** with the summary and a one-click fix for the blank-pitch trap.
+- [x] After **Mark reviewed**, scorers call the `community-scores` function so community scores update straight away.
+- [x] "Needs review" list, Runeblade and Shadow cards first. Account page with the sides preference.
 
 **Done when:** a scorer can review a card from start to finish, and the community score updates.
 
