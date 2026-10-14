@@ -35,25 +35,37 @@ function Harness() {
   );
 }
 
+const include = (label: string) =>
+  screen.getByRole("button", { name: new RegExp(`^Include ${label},`) });
+const exclude = (label: string) =>
+  screen.getByRole("button", { name: `Exclude ${label}` });
+
 describe("FilterSidebar", () => {
-  it("cycles a value: neutral, include, exclude, neutral", async () => {
+  it("has a green include and a red exclude button for each value", async () => {
     render(<Harness />);
     const user = userEvent.setup();
-    const go = () => screen.getByRole("button", { name: /^Go again/ });
-    expect(go()).toHaveAccessibleName("Go again, 2 cards, not filtered");
-    await user.click(go());
-    expect(go()).toHaveAccessibleName("Go again, 2 cards, included");
-    await user.click(go());
-    expect(go()).toHaveAccessibleName("Go again, 2 cards, excluded");
-    await user.click(go());
-    expect(go()).toHaveAccessibleName("Go again, 2 cards, not filtered");
+    expect(include("Go again")).toHaveAccessibleName(
+      "Include Go again, 2 cards",
+    );
+    expect(include("Go again")).toHaveAttribute("aria-pressed", "false");
+    expect(exclude("Go again")).toHaveAttribute("aria-pressed", "false");
+
+    await user.click(include("Go again"));
+    expect(include("Go again")).toHaveAttribute("aria-pressed", "true");
+
+    // Exclude replaces include
+    await user.click(exclude("Go again"));
+    expect(exclude("Go again")).toHaveAttribute("aria-pressed", "true");
+    expect(include("Go again")).toHaveAttribute("aria-pressed", "false");
+
+    // Clicking the active button turns it off
+    await user.click(exclude("Go again"));
+    expect(exclude("Go again")).toHaveAttribute("aria-pressed", "false");
   });
 
   it("doesn't add anything above the groups when filtering", async () => {
     render(<Harness />);
-    await userEvent
-      .setup()
-      .click(screen.getByRole("button", { name: /^Go again/ }));
+    await userEvent.setup().click(include("Go again"));
     expect(
       screen.queryByRole("button", { name: /^Remove/ }),
     ).not.toBeInTheDocument();
@@ -68,16 +80,11 @@ describe("FilterSidebar", () => {
     expect(
       screen.queryByRole("button", { name: "Clear Keywords" }),
     ).not.toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /^Go again/ }));
-    await user.click(screen.getByRole("button", { name: /^Blood debt/ }));
-    await user.click(screen.getByRole("button", { name: /^Blood debt/ }));
+    await user.click(include("Go again"));
+    await user.click(exclude("Blood debt"));
     await user.click(screen.getByRole("button", { name: "Clear Keywords" }));
-    expect(
-      screen.getByRole("button", { name: /^Go again/ }),
-    ).toHaveAccessibleName(/not filtered$/);
-    expect(
-      screen.getByRole("button", { name: /^Blood debt/ }),
-    ).toHaveAccessibleName(/not filtered$/);
+    expect(include("Go again")).toHaveAttribute("aria-pressed", "false");
+    expect(exclude("Blood debt")).toHaveAttribute("aria-pressed", "false");
     expect(
       screen.queryByRole("button", { name: "Clear Keywords" }),
     ).not.toBeInTheDocument();
@@ -85,12 +92,10 @@ describe("FilterSidebar", () => {
 
   it("updates counts as filters change", async () => {
     render(<Harness />);
-    await userEvent
-      .setup()
-      .click(screen.getByRole("button", { name: /^Go again/ }));
-    // Blood debt count within the 'all' keywords group: cards with go AND debt
-    expect(
-      screen.getByRole("button", { name: /^Blood debt/ }),
-    ).toHaveAccessibleName("Blood debt, 1 card, not filtered");
+    await userEvent.setup().click(include("Go again"));
+    // ALL group: cards with Go again and Blood debt
+    expect(include("Blood debt")).toHaveAccessibleName(
+      "Include Blood debt, 1 card",
+    );
   });
 });

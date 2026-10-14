@@ -40,15 +40,17 @@ describe("cards page", () => {
     });
     await screen.findByRole("link", { name: "Hocus Pocus" });
     const user = userEvent.setup();
-    await user.click(filters().getByRole("button", { name: /^Pitch 3,/ }));
+    await user.click(
+      filters().getByRole("button", { name: /^Include Pitch 3,/ }),
+    );
     expect(rowNames()).toEqual([
       "Become the Shadow Lord",
       "Fate Foreseen",
       "Hocus Pocus",
     ]);
-    // Generic: click twice to exclude
-    await user.click(filters().getByRole("button", { name: /^Generic,/ }));
-    await user.click(filters().getByRole("button", { name: /^Generic,/ }));
+    await user.click(
+      filters().getByRole("button", { name: "Exclude Generic" }),
+    );
     expect(rowNames()).toEqual(["Become the Shadow Lord", "Hocus Pocus"]);
     expect(router.state.location.search).toEqual({
       inc: ["pitch:3"],
@@ -64,8 +66,8 @@ describe("cards page", () => {
     await screen.findByRole("table", { name: /cards/i });
     expect(rowNames()).toEqual(["Become the Shadow Lord"]);
     expect(
-      filters().getByRole("button", { name: /^Go again,/ }),
-    ).toHaveAccessibleName(/included$/);
+      filters().getByRole("button", { name: /^Include Go again,/ }),
+    ).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByText("1 filter active")).toBeInTheDocument();
   });
 
