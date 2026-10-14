@@ -82,6 +82,17 @@ describe("analyseDeck", () => {
     ]);
   });
 
+  it("gives an overview: average cost and pitch, resource surplus, go again and attacks", () => {
+    expect(analysis.overview).toEqual({
+      cards: 6,
+      averageCost: 1.33,
+      averagePitch: 1.83,
+      resourceSurplus: 0.5,
+      goAgain: 0,
+      attacks: 0,
+    });
+  });
+
   it("counts deck cards nobody has scored", () => {
     expect(analysis.unscored).toBe(1);
   });
