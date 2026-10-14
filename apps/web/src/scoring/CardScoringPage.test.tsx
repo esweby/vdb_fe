@@ -97,4 +97,59 @@ describe("card page", () => {
       screen.getByText("Pitch 3: Creates 3 Runechants when it attacks."),
     ).toBeInTheDocument();
   });
+
+  it("only offers dimensions the card does anything for, with a way to show all", async () => {
+    const fake = fakeScoreRepository();
+    await renderApp({
+      path: "/cards/card-nebula-blade",
+      auth: fakeAuthService({
+        users,
+        signedIn: { id: "s1", email: "s@test.local" },
+      }).service,
+      scores: fake.repository,
+    });
+    // Nebula Blade's sample data creates nothing: only Utility... which the sample dimensions lack.
+    expect(
+      await screen.findByText(
+        "This card doesn't do anything these dimensions measure.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("group", { name: "Runechant creation" }),
+    ).not.toBeInTheDocument();
+    await userEvent
+      .setup()
+      .click(screen.getByRole("checkbox", { name: "Show all dimensions" }));
+    expect(
+      screen.getByRole("group", { name: "Runechant creation" }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows Runechant creation for a card that creates Runechants", async () => {
+    const fake = fakeScoreRepository();
+    await renderApp({
+      path,
+      auth: fakeAuthService({
+        users,
+        signedIn: { id: "s1", email: "s@test.local" },
+      }).service,
+      scores: fake.repository,
+    });
+    expect(
+      await screen.findByRole("group", { name: "Runechant creation" }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows each pitch's cost, power and defense", async () => {
+    await renderApp({
+      path: "/cards/card-hocus-pocus",
+      auth: fakeAuthService().service,
+    });
+    expect(
+      await screen.findByText("Pitch 1: cost 0 · power 4 · defense 3"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Pitch 3: cost 0 · power 2 · defense 3"),
+    ).toBeInTheDocument();
+  });
 });

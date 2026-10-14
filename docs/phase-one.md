@@ -108,9 +108,9 @@ These three tasks go first because any of them could change the plan.
 
 ### M6: Ranking (2–3 days)
 
-- [ ] Priorities editor (a weight for each dimension), source blend, side focus.
-- [ ] "Ranked by your priorities": threshold, pin and exclude, minimum rating count, unreviewed cards left out.
-- [ ] Weapons and equipment ranked separately by slot.
+- [x] Priorities editor (a weight for each dimension), source blend (signed in), side focus. All kept in the URL.
+- [x] "Ranked by your priorities": variants ranked by the weighted average of their dimension scores; core size (top N marked Core), pin and exclude (with restore), minimum rating count, unreviewed cards left out; my reviewed scores count when community data is thin. The filter sidebar narrows the candidates.
+- [x] Weapons and equipment ranked separately by slot (top 3 each).
 
 **Done when:** changing a priority re-ranks instantly, and the ranking matches hand-calculated results for a test fixture.
 

@@ -2,6 +2,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AuthoredCardAttributes, CardAttributes } from "@vdb/cards";
 import type { Side } from "@vdb/scoring";
+import type { CommunityRow } from "../ranking/rank.ts";
 
 export interface Dimension {
   id: number;
@@ -34,6 +35,9 @@ export interface CardDetail {
   variants: {
     id: string;
     pitch: number | null;
+    cost: number | null;
+    power: number | null;
+    defense: number | null;
     text: string | null;
     /** Overrides for this pitch, merged over the card's attributes. */
     attributes: AuthoredCardAttributes;
@@ -55,6 +59,9 @@ export interface ScoreRepository {
   listMyReviewedCardIds(userId: string): Promise<string[]>;
   getPreferences(userId: string): Promise<Preferences>;
   savePreferences(userId: string, preferences: Preferences): Promise<void>;
+  listCommunityScores(): Promise<CommunityRow[]>;
+  listAllMyScores(userId: string): Promise<(ScoreRow & { cardId: string })[]>;
+  getMinRatingCount(): Promise<number>;
 }
 
 export interface Preferences {
@@ -76,7 +83,7 @@ export function supabaseScoreRepository(
       const { data, error } = await client
         .from("cards")
         .select(
-          "id, name, type, classes, talents, text, attributes, attributes_verified, variants(id, pitch, text, attributes)",
+          "id, name, type, classes, talents, text, attributes, attributes_verified, variants(id, pitch, cost, power, defense, text, attributes)",
         )
         .eq("id", cardId)
         .maybeSingle();
@@ -174,6 +181,55 @@ export function supabaseScoreRepository(
         .update({ preferences })
         .eq("id", user);
       if (error) throw error;
+    },
+    async listCommunityScores() {
+      const rows: CommunityRow[] = [];
+      // PostgREST returns at most 1,000 rows per request.
+      for (let from = 0; ; from += 1000) {
+        const { data, error } = await client
+          .from("community_scores")
+          .select(
+            "card_id, variant_id, side, dimension_id, score, rating_count",
+          )
+          .not("variant_id", "is", null)
+          .not("side", "is", null)
+          .range(from, from + 999);
+        if (error) throw error;
+        rows.push(
+          ...data.map((r) => ({
+            cardId: r.card_id,
+            variantId: r.variant_id,
+            side: r.side,
+            dimensionId: r.dimension_id,
+            score: Number(r.score),
+            ratingCount: r.rating_count,
+          })),
+        );
+        if (data.length < 1000) return rows;
+      }
+    },
+    async listAllMyScores(user) {
+      const { data, error } = await client
+        .from("card_scores")
+        .select("card_id, variant_id, side, dimension_id, score")
+        .eq("user_id", user);
+      if (error) throw error;
+      return data.map((r) => ({
+        cardId: r.card_id,
+        variantId: r.variant_id,
+        side: r.side,
+        dimensionId: r.dimension_id,
+        score: r.score,
+      }));
+    },
+    async getMinRatingCount() {
+      const { data, error } = await client
+        .from("app_settings")
+        .select("value")
+        .eq("key", "min_rating_count")
+        .maybeSingle();
+      if (error) throw error;
+      return Number(data?.value ?? 2);
     },
     async runCommunityJob() {
       const { error } = await client.functions.invoke("community-scores", {

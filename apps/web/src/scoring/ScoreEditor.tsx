@@ -81,6 +81,9 @@ export function ScoreEditor(props: {
                 <div key={`${variantId}-${side}`} className={styles.cell}>
                   <Slider
                     label={label}
+                    visibleLabel={
+                      suffix ? suffix[0]!.toUpperCase() + suffix.slice(1) : null
+                    }
                     value={own}
                     onChange={(score) => props.onSet(key, score)}
                   />

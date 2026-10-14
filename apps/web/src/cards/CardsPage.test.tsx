@@ -40,15 +40,17 @@ describe("cards page", () => {
     });
     await screen.findByRole("link", { name: "Hocus Pocus" });
     const user = userEvent.setup();
-    await user.click(filters().getByRole("button", { name: /^Pitch 3,/ }));
+    await user.click(
+      filters().getByRole("button", { name: /^Include Pitch 3,/ }),
+    );
     expect(rowNames()).toEqual([
       "Become the Shadow Lord",
       "Fate Foreseen",
       "Hocus Pocus",
     ]);
-    // Generic: click twice to exclude
-    await user.click(filters().getByRole("button", { name: /^Generic,/ }));
-    await user.click(filters().getByRole("button", { name: /^Generic,/ }));
+    await user.click(
+      filters().getByRole("button", { name: "Exclude Generic" }),
+    );
     expect(rowNames()).toEqual(["Become the Shadow Lord", "Hocus Pocus"]);
     expect(router.state.location.search).toEqual({
       inc: ["pitch:3"],
@@ -64,8 +66,23 @@ describe("cards page", () => {
     await screen.findByRole("table", { name: /cards/i });
     expect(rowNames()).toEqual(["Become the Shadow Lord"]);
     expect(
-      screen.getByRole("button", { name: "Remove Include: Go again" }),
-    ).toBeInTheDocument();
+      filters().getByRole("button", { name: /^Include Go again,/ }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByText("1 filter active")).toBeInTheDocument();
+  });
+
+  it("clears every filter from the status line above the results", async () => {
+    await renderApp({
+      path: "/cards?inc=%5B%22keywords%3Ago_again%22%2C%22pitch%3A3%22%5D",
+      auth: fakeAuthService().service,
+    });
+    await screen.findByRole("table", { name: /cards/i });
+    expect(screen.getByText("2 filters active")).toBeInTheDocument();
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: "Clear all filters" }));
+    expect(await screen.findByText("No filters")).toBeInTheDocument();
+    expect(rowNames()).toHaveLength(4);
   });
 
   it("shows how many cards match", async () => {
@@ -88,5 +105,22 @@ describe("cards page", () => {
     expect(
       await screen.findByRole("heading", { name: "Nebula Blade" }),
     ).toBeInTheDocument();
+  });
+
+  it("shows cost, power and defense, and sorts by them", async () => {
+    const { router } = await renderApp({
+      path: "/cards",
+      auth: fakeAuthService().service,
+    });
+    await screen.findByRole("link", { name: "Hocus Pocus" });
+    const row = screen
+      .getByRole("link", { name: "Hocus Pocus" })
+      .closest("tr")!;
+    expect(within(row).getByText("4 / 3 / 2")).toBeInTheDocument();
+    await userEvent
+      .setup()
+      .selectOptions(screen.getByLabelText("Sort"), "power");
+    await waitFor(() => expect(rowNames()[0]).toBe("Hocus Pocus"));
+    expect(router.state.location.search).toMatchObject({ sort: "power" });
   });
 });
