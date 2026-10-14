@@ -13,6 +13,10 @@ The design is in [README.md](README.md), and the current plan is in [docs/phase-
 - A rule in the README ("Reviews and blank scores", fringe default, scenario contract and so on) isn't implemented until a test covers it.
 - Bug fixes start with a test that reproduces the bug.
 
+## Database
+
+- Hosted Supabase doesn't grant table access to `anon` or `authenticated` by default, and local is set up to match. Every new table needs explicit `grant` statements in its migration, and an entry in `supabase/tests/06_privileges.test.sql`.
+
 ## Game logic
 
 - Flesh and Blood rules, card interactions and synergy rules are checked by the maintainer or an experienced player. Anything drafted without that check is marked unverified.

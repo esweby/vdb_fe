@@ -32,7 +32,7 @@ insert into public.deck_cards (deck_id, variant_id, quantity)
 set local role anon;
 select is((select count(*)::int from public.cards where external_id = 'ext-card-1'), 1, 'anon can read cards');
 select is((select count(*)::int from public.community_scores where card_id = '10000000-0000-0000-0000-000000000001'), 1, 'anon can read community scores');
-select is((select count(*)::int from public.card_scores), 0, 'anon cannot read individual scores');
+select throws_ok($$select count(*) from public.card_scores$$, '42501', null, 'anon cannot read individual scores');
 reset role;
 
 -- Alice (user)
