@@ -571,7 +571,7 @@ scenario_results (id, scenario_id, user_id, deck_snapshot jsonb, definition json
 
 The goal is one complete loop: **accurate cards → scoring → community scores → priorities → ranked cards → deck**.
 
-**Time budget: 3–4 weeks, part-time, for the build.** The project should stay small enough to build and refine without taking over. The interface is functional, not polished.
+**Time budget: 3–4 weeks, part-time, for the build.** The project should stay small enough to build and refine without taking over. The interface doesn't need to be polished everywhere, but it has to clear a minimum bar (see M8 in the phase one plan), because volunteer scorers won't engage with something that feels like a prototype.
 
 **Card data is budgeted separately: about 1 week.** It's the largest hidden task. To keep it manageable:
 
