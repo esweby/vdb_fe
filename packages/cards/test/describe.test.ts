@@ -492,6 +492,27 @@ describe("describeAttributes", () => {
     ).toEqual(["Banishes itself from your hand when activated."]);
   });
 
+  it("describes banishing your defending cards after it defended", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        banishesOwn: [
+          {
+            from: "defending_cards",
+            trigger: "combat_chain_closes",
+            conditions: ["it_defended"],
+          },
+        ],
+        banishesSelf: [
+          { trigger: "combat_chain_closes", conditions: ["it_defended"] },
+        ],
+      }),
+    ).toEqual([
+      "Banishes all your defending cards on the chain when the combat chain closes, if it defended.",
+      "Banishes itself when the combat chain closes, if it defended.",
+    ]);
+  });
+
   it("describes cards a card works with", () => {
     expect(
       describeAttributes({
