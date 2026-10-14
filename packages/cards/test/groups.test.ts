@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { groupsOf } from "../src/groups.ts";
+import { attributeGroups, groupsOf } from "../src/groups.ts";
 
 const card = (
   name: string,
@@ -49,5 +49,55 @@ describe("groupsOf", () => {
       groupsOf(card("Fate Foreseen", "defense_reaction", [], ["Generic"])),
     ).toEqual([]);
     expect(groupsOf(card("Abyssal Bite", "action", [], []))).toEqual([]);
+  });
+});
+
+describe("attributeGroups", () => {
+  it("tags cards that banish a card from your hand", () => {
+    expect(
+      attributeGroups({ banishesOwn: [{ from: "hand", trigger: "on_play" }] }),
+    ).toEqual(["banishes_from_hand"]);
+  });
+
+  it("tags cards that banish themselves from your hand", () => {
+    expect(
+      attributeGroups({
+        banishesSelf: [{ trigger: "activated", from: "hand" }],
+      }),
+    ).toEqual(["banishes_from_hand"]);
+  });
+
+  it("tags cards that make every hero banish from hand", () => {
+    expect(
+      attributeGroups({
+        disrupts: [
+          {
+            action: "banish",
+            from: "hand",
+            amount: 1,
+            target: "each_hero",
+            trigger: "on_play",
+          },
+        ],
+      }),
+    ).toEqual(["banishes_from_hand"]);
+  });
+
+  it("doesn't tag other banishing", () => {
+    expect(
+      attributeGroups({
+        banishesOwn: [{ from: "deck_top", trigger: "on_play" }],
+        banishesSelf: [{ trigger: "activated" }],
+        disrupts: [
+          {
+            action: "banish",
+            from: "hand",
+            amount: 1,
+            target: "defending_hero",
+            trigger: "on_hit",
+          },
+        ],
+      }),
+    ).toEqual([]);
   });
 });

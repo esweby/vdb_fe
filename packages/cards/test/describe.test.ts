@@ -483,6 +483,15 @@ describe("describeAttributes", () => {
     ]);
   });
 
+  it("describes banishing itself from hand", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        banishesSelf: [{ trigger: "activated", from: "hand" }],
+      }),
+    ).toEqual(["Banishes itself from your hand when activated."]);
+  });
+
   it("describes cards a card works with", () => {
     expect(
       describeAttributes({

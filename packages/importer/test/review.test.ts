@@ -49,7 +49,7 @@ describe("reviewSheet", () => {
     expect(sheet).toMatch(/^# Review: Runechant creators\n/);
     expect(sheet).toContain("OK");
     expect(sheet).toContain(
-      "| Card | Pitch | Card text | Draft says | Notes |",
+      "| Card | Pitch | Card text | Draft says | Groups | Notes |",
     );
   });
 
@@ -72,6 +72,12 @@ describe("reviewSheet", () => {
     expect(sheet).toContain("| Arcane Cussing | 2 |");
     expect(sheet).toContain("| Arcane Cussing | 3 |");
     expect(sheet).toContain("Creates 3 Runechants when it leaves the arena.");
+  });
+
+  it("shows each card's groups, including banishes_from_hand", () => {
+    expect(sheet).toMatch(
+      /\| Become the Shadow Lord \| 3 \|[^\n]*\| runeblade_non_attack_action, banishes_from_hand \|/,
+    );
   });
 
   it("lists cards in alphabetical order", () => {

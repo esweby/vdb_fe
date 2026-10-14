@@ -214,6 +214,18 @@ describe("authored attributes", () => {
     ).toThrow(/pitch 1/);
   });
 
+  it("adds attribute-derived groups after merging authored attributes", () => {
+    const cards = toImportCards(entries, {
+      "Become the Shadow Lord": {
+        verified: false,
+        card: { banishesOwn: [{ from: "hand", trigger: "on_play" }] },
+      },
+    });
+    expect(
+      cards.find((c) => c.name === "Become the Shadow Lord")!.attributes.groups,
+    ).toEqual(["runeblade_non_attack_action", "banishes_from_hand"]);
+  });
+
   it("rejects references to cards that aren't imported", () => {
     expect(() =>
       toImportCards(entries, {
