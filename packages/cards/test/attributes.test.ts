@@ -156,6 +156,14 @@ describe("authoredAttributesSchema", () => {
     ).toBe(true);
   });
 
+  it("accepts a cost reduction granted to your next attack", () => {
+    expect(
+      authoredAttributesSchema.safeParse({
+        costReductions: [{ amount: "X", grantedTo: "next_attack_action" }],
+      }).success,
+    ).toBe(true);
+  });
+
   it("accepts cards a card works with", () => {
     expect(
       authoredAttributesSchema.safeParse({

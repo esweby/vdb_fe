@@ -431,6 +431,17 @@ describe("describeAttributes", () => {
     ]);
   });
 
+  it("describes a cost reduction granted to your next attack", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        costReductions: [{ amount: "X", grantedTo: "next_attack_action" }],
+      }),
+    ).toEqual([
+      "Your next attack action card this turn gets: costs X{r} less.",
+    ]);
+  });
+
   it("describes cards a card works with", () => {
     expect(
       describeAttributes({
