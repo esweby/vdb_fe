@@ -107,7 +107,12 @@ export function DeckPage() {
   const inPool = (variantId: string) =>
     deck?.cards.find((c) => c.variantId === variantId);
 
+  const copyLimit = rules?.copyLimit ?? Infinity;
+  const atLimit = (variantId: string) =>
+    (inPool(variantId)?.quantity ?? 0) >= copyLimit;
+
   function add(variantId: string) {
+    if (atLimit(variantId)) return;
     const existing = inPool(variantId);
     void setCard({
       variantId,
@@ -181,6 +186,7 @@ export function DeckPage() {
               key={s.title}
               title={s.title}
               entries={s.entries}
+              copyLimit={copyLimit}
               onSet={(card) => void setCard(card)}
             />
           ))}
@@ -205,6 +211,12 @@ export function DeckPage() {
                       type="button"
                       className={`${styles.add} ${styles[`pitch${v.pitch ?? 0}`] ?? ""}`}
                       aria-label={`Add ${variantName(card, v)}`}
+                      disabled={atLimit(v.id)}
+                      title={
+                        atLimit(v.id)
+                          ? `At most ${copyLimit} copies`
+                          : undefined
+                      }
                       onClick={() => add(v.id)}
                     >
                       + {v.pitch === null ? "Add" : PITCH_NAMES[v.pitch]}
@@ -224,9 +236,10 @@ export function DeckPage() {
 function PoolSection(props: {
   title: string;
   entries: DeckEntry[];
+  copyLimit: number;
   onSet: (card: DeckCard) => void;
 }) {
-  const { title, entries, onSet } = props;
+  const { title, entries, copyLimit, onSet } = props;
   const sorted = [...entries].sort(
     (a, b) =>
       a.card.name.localeCompare(b.card.name) ||
@@ -280,6 +293,12 @@ function PoolSection(props: {
                   <button
                     type="button"
                     aria-label={`One more ${label}`}
+                    disabled={e.quantity >= copyLimit}
+                    title={
+                      e.quantity >= copyLimit
+                        ? `At most ${copyLimit} copies`
+                        : undefined
+                    }
                     onClick={() => set({ quantity: e.quantity + 1 })}
                   >
                     +

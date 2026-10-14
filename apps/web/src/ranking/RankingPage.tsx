@@ -2,6 +2,7 @@ import { getRouteApi, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import type { CardSummary } from "../cards/cardRepository.ts";
 import type { Deck, DeckSummary } from "../decks/deckRepository.ts";
+import type { FormatRules } from "../decks/deckRules.ts";
 import { cardFacets } from "../cards/facets.ts";
 import { useCards } from "../cards/useCards.ts";
 import { applyFilters } from "../filters/applyFilters.ts";
@@ -47,6 +48,7 @@ export function RankingPage() {
   const deckId = typeof search.deck === "string" ? search.deck : undefined;
   const [deckList, setDeckList] = useState<DeckSummary[]>([]);
   const [deck, setDeck] = useState<Deck | null>(null);
+  const [rules, setRules] = useState<FormatRules | null>(null);
   const [deckError, setDeckError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -67,8 +69,12 @@ export function RankingPage() {
       return;
     }
     let live = true;
-    decks.getDeck(deckId).then(
-      (d) => live && setDeck(d),
+    Promise.all([decks.getDeck(deckId), decks.getFormatRules()]).then(
+      ([d, r]) => {
+        if (!live) return;
+        setDeck(d);
+        setRules(r);
+      },
       (e) => live && setDeckError(String(e.message ?? e)),
     );
     return () => {
@@ -168,8 +174,12 @@ export function RankingPage() {
     ...[...inDeck.keys()].filter((id) => !pinned.includes(id)),
   ];
 
+  const copyLimit = rules?.copyLimit ?? Infinity;
+  const atLimit = (variantId: string) =>
+    (inDeck.get(variantId) ?? 0) >= copyLimit;
+
   async function addToDeck(variantId: string) {
-    if (!deck) return;
+    if (!deck || atLimit(variantId)) return;
     const existing = deck.cards.find((c) => c.variantId === variantId);
     const card = {
       variantId,
@@ -196,6 +206,8 @@ export function RankingPage() {
         variant="ghost"
         onClick={() => void addToDeck(variantId)}
         aria-label={`Add ${name} to ${deck.name}`}
+        disabled={atLimit(variantId)}
+        title={atLimit(variantId) ? `At most ${copyLimit} copies` : undefined}
       >
         Add
       </Button>
