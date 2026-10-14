@@ -1,0 +1,140 @@
+.muted {
+  color: var(--muted);
+  font-weight: normal;
+}
+
+.create {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+.deckList {
+  padding-left: 1.2rem;
+}
+
+.problems {
+  color: var(--danger, #b3261e);
+  margin: 0 0 1rem;
+  padding-left: 1.2rem;
+}
+
+.editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 20rem;
+  gap: 3rem;
+  align-items: start;
+}
+@media (max-width: 800px) {
+  .editor {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .finder {
+    order: -1;
+  }
+}
+
+.section h2 {
+  font-size: 1.1rem;
+  margin: 1.25rem 0 0.4rem;
+}
+.rows,
+.results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.name {
+  flex: 1;
+}
+
+.pip {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  flex: none;
+  border: 1px solid var(--border);
+}
+.pitch1 {
+  --pitch: #d63c35;
+}
+.pitch2 {
+  --pitch: #e6b422;
+}
+.pitch3 {
+  --pitch: #3b7dd8;
+}
+.pip.pitch1,
+.pip.pitch2,
+.pip.pitch3 {
+  background: var(--pitch);
+  border-color: var(--pitch);
+}
+
+.quantity {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.quantity button,
+.add {
+  font: inherit;
+  min-width: 1.8rem;
+  height: 1.8rem;
+  border: 1px solid var(--border);
+  border-radius: 0.3rem;
+  background: none;
+  color: var(--fg);
+  cursor: pointer;
+}
+.quantity output {
+  min-width: 1.2ch;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.sideboard {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.85em;
+  color: var(--muted);
+}
+
+.finder {
+  position: sticky;
+  top: 1rem;
+}
+.results li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.adds {
+  display: inline-flex;
+  gap: 0.3rem;
+}
+.add {
+  padding: 0 0.45rem;
+  font-size: 0.85em;
+}
+.add.pitch1,
+.add.pitch2,
+.add.pitch3 {
+  border-color: var(--pitch);
+}
+.quantity button:focus-visible,
+.add:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
