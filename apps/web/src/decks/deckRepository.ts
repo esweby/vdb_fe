@@ -15,8 +15,12 @@ export interface DeckCard {
   sideboard: boolean;
 }
 
+/** Target number of deck cards per pitch (1 red, 2 yellow, 3 blue); missing = no target. */
+export type PitchTargets = Partial<Record<1 | 2 | 3, number>>;
+
 export interface Deck extends DeckSummary {
   cards: DeckCard[];
+  pitchTargets: PitchTargets;
 }
 
 export interface DeckRepository {
@@ -25,6 +29,7 @@ export interface DeckRepository {
   getDeck(id: string): Promise<Deck | null>;
   /** Adds, updates or (with quantity 0) removes a card in the pool. */
   setCard(deckId: string, card: DeckCard): Promise<void>;
+  setPitchTargets(deckId: string, targets: PitchTargets): Promise<void>;
   getFormatRules(): Promise<FormatRules>;
 }
 
@@ -53,7 +58,7 @@ export function supabaseDeckRepository(client: SupabaseClient): DeckRepository {
       const { data, error } = await client
         .from("decks")
         .select(
-          "id, name, updatedAt:updated_at, cards:deck_cards(variantId:variant_id, quantity, sideboard)",
+          "id, name, updatedAt:updated_at, pitchTargets:pitch_targets, cards:deck_cards(variantId:variant_id, quantity, sideboard)",
         )
         .eq("id", id)
         .maybeSingle();
@@ -80,6 +85,16 @@ export function supabaseDeckRepository(client: SupabaseClient): DeckRepository {
         .from("decks")
         .update({ updated_at: new Date().toISOString() })
         .eq("id", deckId);
+    },
+    async setPitchTargets(deckId, targets) {
+      const { error } = await client
+        .from("decks")
+        .update({
+          pitch_targets: targets,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", deckId);
+      if (error) throw error;
     },
     async getFormatRules() {
       const { data, error } = await client
