@@ -1,6 +1,7 @@
 import { getRouteApi, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import type { CardSummary } from "../cards/cardRepository.ts";
+import type { Deck, DeckSummary } from "../decks/deckRepository.ts";
 import { cardFacets } from "../cards/facets.ts";
 import { useCards } from "../cards/useCards.ts";
 import { applyFilters } from "../filters/applyFilters.ts";
@@ -38,11 +39,42 @@ const label = (r: RankedVariant, multiPitch: boolean) =>
 
 export function RankingPage() {
   const { status, items } = useCards();
-  const { scores } = useServices();
+  const { scores, decks } = useServices();
   const user = useAppSelector((s) => s.auth.user);
   const search = route.useSearch();
   const navigate = useNavigate();
   const [data, setData] = useState<Data | null>(null);
+  const deckId = typeof search.deck === "string" ? search.deck : undefined;
+  const [deckList, setDeckList] = useState<DeckSummary[]>([]);
+  const [deck, setDeck] = useState<Deck | null>(null);
+  const [deckError, setDeckError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    let live = true;
+    decks.listDecks().then(
+      (d) => live && setDeckList(d),
+      () => {},
+    );
+    return () => {
+      live = false;
+    };
+  }, [decks, user]);
+
+  useEffect(() => {
+    if (!user || !deckId) {
+      setDeck(null);
+      return;
+    }
+    let live = true;
+    decks.getDeck(deckId).then(
+      (d) => live && setDeck(d),
+      (e) => live && setDeckError(String(e.message ?? e)),
+    );
+    return () => {
+      live = false;
+    };
+  }, [decks, user, deckId]);
 
   useEffect(() => {
     let live = true;
@@ -74,13 +106,18 @@ export function RankingPage() {
     data?.dimensions.map((d) => d.key) ?? [],
   );
   const filterState = fromSearch(search);
-  const update = (patch: Partial<RankingSettings>, filters = filterState) =>
+  const update = (
+    patch: Partial<RankingSettings>,
+    filters = filterState,
+    deckChoice = deckId,
+  ) =>
     void navigate({
       to: ".",
       replace: true,
       search: {
         ...writeRankingSearch({ ...settings, ...patch }),
         ...toSearch(filters),
+        ...(deckChoice ? { deck: deckChoice } : {}),
       },
     });
 
@@ -122,13 +159,60 @@ export function RankingPage() {
   const multiPitch = (r: RankedVariant) => typeOf(r).variants.length > 1;
   const excluded = new Set(settings.excluded);
   const pinned = settings.pinned;
+  const inDeck = new Map(
+    (deck?.cards ?? []).map((c) => [c.variantId, c.quantity]),
+  );
+  // README "Suggested core": cards in the deck being built count as pinned.
+  const pinnedOrInDeck = [
+    ...pinned,
+    ...[...inDeck.keys()].filter((id) => !pinned.includes(id)),
+  ];
 
-  const deck = ranked.filter((r) => !isGear(r) && !excluded.has(r.variantId));
+  async function addToDeck(variantId: string) {
+    if (!deck) return;
+    const existing = deck.cards.find((c) => c.variantId === variantId);
+    const card = {
+      variantId,
+      quantity: (existing?.quantity ?? 0) + 1,
+      sideboard: existing?.sideboard ?? false,
+    };
+    const previous = deck;
+    setDeck({
+      ...deck,
+      cards: [...deck.cards.filter((c) => c.variantId !== variantId), card],
+    });
+    try {
+      await decks.setCard(deck.id, card);
+    } catch (e) {
+      setDeck(previous);
+      setDeckError(
+        `Couldn't add to the deck: ${e instanceof Error ? e.message : String(e)}`,
+      );
+    }
+  }
+  const addButton = (variantId: string, name: string) =>
+    deck && (
+      <Button
+        variant="ghost"
+        onClick={() => void addToDeck(variantId)}
+        aria-label={`Add ${name} to ${deck.name}`}
+      >
+        Add
+      </Button>
+    );
+  const inDeckTag = (variantId: string) =>
+    inDeck.has(variantId) && (
+      <Tag tone="accent">{inDeck.get(variantId)} in deck</Tag>
+    );
+
+  const deckRows = ranked.filter(
+    (r) => !isGear(r) && !excluded.has(r.variantId),
+  );
   const ordered = [
-    ...pinned
-      .map((id) => deck.find((r) => r.variantId === id))
+    ...pinnedOrInDeck
+      .map((id) => deckRows.find((r) => r.variantId === id))
       .filter((r): r is RankedVariant => !!r),
-    ...deck.filter((r) => !pinned.includes(r.variantId)),
+    ...deckRows.filter((r) => !pinnedOrInDeck.includes(r.variantId)),
   ];
   const excludedRows = ranked.filter((r) => excluded.has(r.variantId));
   const gear = ranked.filter((r) => isGear(r) && !excluded.has(r.variantId));
@@ -211,6 +295,34 @@ export function RankingPage() {
           </div>
         </section>
 
+        {user && (
+          <div className={styles.deckChoice}>
+            <label>
+              Add to deck{" "}
+              <select
+                value={deckId ?? ""}
+                onChange={(e) =>
+                  update({}, filterState, e.target.value || undefined)
+                }
+              >
+                <option value="">None</option>
+                {deckList.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {deck && (
+              <Link to="/decks/$deckId" params={{ deckId: deck.id }}>
+                Open {deck.name}
+              </Link>
+            )}
+            {deckList.length === 0 && <Link to="/decks">Create a deck</Link>}
+            {deckError && <p role="alert">{deckError}</p>}
+          </div>
+        )}
+
         <p className={styles.note}>
           Cards need at least {data.minRatingCount} community ratings (or your
           own review) to be ranked. Synergy joins the ranking in phase two.
@@ -253,11 +365,12 @@ export function RankingPage() {
                         {name}
                       </Link>{" "}
                       {inCore && <Tag tone="accent">Core</Tag>}{" "}
-                      {isPinned && <Tag>Pinned</Tag>}
+                      {isPinned && <Tag>Pinned</Tag>} {inDeckTag(r.variantId)}
                     </td>
                     <td>{r.value}</td>
                     <td>{r.ratingCount || "mine"}</td>
                     <td className={styles.actions}>
+                      {addButton(r.variantId, name)}
                       <Button
                         variant="ghost"
                         onClick={() => togglePin(r.variantId)}
@@ -322,9 +435,13 @@ export function RankingPage() {
                             params={{ cardId: r.cardId }}
                           >
                             {r.name}
-                          </Link>
+                          </Link>{" "}
+                          {inDeckTag(r.variantId)}
                         </td>
                         <td>{r.value}</td>
+                        <td className={styles.actions}>
+                          {addButton(r.variantId, r.name)}
+                        </td>
                       </tr>
                     ))}
                   </tbody>

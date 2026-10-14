@@ -215,7 +215,8 @@ describe("adding ranked cards to a deck", () => {
       path: "/ranking?deck=deck-1",
       auth: signedIn(),
       scores: scores(),
-      decks: decks([{ variantId: "hp3", quantity: 2, sideboard: false }]),
+      decks: decks([{ variantId: "hp3", quantity: 2, sideboard: false }])
+        .repository,
     });
     await screen.findByRole("button", {
       name: "Add Hocus Pocus (pitch 3) to Gate tempo",
