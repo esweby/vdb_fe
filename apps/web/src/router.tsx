@@ -9,6 +9,8 @@ import { authSettled } from "./auth/listenToAuth.ts";
 import { selectCanScore, selectIsSignedIn } from "./auth/authSlice.ts";
 import { SignInPage } from "./auth/SignInPage.tsx";
 import { CardScoringPage } from "./scoring/CardScoringPage.tsx";
+import { NeedsReviewPage } from "./scoring/NeedsReviewPage.tsx";
+import { AccountPage } from "./account/AccountPage.tsx";
 import { CardsPage } from "./cards/CardsPage.tsx";
 import { Layout } from "./Layout.tsx";
 import { PlaceholderPage } from "./pages/PlaceholderPage.tsx";
@@ -63,9 +65,19 @@ const routeTree = rootRoute.addChildren([
     component: CardScoringPage,
   }),
   page("/ranking", "Ranking"),
-  page("/needs-review", "Needs review", requireScorer),
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/needs-review",
+    beforeLoad: requireScorer,
+    component: NeedsReviewPage,
+  }),
   page("/decks", "Decks", requireSignedIn),
-  page("/account", "Account", requireSignedIn),
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/account",
+    beforeLoad: requireSignedIn,
+    component: AccountPage,
+  }),
   createRoute({
     getParentRoute: () => rootRoute,
     path: "/sign-in",

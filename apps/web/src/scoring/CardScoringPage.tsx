@@ -52,6 +52,7 @@ export function CardScoringPage() {
   const [reviewedAt, setReviewedAt] = useState<string | null>(null);
   const [reviewing, setReviewing] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [sidesTogether, setSidesTogether] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -72,9 +73,11 @@ export function CardScoringPage() {
       scores.listDimensions(),
       scores.listMyScores(user.id, cardId),
       scores.getMyReview(user.id, cardId),
+      scores.getPreferences(user.id),
     ]).then(
-      ([d, r, reviewed]) => {
+      ([d, r, reviewed, preferences]) => {
         if (!live) return;
+        setSidesTogether(preferences.scoreSidesTogether ?? true);
         setDimensions(d);
         setRows(r);
         setReviewedAt(reviewed);
@@ -200,6 +203,7 @@ export function CardScoringPage() {
               busy={busy}
             />
             <ScoreEditor
+              sidesTogetherByDefault={sidesTogether}
               dimensions={dimensions}
               variants={card.variants}
               rows={rows}

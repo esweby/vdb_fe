@@ -52,6 +52,14 @@ export interface ScoreRepository {
   markReviewed(cardId: string): Promise<string>;
   /** Asks the community score job to recalculate (scorers only; the function checks). */
   runCommunityJob(): Promise<void>;
+  listMyReviewedCardIds(userId: string): Promise<string[]>;
+  getPreferences(userId: string): Promise<Preferences>;
+  savePreferences(userId: string, preferences: Preferences): Promise<void>;
+}
+
+export interface Preferences {
+  /** Default for "Same score for both sides" on card pages. Defaults to true. */
+  scoreSidesTogether?: boolean;
 }
 
 export function supabaseScoreRepository(
@@ -142,6 +150,30 @@ export function supabaseScoreRepository(
         .single();
       if (error) throw error;
       return data.reviewed_at;
+    },
+    async listMyReviewedCardIds(user) {
+      const { data, error } = await client
+        .from("card_reviews")
+        .select("card_id")
+        .eq("user_id", user);
+      if (error) throw error;
+      return data.map((r) => r.card_id);
+    },
+    async getPreferences(user) {
+      const { data, error } = await client
+        .from("profiles")
+        .select("preferences")
+        .eq("id", user)
+        .single();
+      if (error) throw error;
+      return (data.preferences ?? {}) as Preferences;
+    },
+    async savePreferences(user, preferences) {
+      const { error } = await client
+        .from("profiles")
+        .update({ preferences })
+        .eq("id", user);
+      if (error) throw error;
     },
     async runCommunityJob() {
       const { error } = await client.functions.invoke("community-scores", {
