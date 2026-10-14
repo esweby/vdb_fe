@@ -207,6 +207,24 @@ describe("describeAttributes", () => {
     ]);
   });
 
+  it("describes effects granted to your next Shadow attack", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        tokens: [
+          {
+            token: "gate",
+            amount: 1,
+            trigger: "on_hit",
+            grantedTo: "next_shadow_attack",
+          },
+        ],
+      }),
+    ).toEqual([
+      "Your next Shadow attack this turn gets: creates 1 Gate to i'Arathael when it hits.",
+    ]);
+  });
+
   it("describes nothing for a plain card", () => {
     expect(describeAttributes(generated)).toEqual([]);
   });
