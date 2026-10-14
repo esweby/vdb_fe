@@ -127,6 +127,16 @@ describe("FilterSidebar", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("collapses each group by default, but opens groups that have filters", () => {
+    render(<Harness initial={{ keywords: { go: "include" } }} />);
+    const groupOf = (name: string) =>
+      sidebar()
+        .getByText(name, { selector: "summary *, summary" })
+        .closest("details")!;
+    expect(groupOf("Card type")).not.toHaveAttribute("open");
+    expect(groupOf("Keywords")).toHaveAttribute("open");
+  });
+
   it("keeps mechanics in a collapsed section", () => {
     render(<Harness />);
     const mechanics = sidebar().getByText("Mechanics").closest("details")!;
