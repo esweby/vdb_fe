@@ -149,6 +149,12 @@ export const tokenCreationSchema = z.strictObject({
 
 export const ownBanishSchema = z.strictObject({
   from: z.enum(BANISH_ZONES),
+  /** How many (default 1). "any" for "any number of". */
+  amount: z.union([amount, z.literal("any")]).optional(),
+  /** Only action cards. */
+  which: z.enum(["action"]).optional(),
+  /** The cards move on (e.g. to the chain) rather than staying in your banished zone. */
+  temporary: z.boolean().optional(),
   trigger,
   conditions,
   optional: z.boolean().optional(),

@@ -12,6 +12,7 @@ export const CARD_GROUPS = [
   "banishes_from_hand",
   "rewards_shadow_banish",
   "rewards_runeblade_banish",
+  "triggers_when_banished",
 ] as const;
 
 export type CardGroup = (typeof CARD_GROUPS)[number];
@@ -60,6 +61,9 @@ export function attributeGroups(
   }
   if (json.includes('"banished_card_is_runeblade"')) {
     groups.push("rewards_runeblade_banish");
+  }
+  if (json.includes('"trigger":"on_banished"')) {
+    groups.push("triggers_when_banished");
   }
   return groups;
 }

@@ -2,6 +2,7 @@
 import type { CardGroup } from "./groups.ts";
 import type {
   CardAttributes,
+  OwnBanish,
   CardRef,
   Tutor,
   Disruption,
@@ -142,6 +143,7 @@ const GROUP_TEXT: Record<CardGroup, string> = {
   banishes_from_hand: "a card that banishes from hand",
   rewards_shadow_banish: "a card that rewards banishing a Shadow card",
   rewards_runeblade_banish: "a card that rewards banishing a Runeblade card",
+  triggers_when_banished: "a card with an effect when it's banished",
 };
 
 const GROUP_PLURAL: Record<CardGroup, string> = {
@@ -153,6 +155,7 @@ const GROUP_PLURAL: Record<CardGroup, string> = {
   banishes_from_hand: "cards that banish from hand",
   rewards_shadow_banish: "cards that reward banishing a Shadow card",
   rewards_runeblade_banish: "cards that reward banishing a Runeblade card",
+  triggers_when_banished: "cards with an effect when they're banished",
 };
 
 const refText = (ref: CardRef) =>
@@ -164,6 +167,22 @@ const TUTOR_TO: Record<Tutor["to"], [string, string]> = {
   arena: ["puts it into the arena", "put it into the arena"],
   banished: ["banishes it", "banish it"],
 };
+
+function ownBanishText(b: OwnBanish): string {
+  const n = b.amount ?? 1;
+  if (b.from === "defending_cards" || (b.from === "deck_top" && n === 1)) {
+    return BANISH_TEXT[b.from];
+  }
+  if (b.from === "deck_top") return `the top ${n} cards of your deck`;
+  const kind = b.which === "action" ? "action card" : "card";
+  const count =
+    n === 1
+      ? `a ${kind}`
+      : n === "any"
+        ? `any number of ${kind}s`
+        : `${n} ${kind}s`;
+  return `${count} from your ${b.from}`;
+}
 
 function ifConditions(conditions: Condition[] | undefined): string {
   return conditions?.length
@@ -187,8 +206,11 @@ export function describeAttributes(attributes: CardAttributes): string[] {
 
   for (const b of attributes.banishesOwn ?? []) {
     const verb = b.optional ? "May banish" : "Banishes";
+    const temporary = b.temporary
+      ? " (temporarily: they don't stay in your banished zone)"
+      : "";
     lines.push(
-      `${verb} ${BANISH_TEXT[b.from]} ${TRIGGER_TEXT[b.trigger]}${ifConditions(b.conditions)}.`,
+      `${verb} ${ownBanishText(b)} ${TRIGGER_TEXT[b.trigger]}${ifConditions(b.conditions)}${temporary}.`,
     );
   }
 

@@ -282,6 +282,25 @@ export const weaponsAndEquipment: AuthoredAttributes = {
     },
   },
 
+  "Base of the Mountain": {
+    verified: false,
+    card: {
+      banishesOwn: [
+        {
+          from: "hand",
+          amount: "any",
+          which: "action",
+          trigger: "on_defend",
+          optional: true,
+          temporary: true,
+        },
+      ],
+      supports: [{ target: { group: "triggers_when_banished" } }],
+      notes:
+        'Generic. The banished action cards are added to the chain link as defenders, and its defense equals the number of defending action cards. Fires "when banished" effects (Arknight Descendancy, Open the Gate to i\'Arathael) without losing the cards to banish.',
+    },
+  },
+
   // Arcane damage and auras
   "Aether Crackers": {
     verified: true,
