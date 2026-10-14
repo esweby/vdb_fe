@@ -555,9 +555,10 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
   "Usurp the Shadow Throne": {
     verified: true,
     card: {
-      playableFromBanish: {},
+      costReductions: [{ amount: 6, conditions: ["usurped_this_turn"] }],
+      playableFromBanish: { conditions: ["usurped_this_turn"] },
       notes:
-        "Only playable from banish (and 6{r} cheaper) if you've usurped this turn. No condition for usurping exists yet.",
+        "When it hits, turns all cards in their banished zone face-down; they lose X life and you gain X, where X is the number turned.",
     },
   },
   "Vantom Banshee": {
