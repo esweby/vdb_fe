@@ -5,11 +5,11 @@ import type { AuthoredAttributes } from "../map.ts";
 export const remaining: AuthoredAttributes = {
   // Costs less per Runechant
   "Amplify the Arknight": {
-    verified: false,
+    verified: true,
     card: { costReducedPerRunechant: true },
   },
   "Bequest the Vast Beyond": {
-    verified: false,
+    verified: true,
     card: {
       costReductions: [
         {
@@ -20,29 +20,29 @@ export const remaining: AuthoredAttributes = {
     },
   },
   "Drawn to the Dark Dimension": {
-    verified: false,
+    verified: true,
     card: {
       costReducedPerRunechant: true,
       notes: "When it attacks, draw a card.",
     },
   },
   "Ninth Blade of the Blood Oath": {
-    verified: false,
+    verified: true,
     card: { costReducedPerRunechant: true },
   },
   "Rune Flash": {
-    verified: false,
+    verified: true,
     card: { costReducedPerRunechant: true },
   },
   "Runic Reckoning": {
-    verified: false,
+    verified: true,
     card: {
       costReducedPerRunechant: true,
       notes: "Your next Runeblade attack action card this turn gets +3 power.",
     },
   },
   "Sonata Galaxia": {
-    verified: false,
+    verified: true,
     card: {
       costReducedPerRunechant: true,
       tutors: [
@@ -59,7 +59,7 @@ export const remaining: AuthoredAttributes = {
 
   // Tutors
   "Become the Arknight": {
-    verified: false,
+    verified: true,
     card: {
       tutors: [
         {
@@ -81,7 +81,7 @@ export const remaining: AuthoredAttributes = {
 
   // Arcane damage
   "Aether Slash": {
-    verified: false,
+    verified: true,
     card: {
       arcaneDamage: [
         {
@@ -93,11 +93,11 @@ export const remaining: AuthoredAttributes = {
     },
   },
   "Arcanic Crackle": {
-    verified: false,
+    verified: true,
     card: { arcaneDamage: [{ amount: 1, trigger: "on_attack" }] },
   },
   "Deny Redemption": {
-    verified: false,
+    verified: true,
     card: {
       arcaneDamage: [{ amount: 1, trigger: "on_attack" }],
       notes:
@@ -105,7 +105,7 @@ export const remaining: AuthoredAttributes = {
     },
   },
   "Looming Doom": {
-    verified: false,
+    verified: true,
     card: {
       arcaneDamage: [{ amount: 2, trigger: "your_end_phase" }],
       notes:
@@ -113,14 +113,14 @@ export const remaining: AuthoredAttributes = {
     },
   },
   "Sigil of Gravespawning": {
-    verified: false,
+    verified: true,
     card: {
       notes:
         "Deals 1 arcane damage whenever an aura leaves your graveyard. Destroyed at your next action phase.",
     },
   },
   "Sigil of Suffering": {
-    verified: false,
+    verified: true,
     card: {
       arcaneDamage: [{ amount: 1, trigger: "on_play" }],
       conditionalBonuses: [
@@ -134,11 +134,11 @@ export const remaining: AuthoredAttributes = {
     },
   },
   "Singeing Steelblade": {
-    verified: false,
+    verified: true,
     card: { arcaneDamage: [{ amount: 1, trigger: "on_attack" }] },
   },
   "Sting of Sorcery": {
-    verified: false,
+    verified: true,
     card: {
       arcaneDamage: [
         {
@@ -151,13 +151,13 @@ export const remaining: AuthoredAttributes = {
     },
   },
   "Vexing Malice": {
-    verified: false,
+    verified: true,
     card: { arcaneDamage: [{ amount: 2, trigger: "on_attack" }] },
   },
 
   // Rewards dealing arcane damage
   "Arcanic Spike": {
-    verified: false,
+    verified: true,
     card: {
       conditionalBonuses: [
         {
@@ -169,7 +169,7 @@ export const remaining: AuthoredAttributes = {
     },
   },
   "Consuming Volition": {
-    verified: false,
+    verified: true,
     card: {
       disrupts: [
         {
@@ -184,7 +184,7 @@ export const remaining: AuthoredAttributes = {
     },
   },
   "Succumb to Temptation": {
-    verified: false,
+    verified: true,
     card: {
       instantSpeed: { conditions: ["dealt_arcane_damage_this_turn"] },
       disrupts: [
@@ -203,7 +203,7 @@ export const remaining: AuthoredAttributes = {
 
   // Rewards playing or creating auras
   "Drowning Dire": {
-    verified: false,
+    verified: true,
     card: {
       conditionalBonuses: [
         {
@@ -216,7 +216,7 @@ export const remaining: AuthoredAttributes = {
     },
   },
   "Hit the High Notes": {
-    verified: false,
+    verified: true,
     card: {
       conditionalBonuses: [
         {
@@ -228,7 +228,7 @@ export const remaining: AuthoredAttributes = {
     },
   },
   "Reek of Corruption": {
-    verified: false,
+    verified: true,
     card: {
       disrupts: [
         {
@@ -243,11 +243,11 @@ export const remaining: AuthoredAttributes = {
     },
   },
   "Runerager Swarm": {
-    verified: false,
+    verified: true,
     card: { goAgain: { conditions: ["played_or_created_aura_this_turn"] } },
   },
   "Shrill of Skullform": {
-    verified: false,
+    verified: true,
     card: {
       conditionalBonuses: [
         {
@@ -259,7 +259,7 @@ export const remaining: AuthoredAttributes = {
     },
   },
   "Swarming Gloomveil": {
-    verified: false,
+    verified: true,
     card: {
       goAgain: { conditions: ["played_or_created_aura_this_turn"] },
       notes:
@@ -267,7 +267,7 @@ export const remaining: AuthoredAttributes = {
     },
   },
   "Vantage Point": {
-    verified: false,
+    verified: true,
     card: {
       conditionalBonuses: [
         {
@@ -279,7 +279,7 @@ export const remaining: AuthoredAttributes = {
     },
   },
   "Machinations of Dominion": {
-    verified: false,
+    verified: true,
     card: {
       grantsGoAgain: "next_runeblade_attack_action",
       notes:
@@ -289,7 +289,7 @@ export const remaining: AuthoredAttributes = {
 
   // Aura destruction and disruption
   "Caress of the Reaper": {
-    verified: false,
+    verified: true,
     card: {
       disrupts: [
         {
@@ -304,7 +304,7 @@ export const remaining: AuthoredAttributes = {
     },
   },
   "Condemn to Slaughter": {
-    verified: false,
+    verified: true,
     card: {
       disrupts: [
         {
@@ -321,7 +321,7 @@ export const remaining: AuthoredAttributes = {
     },
   },
   "Cryptic Crossing": {
-    verified: false,
+    verified: true,
     card: {
       disrupts: [
         {
@@ -337,7 +337,7 @@ export const remaining: AuthoredAttributes = {
     },
   },
   "Diabolic Ultimatum": {
-    verified: false,
+    verified: true,
     card: {
       disrupts: [
         {
@@ -354,7 +354,7 @@ export const remaining: AuthoredAttributes = {
     },
   },
   Doomsaying: {
-    verified: false,
+    verified: true,
     card: {
       disrupts: [
         {
@@ -370,7 +370,7 @@ export const remaining: AuthoredAttributes = {
     },
   },
   "Leech Renown": {
-    verified: false,
+    verified: true,
     card: {
       disrupts: [
         {
@@ -386,7 +386,7 @@ export const remaining: AuthoredAttributes = {
     },
   },
   "Snuff Out": {
-    verified: false,
+    verified: true,
     card: {
       disrupts: [
         {
@@ -405,40 +405,40 @@ export const remaining: AuthoredAttributes = {
 
   // Card advantage and other
   "Arcanic Cunning": {
-    verified: false,
+    verified: true,
     card: {
       notes:
         "While attacking, defending or on the stack, prevents 1 of any arcane damage you'd be dealt.",
     },
   },
   "Leech Memory": {
-    verified: false,
+    verified: true,
     card: {
       notes:
         "Your next attack action card gets +3 power and may put an attack action card from your graveyard on the bottom of your deck when it deals damage.",
     },
   },
   "Leech Vitality": {
-    verified: false,
+    verified: true,
     card: {
       notes:
         "Your next attack action card gets +3 power and gains you 1 life when it deals damage.",
     },
   },
   "Sigil of the Arknight": {
-    verified: false,
+    verified: true,
     card: {
       notes:
         "When it leaves the arena (at your next action phase), reveal the top card; if it's an attack action card, put it into your hand.",
     },
   },
-  Slay: { verified: false, card: { notes: "Destroys an angel ally (Light)." } },
+  Slay: { verified: true, card: { notes: "Destroys an angel ally (Light)." } },
   "Soul of Existence": {
-    verified: false,
+    verified: true,
     card: { notes: "Pitch 4 resource. When pitched, lose 1 life." },
   },
   "Tome of the Arknight": {
-    verified: false,
+    verified: true,
     card: {
       notes:
         "Reveals the top 2; if they're an attack action card and a non-attack action card, both go into your hand.",
