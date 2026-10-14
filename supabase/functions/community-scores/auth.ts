@@ -11,11 +11,21 @@ export type JobAuthorization =
 export async function authorizeJobCaller(input: {
   /** The request's Authorization header. */
   authorization: string | null;
+  /** The x-job-token header: a single-use token created by the daily job. */
+  jobToken: string | null;
   /** The project's server keys (service role / secret key). Empty values are ignored. */
   serverKeys: (string | undefined)[];
   /** Verifies a user token with Supabase Auth and returns their app role, or null. */
   getUserRole: (token: string) => Promise<string | null>;
+  /** Consumes a job token in the database; true if it was valid. */
+  consumeJobToken: (token: string) => Promise<boolean>;
 }): Promise<JobAuthorization> {
+  if (input.jobToken) {
+    return (await input.consumeJobToken(input.jobToken))
+      ? { ok: true, caller: "server" }
+      : { ok: false, status: 401 };
+  }
+
   const token = input.authorization?.match(/^Bearer (.+)$/)?.[1];
   if (!token) return { ok: false, status: 401 };
 

@@ -15,6 +15,7 @@ Deno.serve(async (request) => {
 
   const auth = await authorizeJobCaller({
     authorization: request.headers.get("Authorization"),
+    jobToken: request.headers.get("x-job-token"),
     serverKeys: [
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
       Deno.env.get("SUPABASE_SECRET_KEY"),
@@ -28,6 +29,10 @@ Deno.serve(async (request) => {
         .eq("id", data.user.id)
         .single();
       return (profile?.role as string | undefined) ?? null;
+    },
+    consumeJobToken: async (token) => {
+      const { data, error } = await db.rpc("consume_job_nonce", { token });
+      return !error && data === true;
     },
   });
   if (!auth.ok) {
