@@ -48,9 +48,15 @@ export const CONDITIONS = [
   "defending_hero_has_soul_cards",
   "usurped_this_turn",
   "played_card_from_banish_this_turn",
+  "it_defended",
 ] as const;
 
-export const BANISH_ZONES = ["hand", "deck_top", "graveyard"] as const;
+export const BANISH_ZONES = [
+  "hand",
+  "deck_top",
+  "graveyard",
+  "defending_cards",
+] as const;
 
 /** The effect is given to a later card rather than happening on this one. */
 export const GRANTED_TO = [

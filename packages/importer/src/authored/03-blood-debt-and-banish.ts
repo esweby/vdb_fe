@@ -180,10 +180,11 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     card: { playableFromBanish: {} },
   },
   "Depths of Despair": {
-    verified: true,
+    verified: false,
     card: {
-      banishesSelf: [{ trigger: "combat_chain_closes" }],
-      notes: "Only after it has defended.",
+      banishesSelf: [
+        { trigger: "combat_chain_closes", conditions: ["it_defended"] },
+      ],
     },
   },
   "Dimenxxional Crossroads": {

@@ -56,6 +56,7 @@ const CONDITION_TEXT: Record<Condition, string> = {
   paid_optional_additional_cost: "you paid its optional additional cost",
   defending_hero_has_soul_cards: "the defending hero has cards in their soul",
   usurped_this_turn: "you've usurped this turn",
+  it_defended: "it defended",
   played_card_from_banish_this_turn:
     "you've played a card from your banished zone this turn",
 };
@@ -70,6 +71,7 @@ const BANISH_TEXT = {
   hand: "a card from your hand",
   deck_top: "the top card of your deck",
   graveyard: "a card from your graveyard",
+  defending_cards: "all your defending cards on the chain",
 } as const;
 
 const GRANTED_TEXT: Record<GrantedTo, string> = {

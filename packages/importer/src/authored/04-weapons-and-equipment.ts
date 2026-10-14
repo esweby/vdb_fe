@@ -132,14 +132,14 @@ export const weaponsAndEquipment: AuthoredAttributes = {
 
   // Blood debt equipment
   "Carrion Husk": {
-    verified: true,
+    verified: false,
     card: {
       banishesSelf: [
-        { trigger: "combat_chain_closes" },
+        { trigger: "combat_chain_closes", conditions: ["it_defended"] },
         { trigger: "start_of_turn" },
       ],
       notes:
-        "6 defense. Banished after it defends, or at the start of your turn if you have 13 or less life.",
+        "6 defense. The start-of-turn banish only happens if you have 13 or less life.",
     },
   },
   "Cloak of Darkness": {
@@ -208,28 +208,35 @@ export const weaponsAndEquipment: AuthoredAttributes = {
     },
   },
 
-  // Banishing from hand
+  // Banishing your own cards (from hand, or defending cards on the chain)
   "Corrupted Crown": {
-    verified: true,
+    verified: false,
     card: {
       banishesOwn: [{ from: "hand", trigger: "on_defend", optional: true }],
-      notes: "+1 defense if you banish a card.",
+      notes: "If you banish a card this way, Corrupted Crown gets +1 defense.",
     },
   },
   "Ebon Fold": {
-    verified: true,
+    verified: false,
     card: {
       oneUse: true,
       banishesOwn: [{ from: "hand", trigger: "activated" }],
       notes:
-        "Instant: {r}, destroy it. Draw a card if the banished card is Shadow.",
+        "Instant: {r}, destroy it. If the banished card is Shadow, draw a card.",
     },
   },
   "Reach of the Abyss": {
-    verified: true,
+    verified: false,
     card: {
+      banishesOwn: [
+        {
+          from: "defending_cards",
+          trigger: "combat_chain_closes",
+          conditions: ["it_defended"],
+        },
+      ],
       notes:
-        "When the combat chain closes, if it defended, banishes all the defending cards (yours), feeding your banished zone.",
+        "Your cards that defended alongside it (normally from your hand) go to your banished zone instead of the graveyard.",
     },
   },
 

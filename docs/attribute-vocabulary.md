@@ -22,7 +22,7 @@ This page defines what we record about each card. Every hand-authored entry has 
 | Attribute                                    | Meaning                                                                                                                                                                                                                                                                                                                                                                     | Example                                                                             |
 | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | `tokens`                                     | Tokens this card creates: which token, how many (a number, or `X` for variable), when, and under which conditions. One entry per separate creation.                                                                                                                                                                                                                         | Hocus Pocus: 1 Runechant `on_attack`                                                |
-| `banishesOwn`                                | Cards this card banishes from **your own** hand, top of deck or graveyard, and whether it's optional. These feed Gates and play-from-banish.                                                                                                                                                                                                                                | Become the Shadow Lord: a card from hand, `on_play`                                 |
+| `banishesOwn`                                | Cards this card banishes from **your own** hand, top of deck or graveyard, or all your defending cards on the chain (`defending_cards`), and whether it's optional. These feed Gates and play-from-banish.                                                                                                                                                                  | Become the Shadow Lord: a card from hand, `on_play`                                 |
 | `banishesSelf`                               | The card banishes **itself**: when, under which conditions, whether it's optional, and `from: "hand"` when it banishes itself from your hand (Fallen Herald). Feeds Gates and play-from-banish.                                                                                                                                                                             | Engulfing Shadows: instead of going to your graveyard                               |
 | `playableFromBanish`                         | The card can be played from your banished zone, with any conditions.                                                                                                                                                                                                                                                                                                        | Bounding Demigon: if you've played a non-attack action this turn                    |
 | `rewardsPlayFromBanish`                      | The card gets better when played from your banished zone, whether by its own text or with a Gate. Details go in `notes`.                                                                                                                                                                                                                                                    | Shadowrealm Reaper: +1 power and go again from banish                               |
@@ -45,24 +45,25 @@ This page defines what we record about each card. Every hand-authored entry has 
 
 **What has to be true (`conditions`):**
 
-| Condition                                                               | Plain English                                                                   |
-| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| `banished_card_is_runeblade` / `banished_card_is_shadow`                | the banished card is Runeblade / Shadow                                         |
-| `pitched_attack_action` / `pitched_non_attack_action`                   | an attack / non-attack action card was pitched to play it                       |
-| `played_attack_action_this_turn` / `played_non_attack_action_this_turn` | you've played an attack / non-attack action card this turn                      |
-| `dealt_arcane_damage_this_turn`                                         | you've dealt arcane damage this turn                                            |
-| `played_or_created_aura_this_turn`                                      | you've played or created an aura this turn                                      |
-| `played_from_banish`                                                    | it was played from your banished zone                                           |
-| `top_card_matches_pitch`                                                | the banished or revealed card matches this card's colour (e.g. Jack-o'-lantern) |
-| `destroyed_own_aura`                                                    | you destroyed an aura you control                                               |
-| `hero_lost_life_this_turn`                                              | a hero has lost life this turn                                                  |
-| `dealt_damage_to_defending_hero_this_turn`                              | you've dealt damage to the defending hero this turn                             |
-| `dealt_arcane_damage_to_opponent_this_turn`                             | you've dealt arcane damage to an opponent this turn                             |
-| `created_3_or_more_runechants`                                          | it created 3 or more Runechants                                                 |
-| `paid_optional_additional_cost`                                         | you paid its optional additional cost                                           |
-| `defending_hero_has_soul_cards`                                         | the defending hero has cards in their soul                                      |
-| `usurped_this_turn`                                                     | you've usurped this turn                                                        |
-| `played_card_from_banish_this_turn`                                     | you've played a card from your banished zone this turn                          |
+| Condition                                                               | Plain English                                                                       |
+| ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `banished_card_is_runeblade` / `banished_card_is_shadow`                | the banished card is Runeblade / Shadow                                             |
+| `pitched_attack_action` / `pitched_non_attack_action`                   | an attack / non-attack action card was pitched to play it                           |
+| `played_attack_action_this_turn` / `played_non_attack_action_this_turn` | you've played an attack / non-attack action card this turn                          |
+| `dealt_arcane_damage_this_turn`                                         | you've dealt arcane damage this turn                                                |
+| `played_or_created_aura_this_turn`                                      | you've played or created an aura this turn                                          |
+| `played_from_banish`                                                    | it was played from your banished zone                                               |
+| `top_card_matches_pitch`                                                | the banished or revealed card matches this card's colour (e.g. Jack-o'-lantern)     |
+| `destroyed_own_aura`                                                    | you destroyed an aura you control                                                   |
+| `hero_lost_life_this_turn`                                              | a hero has lost life this turn                                                      |
+| `dealt_damage_to_defending_hero_this_turn`                              | you've dealt damage to the defending hero this turn                                 |
+| `dealt_arcane_damage_to_opponent_this_turn`                             | you've dealt arcane damage to an opponent this turn                                 |
+| `created_3_or_more_runechants`                                          | it created 3 or more Runechants                                                     |
+| `paid_optional_additional_cost`                                         | you paid its optional additional cost                                               |
+| `defending_hero_has_soul_cards`                                         | the defending hero has cards in their soul                                          |
+| `usurped_this_turn`                                                     | you've usurped this turn                                                            |
+| `played_card_from_banish_this_turn`                                     | you've played a card from your banished zone this turn                              |
+| `it_defended`                                                           | it defended (e.g. banish it, or its fellow defenders, when the combat chain closes) |
 
 ## Pitch variants
 
@@ -109,7 +110,7 @@ Card references: generated `groups`, `tutors` and `enablesPlayFromBanish`, so ca
 
 Added for batch 4 (weapons and equipment): generated `canAttack`, `oneUse`, `turnsBanishedFaceDown`, the trigger `would_be_dealt_damage`, the condition `played_card_from_banish_this_turn`, the disruption target `attacking_hero` and the granted-to target `target_attack_action`.
 
-Added after batch 4 review: the `banishes_from_hand` group, `banishesSelf.from`, and a Groups column on review sheets.
+Added after batch 4 review: the `banishes_from_hand` group, `banishesSelf.from`, and a Groups column on review sheets. Also the banish zone `defending_cards` (Reach of the Abyss) and the condition `it_defended` (Reach of the Abyss, Depths of Despair, Carrion Husk).
 
 ## Review workflow
 
