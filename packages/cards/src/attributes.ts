@@ -16,6 +16,7 @@ export const TRIGGERS = [
   "on_leave_arena",
   "on_destroyed",
   "on_usurped",
+  "would_go_to_graveyard",
   "start_of_turn",
   "start_of_action_phase",
   "combat_chain_closes",
@@ -69,6 +70,12 @@ export const ownBanishSchema = z.strictObject({
   optional: z.boolean().optional(),
 });
 
+export const selfBanishSchema = z.strictObject({
+  trigger,
+  conditions,
+  optional: z.boolean().optional(),
+});
+
 export const arcaneDamageSchema = z.strictObject({
   amount,
   trigger,
@@ -80,6 +87,8 @@ export const arcaneDamageSchema = z.strictObject({
 export const authoredAttributesSchema = z.strictObject({
   tokens: z.array(tokenCreationSchema).optional(),
   banishesOwn: z.array(ownBanishSchema).optional(),
+  /** The card banishes itself (feeds Gates and play-from-banish). */
+  banishesSelf: z.array(selfBanishSchema).optional(),
   playableFromBanish: z.strictObject({ conditions }).optional(),
   arcaneDamage: z.array(arcaneDamageSchema).optional(),
   costReducedPerRunechant: z.boolean().optional(),
@@ -109,5 +118,6 @@ export type GrantedTo = (typeof GRANTED_TO)[number];
 export type TokenCreation = z.infer<typeof tokenCreationSchema>;
 export type OwnBanish = z.infer<typeof ownBanishSchema>;
 export type ArcaneDamage = z.infer<typeof arcaneDamageSchema>;
+export type SelfBanish = z.infer<typeof selfBanishSchema>;
 export type AuthoredCardAttributes = z.infer<typeof authoredAttributesSchema>;
 export type CardAttributes = GeneratedAttributes & AuthoredCardAttributes;

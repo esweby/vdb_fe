@@ -20,6 +20,7 @@ This page defines what we record about each card. Every hand-authored entry has 
 | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
 | `tokens`                                     | Tokens this card creates: which token, how many (a number, or `X` for variable), when, and under which conditions. One entry per separate creation.                                                                                  | Hocus Pocus: 1 Runechant `on_attack`                                                |
 | `banishesOwn`                                | Cards this card banishes from **your own** hand, top of deck or graveyard, and whether it's optional. These feed Gates and play-from-banish.                                                                                         | Become the Shadow Lord: a card from hand, `on_play`                                 |
+| `banishesSelf`                               | The card banishes **itself**: when, under which conditions, and whether it's optional. Feeds Gates and play-from-banish.                                                                                                             | Engulfing Shadows: instead of going to your graveyard                               |
 | `playableFromBanish`                         | The card can be played from your banished zone, with any conditions.                                                                                                                                                                 | Bounding Demigon: if you've played a non-attack action this turn                    |
 | `arcaneDamage`                               | Arcane damage the card deals: amount, when and conditions.                                                                                                                                                                           | Arcanic Crackle: 1 `on_attack`                                                      |
 | `grantedTo` (on `tokens` and `arcaneDamage`) | The effect is given to a later card: `next_attack_action`, `next_runeblade_attack_action` or `next_shadow_attack`.                                                                                                                   | Mauvrion Skies: your next Runeblade attack action creates 3 Runechants when it hits |
@@ -28,7 +29,7 @@ This page defines what we record about each card. Every hand-authored entry has 
 | `costReducedPerRunechant`                    | "Costs {r} less for each Runechant you control."                                                                                                                                                                                     | Rune Flash                                                                          |
 | `notes`                                      | Free text for the reviewer: doubts, or things the vocabulary can't express yet.                                                                                                                                                      |                                                                                     |
 
-**When an effect happens (`trigger`):** `on_play`, `on_attack`, `on_hit`, `on_defend`, `on_pitch`, `on_banished`, `on_leave_arena`, `on_destroyed`, `on_usurped`, `start_of_turn`, `start_of_action_phase`, `combat_chain_closes`, `activated` (an instant ability on the card), `your_attack_action_played` (when you play an attack action card), `your_attack_action_hits` (when an attack action card you control hits).
+**When an effect happens (`trigger`):** `on_play`, `on_attack`, `on_hit`, `on_defend`, `on_pitch`, `on_banished`, `on_leave_arena`, `on_destroyed`, `on_usurped`, `start_of_turn`, `start_of_action_phase`, `combat_chain_closes`, `would_go_to_graveyard` (instead of going to your graveyard), `activated` (an instant ability on the card), `your_attack_action_played` (when you play an attack action card), `your_attack_action_hits` (when an attack action card you control hits).
 
 **What has to be true (`conditions`):**
 
@@ -78,6 +79,8 @@ Added for batch 1: `your_attack_action_played`, `your_attack_action_hits`, `play
 Added after batch 1: `goAgain` (conditional) and `grantsGoAgain` (granted). Go again now has three kinds: **natural** (`hasGoAgain`, from the keyword), **conditional** and **granted**. Deck analysis and synergy rules treat them separately.
 
 Added for batch 2: `next_shadow_attack` (Step through Realms).
+
+Added for batch 3: `banishesSelf`, `would_go_to_graveyard`.
 
 ## Review workflow
 

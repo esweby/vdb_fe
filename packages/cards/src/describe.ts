@@ -17,6 +17,7 @@ const TRIGGER_TEXT: Record<Trigger, string> = {
   on_leave_arena: "when it leaves the arena",
   on_destroyed: "when it's destroyed",
   on_usurped: "when it's usurped",
+  would_go_to_graveyard: "instead of going to your graveyard",
   start_of_turn: "at the start of your turn",
   start_of_action_phase: "at the start of your action phase",
   combat_chain_closes: "when the combat chain closes",
@@ -86,6 +87,13 @@ export function describeAttributes(attributes: CardAttributes): string[] {
     const verb = b.optional ? "May banish" : "Banishes";
     lines.push(
       `${verb} ${BANISH_TEXT[b.from]} ${TRIGGER_TEXT[b.trigger]}${ifConditions(b.conditions)}.`,
+    );
+  }
+
+  for (const b of attributes.banishesSelf ?? []) {
+    const verb = b.optional ? "May banish" : "Banishes";
+    lines.push(
+      `${verb} itself ${TRIGGER_TEXT[b.trigger]}${ifConditions(b.conditions)}.`,
     );
   }
 
