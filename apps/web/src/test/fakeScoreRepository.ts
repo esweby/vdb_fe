@@ -9,8 +9,9 @@ import type {
 } from "../scoring/scoreRepository.ts";
 
 export const sampleDimensions: Dimension[] = [
-  { id: 1, key: "runechantCreation", label: "Runechant creation" },
-  { id: 2, key: "gateCreation", label: "Gate creation" },
+  { id: 1, key: "floor", label: "Floor" },
+  { id: 2, key: "ceiling", label: "Ceiling" },
+  { id: 3, key: "overall", label: "Overall" },
 ];
 
 export const sampleDetail: CardDetail = {

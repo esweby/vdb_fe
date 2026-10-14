@@ -56,7 +56,7 @@ describe("card page", () => {
       }).service,
       scores: fake.repository,
     });
-    const gate = await screen.findByRole("group", { name: "Gate creation" });
+    const gate = await screen.findByRole("group", { name: "Ceiling" });
     const user = userEvent.setup();
     await user.click(
       within(gate).getByRole("button", { name: "Not relevant" }),
@@ -81,7 +81,7 @@ describe("card page", () => {
       scores: fake.repository,
     });
     expect(
-      await screen.findByRole("slider", { name: "Runechant creation" }),
+      await screen.findByRole("slider", { name: "Floor" }),
     ).toHaveAttribute("aria-valuetext", "80");
   });
 
@@ -98,35 +98,36 @@ describe("card page", () => {
     ).toBeInTheDocument();
   });
 
-  it("only offers dimensions the card does anything for, with a way to show all", async () => {
-    const fake = fakeScoreRepository();
+  it("asks only overall for a card without conditions, with a way to rate floor and ceiling too", async () => {
     await renderApp({
       path: "/cards/card-nebula-blade",
       auth: fakeAuthService({
         users,
         signedIn: { id: "s1", email: "s@test.local" },
       }).service,
-      scores: fake.repository,
+      scores: fakeScoreRepository().repository,
     });
-    // Nebula Blade's sample data creates nothing: only Utility... which the sample dimensions lack.
     expect(
-      await screen.findByText(
-        "This card doesn't do anything these dimensions measure.",
-      ),
+      await screen.findByRole("group", { name: "Overall" }),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole("group", { name: "Runechant creation" }),
+      screen.queryByRole("group", { name: "Floor" }),
     ).not.toBeInTheDocument();
     await userEvent
       .setup()
-      .click(screen.getByRole("checkbox", { name: "Show all dimensions" }));
-    expect(
-      screen.getByRole("group", { name: "Runechant creation" }),
-    ).toBeInTheDocument();
+      .click(
+        screen.getByRole("checkbox", { name: "Rate floor and ceiling too" }),
+      );
+    expect(screen.getByRole("group", { name: "Floor" })).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Ceiling" })).toBeInTheDocument();
   });
 
-  it("shows Runechant creation for a card that creates Runechants", async () => {
-    const fake = fakeScoreRepository();
+  it("asks floor, ceiling and overall for a card with conditions, and can make floor and ceiling the same as overall", async () => {
+    const fake = fakeScoreRepository([
+      { variantId: null, side: null, dimensionId: 1, score: 40 },
+      { variantId: null, side: null, dimensionId: 2, score: 90 },
+      { variantId: null, side: null, dimensionId: 3, score: 70 },
+    ]);
     await renderApp({
       path,
       auth: fakeAuthService({
@@ -135,8 +136,36 @@ describe("card page", () => {
       }).service,
       scores: fake.repository,
     });
+    for (const name of ["Floor", "Ceiling", "Overall"]) {
+      expect(await screen.findByRole("group", { name })).toBeInTheDocument();
+    }
+    await userEvent.setup().click(
+      screen.getByRole("button", {
+        name: "Floor and ceiling same as overall",
+      }),
+    );
+    await waitFor(() =>
+      expect(fake.saved).toEqual(["clear 1:card:both", "clear 2:card:both"]),
+    );
+  });
+
+  it("flags an overall outside the floor and ceiling, without rejecting it", async () => {
+    await renderApp({
+      path,
+      auth: fakeAuthService({
+        users,
+        signedIn: { id: "s1", email: "s@test.local" },
+      }).service,
+      scores: fakeScoreRepository([
+        { variantId: null, side: null, dimensionId: 1, score: 50 },
+        { variantId: null, side: null, dimensionId: 2, score: 60 },
+        { variantId: null, side: null, dimensionId: 3, score: 80 },
+      ]).repository,
+    });
     expect(
-      await screen.findByRole("group", { name: "Runechant creation" }),
+      await screen.findByText(
+        "Overall (80) is above the ceiling (60). That's allowed, but check it.",
+      ),
     ).toBeInTheDocument();
   });
 

@@ -130,15 +130,7 @@ Format rules, such as pool size, deck size and how many weapons a hero can carry
 ### Scoring
 
 - Users score on a **0–100 scale** using a slider. Internally the maths uses `score / 100`, so the two scales are the same thing. The slider snaps to steps of 10 to reduce noise.
-- Score dimensions live in their own table, so new ones can be added without changing the schema. The initial list is decided by the scoring group. A starting draft, taken from the hero and token text:
-  - Runechant creation
-  - Gate creation
-  - Banish (from hand or deck)
-  - Playable from banish
-  - Enables traverse
-  - Utility
-
-  The scoring group agrees to score every dimension on every card they review, or to drop the dimension. Otherwise a dimension that most scorers skip turns into a wall of zeros (see below).
+- Score dimensions live in their own table, so new ones can be added without changing the schema. There are three: **floor**, **ceiling** and **overall** (below). They replaced a first draft of six mechanic dimensions (Runechant creation, Gate creation, banish, playable from banish, enables traverse, utility) before scoring started. What a card does mechanically now comes from its attributes, and later from roles, not from scores.
 
 - **Roles.**
   - `user`: personal scores and decks only.
@@ -146,6 +138,20 @@ Format rules, such as pool size, deck size and how many weapons a hero can carry
   - `curator`: a scorer who can also flag fringe cards and promote scenarios to the library. This is where experienced deck builders go.
   - `admin`: everything, including the hidden `rating_weight`. Kept to the maintainer, so nobody can quietly give themselves more weight.
 - **Rater weighting.** Every scorer's score counts equally by default. Each user has a hidden `rating_weight` (default `1.0`) that only admins can change, so known or power users can be given more influence. It's never returned to non-admin users and never used in client-side score resolution. It's applied only by the community score job on the server.
+
+#### Floor, ceiling and overall
+
+Every card is rated on how good it is, at three points (proposal agreed with the maintainer; wording and presets are for the scoring group to confirm):
+
+- **Floor:** assume none of this card's conditions are met, and it's blocked if it has an on-hit. How good is it?
+- **Ceiling:** assume all of its conditions are met and it hits.
+- **Overall:** in a typical game on this side, how good is this card?
+
+Side is not a condition: the per-side ratings already cover the two sides.
+
+**Only cards with conditions are asked for floor and ceiling.** A card has conditions when any recorded effect has a condition, or happens on a hit (UNVERIFIED rule, `hasConditions` in `packages/cards`). Cards without authored attributes count as having none; scorers can still choose "Rate floor and ceiling too". Weapons and equipment follow the same rules: a weapon with an on-hit has a condition.
+
+**A blank floor or ceiling means "the same as overall"**, at every level, instead of 0. So a card with no conditions collapses to floor = ceiling = overall without anyone rating it three times, and "Floor and ceiling same as overall" on a card with conditions just clears them. The scoring form flags, but doesn't reject, an overall outside [floor, ceiling].
 
 #### Reviews and blank scores
 
@@ -167,7 +173,7 @@ Scores can be given at four levels, from most specific to least:
 The rules:
 
 - **A blank uses the level above it.** If a scorer gives the card one Gate creation score and leaves the variants blank, every variant uses the card score.
-- **A blank at the top level, on a reviewed card, is a 0.** The scorer looked at the card and decided it doesn't matter there. The UI shows it as "not relevant".
+- **A blank at the top level, on a reviewed card, is a 0.** The scorer looked at the card and decided it doesn't matter there. The UI shows it as "not relevant". The exception is floor and ceiling: blank everywhere, they resolve as overall (see Floor, ceiling and overall).
 - **Lower levels have an explicit "not relevant" button**, which writes a 0. This is for a scorer who splits a card because one side doesn't care about it. They press "not relevant" on that side. Leaving the side blank means "same as the card".
 - **Each scorer's score is resolved first, then averaged.** For each scorer, the app finds the score that applies to a given variant, side and dimension using the rules above. The community score is the weighted average of those resolved scores. A 0 counts with the scorer's full weight, because a 0 is a rating like any other.
 - **Throughout the scoring UI, inherited values are shown.** Each blank cell shows the value it will inherit and where it comes from, greyed out, so inheriting and 0 are never confused.
@@ -283,19 +289,21 @@ This is a visualisation tool, not an automatic deck generator. The suggested cor
 
 In phase one there's no synergy yet, so the output is labelled **"Ranked by your priorities"**, not "suggested core", to avoid implying that synergy is included. From phase two, when synergy joins the ranking, it becomes the suggested core and is also highlighted on the graph. Rules elsewhere in this document that apply to the suggested core, like the minimum rating count and leaving out unreviewed cards, apply to the phase one ranking too.
 
-The user's priorities are a weight for each dimension, for example `{ runechantCreation: 1.0, gateCreation: 0.5, utility: 0.3 }`.
+The user's priority is a single **risk** setting `r` from −1 (consistent) to 1 (high-roll), with presets Consistent (−0.5), Balanced (0) and High-roll (0.5) plus a slider. The preset values are for the scoring group to confirm.
 
-1. **Source blend and side focus**: one slider between "my scores" and "community scores", and one between Forsaken and Usurper, decide which score each card uses.
-2. **Card value** = `Σ priority[d] × score[card][d]`
+1. **Source blend and side focus**: one slider between "my scores" and "community scores", and one between Forsaken and Usurper, decide which floor, ceiling and overall each card uses. They're applied to each rating; because the value is linear in the ratings, that's the same as applying them to the value.
+2. **Card value** `S = O + max(r, 0) × (C − O) + min(r, 0) × (O − F)`, with floor F, ceiling C and overall O. Balanced (r = 0) ranks by overall, full high-roll by ceiling, full consistent by floor.
 3. **Ranking**: cards are ranked by value. From phase two the ranking adds synergy: cards are picked greedily, one at a time, by `value + synergy with cards already picked`.
 4. **Threshold**: the user moves a cut-off (by count or by score) to grow or shrink the core.
 5. **Pin and exclude**: the user can pin cards (always in the core, and the ranking builds around them) or exclude cards. Cards in the deck being built count as pinned.
 6. **Constraints**: Classic Constructed copy limits (max 3 of each card), at least 2 community ratings (when using community scores), and no unreviewed cards.
 7. **Weapons and equipment**: ranked separately by slot, as described in Weapons and equipment.
 
-From there the user can add the core to a deck, or ignore it and build manually. Either way, the deck builder shows the deck's totals for each dimension as it changes.
+From there the user can add the core to a deck, or ignore it and build manually. Either way, the deck builder shows the deck's average floor, ceiling and overall by pitch as it changes. That's a stopgap: mechanic totals move to attribute counts, and roles become deck targets, later.
 
-The hero's card pool is around 1,000 variants (about 630 distinct cards), which is still small enough for the ranking to run in the browser. Changing a priority recalculates instantly, with no backend call.
+The hero's card pool is around 1,000 variants (about 630 distinct cards), which is still small enough for the ranking to run in the browser. Changing the risk setting recalculates instantly, with no backend call.
+
+**Planned, not in the first change:** roles (Setup, Payoff, Support, with sub-roles), derived from attributes and checked against player-written must-have and must-not-have card lists; role ranges as deck targets, where a card with several roles counts toward each; new payoff attributes such as "gets better with Runechants"; showing the floor–ceiling spread only above a rating-count threshold; and "enables traverse" as a phase two synergy edge.
 
 ## Utilities
 

@@ -19,9 +19,9 @@ insert into public.variants (id, card_id, external_id, pitch)
   values ('20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', 'ext-v-1', 3);
 insert into public.card_scores (user_id, card_id, dimension_id, score)
   values ('00000000-0000-0000-0000-0000000000b0', '10000000-0000-0000-0000-000000000001',
-          (select id from public.score_dimensions where key = 'utility'), 70);
+          (select id from public.score_dimensions where key = 'overall'), 70);
 insert into public.community_scores (card_id, dimension_id, score, rating_count, total_weight, scores_version)
-  values ('10000000-0000-0000-0000-000000000001', (select id from public.score_dimensions where key = 'utility'),
+  values ('10000000-0000-0000-0000-000000000001', (select id from public.score_dimensions where key = 'overall'),
           70, 1, 1, 1);
 insert into public.decks (id, user_id, name)
   values ('30000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-0000000000a1', 'Alice deck');
@@ -46,14 +46,14 @@ select throws_ok(
 select lives_ok(
   $$insert into public.card_scores (user_id, card_id, dimension_id, score)
     values ('00000000-0000-0000-0000-0000000000a1', '10000000-0000-0000-0000-000000000001',
-            (select id from public.score_dimensions where key = 'utility'), 40)$$,
+            (select id from public.score_dimensions where key = 'overall'), 40)$$,
   'users can save their own scores'
 );
 select is((select count(*)::int from public.card_scores), 1, 'users only see their own scores');
 select throws_ok(
   $$insert into public.card_scores (user_id, card_id, dimension_id, score)
     values ('00000000-0000-0000-0000-0000000000b0', '10000000-0000-0000-0000-000000000001',
-            (select id from public.score_dimensions where key = 'gateCreation'), 40)$$,
+            (select id from public.score_dimensions where key = 'ceiling'), 40)$$,
   '42501', null, 'users cannot save scores as someone else'
 );
 select lives_ok(
@@ -63,7 +63,7 @@ select lives_ok(
 );
 select throws_ok(
   $$insert into public.community_scores (card_id, dimension_id, score, rating_count, total_weight, scores_version)
-    values ('10000000-0000-0000-0000-000000000001', (select id from public.score_dimensions where key = 'banish'),
+    values ('10000000-0000-0000-0000-000000000001', (select id from public.score_dimensions where key = 'floor'),
             10, 1, 1, 1)$$,
   '42501', null, 'users cannot write community scores'
 );

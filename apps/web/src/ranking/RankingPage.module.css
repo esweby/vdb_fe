@@ -79,3 +79,32 @@
   margin-left: 0.4rem;
   padding: 0.2rem 0.4rem;
 }
+
+.risk {
+  display: grid;
+  gap: 0.5rem;
+  max-width: 32rem;
+}
+.presets {
+  display: inline-flex;
+  width: fit-content;
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  overflow: hidden;
+}
+.presets button {
+  font: inherit;
+  padding: 0.35rem 0.9rem;
+  border: none;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+.presets button[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+.presets button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}

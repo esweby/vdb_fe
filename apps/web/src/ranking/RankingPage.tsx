@@ -15,6 +15,7 @@ import { useServices } from "../servicesContext.ts";
 import { Button, Slider, Tag } from "../ui/index.ts";
 import { rankVariants, type CommunityRow, type RankedVariant } from "./rank.ts";
 import {
+  RISK_PRESETS,
   readRankingSearch,
   writeRankingSearch,
   type RankingSettings,
@@ -107,10 +108,7 @@ export function RankingPage() {
     };
   }, [scores, user]);
 
-  const settings = readRankingSearch(
-    search,
-    data?.dimensions.map((d) => d.key) ?? [],
-  );
+  const settings = readRankingSearch(search);
   const filterState = fromSearch(search);
   const update = (
     patch: Partial<RankingSettings>,
@@ -150,7 +148,7 @@ export function RankingPage() {
       dimensions: data.dimensions,
       community: data.community,
       mine: data.mine,
-      priorities: settings.priorities,
+      risk: settings.risk,
       sourceBlend: data.mine ? settings.sourceBlend : 100,
       sideFocus: settings.sideFocus,
       minRatingCount: data.minRatingCount,
@@ -267,17 +265,36 @@ export function RankingPage() {
       >
         <section className={styles.controls} aria-label="Priorities">
           <h2>Your priorities</h2>
-          <div className={styles.sliders}>
-            {data.dimensions.map((d) => (
-              <Slider
-                key={d.id}
-                label={d.label}
-                value={settings.priorities[d.key] ?? 50}
-                onChange={(v) =>
-                  update({ priorities: { ...settings.priorities, [d.key]: v } })
-                }
-              />
-            ))}
+          <div className={styles.risk}>
+            <div
+              className={styles.presets}
+              role="group"
+              aria-label="Risk presets"
+            >
+              {RISK_PRESETS.map((p) => (
+                <button
+                  key={p.label}
+                  type="button"
+                  aria-pressed={settings.risk === p.risk}
+                  onClick={() => update({ risk: p.risk })}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+            <Slider
+              label="Risk (floor ← → ceiling)"
+              min={-100}
+              max={100}
+              step={10}
+              value={settings.risk}
+              onChange={(v) => update({ risk: v })}
+            />
+            <p className={styles.note}>
+              Consistent ranks towards each card's floor (its conditions aren't
+              met), High-roll towards its ceiling (they are). Balanced uses
+              overall.
+            </p>
           </div>
           <div className={styles.sliders}>
             {data.mine && (

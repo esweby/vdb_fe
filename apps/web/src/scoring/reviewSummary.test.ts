@@ -94,4 +94,23 @@ describe("suggestedFixes", () => {
       )[0]?.score,
     ).toBe(60);
   });
+
+  it("shows a blank floor or ceiling as the same as overall, not 0", () => {
+    const ratings = [
+      { id: 1, key: "floor", label: "Floor" },
+      { id: 3, key: "overall", label: "Overall" },
+    ];
+    const cells = reviewSummary(
+      [{ variantId: null, side: null, dimensionId: 3, score: 70 }],
+      ratings,
+      [{ id: "v1", pitch: 1 }],
+    );
+    expect(
+      cells.filter((c) => c.dimensionId === 1).map((c) => [c.value, c.source]),
+    ).toEqual([
+      [70, "same_as_overall"],
+      [70, "same_as_overall"],
+    ]);
+    expect(suggestedFixes([], ratings, [{ id: "v1", pitch: 1 }])).toEqual([]);
+  });
 });

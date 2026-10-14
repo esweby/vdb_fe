@@ -7,3 +7,4 @@ export { describeAttributes } from "./describe.ts";
 export * from "./groups.ts";
 export * from "./routes.ts";
 export { relevantDimensions } from "./relevance.ts";
+export { hasConditions } from "./conditions.ts";

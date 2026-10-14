@@ -64,13 +64,14 @@ export function Slider(props: {
           data-testid="slider-scale"
           aria-hidden="true"
         >
-          {ticks.map((t) => (
+          {ticks.map((t, i) => (
             <span
               key={t}
               style={{ left: `${((t - min) / (max - min)) * 100}%` }}
               data-current={value === t || undefined}
             >
-              {t}
+              {/* More than 11 labels crowd together: label every other step. */}
+              {ticks.length <= 11 || i % 2 === 0 ? t : ""}
             </span>
           ))}
         </div>

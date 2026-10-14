@@ -1,6 +1,8 @@
 // Resolves one scorer's score for a variant, side and dimension.
 // README "Reviews and blank scores": the most specific score wins; a blank uses the
 // level above; a blank at the top level is 0 on a reviewed card and unknown otherwise.
+// README "Floor, ceiling and overall": with a fallback, a dimension that's blank at every
+// level resolves as the fallback instead (a blank floor or ceiling means "same as overall").
 
 export type Side = "forsaken" | "usurper";
 
@@ -24,6 +26,7 @@ export function resolveScore(
   rows: ScoreRow[],
   target: ScoreTarget,
   reviewed: boolean,
+  options: { fallbackDimensionId?: number } = {},
 ): number | null {
   const levels: [string | null, Side | null][] = [
     [target.variantId, target.side],
@@ -39,6 +42,13 @@ export function resolveScore(
         r.side === side,
     );
     if (match) return match.score;
+  }
+  if (options.fallbackDimensionId !== undefined) {
+    return resolveScore(
+      rows,
+      { ...target, dimensionId: options.fallbackDimensionId },
+      reviewed,
+    );
   }
   return reviewed ? 0 : null;
 }

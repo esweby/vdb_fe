@@ -39,7 +39,11 @@ const db = {
     { id: "v1", card_id: "c1" },
     { id: "v2", card_id: "c1" },
   ],
-  scoreDimensions: [{ id: 6 }],
+  scoreDimensions: [
+    { id: 6, key: "overall" },
+    { id: 4, key: "floor" },
+    { id: 5, key: "ceiling" },
+  ],
   appSettings: [
     { key: "fringe_default", value: 20 },
     { key: "fringe_k", value: 3 },
@@ -87,6 +91,8 @@ describe("buildScoringInput", () => {
 
   it("reads the fringe settings", () => {
     expect(input.settings).toEqual({ fringeDefault: 20, fringeK: 3 });
-    expect(input.dimensionIds).toEqual([6]);
+    expect(input.dimensionIds).toEqual([6, 4, 5]);
+    // Floor and ceiling fall back to overall.
+    expect(input.fallbacks).toEqual({ 4: 6, 5: 6 });
   });
 });

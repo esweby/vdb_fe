@@ -9,7 +9,7 @@ insert into public.variants (id, card_id, external_id, pitch)
   values ('20000000-0000-0000-0000-0000000000c1', '10000000-0000-0000-0000-0000000000c1', 'job-v-1', 1);
 insert into public.community_scores (card_id, variant_id, side, dimension_id, score, rating_count, total_weight, scores_version)
   values ('10000000-0000-0000-0000-0000000000c1', '20000000-0000-0000-0000-0000000000c1', 'forsaken',
-          (select id from public.score_dimensions where key = 'utility'), 10, 1, 1, 1);
+          (select id from public.score_dimensions where key = 'overall'), 10, 1, 1, 1);
 
 -- Not callable by users
 insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000e1', 'job@test.local');
@@ -36,7 +36,7 @@ select lives_ok(
       'cardId', '10000000-0000-0000-0000-0000000000c1',
       'variantId', '20000000-0000-0000-0000-0000000000c1',
       'side', 'usurper',
-      'dimensionId', (select id from public.score_dimensions where key = 'utility'),
+      'dimensionId', (select id from public.score_dimensions where key = 'overall'),
       'score', 62.5, 'ratingCount', 2, 'totalWeight', 2
     ))::text
   ),

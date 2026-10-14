@@ -20,13 +20,14 @@ export interface ScoringDbRows {
   }[];
   cards: { id: string; fringe: boolean }[];
   variants: { id: string; card_id: string }[];
-  scoreDimensions: { id: number }[];
+  scoreDimensions: { id: number; key: string }[];
   appSettings: { key: string; value: unknown }[];
 }
 
 export function buildScoringInput(db: ScoringDbRows): {
   cards: ScoringCard[];
   dimensionIds: number[];
+  fallbacks: Record<number, number>;
   scorers: Scorer[];
   settings: FringeSettings;
 } {
@@ -70,10 +71,24 @@ export function buildScoringInput(db: ScoringDbRows): {
       variantIds: variantsByCard.get(c.id) ?? [],
     })),
     dimensionIds: db.scoreDimensions.map((d) => d.id),
+    fallbacks: fallbacksFor(db.scoreDimensions),
     scorers,
     settings: {
       fringeDefault: setting("fringe_default"),
       fringeK: setting("fringe_k"),
     },
   };
+}
+
+/** README "Floor, ceiling and overall": a blank floor or ceiling resolves as overall. */
+export function fallbacksFor(
+  dimensions: { id: number; key: string }[],
+): Record<number, number> {
+  const overall = dimensions.find((d) => d.key === "overall");
+  if (!overall) return {};
+  return Object.fromEntries(
+    dimensions
+      .filter((d) => d.key === "floor" || d.key === "ceiling")
+      .map((d) => [d.id, overall.id]),
+  );
 }

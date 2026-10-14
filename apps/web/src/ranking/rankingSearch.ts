@@ -1,8 +1,8 @@
 // Ranking settings <-> URL search params, so a ranking can be shared or bookmarked.
 
 export interface RankingSettings {
-  /** dimension key -> weight, 0–100 */
-  priorities: Record<string, number>;
+  /** −100 (consistent: floor) to 100 (high-roll: ceiling); 0 = overall */
+  risk: number;
   sourceBlend: number;
   sideFocus: number;
   coreSize: number;
@@ -12,7 +12,7 @@ export interface RankingSettings {
 }
 
 export interface RankingSearch {
-  w?: string[];
+  risk?: number;
   blend?: number;
   side?: number;
   core?: number;
@@ -20,7 +20,13 @@ export interface RankingSearch {
   ex?: string[];
 }
 
-const DEFAULT_WEIGHT = 50;
+/** README "Ranking" presets. UNVERIFIED values, for the scoring group to confirm. */
+export const RISK_PRESETS = [
+  { label: "Consistent", risk: -50 },
+  { label: "Balanced", risk: 0 },
+  { label: "High-roll", risk: 50 },
+] as const;
+
 const clamp = (n: number, min: number, max: number) =>
   Math.min(max, Math.max(min, n));
 const num = (v: unknown) =>
@@ -30,22 +36,11 @@ const strings = (v: unknown) =>
 
 export function readRankingSearch(
   search: Partial<Record<keyof RankingSearch, unknown>>,
-  dimensionKeys: string[],
 ): RankingSettings {
-  const priorities = Object.fromEntries(
-    dimensionKeys.map((k) => [k, DEFAULT_WEIGHT]),
-  );
-  for (const entry of strings(search.w)) {
-    const [key, raw] = entry.split(":");
-    const value = Number(raw);
-    if (key && key in priorities && raw !== "" && Number.isFinite(value)) {
-      priorities[key] = clamp(value, 0, 100);
-    }
-  }
   const or = (v: unknown, fallback: number, min: number, max: number) =>
     Number.isFinite(num(v)) ? clamp(Math.round(num(v)), min, max) : fallback;
   return {
-    priorities,
+    risk: or(search.risk, 0, -100, 100),
     sourceBlend: or(search.blend, 100, 0, 100),
     sideFocus: or(search.side, 50, 0, 100),
     coreSize: or(search.core, 20, 1, 80),
@@ -56,11 +51,8 @@ export function readRankingSearch(
 
 /** Only non-default values are written, to keep URLs short. */
 export function writeRankingSearch(s: RankingSettings): RankingSearch {
-  const w = Object.entries(s.priorities)
-    .filter(([, v]) => v !== DEFAULT_WEIGHT)
-    .map(([k, v]) => `${k}:${v}`);
   return {
-    ...(w.length ? { w } : {}),
+    ...(s.risk !== 0 ? { risk: s.risk } : {}),
     ...(s.sourceBlend !== 100 ? { blend: s.sourceBlend } : {}),
     ...(s.sideFocus !== 50 ? { side: s.sideFocus } : {}),
     ...(s.coreSize !== 20 ? { core: s.coreSize } : {}),

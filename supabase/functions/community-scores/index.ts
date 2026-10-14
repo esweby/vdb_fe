@@ -66,7 +66,7 @@ Deno.serve(async (request) => {
     )) as never,
     cards: (await all("cards", "id, fringe")) as never,
     variants: (await all("variants", "id, card_id")) as never,
-    scoreDimensions: (await all("score_dimensions", "id")) as never,
+    scoreDimensions: (await all("score_dimensions", "id, key")) as never,
     appSettings: (await all("app_settings", "key, value")) as never,
   });
 

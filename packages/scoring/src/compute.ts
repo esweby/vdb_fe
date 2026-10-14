@@ -32,6 +32,8 @@ const SIDES: Side[] = ["forsaken", "usurper"];
 export function computeCommunityScores(input: {
   cards: ScoringCard[];
   dimensionIds: number[];
+  /** dimension id -> the dimension a blank resolves to (floor and ceiling -> overall) */
+  fallbacks?: Record<number, number>;
   scorers: Scorer[];
   settings: FringeSettings;
 }): CommunityRow[] {
@@ -54,6 +56,7 @@ export function computeCommunityScores(input: {
               r.scores,
               { variantId, side, dimensionId },
               true,
+              { fallbackDimensionId: input.fallbacks?.[dimensionId] },
             )!,
           }));
           const result = communityScore(ratings, {

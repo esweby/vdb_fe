@@ -113,6 +113,8 @@
 .backdrop {
   position: fixed;
   inset: 0;
+  /* Above positioned page content (e.g. slider scales) that comes later in the DOM. */
+  z-index: 100;
   background: rgb(0 0 0 / 0.45);
   display: grid;
   place-items: center;

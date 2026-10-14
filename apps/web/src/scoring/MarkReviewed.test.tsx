@@ -15,7 +15,7 @@ const signedIn = (email: "s@test.local" | "u@test.local") =>
 describe("Mark reviewed", () => {
   it("shows the summary before confirming, highlighting blanks that count as 0", async () => {
     const fake = fakeScoreRepository([
-      { variantId: "hp1", side: null, dimensionId: 1, score: 80 },
+      { variantId: "hp1", side: null, dimensionId: 3, score: 80 },
     ]);
     await renderApp({
       path: "/cards/card-hocus-pocus",
@@ -70,7 +70,7 @@ describe("Mark reviewed", () => {
 
   it("applies the one-click fix for the blank-pitch trap", async () => {
     const fake = fakeScoreRepository([
-      { variantId: "hp1", side: null, dimensionId: 1, score: 80 },
+      { variantId: "hp1", side: null, dimensionId: 3, score: 80 },
     ]);
     await renderApp({
       path: "/cards/card-hocus-pocus",
@@ -83,16 +83,56 @@ describe("Mark reviewed", () => {
     );
     await user.click(
       screen.getByRole("button", {
-        name: "Runechant creation: Use 80 for the whole card, so blank pitches and sides inherit it",
+        name: "Overall: Use 80 for the whole card, so blank pitches and sides inherit it",
       }),
     );
-    await waitFor(() => expect(fake.saved).toContain("save 1:card:both=80"));
+    await waitFor(() => expect(fake.saved).toContain("save 3:card:both=80"));
     expect(
       within(screen.getByRole("dialog")).queryAllByText("0 (blank)"),
     ).toHaveLength(
-      // Gate creation isn't relevant to Hocus Pocus, so nothing is left blank.
+      // Hocus Pocus has no conditions, so only overall is asked and nothing is left blank.
       0,
     );
+  });
+
+  it("highlights a blank floor and ceiling on a card with conditions, until confirmed as the same as overall", async () => {
+    const fake = fakeScoreRepository([
+      { variantId: null, side: null, dimensionId: 3, score: 70 },
+    ]);
+    await renderApp({
+      path: "/cards/card-become-the-shadow-lord",
+      auth: signedIn("s@test.local"),
+      scores: fake.repository,
+    });
+    const user = userEvent.setup();
+    await user.click(
+      await screen.findByRole("button", { name: "Mark reviewed" }),
+    );
+    const dialog = within(
+      screen.getByRole("dialog", { name: "Mark reviewed" }),
+    );
+    const flagged = () =>
+      dialog
+        .getAllByText("70 (same as overall)")
+        .filter((cell) => cell.getAttribute("data-attention") === "true");
+    // Floor and ceiling, both sides
+    expect(flagged()).toHaveLength(4);
+    expect(
+      dialog.getByText(
+        "Floor and ceiling are blank, so they'll count as the same as overall. This card has conditions: check that's right.",
+      ),
+    ).toBeInTheDocument();
+    await user.click(
+      dialog.getByRole("button", { name: "Yes, same as overall" }),
+    );
+    expect(flagged()).toHaveLength(0);
+    expect(
+      dialog.queryByRole("button", { name: "Yes, same as overall" }),
+    ).not.toBeInTheDocument();
+    // Confirming the review isn't blocked either way
+    expect(
+      dialog.getByRole("button", { name: "Confirm review" }),
+    ).toBeEnabled();
   });
 
   it("shows an existing review", async () => {

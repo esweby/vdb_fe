@@ -64,3 +64,45 @@ describe("resolveScore", () => {
     );
   });
 });
+
+// README "Floor, ceiling and overall": a blank floor or ceiling, at every level, means
+// "the same as overall". Cards without conditions are only asked overall, so they collapse.
+describe("resolveScore with a fallback (floor and ceiling fall back to overall)", () => {
+  const FLOOR = 1;
+  const OVERALL = 3;
+  const r = (
+    dimensionId: number,
+    score: number,
+    variantId: string | null = null,
+  ): ScoreRow => ({ variantId, side: null, dimensionId, score });
+  const floorAt = {
+    variantId: RED,
+    side: "forsaken" as const,
+    dimensionId: FLOOR,
+  };
+
+  it("uses overall when floor is blank at every level", () => {
+    expect(
+      resolveScore([r(OVERALL, 70)], floorAt, true, {
+        fallbackDimensionId: OVERALL,
+      }),
+    ).toBe(70);
+  });
+
+  it("uses the floor when one is set at any level, even if overall is more specific", () => {
+    expect(
+      resolveScore([r(FLOOR, 40), r(OVERALL, 70, RED)], floorAt, true, {
+        fallbackDimensionId: OVERALL,
+      }),
+    ).toBe(40);
+  });
+
+  it("is 0 on a reviewed card with nothing set, and unknown on an unreviewed one", () => {
+    expect(
+      resolveScore([], floorAt, true, { fallbackDimensionId: OVERALL }),
+    ).toBe(0);
+    expect(
+      resolveScore([], floorAt, false, { fallbackDimensionId: OVERALL }),
+    ).toBeNull();
+  });
+});
