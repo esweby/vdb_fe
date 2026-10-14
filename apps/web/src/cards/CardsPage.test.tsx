@@ -166,7 +166,7 @@ describe("cards page", () => {
     expect(router.state.location.search).toMatchObject({ sort: "power" });
   });
 
-  it("offers small, large and larger cards, and a list", async () => {
+  it("offers small and large cards, and a list", async () => {
     const { router } = await renderApp({
       path: "/cards",
       auth: fakeAuthService().service,
@@ -179,14 +179,17 @@ describe("cards page", () => {
     );
     await userEvent
       .setup()
-      .click(views.getByRole("button", { name: "Larger cards" }));
+      .click(views.getByRole("button", { name: "Large cards" }));
     await waitFor(() =>
-      expect(router.state.location.search).toMatchObject({ view: "larger" }),
+      expect(router.state.location.search).toMatchObject({ view: "large" }),
     );
     expect(screen.getByRole("list", { name: "Cards" })).toHaveAttribute(
       "data-size",
-      "larger",
+      "large",
     );
+    expect(
+      views.queryByRole("button", { name: "Larger cards" }),
+    ).not.toBeInTheDocument();
   });
 
   it("pages through results, and goes back to page 1 when filters change", async () => {
