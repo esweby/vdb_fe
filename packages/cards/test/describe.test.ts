@@ -130,6 +130,21 @@ describe("describeAttributes", () => {
     ]);
   });
 
+  it("describes Runechants created when usurped", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        tokens: [
+          { token: "runechant", amount: 1, trigger: "on_usurped" },
+          { token: "runechant", amount: 1, trigger: "on_destroyed" },
+        ],
+      }),
+    ).toEqual([
+      "Creates 1 Runechant when it's usurped.",
+      "Creates 1 Runechant when it's destroyed.",
+    ]);
+  });
+
   it("describes nothing for a plain card", () => {
     expect(describeAttributes(generated)).toEqual([]);
   });
