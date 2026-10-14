@@ -132,7 +132,7 @@ export const weaponsAndEquipment: AuthoredAttributes = {
 
   // Blood debt equipment
   "Carrion Husk": {
-    verified: false,
+    verified: true,
     card: {
       banishesSelf: [
         { trigger: "combat_chain_closes", conditions: ["it_defended"] },
@@ -210,7 +210,7 @@ export const weaponsAndEquipment: AuthoredAttributes = {
 
   // Banishing your own cards (from hand, or defending cards on the chain)
   "Corrupted Crown": {
-    verified: false,
+    verified: true,
     card: {
       banishesOwn: [{ from: "hand", trigger: "on_defend", optional: true }],
       conditionalBonuses: [
@@ -219,7 +219,7 @@ export const weaponsAndEquipment: AuthoredAttributes = {
     },
   },
   "Ebon Fold": {
-    verified: false,
+    verified: true,
     card: {
       oneUse: true,
       banishesOwn: [{ from: "hand", trigger: "activated" }],
@@ -230,7 +230,7 @@ export const weaponsAndEquipment: AuthoredAttributes = {
     },
   },
   "Reach of the Abyss": {
-    verified: false,
+    verified: true,
     card: {
       banishesOwn: [
         {
@@ -273,7 +273,7 @@ export const weaponsAndEquipment: AuthoredAttributes = {
   },
 
   "Snapdragon Scalers": {
-    verified: false,
+    verified: true,
     card: {
       oneUse: true,
       grantsGoAgain: "target_attack_action",
@@ -283,7 +283,7 @@ export const weaponsAndEquipment: AuthoredAttributes = {
   },
 
   "Base of the Mountain": {
-    verified: false,
+    verified: true,
     card: {
       banishesOwn: [
         {

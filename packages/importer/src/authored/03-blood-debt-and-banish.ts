@@ -82,7 +82,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Consuming Aftermath": {
-    verified: false,
+    verified: true,
     card: {
       banishesOwn: [{ from: "hand", trigger: "on_play", optional: true }],
       conditionalBonuses: [
@@ -183,7 +183,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     card: { playableFromBanish: {} },
   },
   "Depths of Despair": {
-    verified: false,
+    verified: true,
     card: {
       banishesSelf: [
         { trigger: "combat_chain_closes", conditions: ["it_defended"] },
@@ -279,7 +279,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     card: { banishesSelf: [{ trigger: "would_go_to_graveyard" }] },
   },
   "Fallen Herald": {
-    verified: false,
+    verified: true,
     card: {
       banishesSelf: [{ from: "hand", trigger: "activated" }],
       notes: "Banish it from hand to prevent the next 4 damage.",
@@ -560,7 +560,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Shadowrealm Ripper": {
-    verified: false,
+    verified: true,
     card: {
       banishesOwn: [{ from: "hand", trigger: "on_attack", optional: true }],
       conditionalBonuses: [
@@ -573,7 +573,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Shadowrealm Walker": {
-    verified: false,
+    verified: true,
     card: {
       banishesOwn: [{ from: "hand", trigger: "on_attack", optional: true }],
       conditionalBonuses: [
@@ -650,7 +650,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     card: { playableFromBanish: {}, notes: "Draw a card." },
   },
   "Tribute to Greater Power": {
-    verified: false,
+    verified: true,
     card: {
       banishesSelf: [{ from: "hand", trigger: "activated" }],
       notes:
