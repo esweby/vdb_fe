@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { selectCanScore } from "../auth/authSlice.ts";
 import { classOf, TYPE_LABELS } from "../cards/filterCards.ts";
 import { useAppSelector } from "../hooks.ts";
-import { useServices } from "../services.tsx";
+import { useServices } from "../servicesContext.ts";
 import { Button, Tag } from "../ui/index.ts";
 import { ReviewDialog } from "./ReviewDialog.tsx";
 import type {
@@ -144,8 +144,7 @@ export function CardScoringPage() {
       <Link to="/cards">← Cards</Link>
       <h1>{card.name}</h1>
       <p className={styles.meta}>
-        {TYPE_LABELS[card.type] ?? card.type} ·{" "}
-        {classOf({ ...card, subtypes: [], variants: [] })}{" "}
+        {TYPE_LABELS[card.type] ?? card.type} · {classOf(card)}{" "}
         <Tag tone={card.attributesVerified ? "accent" : "neutral"}>
           {card.attributesVerified ? "Verified" : "Unverified"}
         </Tag>

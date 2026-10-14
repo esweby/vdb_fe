@@ -10,6 +10,8 @@ const rowNames = () =>
     .getAllByRole("row")
     .slice(1)
     .map((r) => within(r).getAllByRole("cell")[0]!.textContent);
+const filters = () =>
+  within(screen.getByRole("complementary", { name: "Filters" }));
 
 describe("cards page", () => {
   it("lists cards with their details", async () => {
@@ -28,16 +30,42 @@ describe("cards page", () => {
     await renderApp({ path: "/cards", auth: fakeAuthService().service });
     await screen.findByRole("link", { name: "Hocus Pocus" });
     await userEvent.setup().type(screen.getByLabelText("Search"), "shadow");
-    expect(rowNames()).toEqual(["Become the Shadow Lord"]);
+    await waitFor(() => expect(rowNames()).toEqual(["Become the Shadow Lord"]));
   });
 
-  it("filters by pitch and class", async () => {
-    await renderApp({ path: "/cards", auth: fakeAuthService().service });
+  it("includes and excludes with the sidebar, and keeps filters in the URL", async () => {
+    const { router } = await renderApp({
+      path: "/cards",
+      auth: fakeAuthService().service,
+    });
     await screen.findByRole("link", { name: "Hocus Pocus" });
     const user = userEvent.setup();
-    await user.click(screen.getByRole("checkbox", { name: "Pitch 3" }));
-    await user.selectOptions(screen.getByLabelText("Class"), "Runeblade");
+    await user.click(filters().getByRole("button", { name: /^Pitch 3,/ }));
+    expect(rowNames()).toEqual([
+      "Become the Shadow Lord",
+      "Fate Foreseen",
+      "Hocus Pocus",
+    ]);
+    // Generic: click twice to exclude
+    await user.click(filters().getByRole("button", { name: /^Generic,/ }));
+    await user.click(filters().getByRole("button", { name: /^Generic,/ }));
     expect(rowNames()).toEqual(["Become the Shadow Lord", "Hocus Pocus"]);
+    expect(router.state.location.search).toEqual({
+      inc: ["pitch:3"],
+      exc: ["class:Generic"],
+    });
+  });
+
+  it("restores filters from the URL", async () => {
+    await renderApp({
+      path: "/cards?inc=%5B%22keywords%3Ago_again%22%5D",
+      auth: fakeAuthService().service,
+    });
+    await screen.findByRole("table", { name: /cards/i });
+    expect(rowNames()).toEqual(["Become the Shadow Lord"]);
+    expect(
+      screen.getByRole("button", { name: "Remove Include: Go again" }),
+    ).toBeInTheDocument();
   });
 
   it("shows how many cards match", async () => {

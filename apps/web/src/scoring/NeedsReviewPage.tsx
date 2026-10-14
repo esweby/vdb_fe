@@ -1,10 +1,19 @@
-import { Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { getRouteApi, Link } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import { cardFacets } from "../cards/facets.ts";
+import { searchAndSort } from "../cards/filterCards.ts";
+import { applyFilters } from "../filters/applyFilters.ts";
+import { FilteredLayout } from "../filters/FilteredLayout.tsx";
+import { FilterSidebar } from "../filters/FilterSidebar.tsx";
+import { useUrlFilters } from "../filters/useUrlFilters.ts";
 import type { CardSummary } from "../cards/cardRepository.ts";
 import { useCards } from "../cards/useCards.ts";
 import { useAppSelector } from "../hooks.ts";
-import { useServices } from "../services.tsx";
+import { useServices } from "../servicesContext.ts";
 import styles from "./NeedsReviewPage.module.css";
+
+const route = getRouteApi("/needs-review");
+const facets = cardFacets();
 
 const isClassCard = (c: CardSummary) =>
   c.classes.includes("Runeblade") || c.talents.includes("Shadow");
@@ -39,6 +48,7 @@ export function NeedsReviewPage() {
   const { scores } = useServices();
   const user = useAppSelector((s) => s.auth.user);
   const [reviewed, setReviewed] = useState<Set<string> | null>(null);
+  const filters = useUrlFilters(route.useSearch());
 
   useEffect(() => {
     if (!user) return;
@@ -51,10 +61,21 @@ export function NeedsReviewPage() {
     };
   }, [scores, user]);
 
+  const unreviewed = useMemo(
+    () =>
+      searchAndSort(
+        items.filter((c) => !reviewed?.has(c.id)),
+        "",
+        "name",
+      ),
+    [items, reviewed],
+  );
+  const todo = useMemo(
+    () => applyFilters(unreviewed, facets, filters.state),
+    [unreviewed, filters.state],
+  );
+
   if (status !== "loaded" || !reviewed) return <p>Loading…</p>;
-  const todo = items
-    .filter((c) => !reviewed.has(c.id))
-    .sort((a, b) => a.name.localeCompare(b.name));
   const classCards = todo.filter(isClassCard);
   const generics = todo.filter((c) => !isClassCard(c));
 
@@ -64,8 +85,20 @@ export function NeedsReviewPage() {
       <p>
         {todo.length} {todo.length === 1 ? "card" : "cards"} left to review
       </p>
-      <Section title="Runeblade and Shadow" cards={classCards} />
-      <Section title="Generic" cards={generics} />
+      <FilteredLayout
+        state={filters.state}
+        sidebar={
+          <FilterSidebar
+            items={unreviewed}
+            facets={facets}
+            state={filters.state}
+            onChange={filters.setState}
+          />
+        }
+      >
+        <Section title="Runeblade and Shadow" cards={classCards} />
+        <Section title="Generic" cards={generics} />
+      </FilteredLayout>
     </>
   );
 }

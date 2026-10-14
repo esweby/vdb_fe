@@ -1,0 +1,32 @@
+.layout {
+  display: grid;
+  grid-template-columns: 16rem minmax(0, 1fr);
+  gap: 3rem;
+  align-items: start;
+}
+.toggle {
+  display: none;
+}
+.sidebar {
+  position: sticky;
+  top: 1rem;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+@media (max-width: 48rem) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .toggle {
+    display: block;
+  }
+  .sidebar {
+    display: none;
+    position: static;
+    max-height: none;
+  }
+  .sidebar.open {
+    display: block;
+  }
+}

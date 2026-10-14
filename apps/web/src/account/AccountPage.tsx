@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAppSelector } from "../hooks.ts";
-import { useServices } from "../services.tsx";
+import { useServices } from "../servicesContext.ts";
 import type { Preferences } from "../scoring/scoreRepository.ts";
 
 const ROLE_LABEL = {
