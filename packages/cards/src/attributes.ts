@@ -2,6 +2,7 @@
 // It describes effects, it doesn't implement game rules. Extend it in small, tested changes
 // when a card can't be described (see docs/attribute-vocabulary.md).
 import { z } from "zod";
+import { CARD_GROUPS, type CardGroup } from "./groups.ts";
 
 export const TOKENS = ["runechant", "gate", "eloquence"] as const;
 
@@ -62,6 +63,27 @@ const amount = z.union([z.number().int().positive(), z.literal("X")]);
 const trigger = z.enum(TRIGGERS);
 const conditions = z.array(z.enum(CONDITIONS)).optional();
 const grantedTo = z.enum(GRANTED_TO).optional();
+
+/** A reference to a group of cards or one named card. */
+export const cardRefSchema = z.union([
+  z.strictObject({ group: z.enum(CARD_GROUPS) }),
+  z.strictObject({ card: z.string().min(1) }),
+]);
+
+export const TUTOR_DESTINATIONS = ["hand", "arena", "banished"] as const;
+
+export const tutorSchema = z.strictObject({
+  target: cardRefSchema,
+  to: z.enum(TUTOR_DESTINATIONS),
+  trigger,
+  conditions,
+  optional: z.boolean().optional(),
+});
+
+export const playFromBanishEnablerSchema = z.strictObject({
+  target: cardRefSchema,
+  conditions,
+});
 
 /** Who a disruption effect hits. `each_hero` includes you. */
 export const DISRUPT_TARGETS = [
@@ -143,6 +165,10 @@ export const authoredAttributesSchema = z.strictObject({
   arcaneDamage: z.array(arcaneDamageSchema).optional(),
   costReducedPerRunechant: z.boolean().optional(),
   disrupts: z.array(disruptionSchema).optional(),
+  /** Searches your deck for a group or named card. */
+  tutors: z.array(tutorSchema).optional(),
+  /** Lets a group or named card be played from your banished zone this turn. */
+  enablesPlayFromBanish: z.array(playFromBanishEnablerSchema).optional(),
   /** "You may play this as though it were an instant", with its condition. */
   instantSpeed: z
     .strictObject({ conditions: z.array(z.enum(CONDITIONS)).min(1) })
@@ -168,6 +194,8 @@ export interface GeneratedAttributes {
   hasRuneGate: boolean;
   /** A blood debt action card, so a Gate to i'Arathael can play it from banish. */
   isGateTarget: boolean;
+  /** Groups the card belongs to (see groups.ts). */
+  groups: CardGroup[];
   /** Hero named in "<Hero> Specialization", or null. */
   specialization: string | null;
 }
@@ -181,5 +209,7 @@ export type OwnBanish = z.infer<typeof ownBanishSchema>;
 export type ArcaneDamage = z.infer<typeof arcaneDamageSchema>;
 export type SelfBanish = z.infer<typeof selfBanishSchema>;
 export type Disruption = z.infer<typeof disruptionSchema>;
+export type CardRef = z.infer<typeof cardRefSchema>;
+export type Tutor = z.infer<typeof tutorSchema>;
 export type AuthoredCardAttributes = z.infer<typeof authoredAttributesSchema>;
 export type CardAttributes = GeneratedAttributes & AuthoredCardAttributes;

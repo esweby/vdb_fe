@@ -1,6 +1,9 @@
 // Plain-English descriptions of attributes, for review sheets and card pages.
+import type { CardGroup } from "./groups.ts";
 import type {
   CardAttributes,
+  CardRef,
+  Tutor,
   Disruption,
   Condition,
   GrantedTo,
@@ -121,6 +124,23 @@ function disruptionPhrase(d: Disruption): [string, string] {
   return [`banishes ${rest}`, `banish ${rest}`];
 }
 
+const GROUP_TEXT: Record<CardGroup, string> = {
+  runechant_aura: "a Runechant aura (sinchant)",
+  runeblade_aura: "a Runeblade aura",
+  runeblade_attack_action: "a Runeblade attack action card",
+  runeblade_non_attack_action: "a Runeblade non-attack action card",
+};
+
+const refText = (ref: CardRef) =>
+  "group" in ref ? GROUP_TEXT[ref.group] : ref.card;
+
+/** [third person, base form] of where a tutor puts the card. */
+const TUTOR_TO: Record<Tutor["to"], [string, string]> = {
+  hand: ["puts it into your hand", "put it into your hand"],
+  arena: ["puts it into the arena", "put it into the arena"],
+  banished: ["banishes it", "banish it"],
+};
+
 function ifConditions(conditions: Condition[] | undefined): string {
   return conditions?.length
     ? `, if ${conditions.map((c) => CONDITION_TEXT[c]).join(" and ")}`
@@ -130,8 +150,12 @@ function ifConditions(conditions: Condition[] | undefined): string {
 export function describeAttributes(attributes: CardAttributes): string[] {
   const lines: string[] = [];
 
-  if (attributes.specialization)
+  if (attributes.specialization) {
     lines.push(`${attributes.specialization} specialization.`);
+  }
+  if (attributes.groups?.includes("runechant_aura")) {
+    lines.push("Is a Runechant aura (sinchant).");
+  }
 
   for (const b of attributes.banishesOwn ?? []) {
     const verb = b.optional ? "May banish" : "Banishes";
@@ -175,6 +199,22 @@ export function describeAttributes(attributes: CardAttributes): string[] {
       : `${subject} ${third}`;
     lines.push(
       `${sentence} ${TRIGGER_TEXT[d.trigger]}${ifConditions(d.conditions)}.`,
+    );
+  }
+
+  for (const t of attributes.tutors ?? []) {
+    const [third, base] = TUTOR_TO[t.to];
+    const sentence = t.optional
+      ? `May search your deck for ${refText(t.target)} and ${base}`
+      : `Searches your deck for ${refText(t.target)} and ${third}`;
+    lines.push(
+      `${sentence} ${TRIGGER_TEXT[t.trigger]}${ifConditions(t.conditions)}.`,
+    );
+  }
+
+  for (const e of attributes.enablesPlayFromBanish ?? []) {
+    lines.push(
+      `Lets you play ${refText(e.target)} from your banished zone this turn${ifConditions(e.conditions)}.`,
     );
   }
 

@@ -6,14 +6,15 @@ This page defines what we record about each card. Every hand-authored entry has 
 
 ## Generated automatically (from the dataset)
 
-| Attribute        | From                                                                                                |
-| ---------------- | --------------------------------------------------------------------------------------------------- |
-| `hasGoAgain`     | the "Go again" keyword                                                                              |
-| `hasBloodDebt`   | the "Blood Debt" keyword                                                                            |
-| `hasUsurp`       | the "Usurp" keyword                                                                                 |
-| `hasRuneGate`    | the "Rune Gate" keyword                                                                             |
-| `specialization` | "<Hero> Specialization" in the card text. Other heroes' specializations are excluded from the pool. |
-| `isGateTarget`   | a blood debt action or attack action card: a Gate to i'Arathael can play it from your banished zone |
+| Attribute        | From                                                                                                                                                                                                                                                             |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `hasGoAgain`     | the "Go again" keyword                                                                                                                                                                                                                                           |
+| `hasBloodDebt`   | the "Blood Debt" keyword                                                                                                                                                                                                                                         |
+| `hasUsurp`       | the "Usurp" keyword                                                                                                                                                                                                                                              |
+| `hasRuneGate`    | the "Rune Gate" keyword                                                                                                                                                                                                                                          |
+| `specialization` | "<Hero> Specialization" in the card text. Other heroes' specializations are excluded from the pool.                                                                                                                                                              |
+| `isGateTarget`   | a blood debt action or attack action card: a Gate to i'Arathael can play it from your banished zone                                                                                                                                                              |
+| `groups`         | groups the card belongs to, derived from its facts: `runechant_aura` (the sinchants: auras with Runechant in their name), `runeblade_aura`, `runeblade_attack_action`, `runeblade_non_attack_action`. Defined in [`groups.ts`](../packages/cards/src/groups.ts). |
 
 ## Written by hand
 
@@ -30,6 +31,8 @@ This page defines what we record about each card. Every hand-authored entry has 
 | `grantsGoAgain`                              | **Granted** go again: gives go again to a later card (`next_attack_action` or `next_runeblade_attack_action`).                                                                                                                                                                                                                    | Mauvrion Skies                                                                      |
 | `disrupts`                                   | Effects on opponents' cards: `banish` (from hand, arsenal, top of deck, graveyard, soul or auras), `discard` (from hand) or `destroy` (auras). Records the `amount` (a number, `X` or `all`), the `target` (`opponent`, `defending_hero`, or `each_hero`, which includes you), the trigger, conditions and whether it's optional. | Cull: each hero (you included) banishes 1 card from their hand                      |
 | `instantSpeed`                               | "You may play this as though it were an instant", with its `conditions` (required).                                                                                                                                                                                                                                               | Cull: if a hero has lost life this turn                                             |
+| `tutors`                                     | Searches your deck for a `target` (a `{ group }` or a `{ card }` by name) and puts it into your `hand`, the `arena`, or `banished`. Card names are checked against the imported pool.                                                                                                                                             | Sinspeaker Gloomblade: a Runechant aura into the arena                              |
+| `enablesPlayFromBanish`                      | Lets a group or named card be played from your banished zone this turn.                                                                                                                                                                                                                                                           | Embrace Sin: a Runechant aura (sinchant)                                            |
 | `costReducedPerRunechant`                    | "Costs {r} less for each Runechant you control."                                                                                                                                                                                                                                                                                  | Rune Flash                                                                          |
 | `notes`                                      | Free text for the reviewer: doubts, or things the vocabulary can't express yet.                                                                                                                                                                                                                                                   |                                                                                     |
 
@@ -94,6 +97,8 @@ Added for batch 3: `banishesSelf`, `would_go_to_graveyard`.
 Added from batch 3 review: `isGateTarget` (generated), `rewardsPlayFromBanish`, five conditions, and `goAgain` now requires at least one condition.
 
 Added after batch 3 review: `disrupts` and `instantSpeed`. Hand, arsenal and other disruption and conditional instant speed matter strategically, so they're recorded as data rather than notes. Also three granted-to targets: `banished_card` (Painful Passage), `card_in_banished_zone_matching_pitch` (Tear Through the Portal) and `next_action_card_matching_pitch` (Fasting Carcass).
+
+Card references: generated `groups`, `tutors` and `enablesPlayFromBanish`, so cards that name other cards or kinds of card (Sinspeaker Gloomblade and Embrace Sin with the sinchants, Countdown to Extinction with Darkest Hour) are linked in the data rather than in notes. Phase two's synergy graph can draw these as edges directly.
 
 ## Review workflow
 
