@@ -29,10 +29,10 @@ const VIEW_LABELS: Record<CardView, string> = {
   large: "Large cards",
   list: "List",
 };
-/** Results per page: fewer as cards get bigger. */
+/** Results per page: fewer as cards get bigger, and multiples of common column counts so rows fill. */
 const PER_PAGE: Record<CardView, number> = {
   small: 60,
-  large: 36,
+  large: 40,
   list: 50,
 };
 
@@ -107,6 +107,17 @@ export function CardsPage() {
   const pageCount = Math.max(1, Math.ceil(total / perPage));
   const page = Math.min(filters.page, pageCount);
   const from = (page - 1) * perPage;
+  // One count, in the unit on screen: cards in the list, a tile per pitch in card views.
+  const everything =
+    filters.view === "list"
+      ? items.length
+      : items.reduce((n, c) => n + c.variants.length, 0);
+  const n = (x: number) => x.toLocaleString("en-GB");
+  const to = Math.min(from + perPage, total);
+  const countText =
+    pageCount > 1
+      ? `${n(from + 1)}–${n(to)} of ${n(total)} cards${total < everything ? ` (of ${n(everything)})` : ""}`
+      : `${n(total)} of ${n(everything)} cards`;
   const goTo = (next: number) => {
     filters.setPage(next);
     document.querySelector("h1")?.scrollIntoView?.({ block: "start" });
@@ -122,7 +133,7 @@ export function CardsPage() {
           state={filters.state}
           facets={facets}
           onClear={() => filters.setState({})}
-          count={`${shown.length} of ${items.length} cards`}
+          count={countText}
           toolbar={
             <div className={styles.toolbar}>
               <TextField
@@ -179,11 +190,6 @@ export function CardsPage() {
             />
           }
         >
-          {pageCount > 1 && (
-            <p className={styles.range}>
-              Showing {from + 1}–{Math.min(from + perPage, total)} of {total}
-            </p>
-          )}
           {filters.view === "list" ? (
             <Table
               caption="Cards"

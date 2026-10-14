@@ -81,11 +81,6 @@
   font-size: 1.35em;
   gap: 1rem;
 }
-.range {
-  margin: 0 0 0.75rem;
-  color: var(--muted);
-  font-size: 0.9rem;
-}
 .empty {
   color: var(--muted);
 }
