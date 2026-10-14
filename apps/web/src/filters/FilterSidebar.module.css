@@ -1,126 +1,139 @@
 .sidebar {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  --include: #1f7a3f;
-  --include-bg: #e4f4e9;
-  --exclude: #b3261e;
-  --exclude-bg: #fbe5e3;
-}
-@media (prefers-color-scheme: dark) {
-  .sidebar {
-    --include: #7fd69a;
-    --include-bg: #16301f;
-    --exclude: #ff8a80;
-    --exclude-bg: #3a1714;
-  }
-}
-
-.facet summary {
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.25rem 0;
-}
-.badge {
-  background: var(--accent);
-  color: var(--accent-fg);
-  border-radius: 999px;
-  padding: 0 0.45rem;
-  font-size: 0.75em;
-}
-.mode {
-  margin-left: auto;
-  font-weight: normal;
-  font-size: 0.75em;
-  color: var(--muted);
-  text-transform: uppercase;
+  gap: 0.35rem;
+  font-size: 0.92rem;
 }
 .facet ul {
   list-style: none;
-  margin: 0 0 0.5rem;
+  margin: 0;
   padding: 0;
 }
-
+.heading,
+.sectionHeading {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  cursor: pointer;
+  list-style: none;
+}
+.heading::-webkit-details-marker,
+.sectionHeading::-webkit-details-marker {
+  display: none;
+}
+/* A chevron that turns when the group opens. */
+.heading::before,
+.sectionHeading::before {
+  content: "›";
+  display: inline-block;
+  width: 0.6rem;
+  transition: transform 0.15s;
+}
+details[open] > .heading::before,
+details[open] > .sectionHeading::before {
+  transform: rotate(90deg);
+}
+.heading > span,
+.sectionHeading > span {
+  flex: 1;
+}
+.heading {
+  padding: 0.2rem 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.all {
+  font: inherit;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: normal;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--accent);
+  cursor: pointer;
+}
 .value {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.15rem 0.35rem;
-  border-radius: 0.35rem;
+  padding: 0.1rem 0.25rem;
+  margin: 0 -0.25rem;
+  border-radius: 0.3rem;
+}
+.value:hover {
+  background: color-mix(in srgb, var(--fg) 5%, transparent);
+}
+.value label {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  min-width: 0;
+}
+.value input {
+  margin: 0;
+  accent-color: var(--accent);
 }
 .label {
-  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.off .label {
+  color: var(--muted);
 }
 .count {
   color: var(--muted);
-  font-size: 0.85em;
-  min-width: 2ch;
-  text-align: right;
-}
-.include {
-  background: var(--include-bg);
-}
-.include .label {
-  color: var(--include);
-  font-weight: 600;
-}
-.exclude {
-  background: var(--exclude-bg);
-}
-.exclude .label {
-  color: var(--exclude);
-  text-decoration: line-through;
-}
-
-.toggle {
-  font: inherit;
   font-size: 0.8em;
-  width: 1.6rem;
-  height: 1.6rem;
-  flex: none;
-  display: grid;
-  place-items: center;
-  border-radius: 0.3rem;
-  background: none;
-  cursor: pointer;
-  opacity: 0.55;
+  font-variant-numeric: tabular-nums;
 }
-.toggle:hover,
-.toggle[aria-pressed="true"] {
-  opacity: 1;
-}
-.toggle:focus-visible,
-.clearGroup:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-}
-.includeButton {
-  color: var(--include);
-  border: 1px solid var(--include);
-}
-.includeButton[aria-pressed="true"] {
-  background: var(--include);
-  color: var(--include-bg);
-}
-.excludeButton {
-  color: var(--exclude);
-  border: 1px solid var(--exclude);
-}
-.excludeButton[aria-pressed="true"] {
-  background: var(--exclude);
-  color: var(--exclude-bg);
-}
-.clearGroup {
+/* "Only" appears on hover or focus, and stays visible while it's on. */
+.only {
   font: inherit;
-  font-size: 0.75em;
-  font-weight: normal;
+  font-size: 0.78em;
   background: none;
   border: none;
-  padding: 0 0.25rem;
+  padding: 0 0.15rem;
   color: var(--accent);
-  text-decoration: underline;
   cursor: pointer;
+  opacity: 0;
+}
+.value:hover .only,
+.only:focus-visible,
+.onlyOn {
+  opacity: 1;
+}
+@media (hover: none) {
+  .only {
+    opacity: 1;
+  }
+}
+.onlyOn {
+  font-weight: 600;
+}
+.all:focus-visible,
+.only:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-radius: 0.2rem;
+}
+.section {
+  border-top: 1px solid var(--border);
+  padding-top: 0.5rem;
+  margin-top: 0.4rem;
+}
+.sectionHeading {
+  font-weight: 600;
+  padding: 0.2rem 0;
+}
+.section .facet {
+  margin-left: 0.6rem;
+}
+.facet[open] > ul {
+  margin: 0.15rem 0 0.6rem;
 }

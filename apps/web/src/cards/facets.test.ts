@@ -23,11 +23,35 @@ describe("card facets", () => {
     ]);
   });
 
-  it("filters by pitch, class and type", () => {
+  it("filters by pitch (including pitch 4 and no pitch), class and type", () => {
+    expect(
+      names({ pitch: { "1": "exclude", "2": "exclude", none: "exclude" } }),
+    ).toEqual(["Become the Shadow Lord", "Fate Foreseen", "Hocus Pocus"]);
+    expect(
+      facets.find((f) => f.id === "pitch")?.values.map((v) => v.label),
+    ).toEqual(["Red", "Yellow", "Blue", "Pitch 4", "No pitch"]);
     expect(
       names({ pitch: { "3": "include" }, class: { Shadow: "include" } }),
     ).toEqual(["Become the Shadow Lord"]);
     expect(names({ type: { weapon: "include" } })).toEqual(["Nebula Blade"]);
+    // Attack and defense reactions are one "Reactions" line
+    expect(names({ type: { reaction: "exclude" } })).not.toContain(
+      "Fate Foreseen",
+    );
+  });
+
+  it("puts pitch and class in the top bar, and mechanics in a collapsed section", () => {
+    const where = (id: string) => facets.find((f) => f.id === id);
+    expect(where("pitch")?.placement).toBe("bar");
+    expect(where("class")?.placement).toBe("bar");
+    expect(where("type")?.placement ?? "side").toBe("side");
+    for (const id of ["keywords", "creates", "banish", "tags", "disrupts"]) {
+      expect(where(id)).toMatchObject({
+        kind: "feature",
+        section: "Mechanics",
+      });
+    }
+    expect(where("cost")).toBeUndefined();
   });
 
   it("filters by tags and banish routes", () => {
@@ -38,24 +62,20 @@ describe("card facets", () => {
   });
 
   it("filters by my review status", () => {
-    expect(names({ status: { reviewed: "exclude" } })).toEqual([
+    expect(names({ reviewed: { reviewed: "exclude" } })).toEqual([
       "Become the Shadow Lord",
       "Fate Foreseen",
       "Nebula Blade",
     ]);
   });
 
-  it("filters by cost, power and defense, matching any pitch", () => {
-    expect(names({ power: { "4": "include" } })).toEqual(["Hocus Pocus"]);
-    expect(names({ power: { le2: "include" } })).toEqual([
-      "Hocus Pocus",
-      "Nebula Blade",
-    ]);
-    expect(names({ defense: { "3": "include" } })).toEqual([
+  it("filters by power and defense bands, hiding a card only when every pitch is unticked", () => {
+    // Nebula Blade has power 1; Hocus Pocus has 4, 3 and 2; actions without power stay.
+    expect(names({ power: { "0-1": "exclude" } })).toEqual([
       "Become the Shadow Lord",
       "Fate Foreseen",
       "Hocus Pocus",
     ]);
-    expect(names({ cost: { "0": "exclude" } })).toEqual(["Nebula Blade"]);
+    expect(names({ defense: { ge3: "exclude" } })).toEqual(["Nebula Blade"]);
   });
 });
