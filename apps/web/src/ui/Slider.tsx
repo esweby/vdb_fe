@@ -17,6 +17,10 @@ export function Slider(props: {
   const id = useId();
   const text = value === null ? "Not set" : String(value);
   const clamp = (n: number) => Math.min(max, Math.max(min, n));
+  const ticks = Array.from(
+    { length: Math.floor((max - min) / step) + 1 },
+    (_, i) => min + i * step,
+  );
 
   function onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
     const current = value ?? min;
@@ -40,6 +44,24 @@ export function Slider(props: {
       <label htmlFor={id} className={styles.label}>
         {label}
       </label>
+      <div className={styles.scaleRow}>
+        <div
+          className={styles.scale}
+          data-testid="slider-scale"
+          aria-hidden="true"
+        >
+          {ticks.map((t) => (
+            <span
+              key={t}
+              style={{ left: `${((t - min) / (max - min)) * 100}%` }}
+              data-current={value === t || undefined}
+            >
+              {t}
+            </span>
+          ))}
+        </div>
+        <span className={styles.sliderValueSpacer} />
+      </div>
       <div className={styles.sliderRow}>
         <input
           id={id}
