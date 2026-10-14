@@ -122,6 +122,28 @@ describe("authoredAttributesSchema", () => {
     ).toBe(true);
   });
 
+  it("accepts tutors and play-from-banish enablers that reference groups or cards", () => {
+    expect(
+      authoredAttributesSchema.safeParse({
+        tutors: [
+          {
+            target: { group: "runechant_aura" },
+            to: "arena",
+            trigger: "on_attack",
+            conditions: ["played_from_banish"],
+            optional: true,
+          },
+          {
+            target: { card: "Darkest Hour" },
+            to: "banished",
+            trigger: "on_hit",
+          },
+        ],
+        enablesPlayFromBanish: [{ target: { group: "runechant_aura" } }],
+      }).success,
+    ).toBe(true);
+  });
+
   it("accepts conditional and granted go again", () => {
     expect(
       authoredAttributesSchema.safeParse({
@@ -138,6 +160,18 @@ describe("authoredAttributesSchema", () => {
   it.each([
     ["an unknown grantsGoAgain", { grantsGoAgain: "every_card" }],
     ["go again without a condition", { goAgain: {} }],
+    [
+      "an unknown card group",
+      { enablesPlayFromBanish: [{ target: { group: "sinchants" } }] },
+    ],
+    [
+      "a reference to both a group and a card",
+      {
+        enablesPlayFromBanish: [
+          { target: { group: "runechant_aura", card: "Runechant of Lust" } },
+        ],
+      },
+    ],
     ["instant speed without a condition", { instantSpeed: {} }],
     [
       "an unknown disruption target",

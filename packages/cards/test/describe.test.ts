@@ -7,6 +7,7 @@ const generated = {
   hasUsurp: false,
   hasRuneGate: false,
   isGateTarget: false,
+  groups: [],
   specialization: null,
 };
 
@@ -104,6 +105,7 @@ describe("describeAttributes", () => {
         hasUsurp: true,
         hasRuneGate: true,
         isGateTarget: false,
+        groups: [],
         specialization: "Viserai",
         playableFromBanish: {},
         notes: "Unsure whether the Gate is optional.",
@@ -375,6 +377,45 @@ describe("describeAttributes", () => {
     ).toEqual([
       "Your next action card of this card's colour this turn gets go again.",
     ]);
+  });
+
+  it("describes tutors, play-from-banish enablers and sinchants", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        tutors: [
+          {
+            target: { group: "runechant_aura" },
+            to: "arena",
+            trigger: "on_attack",
+            conditions: ["played_from_banish"],
+            optional: true,
+          },
+          {
+            target: { card: "Darkest Hour" },
+            to: "banished",
+            trigger: "on_hit",
+          },
+          {
+            target: { group: "runeblade_attack_action" },
+            to: "hand",
+            trigger: "on_play",
+          },
+        ],
+        enablesPlayFromBanish: [{ target: { group: "runechant_aura" } }],
+      }),
+    ).toEqual([
+      "May search your deck for a Runechant aura (sinchant) and put it into the arena when it attacks, if it was played from your banished zone.",
+      "Searches your deck for Darkest Hour and banishes it when it hits.",
+      "Searches your deck for a Runeblade attack action card and puts it into your hand when played.",
+      "Lets you play a Runechant aura (sinchant) from your banished zone this turn.",
+    ]);
+    expect(
+      describeAttributes({
+        ...generated,
+        groups: ["runechant_aura", "runeblade_aura"],
+      }),
+    ).toEqual(["Is a Runechant aura (sinchant)."]);
   });
 
   it("describes nothing for a plain card", () => {
