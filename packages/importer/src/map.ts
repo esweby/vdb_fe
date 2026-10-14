@@ -165,6 +165,7 @@ export function toImportCards(
             type: toTypeKey(mainType!, subtypes),
             subtypes,
             classes,
+            keywords,
           }),
         ),
         ...(entry?.card ? validated(name, "card", entry.card) : {}),

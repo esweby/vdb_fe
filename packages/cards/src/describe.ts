@@ -130,6 +130,15 @@ const GROUP_TEXT: Record<CardGroup, string> = {
   runeblade_aura: "a Runeblade aura",
   runeblade_attack_action: "a Runeblade attack action card",
   runeblade_non_attack_action: "a Runeblade non-attack action card",
+  rune_gate: "a Rune Gate card",
+};
+
+const GROUP_PLURAL: Record<CardGroup, string> = {
+  runechant_aura: "Runechant auras (sinchants)",
+  runeblade_aura: "Runeblade auras",
+  runeblade_attack_action: "Runeblade attack action cards",
+  runeblade_non_attack_action: "Runeblade non-attack action cards",
+  rune_gate: "Rune Gate cards",
 };
 
 const refText = (ref: CardRef) =>
@@ -241,7 +250,11 @@ export function describeAttributes(attributes: CardAttributes): string[] {
   if (attributes.costReducedPerRunechant)
     lines.push("Costs {r} less for each Runechant you control.");
   if (attributes.hasUsurp) lines.push("Usurp.");
-  if (attributes.hasRuneGate) lines.push("Rune Gate.");
+  if (attributes.hasRuneGate) {
+    lines.push(
+      "Rune Gate: if you control at least as many Runechants as its cost, you may play it from your banished zone without paying its cost.",
+    );
+  }
   if (attributes.goAgain) {
     lines.push(`Gets go again${ifConditions(attributes.goAgain.conditions)}.`);
   } else if (attributes.hasGoAgain) {
@@ -251,6 +264,11 @@ export function describeAttributes(attributes: CardAttributes): string[] {
     lines.push(`${GRANTED_TEXT[attributes.grantsGoAgain]} go again.`);
   }
   if (attributes.hasBloodDebt) lines.push("Blood debt.");
+  for (const sup of attributes.supports ?? []) {
+    const what =
+      "group" in sup.target ? GROUP_PLURAL[sup.target.group] : sup.target.card;
+    lines.push(`Works with ${what}${sup.note ? ` (${sup.note})` : ""}.`);
+  }
   if (attributes.notes) lines.push(`Note: ${attributes.notes}`);
 
   return lines;

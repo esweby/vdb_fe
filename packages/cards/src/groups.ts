@@ -6,6 +6,7 @@ export const CARD_GROUPS = [
   "runeblade_aura",
   "runeblade_attack_action",
   "runeblade_non_attack_action",
+  "rune_gate",
 ] as const;
 
 export type CardGroup = (typeof CARD_GROUPS)[number];
@@ -15,6 +16,7 @@ export interface GroupableCard {
   type: string;
   subtypes: string[];
   classes: string[];
+  keywords?: string[];
 }
 
 export function groupsOf(card: GroupableCard): CardGroup[] {
@@ -30,5 +32,6 @@ export function groupsOf(card: GroupableCard): CardGroup[] {
   if (runeblade && card.type === "action") {
     groups.push("runeblade_non_attack_action");
   }
+  if (card.keywords?.includes("Rune Gate")) groups.push("rune_gate");
   return groups;
 }

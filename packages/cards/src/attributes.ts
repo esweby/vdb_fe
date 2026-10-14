@@ -179,6 +179,12 @@ export const authoredAttributesSchema = z.strictObject({
   tutors: z.array(tutorSchema).optional(),
   /** Lets a group or named card be played from your banished zone this turn. */
   enablesPlayFromBanish: z.array(playFromBanishEnablerSchema).optional(),
+  /** Cards this card works with that no other attribute links (e.g. "the next card you rune gate"). */
+  supports: z
+    .array(
+      z.strictObject({ target: cardRefSchema, note: z.string().optional() }),
+    )
+    .optional(),
   /** "You may play this as though it were an instant", with its condition. */
   instantSpeed: z
     .strictObject({ conditions: z.array(z.enum(CONDITIONS)).min(1) })
