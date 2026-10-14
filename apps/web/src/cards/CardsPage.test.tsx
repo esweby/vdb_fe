@@ -207,7 +207,9 @@ describe("cards page", () => {
     });
     await screen.findByRole("article", { name: "Card 00 (blue)" });
     expect(screen.getAllByRole("article")).toHaveLength(60);
-    expect(screen.getByText(/Showing 1–60 of 70/)).toBeInTheDocument();
+    // One count line, in the unit on screen (a tile per pitch)
+    expect(screen.getByText(/^1–60 of 70 cards/)).toBeInTheDocument();
+    expect(screen.queryByText(/Showing/)).not.toBeInTheDocument();
     const user = userEvent.setup();
     await user.click(screen.getByRole("button", { name: "Next page" }));
     await waitFor(() =>

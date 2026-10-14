@@ -81,11 +81,6 @@
   font-size: 1.35em;
   gap: 1rem;
 }
-.tiles[data-size="larger"] {
-  grid-template-columns: repeat(auto-fill, minmax(17.5rem, 1fr));
-  font-size: 1.8em;
-  gap: 1.25rem;
-}
 .range {
   margin: 0 0 0.75rem;
   color: var(--muted);

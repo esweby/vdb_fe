@@ -12,8 +12,8 @@ export interface ListSearch extends FilterSearch {
   page?: number;
 }
 
-export type CardView = "small" | "large" | "larger" | "list";
-export const CARD_VIEWS: CardView[] = ["small", "large", "larger", "list"];
+export type CardView = "small" | "large" | "list";
+export const CARD_VIEWS: CardView[] = ["small", "large", "list"];
 
 /** Validates list-page search params from the URL. */
 export function validateListSearch(

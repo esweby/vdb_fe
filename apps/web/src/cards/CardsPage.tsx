@@ -27,14 +27,12 @@ const route = getRouteApi("/cards");
 const VIEW_LABELS: Record<CardView, string> = {
   small: "Small cards",
   large: "Large cards",
-  larger: "Larger cards",
   list: "List",
 };
 /** Results per page: fewer as cards get bigger. */
 const PER_PAGE: Record<CardView, number> = {
   small: 60,
   large: 36,
-  larger: 24,
   list: 50,
 };
 
@@ -216,7 +214,7 @@ export function CardsPage() {
   );
 }
 
-/** Small: a dense 3×3 grid. Large: 2×2. Larger: one wide card. List: lines. */
+/** Small: a dense 3×3 grid. Large: 2×2. List: lines. */
 function ViewIcon({ view }: { view: CardView }) {
   const cells: Record<Exclude<CardView, "list">, [number, number, number][]> = {
     small: [0, 1, 2].flatMap((r) =>
@@ -225,7 +223,6 @@ function ViewIcon({ view }: { view: CardView }) {
     large: [0, 1].flatMap((r) =>
       [0, 1].map((c): [number, number, number] => [c * 9, r * 9, 7]),
     ),
-    larger: [[2, 0, 12]],
   };
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
@@ -238,8 +235,8 @@ function ViewIcon({ view }: { view: CardView }) {
               key={`${x}-${y}`}
               x={x}
               y={y}
-              width={view === "larger" ? size : size}
-              height={view === "larger" ? 16 : size}
+              width={size}
+              height={size}
               rx="1"
             />
           ))}
