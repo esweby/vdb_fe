@@ -43,7 +43,10 @@ export const CONDITIONS = [
 export const BANISH_ZONES = ["hand", "deck_top", "graveyard"] as const;
 
 /** The effect is given to a later card rather than happening on this one. */
-export const GRANTED_TO = ["next_attack_action", "next_runeblade_attack_action"] as const;
+export const GRANTED_TO = [
+  "next_attack_action",
+  "next_runeblade_attack_action",
+] as const;
 
 const amount = z.union([z.number().int().positive(), z.literal("X")]);
 const trigger = z.enum(TRIGGERS);

@@ -15,11 +15,11 @@ Checked the `the-fab-cube/flesh-and-blood-cards` dataset.
 - **Naming clash.** The dataset's "card" is one name + pitch, which is our `printing`. Its "printing" means a physical print run, such as an edition or foil. To avoid confusion, rename our `printings` to **`variants`** before any migrations are written.
 - **The pool is much bigger than expected.** A rough legality filter (Runeblade, Shadow or Generic; Classic Constructed legal; not banned) gives:
 
-  | | Deck cards (name + pitch) | Weapons and equipment |
-  | --- | --- | --- |
-  | Runeblade / Shadow | 380 | 42 |
-  | Generic | 507 | 118 |
-  | **Total** | **887** | **160** |
+  |                    | Deck cards (name + pitch) | Weapons and equipment |
+  | ------------------ | ------------------------- | --------------------- |
+  | Runeblade / Shadow | 380                       | 42                    |
+  | Generic            | 507                       | 118                   |
+  | **Total**          | **887**                   | **160**               |
 
   That's 633 distinct card names, not the ~150 the README assumed. The browser handles this size easily. The real impact is on **scorer workload** and **hand-authored attributes**. The filter is approximate and needs checking by a player.
 

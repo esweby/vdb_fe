@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { classifyTypes, isViseraiLegal, type DatasetCard } from "../src/classify.ts";
+import {
+  classifyTypes,
+  isViseraiLegal,
+  type DatasetCard,
+} from "../src/classify.ts";
 import fixture from "./fixtures/cards.json" with { type: "json" };
 
 const entries = fixture as DatasetCard[];
@@ -25,16 +29,22 @@ describe("classifyTypes", () => {
   });
 
   it("keeps the equipment slot as a subtype", () => {
-    expect(classifyTypes(["Shadow", "Runeblade", "Equipment", "Off-Hand"]).subtypes).toEqual(["Off-Hand"]);
+    expect(
+      classifyTypes(["Shadow", "Runeblade", "Equipment", "Off-Hand"]).subtypes,
+    ).toEqual(["Off-Hand"]);
   });
 
   it("recognises two-word card types", () => {
-    expect(classifyTypes(["Generic", "Defense Reaction"]).mainType).toBe("Defense Reaction");
+    expect(classifyTypes(["Generic", "Defense Reaction"]).mainType).toBe(
+      "Defense Reaction",
+    );
   });
 });
 
 describe("isViseraiLegal", () => {
-  const legalNames = [...new Set(entries.filter(isViseraiLegal).map((c) => c.name))].sort();
+  const legalNames = [
+    ...new Set(entries.filter(isViseraiLegal).map((c) => c.name)),
+  ].sort();
 
   it("includes Runeblade, Shadow and Generic cards, weapons and equipment", () => {
     expect(legalNames).toEqual([

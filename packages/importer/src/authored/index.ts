@@ -13,7 +13,10 @@ export function allAuthored(): AuthoredAttributes {
   const merged: AuthoredAttributes = {};
   for (const [batch, entries] of Object.entries(batches)) {
     for (const [name, entry] of Object.entries(entries)) {
-      if (name in merged) throw new Error(`"${name}" is authored in more than one batch (again in ${batch})`);
+      if (name in merged)
+        throw new Error(
+          `"${name}" is authored in more than one batch (again in ${batch})`,
+        );
       merged[name] = entry;
     }
   }

@@ -3,7 +3,10 @@
 import type { Sql } from "postgres";
 import type { ImportCard } from "./map.ts";
 
-export async function upsertCards(sql: Sql, cards: ImportCard[]): Promise<void> {
+export async function upsertCards(
+  sql: Sql,
+  cards: ImportCard[],
+): Promise<void> {
   await sql.begin(async (tx) => {
     for (const card of cards) {
       const [row] = await tx<{ id: string }[]>`

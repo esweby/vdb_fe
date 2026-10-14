@@ -14,7 +14,10 @@ export async function loadDataset(): Promise<DatasetCard[]> {
   if (!existsSync(path)) {
     console.log(`Downloading dataset at ${DATASET_COMMIT.slice(0, 7)}…`);
     const response = await fetch(DATASET_URL);
-    if (!response.ok) throw new Error(`Download failed: ${response.status} ${response.statusText}`);
+    if (!response.ok)
+      throw new Error(
+        `Download failed: ${response.status} ${response.statusText}`,
+      );
     await mkdir(CACHE_DIR, { recursive: true });
     await writeFile(path, await response.text());
   }

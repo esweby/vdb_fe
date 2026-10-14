@@ -47,11 +47,11 @@ The core of the application is a scoring and synergy system built around Viserai
 
 Card data comes in three kinds, and each is kept separate:
 
-| Kind | Example | Stored in |
-| --- | --- | --- |
-| **Facts**: objective, entered by us | type, pitch, defense, `hasBloodDebt`, tokens created and under which conditions | `cards` / `variants` tables |
-| **Opinions**: one per user, per card, per dimension | "I rate this 80 for Gate creation" | `card_scores` table |
-| **Aggregates**: calculated | community score, number of ratings | `community_scores` table, written by a scheduled job |
+| Kind                                                | Example                                                                         | Stored in                                            |
+| --------------------------------------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| **Facts**: objective, entered by us                 | type, pitch, defense, `hasBloodDebt`, tokens created and under which conditions | `cards` / `variants` tables                          |
+| **Opinions**: one per user, per card, per dimension | "I rate this 80 for Gate creation"                                              | `card_scores` table                                  |
+| **Aggregates**: calculated                          | community score, number of ratings                                              | `community_scores` table, written by a scheduled job |
 
 A card has the facts shared by all its versions, and one or more **variants** for the facts that differ between versions (usually pitch). They're called variants, not printings, because the card dataset uses "printing" for a physical print run, such as an edition or foil. A non-exhaustive example:
 
@@ -114,16 +114,16 @@ interface CardScore {
 
 Weapons and equipment are a first-class part of the design, not an add-on. Viserai's weapon is one of the two things that use up Runechants, and equipment is always available instead of being drawn. Treating them as ordinary cards would lead to the wrong answers. Every part of the system has to account for them:
 
-| Area | How weapons and equipment are handled |
-| --- | --- |
-| **Card facts** | Every card has a `type` (action, attack action, instant, weapon, equipment, …) and `subtypes`, which include the slot (head, chest, arms, legs, off-hand) and handedness for weapons. Pitch, defense and power are nullable on variants, because not every card type has them. |
-| **Decks** | A deck is a **card pool** (every card the player brings, including weapons, equipment and sideboard cards) plus one or more **loadouts**. A loadout is what starts a game: the main deck, the weapons and one equipment piece per slot. **A loadout is always a subset of the pool**: no loadout can contain more copies of a card than the pool has. Removing a card from the pool removes it from every loadout. Adding a card to the pool adds it to the default loadout, unless it's marked as a sideboard card. In FaB terms, the pool is the registered deck plus sideboard. Phase one creates one loadout per deck automatically, and choosing between several loadouts can come later without a schema change. |
-| **Scoring** | Weapons and equipment are scored on the same dimensions, with the same side rules, as any other card. |
-| **Suggested core** | Weapons and equipment don't take up deck space, so they don't compete with deck cards. They're ranked separately, by slot, and the top option for each slot is suggested. |
-| **Synergy** | Weapons and equipment are nodes in the graph like any other card. Derived rules can target them, for example cards that care about weapon attacks. |
-| **Deck analysis** | Equipment and weapons are always available, so they're counted separately from cards that have to be drawn. Totals show "from the deck" and "always available" apart. |
-| **Game engine** | Weapons and equipment are objects in play, each with a slot, a used-this-turn marker, a destroyed state and a general `counters` map. The map means equipment with its own counters fits without engine changes. |
-| **Scenarios** | Weapon and equipment slots are always visible to conditions. Filters can target them, and steps include "attack with weapon" and "use equipment". |
+| Area               | How weapons and equipment are handled                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Card facts**     | Every card has a `type` (action, attack action, instant, weapon, equipment, …) and `subtypes`, which include the slot (head, chest, arms, legs, off-hand) and handedness for weapons. Pitch, defense and power are nullable on variants, because not every card type has them.                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| **Decks**          | A deck is a **card pool** (every card the player brings, including weapons, equipment and sideboard cards) plus one or more **loadouts**. A loadout is what starts a game: the main deck, the weapons and one equipment piece per slot. **A loadout is always a subset of the pool**: no loadout can contain more copies of a card than the pool has. Removing a card from the pool removes it from every loadout. Adding a card to the pool adds it to the default loadout, unless it's marked as a sideboard card. In FaB terms, the pool is the registered deck plus sideboard. Phase one creates one loadout per deck automatically, and choosing between several loadouts can come later without a schema change. |
+| **Scoring**        | Weapons and equipment are scored on the same dimensions, with the same side rules, as any other card.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| **Suggested core** | Weapons and equipment don't take up deck space, so they don't compete with deck cards. They're ranked separately, by slot, and the top option for each slot is suggested.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| **Synergy**        | Weapons and equipment are nodes in the graph like any other card. Derived rules can target them, for example cards that care about weapon attacks.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| **Deck analysis**  | Equipment and weapons are always available, so they're counted separately from cards that have to be drawn. Totals show "from the deck" and "always available" apart.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| **Game engine**    | Weapons and equipment are objects in play, each with a slot, a used-this-turn marker, a destroyed state and a general `counters` map. The map means equipment with its own counters fits without engine changes.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| **Scenarios**      | Weapon and equipment slots are always visible to conditions. Filters can target them, and steps include "attack with weapon" and "use equipment".                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 
 Format rules, such as pool size, deck size and how many weapons a hero can carry, are kept as configuration and checked by an experienced player, not hard-coded from memory.
 
@@ -139,6 +139,7 @@ Format rules, such as pool size, deck size and how many weapons a hero can carry
   - Utility
 
   The scoring group agrees to score every dimension on every card they review, or to drop the dimension. Otherwise a dimension that most scorers skip turns into a wall of zeros (see below).
+
 - **Roles.**
   - `user`: personal scores and decks only.
   - `scorer`: scores count toward community scores.
@@ -427,16 +428,16 @@ Illustrative examples (the logic still needs checking by a player):
 
 **Starter set of filters and steps.** Each filter and step is a small typed definition in code, so adding one later is a small change. The starter set is a guess, to be reviewed by the scoring group:
 
-| Filters | Steps |
-| --- | --- |
-| Specific card or variant | Draw N |
-| Card fact (blood debt, creates Runechants, creates Gates, go again…) | Pitch a card matching a filter |
-| Class (Shadow, Runeblade, generic) | Put a card matching a filter in arsenal |
-| Card type (attack action, non-attack action, instant, weapon, equipment…) | Block with N cards (lowest score first) |
-| Pitch colour | Banish a card matching a filter from hand |
-| Dimension score threshold | Attack with weapon |
-| Total of a fact across matching cards (e.g. Runechants created) | Use equipment |
-| Hero side | Flip hero side |
+| Filters                                                                   | Steps                                     |
+| ------------------------------------------------------------------------- | ----------------------------------------- |
+| Specific card or variant                                                  | Draw N                                    |
+| Card fact (blood debt, creates Runechants, creates Gates, go again…)      | Pitch a card matching a filter            |
+| Class (Shadow, Runeblade, generic)                                        | Put a card matching a filter in arsenal   |
+| Card type (attack action, non-attack action, instant, weapon, equipment…) | Block with N cards (lowest score first)   |
+| Pitch colour                                                              | Banish a card matching a filter from hand |
+| Dimension score threshold                                                 | Attack with weapon                        |
+| Total of a fact across matching cards (e.g. Runechants created)           | Use equipment                             |
+| Hero side                                                                 | Flip hero side                            |
 
 Steps that choose a card use a fixed tie-break: highest score on a chosen dimension, then lowest pitch, then first in hand.
 
@@ -460,6 +461,7 @@ Steps that choose a card use a fixed tie-break: highest score on a chosen dimens
   - the engine version
 
   If any input differs when a scenario is re-run, the UI says which one, so old and new numbers aren't compared as like for like. No sophisticated versioning system is needed: recording the inputs is enough to spot differences.
+
 - Changing a deck in the deck builder can re-run saved scenarios automatically, as a live check.
 
 ## Talishar Integration

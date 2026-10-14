@@ -4,5 +4,10 @@
     "resolveJsonModule": true,
     "types": ["node"]
   },
-  "include": ["packages/*/src", "packages/*/test", "packages/*/*.config.ts", "vitest.config.ts"]
+  "include": [
+    "packages/*/src",
+    "packages/*/test",
+    "packages/*/*.config.ts",
+    "vitest.config.ts"
+  ]
 }

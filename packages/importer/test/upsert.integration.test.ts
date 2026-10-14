@@ -6,14 +6,21 @@ import { upsertCards } from "../src/db.ts";
 import { toImportCards } from "../src/map.ts";
 import fixture from "./fixtures/cards.json" with { type: "json" };
 
-const sql = postgres(process.env.DB_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres", {
-  onnotice: () => {},
-});
+const sql = postgres(
+  process.env.DB_URL ??
+    "postgresql://postgres:postgres@127.0.0.1:54322/postgres",
+  {
+    onnotice: () => {},
+  },
+);
 // Prefixed ids, so setup and cleanup never touch real imported cards in a local database.
 const cards = toImportCards(fixture as DatasetCard[], {}).map((c) => ({
   ...c,
   externalId: `test:${c.externalId}`,
-  variants: c.variants.map((v) => ({ ...v, externalId: `test:${v.externalId}` })),
+  variants: c.variants.map((v) => ({
+    ...v,
+    externalId: `test:${v.externalId}`,
+  })),
 }));
 const externalIds = cards.map((c) => c.externalId);
 
@@ -37,18 +44,25 @@ afterAll(async () => {
 describe("upsertCards", () => {
   it("inserts every card and variant", async () => {
     await upsertCards(sql, cards);
-    expect(await counts()).toEqual({ cards: cards.length, variants: cards.flatMap((c) => c.variants).length });
+    expect(await counts()).toEqual({
+      cards: cards.length,
+      variants: cards.flatMap((c) => c.variants).length,
+    });
   });
 
   it("is safe to re-run: no duplicates", async () => {
     await upsertCards(sql, cards);
-    expect(await counts()).toEqual({ cards: cards.length, variants: cards.flatMap((c) => c.variants).length });
+    expect(await counts()).toEqual({
+      cards: cards.length,
+      variants: cards.flatMap((c) => c.variants).length,
+    });
   });
 
   it("keeps curator decisions (fringe, hidden) on re-import", async () => {
     await sql`update public.cards set fringe = true, hidden = true where external_id = 'test:Fate Foreseen'`;
     await upsertCards(sql, cards);
-    const [row] = await sql`select fringe, hidden from public.cards where external_id = 'test:Fate Foreseen'`;
+    const [row] =
+      await sql`select fringe, hidden from public.cards where external_id = 'test:Fate Foreseen'`;
     expect(row).toEqual({ fringe: true, hidden: true });
   });
 
@@ -67,7 +81,9 @@ describe("upsertCards", () => {
         join public.cards c on c.id = v.card_id
        where c.external_id = 'test:Arcane Cussing' order by v.pitch`;
     expect(rows.map((r) => r.pitch)).toEqual([1, 2, 3]);
-    expect(rows.every((r) => typeof r.text === "string" && r.text.length > 0)).toBe(true);
+    expect(
+      rows.every((r) => typeof r.text === "string" && r.text.length > 0),
+    ).toBe(true);
     expect(rows[0]?.attributes).toEqual({});
   });
 });

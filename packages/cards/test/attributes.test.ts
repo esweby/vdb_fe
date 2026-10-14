@@ -6,8 +6,18 @@ describe("authoredAttributesSchema", () => {
     const result = authoredAttributesSchema.safeParse({
       banishesOwn: [{ from: "hand", trigger: "on_play" }],
       tokens: [
-        { token: "runechant", amount: 1, trigger: "on_play", conditions: ["banished_card_is_runeblade"] },
-        { token: "gate", amount: 1, trigger: "on_play", conditions: ["banished_card_is_shadow"] },
+        {
+          token: "runechant",
+          amount: 1,
+          trigger: "on_play",
+          conditions: ["banished_card_is_runeblade"],
+        },
+        {
+          token: "gate",
+          amount: 1,
+          trigger: "on_play",
+          conditions: ["banished_card_is_shadow"],
+        },
       ],
     });
     expect(result.success).toBe(true);
@@ -15,14 +25,23 @@ describe("authoredAttributesSchema", () => {
 
   it("accepts a variable amount", () => {
     expect(
-      authoredAttributesSchema.safeParse({ tokens: [{ token: "runechant", amount: "X", trigger: "on_hit" }] }).success,
+      authoredAttributesSchema.safeParse({
+        tokens: [{ token: "runechant", amount: "X", trigger: "on_hit" }],
+      }).success,
     ).toBe(true);
   });
 
   it("accepts effects granted to your next attack", () => {
     expect(
       authoredAttributesSchema.safeParse({
-        tokens: [{ token: "runechant", amount: 3, trigger: "on_hit", grantedTo: "next_runeblade_attack_action" }],
+        tokens: [
+          {
+            token: "runechant",
+            amount: 3,
+            trigger: "on_hit",
+            grantedTo: "next_runeblade_attack_action",
+          },
+        ],
       }).success,
     ).toBe(true);
   });
@@ -31,13 +50,20 @@ describe("authoredAttributesSchema", () => {
     expect(
       authoredAttributesSchema.safeParse({
         tokens: [
-          { token: "runechant", amount: 1, trigger: "your_attack_action_played" },
+          {
+            token: "runechant",
+            amount: 1,
+            trigger: "your_attack_action_played",
+          },
           { token: "runechant", amount: 2, trigger: "your_attack_action_hits" },
           {
             token: "runechant",
             amount: 4,
             trigger: "on_play",
-            conditions: ["played_attack_action_this_turn", "played_non_attack_action_this_turn"],
+            conditions: [
+              "played_attack_action_this_turn",
+              "played_non_attack_action_this_turn",
+            ],
           },
         ],
       }).success,
@@ -45,15 +71,61 @@ describe("authoredAttributesSchema", () => {
   });
 
   it.each([
-    ["an unknown grantedTo", { tokens: [{ token: "runechant", amount: 1, trigger: "on_hit", grantedTo: "any_card" }] }],
+    [
+      "an unknown grantedTo",
+      {
+        tokens: [
+          {
+            token: "runechant",
+            amount: 1,
+            trigger: "on_hit",
+            grantedTo: "any_card",
+          },
+        ],
+      },
+    ],
     ["an unknown key", { canBanishFromHand: true }],
-    ["an unknown token", { tokens: [{ token: "aura", amount: 1, trigger: "on_play" }] }],
-    ["an unknown trigger", { tokens: [{ token: "runechant", amount: 1, trigger: "whenever" }] }],
-    ["an unknown condition", { tokens: [{ token: "runechant", amount: 1, trigger: "on_play", conditions: ["maybe"] }] }],
-    ["a zero amount", { tokens: [{ token: "runechant", amount: 0, trigger: "on_play" }] }],
-    ["a fractional amount", { arcaneDamage: [{ amount: 1.5, trigger: "on_attack" }] }],
-    ["an unknown banish zone", { banishesOwn: [{ from: "soul", trigger: "on_play" }] }],
-    ["an unknown key inside an effect", { tokens: [{ token: "runechant", amount: 1, trigger: "on_play", extra: 1 }] }],
+    [
+      "an unknown token",
+      { tokens: [{ token: "aura", amount: 1, trigger: "on_play" }] },
+    ],
+    [
+      "an unknown trigger",
+      { tokens: [{ token: "runechant", amount: 1, trigger: "whenever" }] },
+    ],
+    [
+      "an unknown condition",
+      {
+        tokens: [
+          {
+            token: "runechant",
+            amount: 1,
+            trigger: "on_play",
+            conditions: ["maybe"],
+          },
+        ],
+      },
+    ],
+    [
+      "a zero amount",
+      { tokens: [{ token: "runechant", amount: 0, trigger: "on_play" }] },
+    ],
+    [
+      "a fractional amount",
+      { arcaneDamage: [{ amount: 1.5, trigger: "on_attack" }] },
+    ],
+    [
+      "an unknown banish zone",
+      { banishesOwn: [{ from: "soul", trigger: "on_play" }] },
+    ],
+    [
+      "an unknown key inside an effect",
+      {
+        tokens: [
+          { token: "runechant", amount: 1, trigger: "on_play", extra: 1 },
+        ],
+      },
+    ],
   ])("rejects %s", (_label, value) => {
     expect(authoredAttributesSchema.safeParse(value).success).toBe(false);
   });
