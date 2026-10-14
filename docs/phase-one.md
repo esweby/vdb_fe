@@ -66,13 +66,13 @@ These three tasks go first because any of them could change the plan.
 - [x] Map dataset fields to ours: types → `type`, `subtypes`, `classes`, `talents`; keywords → `hasGoAgain`, `hasBloodDebt`. Text and attributes are stored per variant as well, because pitch variants can differ (e.g. "create 3/2/1 Runechants").
 - [x] Attribute vocabulary (`packages/cards`, [docs/attribute-vocabulary.md](attribute-vocabulary.md)), validated by the importer, with plain-English descriptions and a review sheet generator.
 - [x] Other heroes' specializations excluded (removed Doomsday, Eclipse, Oblivion, Soul Harvest, Soul Reaping, Flail of Agony). Pool: 627 cards, 1,041 variants.
-- [ ] Hand-author attributes in review batches, Runeblade and Shadow cards first (234 → now 228 after the specialization fix), generics as needed:
-  1. Runechant creators
-  2. Gate creators
-  3. Blood debt, banish and play from banish
-  4. Weapons and equipment
-  5. Everything else
-- [ ] A player checks a sample of authored attributes, and every condition.
+- [x] Hand-author attributes in review batches. All 228 Runeblade and Shadow cards, plus the generics Snapdragon Scalers and Base of the Mountain, are authored and verified by the maintainer:
+  1. Runechant creators (51)
+  2. Gate creators (12)
+  3. Blood debt, banish and play from banish (81)
+  4. Weapons and equipment (43)
+  5. Everything else (42)
+- [x] A player checks every authored card, not just a sample, including every condition. The vocabulary grew during review: go again kinds, disruption, instant speed, card groups and references, Rune Gate, banish payoffs and more. See [attribute-vocabulary.md](attribute-vocabulary.md).
 
 **Done when:** every legal card is in the database, weapons and equipment have their slots, and every Runeblade and Shadow card has checked attributes.
 

@@ -259,7 +259,7 @@ export const remaining: AuthoredAttributes = {
     },
   },
   "Swarming Gloomveil": {
-    verified: false,
+    verified: true,
     card: {
       goAgain: { conditions: ["played_or_created_aura_this_turn"] },
       conditionalBonuses: [
@@ -290,7 +290,7 @@ export const remaining: AuthoredAttributes = {
     },
   },
   "Machinations of Dominion": {
-    verified: false,
+    verified: true,
     card: {
       conditionalBonuses: [
         { effect: "overpower", grantedTo: "next_runeblade_attack_action" },
