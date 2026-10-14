@@ -355,6 +355,28 @@ describe("describeAttributes", () => {
     ]);
   });
 
+  it("describes go again granted to banished cards and matching colours", () => {
+    expect(
+      describeAttributes({ ...generated, grantsGoAgain: "banished_card" }),
+    ).toEqual(["The card banished this way gets go again."]);
+    expect(
+      describeAttributes({
+        ...generated,
+        grantsGoAgain: "card_in_banished_zone_matching_pitch",
+      }),
+    ).toEqual([
+      "A card of this card's colour in your banished zone gets go again.",
+    ]);
+    expect(
+      describeAttributes({
+        ...generated,
+        grantsGoAgain: "next_action_card_matching_pitch",
+      }),
+    ).toEqual([
+      "Your next action card of this card's colour this turn gets go again.",
+    ]);
+  });
+
   it("describes nothing for a plain card", () => {
     expect(describeAttributes(generated)).toEqual([]);
   });
