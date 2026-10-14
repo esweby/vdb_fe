@@ -546,6 +546,28 @@ describe("describeAttributes", () => {
     ]);
   });
 
+  it("describes temporary banishes of several action cards from hand", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        banishesOwn: [
+          {
+            from: "hand",
+            amount: "any",
+            which: "action",
+            trigger: "on_defend",
+            optional: true,
+            temporary: true,
+          },
+          { from: "hand", amount: 2, trigger: "on_play" },
+        ],
+      }),
+    ).toEqual([
+      "May banish any number of action cards from your hand when it defends (temporarily: they don't stay in your banished zone).",
+      "Banishes 2 cards from your hand when played.",
+    ]);
+  });
+
   it("describes cards a card works with", () => {
     expect(
       describeAttributes({

@@ -36,4 +36,11 @@ describe("authored batches", () => {
   it("includes batch 4, weapons and equipment", () => {
     expect(Object.keys(batches)).toContain("04-weapons-and-equipment");
   });
+
+  it("links Base of the Mountain to cards that trigger when banished", () => {
+    expect(
+      batches["04-weapons-and-equipment"]!["Base of the Mountain"]?.card
+        ?.supports,
+    ).toEqual([{ target: { group: "triggers_when_banished" } }]);
+  });
 });

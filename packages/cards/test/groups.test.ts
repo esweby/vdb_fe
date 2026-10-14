@@ -135,4 +135,28 @@ describe("attributeGroups", () => {
       }),
     ).toEqual(["rewards_shadow_banish"]);
   });
+
+  it("tags cards with an effect that fires when they're banished", () => {
+    expect(
+      attributeGroups({
+        tokens: [{ token: "gate", amount: 1, trigger: "on_banished" }],
+      }),
+    ).toEqual(["triggers_when_banished"]);
+  });
+
+  it("still tags temporary banishes from hand", () => {
+    expect(
+      attributeGroups({
+        banishesOwn: [
+          {
+            from: "hand",
+            amount: "any",
+            which: "action",
+            trigger: "on_defend",
+            temporary: true,
+          },
+        ],
+      }),
+    ).toEqual(["banishes_from_hand"]);
+  });
 });
