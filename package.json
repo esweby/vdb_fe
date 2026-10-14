@@ -8,14 +8,16 @@
   ],
   "scripts": {
     "test": "vitest run",
-    "typecheck": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json && tsc -p apps/web/tsconfig.json",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "dev": "npm run dev -w @vdb/web"
   },
   "devDependencies": {
     "@types/node": "^24.19.2",
     "prettier": "^3.9.10",
     "typescript": "^7.0.2",
-    "vitest": "^3.2.7"
+    "vite": "^8.3.4",
+    "vitest": "^5.0.4"
   }
 }

@@ -19,6 +19,7 @@ jobs:
       - run: npm run format:check
       - run: npm run typecheck
       - run: npm test
+      - run: npm run build -w @vdb/web
 
   db-test:
     name: db-test

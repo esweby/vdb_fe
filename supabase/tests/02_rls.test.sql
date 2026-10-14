@@ -123,7 +123,7 @@ reset role;
 -- Dave (admin)
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000d0","role":"authenticated"}', true);
-select is((select count(*)::int from public.rater_weights), 4, 'admins can see rating weights');
+select is((select count(*)::int from public.rater_weights where user_id::text like '00000000-0000-0000-0000-0000000000%'), 4, 'admins can see rating weights');
 reset role;
 
 select * from finish();

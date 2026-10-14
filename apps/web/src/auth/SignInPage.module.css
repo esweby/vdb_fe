@@ -1,0 +1,10 @@
+.page {
+  max-width: 24rem;
+}
+.error {
+  color: var(--danger);
+}
+.switch {
+  margin-top: 1rem;
+  padding-left: 0;
+}

@@ -89,9 +89,10 @@ These three tasks go first because any of them could change the plan.
 
 ### M4: Frontend shell (2–3 days)
 
-- [ ] Vite + React + TypeScript + Redux + TanStack Router in `apps/web`.
-- [ ] Supabase auth (sign up, sign in, sign out), with role available in the app.
-- [ ] Navigation and a minimal component library: button, input, slider, table, tag, dialog.
+- [x] Vite 8 + React 19 + TypeScript + Redux Toolkit + TanStack Router in `apps/web`, CSS Modules. Vitest 5 with Testing Library (jsdom).
+- [x] Supabase auth (sign up, sign in, sign out) behind an `AuthService` interface (a fake in tests); the role is in Redux. Private pages redirect to sign-in; Needs review is scorers only.
+- [x] Navigation and a minimal component library: Button, TextField, Slider ("not set" is distinct from 0), Table, Tag, Dialog.
+- [x] Local dev accounts in `supabase/seed.sql` (local resets only). Verified in a browser against the local stack: sign in as a scorer, navigate, sign out, private-page redirect, phone width.
 
 **Done when:** a user can sign in and move between empty pages.
 
