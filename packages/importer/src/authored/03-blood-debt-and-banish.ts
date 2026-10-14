@@ -82,11 +82,14 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Consuming Aftermath": {
-    verified: true,
+    verified: false,
     card: {
       banishesOwn: [{ from: "hand", trigger: "on_play", optional: true }],
+      conditionalBonuses: [
+        { effect: "dominate", conditions: ["banished_card_is_shadow"] },
+      ],
       notes:
-        "Banishing is an optional additional cost. Gets dominate if the banished card is Shadow.",
+        "Banishing is an optional additional cost. Dominate is listed as a keyword in the dataset but is conditional.",
     },
   },
   "Corrupt and Conquer": {
@@ -557,17 +560,29 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Shadowrealm Ripper": {
-    verified: true,
+    verified: false,
     card: {
       banishesOwn: [{ from: "hand", trigger: "on_attack", optional: true }],
-      notes: "+2 power if the banished card is Shadow.",
+      conditionalBonuses: [
+        {
+          effect: "plus_power",
+          amount: 2,
+          conditions: ["banished_card_is_shadow"],
+        },
+      ],
     },
   },
   "Shadowrealm Walker": {
-    verified: true,
+    verified: false,
     card: {
       banishesOwn: [{ from: "hand", trigger: "on_attack", optional: true }],
-      notes: "+2 power if the banished card is Shadow.",
+      conditionalBonuses: [
+        {
+          effect: "plus_power",
+          amount: 2,
+          conditions: ["banished_card_is_shadow"],
+        },
+      ],
     },
   },
   "Sigil of Silphidae": {

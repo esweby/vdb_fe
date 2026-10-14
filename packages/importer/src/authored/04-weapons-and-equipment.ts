@@ -213,7 +213,9 @@ export const weaponsAndEquipment: AuthoredAttributes = {
     verified: false,
     card: {
       banishesOwn: [{ from: "hand", trigger: "on_defend", optional: true }],
-      notes: "If you banish a card this way, Corrupted Crown gets +1 defense.",
+      conditionalBonuses: [
+        { effect: "plus_defense", amount: 1, conditions: ["banished_a_card"] },
+      ],
     },
   },
   "Ebon Fold": {
@@ -221,8 +223,10 @@ export const weaponsAndEquipment: AuthoredAttributes = {
     card: {
       oneUse: true,
       banishesOwn: [{ from: "hand", trigger: "activated" }],
-      notes:
-        "Instant: {r}, destroy it. If the banished card is Shadow, draw a card.",
+      conditionalBonuses: [
+        { effect: "draw", amount: 1, conditions: ["banished_card_is_shadow"] },
+      ],
+      notes: "Instant: {r}, destroy it.",
     },
   },
   "Reach of the Abyss": {
