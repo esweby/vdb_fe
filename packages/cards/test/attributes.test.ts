@@ -193,6 +193,31 @@ describe("authoredAttributesSchema", () => {
     ).toBe(true);
   });
 
+  it("accepts conditional bonuses", () => {
+    expect(
+      authoredAttributesSchema.safeParse({
+        conditionalBonuses: [
+          {
+            effect: "plus_power",
+            amount: 2,
+            conditions: ["banished_card_is_shadow"],
+          },
+          { effect: "dominate", conditions: ["banished_card_is_shadow"] },
+          {
+            effect: "plus_defense",
+            amount: 1,
+            conditions: ["banished_a_card"],
+          },
+          {
+            effect: "draw",
+            amount: 1,
+            conditions: ["banished_card_is_shadow"],
+          },
+        ],
+      }).success,
+    ).toBe(true);
+  });
+
   it("accepts cards a card works with", () => {
     expect(
       authoredAttributesSchema.safeParse({
@@ -217,6 +242,18 @@ describe("authoredAttributesSchema", () => {
   it.each([
     ["an unknown grantsGoAgain", { grantsGoAgain: "every_card" }],
     ["go again without a condition", { goAgain: {} }],
+    [
+      "a conditional bonus without a condition",
+      { conditionalBonuses: [{ effect: "dominate" }] },
+    ],
+    [
+      "a power bonus without an amount",
+      {
+        conditionalBonuses: [
+          { effect: "plus_power", conditions: ["banished_card_is_shadow"] },
+        ],
+      },
+    ],
     [
       "a cost reduction without a condition",
       { costReductions: [{ amount: 2 }] },

@@ -100,4 +100,39 @@ describe("attributeGroups", () => {
       }),
     ).toEqual([]);
   });
+
+  it("tags cards with payoffs for banishing a Shadow or Runeblade card", () => {
+    expect(
+      attributeGroups({
+        tokens: [
+          {
+            token: "runechant",
+            amount: 1,
+            trigger: "on_play",
+            conditions: ["banished_card_is_runeblade"],
+          },
+          {
+            token: "gate",
+            amount: 1,
+            trigger: "on_play",
+            conditions: ["banished_card_is_shadow"],
+          },
+        ],
+      }),
+    ).toEqual(["rewards_shadow_banish", "rewards_runeblade_banish"]);
+    expect(
+      attributeGroups({ goAgain: { conditions: ["banished_card_is_shadow"] } }),
+    ).toEqual(["rewards_shadow_banish"]);
+    expect(
+      attributeGroups({
+        conditionalBonuses: [
+          {
+            effect: "plus_power",
+            amount: 2,
+            conditions: ["banished_card_is_shadow"],
+          },
+        ],
+      }),
+    ).toEqual(["rewards_shadow_banish"]);
+  });
 });

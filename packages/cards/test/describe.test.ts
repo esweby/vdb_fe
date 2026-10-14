@@ -513,6 +513,39 @@ describe("describeAttributes", () => {
     ]);
   });
 
+  it("describes conditional bonuses", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        conditionalBonuses: [
+          {
+            effect: "plus_power",
+            amount: 2,
+            conditions: ["banished_card_is_shadow"],
+          },
+          {
+            effect: "plus_defense",
+            amount: 1,
+            conditions: ["banished_a_card"],
+          },
+          { effect: "dominate", conditions: ["banished_card_is_shadow"] },
+          { effect: "overpower", conditions: ["played_from_banish"] },
+          {
+            effect: "draw",
+            amount: 1,
+            conditions: ["banished_card_is_shadow"],
+          },
+        ],
+      }),
+    ).toEqual([
+      "Gets +2 power, if the banished card is Shadow.",
+      "Gets +1 defense, if you banished a card this way.",
+      "Gets dominate, if the banished card is Shadow.",
+      "Gets overpower, if it was played from your banished zone.",
+      "You draw 1 card, if the banished card is Shadow.",
+    ]);
+  });
+
   it("describes cards a card works with", () => {
     expect(
       describeAttributes({
