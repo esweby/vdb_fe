@@ -48,10 +48,19 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Bloodsong Gloomblade": {
-    verified: true,
+    verified: false,
     card: {
       playableFromBanish: {},
-      notes: "When it hits, may banish an aura the hit hero controls.",
+      disrupts: [
+        {
+          action: "banish",
+          from: "auras",
+          amount: 1,
+          target: "defending_hero",
+          trigger: "on_hit",
+          optional: true,
+        },
+      ],
     },
   },
   "Bounding Demigon": {
@@ -81,27 +90,51 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Corrupt and Conquer": {
-    verified: true,
+    verified: false,
     card: {
       rewardsPlayFromBanish: true,
+      disrupts: [
+        {
+          action: "banish",
+          from: "arsenal",
+          amount: "all",
+          target: "defending_hero",
+          trigger: "on_hit",
+        },
+      ],
       notes:
         "From banish: defense reaction cards can't be played this chain link.",
     },
   },
   Cull: {
-    verified: true,
+    verified: false,
     card: {
       playableFromBanish: {},
-      banishesOwn: [{ from: "hand", trigger: "on_play" }],
-      notes:
-        "Every hero banishes a card from hand, you included. Instant speed if a hero has lost life this turn.",
+      disrupts: [
+        {
+          action: "banish",
+          from: "hand",
+          amount: 1,
+          target: "each_hero",
+          trigger: "on_play",
+        },
+      ],
+      instantSpeed: { conditions: ["hero_lost_life_this_turn"] },
     },
   },
   "Cullingsong Gloomblade": {
-    verified: true,
+    verified: false,
     card: {
       playableFromBanish: {},
-      notes: "When it hits, the hit hero banishes a card from their hand.",
+      disrupts: [
+        {
+          action: "banish",
+          from: "hand",
+          amount: 1,
+          target: "defending_hero",
+          trigger: "on_hit",
+        },
+      ],
     },
   },
   "Dabble in Darkness": {
@@ -125,11 +158,21 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Deep Recesses of Existence": {
-    verified: true,
+    verified: false,
     card: {
       banishesSelf: [{ trigger: "combat_chain_closes", optional: true }],
+      disrupts: [
+        {
+          action: "banish",
+          from: "graveyard",
+          amount: 1,
+          target: "each_hero",
+          trigger: "combat_chain_closes",
+          conditions: ["hero_lost_life_this_turn"],
+        },
+      ],
       notes:
-        "Banished face-down, so it can't be played from banish. Then banishes cards from graveyards of heroes who lost life.",
+        "Banished face-down, so it can't be played from banish. Only heroes who have lost life this turn banish from their graveyard.",
     },
   },
   "Demonbound Gloomblade": {
@@ -173,11 +216,20 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Dimenxxional Vortex": {
-    verified: true,
+    verified: false,
     card: {
       playableFromBanish: {},
-      notes:
-        "Costs {r}{r} less from banish. Every hero banishes a card from their arsenal, you included. The dataset has no pitch for this card.",
+      costReductions: [{ amount: 2, conditions: ["played_from_banish"] }],
+      disrupts: [
+        {
+          action: "banish",
+          from: "arsenal",
+          amount: 1,
+          target: "each_hero",
+          trigger: "on_play",
+        },
+      ],
+      notes: "The dataset has no pitch for this card.",
     },
   },
   "Eclipse Existence": {
@@ -212,10 +264,10 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Embrace Sin": {
-    verified: true,
+    verified: false,
     card: {
-      notes:
-        "Your next attack gets +2 power, and you may play an aura with Runechant in its name from your banished zone this turn.",
+      enablesPlayFromBanish: [{ target: { group: "runechant_aura" } }],
+      notes: "Your next attack this turn also gets +2 power.",
     },
   },
   "Engulfing Shadows": {
@@ -230,22 +282,19 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Fasting Carcass": {
-    verified: true,
-    card: {
-      notes:
-        "The next red/yellow/blue action card you play this turn (matching its colour) gets go again. Granting to a card of a colour isn't in the vocabulary yet.",
-    },
+    verified: false,
+    card: { grantsGoAgain: "next_action_card_matching_pitch" },
   },
   "Ghostly Visit": {
     verified: true,
     card: { playableFromBanish: {} },
   },
   "Grim Feast": {
-    verified: true,
+    verified: false,
     card: {
       playableFromBanish: {},
-      notes:
-        "Costs {r}{r} less from banish. Gain 3/2/1 life (red/yellow/blue).",
+      costReductions: [{ amount: 2, conditions: ["played_from_banish"] }],
+      notes: "Gain 3/2/1 life (red/yellow/blue).",
     },
   },
   "Guardian of the Shadowrealm": {
@@ -264,26 +313,55 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Hungering Demigon": {
-    verified: true,
+    verified: false,
     card: {
       playableFromBanish: {},
+      disrupts: [
+        {
+          action: "banish",
+          from: "soul",
+          amount: 1,
+          target: "defending_hero",
+          trigger: "on_hit",
+        },
+      ],
       notes:
         "Only playable from banish if an opponent has cards in their soul (Light heroes).",
     },
   },
   "Invert Existence": {
-    verified: true,
+    verified: false,
     card: {
       playableFromBanish: {},
+      disrupts: [
+        {
+          action: "banish",
+          from: "graveyard",
+          amount: 2,
+          target: "opponent",
+          trigger: "on_play",
+          optional: true,
+        },
+      ],
+      arcaneDamage: [{ amount: 2, trigger: "on_play" }],
       notes:
-        "Banishes up to 2 cards from an opponent's graveyard; 2 arcane damage if they're an attack and a non-attack action card.",
+        "Up to 2 cards. The arcane damage needs an attack and a non-attack action card among them.",
     },
   },
   "Lunartide Plunderer": {
-    verified: true,
+    verified: false,
     card: {
       banishesSelf: [{ trigger: "on_hit" }],
-      notes: "Also banishes a card from the hit hero's soul.",
+      disrupts: [
+        {
+          action: "banish",
+          from: "soul",
+          amount: 1,
+          target: "defending_hero",
+          trigger: "on_hit",
+          optional: true,
+        },
+      ],
     },
   },
   "Mutated Mass": {
@@ -291,11 +369,12 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     card: { playableFromBanish: {} },
   },
   "Painful Passage": {
-    verified: true,
+    verified: false,
     card: {
       banishesOwn: [{ from: "hand", trigger: "on_play", optional: true }],
+      grantsGoAgain: "banished_card",
       notes:
-        "Banishes an attack action card from hand, which gets +3 power or go again this turn (so it can be played with a Gate).",
+        "Banishes an attack action card; it gets your choice of +3 power or go again this turn.",
     },
   },
   "Permanent Interment": {
@@ -313,18 +392,30 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Plundersong Gloomblade": {
-    verified: true,
+    verified: false,
     card: {
       playableFromBanish: {},
-      notes: "When it hits, the hit hero banishes a card from their arsenal.",
+      disrupts: [
+        {
+          action: "banish",
+          from: "arsenal",
+          amount: 1,
+          target: "defending_hero",
+          trigger: "on_hit",
+        },
+      ],
     },
   },
   "Putrid Stirrings": {
-    verified: true,
+    verified: false,
     card: {
       playableFromBanish: {},
-      notes:
-        "The next attack action card you rune gate this turn gets +5/+4/+3 power (red/yellow/blue).",
+      supports: [
+        {
+          target: { group: "rune_gate" },
+          note: "+5/+4/+3 power to the next one you rune gate this turn",
+        },
+      ],
     },
   },
   "Rally the Shadow Horde": {
@@ -336,19 +427,23 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Rattle Bones": {
-    verified: true,
+    verified: false,
     card: {
       banishesOwn: [{ from: "graveyard", trigger: "on_play" }],
+      enablesPlayFromBanish: [{ target: { group: "runeblade_attack_action" } }],
+      instantSpeed: {
+        conditions: ["dealt_arcane_damage_to_opponent_this_turn"],
+      },
       notes:
-        "Banishes a Runeblade attack action card from your graveyard, which you may play this turn. Instant speed if you've dealt arcane damage to an opponent.",
+        "Banishes a Runeblade attack action card from your graveyard; that card is the one you may play this turn.",
     },
   },
   "Requiem for the Damned": {
-    verified: true,
+    verified: false,
     card: {
       playableFromBanish: {},
       tokens: [{ token: "eloquence", amount: 1, trigger: "on_play" }],
-      notes: "Instant speed if a hero has lost life this turn.",
+      instantSpeed: { conditions: ["hero_lost_life_this_turn"] },
     },
   },
   "Rift Bind": {
@@ -490,11 +585,18 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Sinspeaker Gloomblade": {
-    verified: true,
+    verified: false,
     card: {
       playableFromBanish: {},
-      notes:
-        "From banish, when it attacks you may search your deck for a Runechant aura (e.g. Runechant of Lust) and put it into the arena.",
+      tutors: [
+        {
+          target: { group: "runechant_aura" },
+          to: "arena",
+          trigger: "on_attack",
+          conditions: ["played_from_banish"],
+          optional: true,
+        },
+      ],
     },
   },
   "Sonata Arcanix": {
@@ -524,11 +626,8 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Tear Through the Portal": {
-    verified: true,
-    card: {
-      notes:
-        "A red/yellow/blue action card (matching its colour) in your banished zone gets go again.",
-    },
+    verified: false,
+    card: { grantsGoAgain: "card_in_banished_zone_matching_pitch" },
   },
   "Tome of Torment": {
     verified: true,
@@ -577,11 +676,21 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Vile Inquisition": {
-    verified: true,
+    verified: false,
     card: {
       playableFromBanish: {},
+      costReductions: [{ amount: 2, conditions: ["played_from_banish"] }],
+      disrupts: [
+        {
+          action: "banish",
+          from: "deck_top",
+          amount: 1,
+          target: "opponent",
+          trigger: "on_play",
+        },
+      ],
       notes:
-        "Costs {r}{r} less from banish. Target hero banishes their top card and loses 1 life if it's red/yellow/blue (matching).",
+        "Targets a hero (normally an opponent). They lose 1 life if the banished card matches this card's colour.",
     },
   },
   "Void Wraith": {
@@ -597,24 +706,51 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Widespread Annihilation": {
-    verified: true,
+    verified: false,
     card: {
-      notes:
-        "Each hero who lost life this turn banishes a card from their hand.",
+      disrupts: [
+        {
+          action: "banish",
+          from: "hand",
+          amount: 1,
+          target: "each_hero",
+          trigger: "combat_chain_closes",
+          conditions: ["hero_lost_life_this_turn"],
+        },
+      ],
+      notes: "Only heroes who have lost life this turn.",
     },
   },
   "Widespread Destruction": {
-    verified: true,
+    verified: false,
     card: {
-      notes:
-        "Each hero who lost life this turn banishes a card from their arsenal.",
+      disrupts: [
+        {
+          action: "banish",
+          from: "arsenal",
+          amount: 1,
+          target: "each_hero",
+          trigger: "combat_chain_closes",
+          conditions: ["hero_lost_life_this_turn"],
+        },
+      ],
+      notes: "Only heroes who have lost life this turn.",
     },
   },
   "Widespread Ruin": {
-    verified: true,
+    verified: false,
     card: {
-      notes:
-        "Each hero who lost life this turn banishes the top card of their deck.",
+      disrupts: [
+        {
+          action: "banish",
+          from: "deck_top",
+          amount: 1,
+          target: "each_hero",
+          trigger: "combat_chain_closes",
+          conditions: ["hero_lost_life_this_turn"],
+        },
+      ],
+      notes: "Only heroes who have lost life this turn.",
     },
   },
 };

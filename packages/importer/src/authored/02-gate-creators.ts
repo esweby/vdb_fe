@@ -12,11 +12,17 @@ export const gateCreators: AuthoredAttributes = {
     card: { tokens: [{ token: "gate", amount: 1, trigger: "on_hit" }] },
   },
   "Countdown to Extinction": {
-    verified: true,
+    verified: false,
     card: {
       tokens: [{ token: "gate", amount: 1, trigger: "on_attack" }],
-      notes:
-        "When it hits, you may search your deck for a Darkest Hour and banish it (a tutor into banish, not the top card).",
+      tutors: [
+        {
+          target: { card: "Darkest Hour" },
+          to: "banished",
+          trigger: "on_hit",
+          optional: true,
+        },
+      ],
     },
   },
   "Dam the Shadowake": {

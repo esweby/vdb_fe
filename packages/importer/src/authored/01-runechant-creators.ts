@@ -186,11 +186,15 @@ export const runechantCreators: AuthoredAttributes = {
     },
   },
   "Envelop in Darkness": {
-    verified: true,
+    verified: false,
     card: {
       tokens: [{ token: "runechant", amount: 1, trigger: "on_play" }],
-      notes:
-        "Also gives the next attack action card you rune gate this turn +3/+2/+1 power (red/yellow/blue).",
+      supports: [
+        {
+          target: { group: "rune_gate" },
+          note: "+3/+2/+1 power to the next one you rune gate this turn",
+        },
+      ],
     },
   },
   "Forbidden Harvest": {
@@ -202,11 +206,11 @@ export const runechantCreators: AuthoredAttributes = {
     },
   },
   "Funeral Moon": {
-    verified: true,
+    verified: false,
     card: {
       playableFromBanish: {},
       tokens: [{ token: "runechant", amount: 1, trigger: "on_play" }],
-      notes: "Can be played as an instant if a hero has lost life this turn.",
+      instantSpeed: { conditions: ["hero_lost_life_this_turn"] },
     },
   },
   "Haunting Rendition": {
@@ -531,11 +535,19 @@ export const runechantCreators: AuthoredAttributes = {
     },
   },
   "Runic Reclamation": {
-    verified: true,
+    verified: false,
     card: {
+      disrupts: [
+        {
+          action: "destroy",
+          from: "auras",
+          amount: 1,
+          target: "defending_hero",
+          trigger: "on_hit",
+        },
+      ],
       tokens: [{ token: "runechant", amount: 1, trigger: "on_hit" }],
-      notes:
-        "Only if it destroys an aura the hit hero controls. No condition exists for opponent auras yet.",
+      notes: "The Runechant only comes if the aura is destroyed.",
     },
   },
   "Sigil of Deadwood": {
@@ -560,7 +572,7 @@ export const runechantCreators: AuthoredAttributes = {
     },
   },
   "Sonata Dystopia": {
-    verified: true,
+    verified: false,
     card: {
       tokens: [
         {
@@ -570,8 +582,9 @@ export const runechantCreators: AuthoredAttributes = {
           grantedTo: "next_attack_action",
         },
       ],
+      costReductions: [{ amount: "X", grantedTo: "next_attack_action" }],
       notes:
-        "Costs destroying X Runechants. The next attack action card also costs {x} less, gets +X power and overpower.",
+        "Costs destroying X Runechants. The next attack action card also gets +X power and overpower.",
     },
   },
   "Sonata Fantasmia": {
