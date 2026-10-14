@@ -81,7 +81,9 @@ These three tasks go first because any of them could change the plan.
 - [x] `packages/scoring`: resolving each scorer's score through the levels (variant + side → variant → card + side → card), top-level blank = 0 on reviewed cards, fringe default, rating count vs. total weight. Drafts (cards not marked reviewed) don't count; only scorer, curator and admin roles count.
 - [x] Unit tests for every rule in README "Reviews and blank scores", including the red-80-yellow-blank trap and the fringe card with a single rating.
 - [x] Community score Edge Function (`supabase/functions/community-scores`): reads scores, reviews and weights with the service role, computes with `@vdb/scoring`, and swaps in `community_scores` atomically through `replace_community_scores` (service role only, pgTAP tested). Verified end to end locally against hand-calculated results.
-- [ ] Decide when the job runs: after each "Mark reviewed" (the app calls the function), on a schedule (pg_cron), or both.
+- [x] When the job runs: **both**.
+  - Daily at 03:00 via pg_cron + pg_net (`invoke_community_scores_job`). This needs the Vault secrets `project_url` and `service_role_key` in the hosted project, and does nothing until they exist. Verified locally: the scheduled call reached the function and wrote scores.
+  - After each "Mark reviewed": the app calls the function (built in M5).
 
 **Done when:** tests cover every rule, and the job produces correct community scores for a hand-built test fixture.
 
@@ -98,6 +100,7 @@ These three tasks go first because any of them could change the plan.
 - [ ] Card table: search, filters (pitch, type, class, dimension), sorting.
 - [ ] Card page: every dimension, the "Same score for both sides" toggle (default from preferences), per-variant scores, "not relevant", inherited values greyed in.
 - [ ] Save as draft, and **Mark reviewed** with the summary and one-click fixes.
+- [ ] After **Mark reviewed**, call the `community-scores` function so community scores update straight away.
 - [ ] "Needs review" list, Runeblade and Shadow cards first.
 
 **Done when:** a scorer can review a card from start to finish, and the community score updates.
