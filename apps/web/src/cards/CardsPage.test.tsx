@@ -89,4 +89,21 @@ describe("cards page", () => {
       await screen.findByRole("heading", { name: "Nebula Blade" }),
     ).toBeInTheDocument();
   });
+
+  it("shows cost, power and defense, and sorts by them", async () => {
+    const { router } = await renderApp({
+      path: "/cards",
+      auth: fakeAuthService().service,
+    });
+    await screen.findByRole("link", { name: "Hocus Pocus" });
+    const row = screen
+      .getByRole("link", { name: "Hocus Pocus" })
+      .closest("tr")!;
+    expect(within(row).getByText("4 / 3 / 2")).toBeInTheDocument();
+    await userEvent
+      .setup()
+      .selectOptions(screen.getByLabelText("Sort"), "power");
+    await waitFor(() => expect(rowNames()[0]).toBe("Hocus Pocus"));
+    expect(router.state.location.search).toMatchObject({ sort: "power" });
+  });
 });
