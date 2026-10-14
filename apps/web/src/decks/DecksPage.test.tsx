@@ -134,6 +134,32 @@ describe("deck page", () => {
     ).toBeInTheDocument();
   });
 
+  it("orders cards by pitch, then name", async () => {
+    await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      decks: withDeck([
+        { variantId: "hp3", quantity: 1, sideboard: false },
+        { variantId: "ff1", quantity: 1, sideboard: false },
+        { variantId: "bsl3", quantity: 1, sideboard: false },
+        { variantId: "hp1", quantity: 1, sideboard: false },
+        { variantId: "ff2", quantity: 1, sideboard: false },
+      ]).repository,
+    });
+    await region("Deck").findAllByText("Fate Foreseen");
+    expect(
+      region("Deck")
+        .getAllByRole("listitem")
+        .map((li) => within(li).getByRole("status").getAttribute("aria-label")),
+    ).toEqual([
+      "Copies of Fate Foreseen (red)",
+      "Copies of Hocus Pocus (red)",
+      "Copies of Fate Foreseen (yellow)",
+      "Copies of Become the Shadow Lord (blue)",
+      "Copies of Hocus Pocus (blue)",
+    ]);
+  });
+
   it("caps each card at the copy limit", async () => {
     const fake = withDeck([
       { variantId: "hp1", quantity: 3, sideboard: false },
