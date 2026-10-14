@@ -134,6 +134,57 @@ describe("deck page", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows each card as a card-shaped tile with its basic details", async () => {
+    await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      decks: withDeck([
+        { variantId: "hp1", quantity: 3, sideboard: false },
+        { variantId: "nb", quantity: 1, sideboard: false },
+      ]).repository,
+    });
+    const tile = await region("Deck").findByRole("article", {
+      name: "Hocus Pocus (red)",
+    });
+    expect(within(tile).getByLabelText("Pitch 1")).toBeInTheDocument();
+    expect(within(tile).getByLabelText("Cost 0")).toBeInTheDocument();
+    expect(within(tile).getByLabelText("Power 4")).toBeInTheDocument();
+    expect(within(tile).getByLabelText("Defense 3")).toBeInTheDocument();
+    expect(
+      within(tile).getByText("Runeblade Attack action"),
+    ).toBeInTheDocument();
+    expect(within(tile).getByText("Blood Debt")).toBeInTheDocument();
+    expect(within(tile).getByText("3×")).toBeInTheDocument();
+    const blade = region("Weapons").getByRole("article", {
+      name: "Nebula Blade",
+    });
+    expect(
+      within(blade).getByText("Runeblade Weapon · Sword · 2H"),
+    ).toBeInTheDocument();
+    expect(within(blade).getByLabelText("Power 1")).toBeInTheDocument();
+  });
+
+  it("switches between card tiles and a compact list, keeping the choice in the URL", async () => {
+    const { router } = await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      decks: withDeck([{ variantId: "hp1", quantity: 3, sideboard: false }])
+        .repository,
+    });
+    await region("Deck").findByRole("article", { name: "Hocus Pocus (red)" });
+    const user = userEvent.setup();
+    expect(screen.getByRole("button", { name: "Card view" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await user.click(screen.getByRole("button", { name: "List view" }));
+    await waitFor(() =>
+      expect(router.state.location.search).toMatchObject({ view: "list" }),
+    );
+    expect(region("Deck").queryByRole("article")).not.toBeInTheDocument();
+    expect(region("Deck").getByText("3×")).toBeInTheDocument();
+  });
+
   it("orders cards by pitch, then name", async () => {
     await renderApp({
       path: "/decks/deck-1",
