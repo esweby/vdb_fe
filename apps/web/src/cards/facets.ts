@@ -27,6 +27,24 @@ const disrupts = (zone: string) => (c: CardSummary) =>
 const inGroup = (group: string) => (c: CardSummary) =>
   (c.attributes.groups as string[]).includes(group);
 
+/** A stat group: a card matches a band if any of its pitches does. */
+function statFacet(
+  id: "cost" | "power" | "defense",
+  label: string,
+  bands: [string, string, (n: number) => boolean][],
+): Facet<CardSummary> {
+  return {
+    id,
+    label,
+    mode: "any",
+    values: bands.map(([valueId, valueLabel, test]) =>
+      value(valueId, valueLabel, (c) =>
+        c.variants.some((v) => v[id] !== null && test(v[id]!)),
+      ),
+    ),
+  };
+}
+
 export function cardFacets(
   context: { reviewedCardIds?: Set<string> } = {},
 ): Facet<CardSummary>[] {
@@ -71,6 +89,26 @@ export function cardFacets(
         ),
       ),
     },
+    statFacet("cost", "Cost", [
+      ["0", "0", (n) => n === 0],
+      ["1", "1", (n) => n === 1],
+      ["2", "2", (n) => n === 2],
+      ["ge3", "3+", (n) => n >= 3],
+    ]),
+    statFacet("power", "Power", [
+      ["le2", "2 or less", (n) => n <= 2],
+      ["3", "3", (n) => n === 3],
+      ["4", "4", (n) => n === 4],
+      ["5", "5", (n) => n === 5],
+      ["ge6", "6+", (n) => n >= 6],
+    ]),
+    statFacet("defense", "Defense", [
+      ["0", "0", (n) => n === 0],
+      ["1", "1", (n) => n === 1],
+      ["2", "2", (n) => n === 2],
+      ["3", "3", (n) => n === 3],
+      ["ge4", "4+", (n) => n >= 4],
+    ]),
     {
       id: "keywords",
       label: "Keywords",

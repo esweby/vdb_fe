@@ -35,6 +35,9 @@ export interface CardDetail {
   variants: {
     id: string;
     pitch: number | null;
+    cost: number | null;
+    power: number | null;
+    defense: number | null;
     text: string | null;
     /** Overrides for this pitch, merged over the card's attributes. */
     attributes: AuthoredCardAttributes;
@@ -80,7 +83,7 @@ export function supabaseScoreRepository(
       const { data, error } = await client
         .from("cards")
         .select(
-          "id, name, type, classes, talents, text, attributes, attributes_verified, variants(id, pitch, text, attributes)",
+          "id, name, type, classes, talents, text, attributes, attributes_verified, variants(id, pitch, cost, power, defense, text, attributes)",
         )
         .eq("id", cardId)
         .maybeSingle();

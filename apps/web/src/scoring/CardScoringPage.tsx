@@ -174,6 +174,19 @@ export function CardScoringPage() {
         )}
       </section>
 
+      <ul className={styles.stats}>
+        {card.variants.map((v) => {
+          const stats = [
+            v.cost !== null ? `cost ${v.cost}` : null,
+            v.power !== null ? `power ${v.power}` : null,
+            v.defense !== null ? `defense ${v.defense}` : null,
+          ].filter(Boolean);
+          if (stats.length === 0) return null;
+          const prefix = v.pitch !== null ? `Pitch ${v.pitch}: ` : "";
+          return <li key={v.id}>{prefix + stats.join(" · ")}</li>;
+        })}
+      </ul>
+
       {lines.length > 0 && (
         <section>
           <h2>What it does</h2>

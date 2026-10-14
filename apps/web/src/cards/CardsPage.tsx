@@ -9,7 +9,13 @@ import { useServices } from "../servicesContext.ts";
 import { Table, TextField, type Column } from "../ui/index.ts";
 import type { CardSummary } from "./cardRepository.ts";
 import { cardFacets } from "./facets.ts";
-import { classOf, searchAndSort, TYPE_LABELS } from "./filterCards.ts";
+import {
+  classOf,
+  searchAndSort,
+  statText,
+  TYPE_LABELS,
+  type CardSort,
+} from "./filterCards.ts";
 import styles from "./CardsPage.module.css";
 import { useCards } from "./useCards.ts";
 
@@ -35,6 +41,9 @@ const columns: Column<CardSummary>[] = [
   { key: "type", header: "Type", render: (c) => TYPE_LABELS[c.type] ?? c.type },
   { key: "class", header: "Class", render: classOf },
   { key: "pitch", header: "Pitch", render: pitches },
+  { key: "cost", header: "Cost", render: (c) => statText(c, "cost") },
+  { key: "power", header: "Power", render: (c) => statText(c, "power") },
+  { key: "defense", header: "Defense", render: (c) => statText(c, "defense") },
 ];
 
 export function CardsPage() {
@@ -102,6 +111,9 @@ export function CardsPage() {
               >
                 <option value="name">Name</option>
                 <option value="type">Type</option>
+                <option value="cost">Cost (lowest)</option>
+                <option value="power">Power (highest)</option>
+                <option value="defense">Defense (highest)</option>
               </select>
             </label>
           </div>
