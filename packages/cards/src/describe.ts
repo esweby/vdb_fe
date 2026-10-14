@@ -43,6 +43,13 @@ const CONDITION_TEXT: Record<Condition, string> = {
     "the banished or revealed card matches this card's colour",
   destroyed_own_aura: "you destroyed an aura you control",
   hero_lost_life_this_turn: "a hero has lost life this turn",
+  dealt_damage_to_defending_hero_this_turn:
+    "you've dealt damage to the defending hero this turn",
+  dealt_arcane_damage_to_opponent_this_turn:
+    "you've dealt arcane damage to an opponent this turn",
+  created_3_or_more_runechants: "it created 3 or more Runechants",
+  paid_optional_additional_cost: "you paid its optional additional cost",
+  defending_hero_has_soul_cards: "the defending hero has cards in their soul",
 };
 
 const TOKEN_TEXT: Record<Token, [one: string, many: string]> = {
@@ -122,17 +129,18 @@ export function describeAttributes(attributes: CardAttributes): string[] {
       `Can be played from your banished zone${ifConditions(attributes.playableFromBanish.conditions)}.`,
     );
   }
+  if (attributes.isGateTarget) {
+    lines.push("Can be played from your banished zone with a Gate.");
+  }
+  if (attributes.rewardsPlayFromBanish) {
+    lines.push("Is better when played from your banished zone.");
+  }
   if (attributes.costReducedPerRunechant)
     lines.push("Costs {r} less for each Runechant you control.");
   if (attributes.hasUsurp) lines.push("Usurp.");
   if (attributes.hasRuneGate) lines.push("Rune Gate.");
   if (attributes.goAgain) {
-    const conditions = attributes.goAgain.conditions;
-    lines.push(
-      conditions?.length
-        ? `Gets go again${ifConditions(conditions)}.`
-        : "Gets go again under a condition (see note).",
-    );
+    lines.push(`Gets go again${ifConditions(attributes.goAgain.conditions)}.`);
   } else if (attributes.hasGoAgain) {
     lines.push("Go again.");
   }

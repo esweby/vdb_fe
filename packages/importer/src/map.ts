@@ -62,12 +62,17 @@ function toTypeKey(mainType: string, subtypes: string[]): string {
 function generatedAttributes(
   keywords: string[],
   specialization: string | null,
+  type: string,
 ): GeneratedAttributes {
+  const hasBloodDebt = keywords.includes("Blood Debt");
   return {
     hasGoAgain: keywords.includes("Go again"),
-    hasBloodDebt: keywords.includes("Blood Debt"),
+    hasBloodDebt,
     hasUsurp: keywords.includes("Usurp"),
     hasRuneGate: keywords.includes("Rune Gate"),
+    // Gate to i'Arathael: "play target action card with blood debt from your banished zone".
+    isGateTarget:
+      hasBloodDebt && (type === "action" || type === "attack_action"),
     specialization,
   };
 }
@@ -148,7 +153,11 @@ export function toImportCards(
       keywords,
       text: texts.size === 1 ? first.functional_text_plain || null : null,
       attributes: {
-        ...generatedAttributes(keywords, specializationOf(first)),
+        ...generatedAttributes(
+          keywords,
+          specializationOf(first),
+          toTypeKey(mainType!, subtypes),
+        ),
         ...(entry?.card ? validated(name, "card", entry.card) : {}),
         // Authored conditional go again means the keyword isn't natural go again.
         ...(entry?.card?.goAgain ? { hasGoAgain: false } : {}),

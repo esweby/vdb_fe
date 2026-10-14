@@ -44,9 +44,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     verified: true,
     card: {
       playableFromBanish: {},
-      goAgain: {},
-      notes:
-        "Gets go again if you've dealt damage to the defending hero this turn.",
+      goAgain: { conditions: ["dealt_damage_to_defending_hero_this_turn"] },
     },
   },
   "Bloodsong Gloomblade": {
@@ -59,10 +57,11 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
   "Bounding Demigon": {
     verified: false,
     card: {
+      rewardsPlayFromBanish: true,
       playableFromBanish: {
         conditions: ["played_non_attack_action_this_turn"],
       },
-      notes: "+1 power when played from your banished zone.",
+      notes: "From banish: +1 power.",
     },
   },
   "Chains of Mephetis": {
@@ -84,8 +83,9 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
   "Corrupt and Conquer": {
     verified: false,
     card: {
+      rewardsPlayFromBanish: true,
       notes:
-        "Rewards being played from your banished zone (defense reactions can't be played), but nothing on the card lets it be played from there.",
+        "From banish: defense reaction cards can't be played this chain link.",
     },
   },
   Cull: {
@@ -204,6 +204,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
   Embalm: {
     verified: false,
     card: {
+      rewardsPlayFromBanish: true,
       playableFromBanish: {},
       goAgain: { conditions: ["played_from_banish"] },
       notes:
@@ -353,9 +354,10 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
   "Rift Bind": {
     verified: false,
     card: {
+      rewardsPlayFromBanish: true,
       playableFromBanish: {},
       notes:
-        "From banish, gets +X power, where X is the number of non-attack action cards you've played this turn.",
+        "From banish: +X power, where X is the number of non-attack action cards you've played this turn.",
     },
   },
   "Rift Skitter": {
@@ -365,6 +367,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
   "Rifted Torment": {
     verified: false,
     card: {
+      rewardsPlayFromBanish: true,
       playableFromBanish: {},
       arcaneDamage: [
         { amount: 1, trigger: "on_play", conditions: ["played_from_banish"] },
@@ -375,8 +378,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     verified: false,
     card: {
       playableFromBanish: {},
-      goAgain: { conditions: ["dealt_arcane_damage_this_turn"] },
-      notes: "The arcane damage must have been dealt to an opponent.",
+      goAgain: { conditions: ["dealt_arcane_damage_to_opponent_this_turn"] },
     },
   },
   "Runic Fellingsong": {
@@ -414,9 +416,9 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     card: {
       playableFromBanish: {},
       banishesOwn: [{ from: "hand", trigger: "on_play", optional: true }],
-      goAgain: {},
+      goAgain: { conditions: ["paid_optional_additional_cost"] },
       notes:
-        "Gets go again if you paid the optional additional cost: banishing a blood debt card from your hand.",
+        "The optional additional cost is banishing a blood debt card from your hand.",
     },
   },
   "Shadow Puppetry": {
@@ -437,23 +439,25 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
   "Shadowrealm Harrower": {
     verified: false,
     card: {
+      rewardsPlayFromBanish: true,
       notes:
-        "From banish, +1 power and lifegain on hit, but nothing on the card lets it be played from there.",
+        "From banish: +1 power and gain life equal to the damage dealt when it hits.",
     },
   },
   "Shadowrealm Harvester": {
     verified: false,
     card: {
+      rewardsPlayFromBanish: true,
       notes:
-        "From banish, +1 power and overpower, but nothing on the card lets it be played from there. Overpower is listed as a keyword but is conditional.",
+        "From banish: +1 power and overpower. Overpower is listed as a keyword but is conditional.",
     },
   },
   "Shadowrealm Reaper": {
     verified: false,
     card: {
+      rewardsPlayFromBanish: true,
       goAgain: { conditions: ["played_from_banish"] },
-      notes:
-        "Also +1 power from banish, but nothing on the card lets it be played from there.",
+      notes: "From banish: also +1 power.",
     },
   },
   "Shadowrealm Ripper": {
@@ -509,8 +513,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
   "Soul Cleaver": {
     verified: false,
     card: {
-      goAgain: {},
-      notes: "Gets go again if the defending hero has cards in their soul.",
+      goAgain: { conditions: ["defending_hero_has_soul_cards"] },
     },
   },
   "Spew Shadow": {

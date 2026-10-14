@@ -39,6 +39,11 @@ export const CONDITIONS = [
   "top_card_matches_pitch",
   "destroyed_own_aura",
   "hero_lost_life_this_turn",
+  "dealt_damage_to_defending_hero_this_turn",
+  "dealt_arcane_damage_to_opponent_this_turn",
+  "created_3_or_more_runechants",
+  "paid_optional_additional_cost",
+  "defending_hero_has_soul_cards",
 ] as const;
 
 export const BANISH_ZONES = ["hand", "deck_top", "graveyard"] as const;
@@ -93,7 +98,11 @@ export const authoredAttributesSchema = z.strictObject({
   arcaneDamage: z.array(arcaneDamageSchema).optional(),
   costReducedPerRunechant: z.boolean().optional(),
   /** Conditional go again. Replaces the dataset's "Go again" keyword, which can't tell. */
-  goAgain: z.strictObject({ conditions }).optional(),
+  goAgain: z
+    .strictObject({ conditions: z.array(z.enum(CONDITIONS)).min(1) })
+    .optional(),
+  /** The card gets better when played from your banished zone (e.g. with a Gate). */
+  rewardsPlayFromBanish: z.boolean().optional(),
   /** Gives go again to a later card. */
   grantsGoAgain: z.enum(GRANTED_TO).optional(),
   /** Doubts or context for the reviewer. Shown on the review sheet. */
@@ -107,6 +116,8 @@ export interface GeneratedAttributes {
   hasBloodDebt: boolean;
   hasUsurp: boolean;
   hasRuneGate: boolean;
+  /** A blood debt action card, so a Gate to i'Arathael can play it from banish. */
+  isGateTarget: boolean;
   /** Hero named in "<Hero> Specialization", or null. */
   specialization: string | null;
 }

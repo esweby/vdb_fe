@@ -137,9 +137,9 @@ export const runechantCreators: AuthoredAttributes = {
     verified: false,
     card: {
       tokens: [{ token: "runechant", amount: "X", trigger: "on_attack" }],
-      goAgain: {},
+      goAgain: { conditions: ["created_3_or_more_runechants"] },
       notes:
-        "X is the number of non-attack action cards you've played this turn. Gets go again if 3 or more Runechants are created this way.",
+        "X is the number of non-attack action cards you've played this turn.",
     },
   },
   "Dread Triptych": {
@@ -311,8 +311,7 @@ export const runechantCreators: AuthoredAttributes = {
     verified: false,
     card: {
       tokens: [{ token: "runechant", amount: 1, trigger: "on_hit" }],
-      goAgain: { conditions: ["dealt_arcane_damage_this_turn"] },
-      notes: "The arcane damage must have been dealt to an opposing hero.",
+      goAgain: { conditions: ["dealt_arcane_damage_to_opponent_this_turn"] },
     },
   },
   "Mordred Tide": {
