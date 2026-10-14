@@ -181,7 +181,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Eclipse Existence": {
-    verified: false,
+    verified: true,
     card: {
       banishesOwn: [{ from: "graveyard", trigger: "on_play", optional: true }],
       notes:
@@ -562,22 +562,22 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Vantom Banshee": {
-    verified: false,
+    verified: true,
     card: {},
   },
   "Vantom Wraith": {
-    verified: false,
+    verified: true,
     card: {},
   },
   "Vexing Gloomblade": {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       arcaneDamage: [{ amount: 2, trigger: "on_hit" }],
     },
   },
   "Vile Inquisition": {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       notes:
@@ -585,11 +585,11 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Void Wraith": {
-    verified: false,
+    verified: true,
     card: { playableFromBanish: {} },
   },
   "Weeping Battleground": {
-    verified: false,
+    verified: true,
     card: {
       banishesOwn: [{ from: "graveyard", trigger: "on_play", optional: true }],
       arcaneDamage: [{ amount: 1, trigger: "on_play" }],
@@ -597,21 +597,21 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Widespread Annihilation": {
-    verified: false,
+    verified: true,
     card: {
       notes:
         "Each hero who lost life this turn banishes a card from their hand.",
     },
   },
   "Widespread Destruction": {
-    verified: false,
+    verified: true,
     card: {
       notes:
         "Each hero who lost life this turn banishes a card from their arsenal.",
     },
   },
   "Widespread Ruin": {
-    verified: false,
+    verified: true,
     card: {
       notes:
         "Each hero who lost life this turn banishes the top card of their deck.",
