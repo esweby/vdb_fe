@@ -159,13 +159,20 @@ describe("FilterSidebar", () => {
 });
 
 describe("FilterBar", () => {
-  it("shows each value as a toggle that starts on, and turning it off hides those cards", async () => {
+  it("shows everything with none selected, and selecting narrows to the selected values", async () => {
     render(<Harness />);
+    const user = userEvent.setup();
     const bar = within(screen.getByRole("group", { name: "Card type" }));
     const instant = bar.getByRole("button", { name: "Instant" });
-    expect(instant).toHaveAttribute("aria-pressed", "true");
-    await userEvent.setup().click(instant);
+    const action = bar.getByRole("button", { name: "Action" });
     expect(instant).toHaveAttribute("aria-pressed", "false");
-    expect(latest).toEqual({ type: { instant: "exclude" } });
+    await user.click(instant);
+    expect(instant).toHaveAttribute("aria-pressed", "true");
+    expect(latest).toEqual({ type: { instant: "include" } });
+    await user.click(action);
+    expect(latest).toEqual({ type: { instant: "include", action: "include" } });
+    await user.click(instant);
+    await user.click(action);
+    expect(latest).toEqual({});
   });
 });

@@ -131,13 +131,11 @@ describe("ranking page", () => {
     await screen.findByRole("table", { name: "Ranked by your priorities" });
     const user = userEvent.setup();
     const cls = within(screen.getByRole("group", { name: "Class" }));
-    await user.click(cls.getByRole("button", { name: "Runeblade" }));
-    await user.click(cls.getByRole("button", { name: "Generic" }));
-    // Become the Shadow Lord is Shadow as well as Runeblade, so it stays
+    await user.click(cls.getByRole("button", { name: "Shadow" }));
     expect(rankedNames()).toEqual(["Become the Shadow Lord"]);
   });
 
-  it("drops a pitch's rows when that pitch is turned off", async () => {
+  it("shows only the selected pitch's rows", async () => {
     await renderApp({
       path: "/ranking",
       auth: fakeAuthService().service,
@@ -149,7 +147,7 @@ describe("ranking page", () => {
       .click(
         within(screen.getByRole("group", { name: "Pitch" })).getByRole(
           "button",
-          { name: "Red" },
+          { name: "Yellow" },
         ),
       );
     expect(rankedNames()).not.toContain("Hocus Pocus (pitch 1)");

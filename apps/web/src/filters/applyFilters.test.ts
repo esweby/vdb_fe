@@ -170,4 +170,13 @@ describe("filterSummary", () => {
       ),
     ).toEqual(["weapon hidden", "Only go", "Power 0–1 hidden"]);
   });
+
+  it("lists a quick-filter group's selected values together", () => {
+    const bar: Facet<Card>[] = [
+      { ...facets[0]!, label: "Type", kind: "exclusive", placement: "bar" },
+    ];
+    expect(
+      filterSummary({ type: { action: "include", weapon: "include" } }, bar),
+    ).toEqual(["Type: action, weapon"]);
+  });
 });

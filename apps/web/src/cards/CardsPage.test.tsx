@@ -39,7 +39,7 @@ describe("cards page", () => {
     await waitFor(() => expect(rowNames()).toEqual(["Become the Shadow Lord"]));
   });
 
-  it("hides cards by turning off pitch and class toggles, and keeps filters in the URL", async () => {
+  it("narrows to the selected pitches and classes, and keeps them in the URL", async () => {
     const { router } = await renderApp({
       path: "/cards?view=list",
       auth: fakeAuthService().service,
@@ -47,21 +47,19 @@ describe("cards page", () => {
     await screen.findByRole("link", { name: "Hocus Pocus" });
     const user = userEvent.setup();
     const pitch = within(screen.getByRole("group", { name: "Pitch" }));
-    await user.click(pitch.getByRole("button", { name: "No pitch" }));
+    await user.click(pitch.getByRole("button", { name: "Blue" }));
     expect(rowNames()).toEqual([
       "Become the Shadow Lord",
       "Fate Foreseen",
       "Hocus Pocus",
     ]);
     const cls = within(screen.getByRole("group", { name: "Class" }));
-    await user.click(cls.getByRole("button", { name: "Generic" }));
-    expect(rowNames()).toEqual(["Become the Shadow Lord", "Hocus Pocus"]);
-    expect(router.state.location.search.exc).toEqual(
-      expect.arrayContaining(["pitch:none", "class:Generic"]),
+    await user.click(cls.getByRole("button", { name: "Shadow" }));
+    expect(rowNames()).toEqual(["Become the Shadow Lord"]);
+    expect(router.state.location.search.inc).toEqual(
+      expect.arrayContaining(["pitch:3", "class:Shadow"]),
     );
-    expect(
-      screen.getByText(/No pitch hidden · Generic hidden/),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Pitch: Blue · Class: Shadow/)).toBeInTheDocument();
   });
 
   it("restores filters from the URL", async () => {
@@ -106,15 +104,18 @@ describe("cards page", () => {
       screen.getByRole("article", { name: "Hocus Pocus (blue)" }),
     ).toBeInTheDocument();
     const user = userEvent.setup();
-    // Turning a pitch off removes that pitch's tiles
+    // Selecting a pitch shows only that pitch's tiles
     await user.click(
       within(screen.getByRole("group", { name: "Pitch" })).getByRole("button", {
-        name: "Red",
+        name: "Blue",
       }),
     );
     expect(
       screen.queryByRole("article", { name: "Hocus Pocus (red)" }),
     ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("article", { name: "Hocus Pocus (blue)" }),
+    ).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "List view" }));
     await waitFor(() =>
       expect(router.state.location.search).toMatchObject({ view: "list" }),
