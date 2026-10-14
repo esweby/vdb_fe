@@ -6,6 +6,8 @@ import { fromSearch, toSearch, type FilterSearch } from "./urlState.ts";
 export interface ListSearch extends FilterSearch {
   q?: string;
   sort?: CardSort;
+  /** Card tiles by default; "list" for the table. */
+  view?: "list";
 }
 
 /** Validates list-page search params from the URL. */
@@ -23,6 +25,7 @@ export function validateListSearch(
     ),
     inc: strings(search.inc)?.length ? strings(search.inc) : undefined,
     exc: strings(search.exc)?.length ? strings(search.exc) : undefined,
+    view: search.view === "list" ? "list" : undefined,
   };
 }
 
@@ -30,8 +33,14 @@ export function validateListSearch(
 export function useUrlFilters(search: ListSearch) {
   const navigate = useNavigate();
   const update = (
-    patch: Partial<{ state: FilterState; q: string; sort: CardSort }>,
+    patch: Partial<{
+      state: FilterState;
+      q: string;
+      sort: CardSort;
+      view: "tiles" | "list";
+    }>,
   ) => {
+    const view = patch.view ?? search.view ?? "tiles";
     const state = patch.state ?? fromSearch(search);
     const q = patch.q ?? search.q ?? "";
     const sort = patch.sort ?? search.sort ?? "name";
@@ -42,6 +51,7 @@ export function useUrlFilters(search: ListSearch) {
         ...(q ? { q } : {}),
         ...(sort !== "name" ? { sort } : {}),
         ...toSearch(state),
+        ...(view === "list" ? { view: "list" as const } : {}),
       },
     });
   };
@@ -52,5 +62,7 @@ export function useUrlFilters(search: ListSearch) {
     setState: (state: FilterState) => update({ state }),
     setQ: (q: string) => update({ q }),
     setSort: (sort: CardSort) => update({ sort }),
+    view: search.view ?? ("tiles" as const),
+    setView: (view: "tiles" | "list") => update({ view }),
   };
 }

@@ -27,7 +27,8 @@ export function typeLine(card: CardSummary) {
 export function CardTile(props: {
   card: CardSummary;
   variant: VariantSummary;
-  quantity: number;
+  /** Copies in a deck; no badge when undefined. */
+  quantity?: number;
   children?: ReactNode;
 }) {
   const { card, variant, quantity, children } = props;
@@ -103,9 +104,11 @@ export function CardTile(props: {
           </span>
         )}
       </div>
-      <output aria-label={`Copies of ${name}`} className={styles.copies}>
-        {quantity}×
-      </output>
+      {quantity !== undefined && (
+        <output aria-label={`Copies of ${name}`} className={styles.copies}>
+          {quantity}×
+        </output>
+      )}
       {children && <div className={styles.controls}>{children}</div>}
     </article>
   );

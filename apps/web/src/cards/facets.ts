@@ -1,8 +1,11 @@
 // The card filter groups (facets) used by the sidebar on every card list.
 import { banishPlayRoutes, type CardAttributes, type Token } from "@vdb/cards";
-import type { Facet, FacetValue } from "../filters/applyFilters.ts";
+import type {
+  Facet,
+  FacetValue,
+  FilterState,
+} from "../filters/applyFilters.ts";
 import type { CardSummary } from "./cardRepository.ts";
-import { TYPE_LABELS } from "./filterCards.ts";
 
 /** Card-level attributes plus every pitch's overrides, for "does any version…" checks. */
 const allAttributes = (c: CardSummary): Partial<CardAttributes>[] => [
@@ -29,7 +32,7 @@ const inGroup = (group: string) => (c: CardSummary) =>
 
 /** A stat group: a card matches a band if any of its pitches does. */
 function statFacet(
-  id: "cost" | "power" | "defense",
+  id: "power" | "defense",
   label: string,
   bands: [string, string, (n: number) => boolean][],
 ): Facet<CardSummary> {
@@ -37,6 +40,7 @@ function statFacet(
     id,
     label,
     mode: "any",
+    summaryPrefix: true,
     values: bands.map(([valueId, valueLabel, test]) =>
       value(valueId, valueLabel, (c) =>
         c.variants.some((v) => v[id] !== null && test(v[id]!)),
@@ -45,22 +49,57 @@ function statFacet(
   };
 }
 
+/** Attack and defense reactions share one line; the rest follow TYPE_LABELS. */
+const TYPE_VALUES: [string, string, string[]][] = [
+  ["attack_action", "Attack action", ["attack_action"]],
+  ["action", "Action", ["action"]],
+  ["instant", "Instant", ["instant"]],
+  ["reaction", "Reactions", ["attack_reaction", "defense_reaction"]],
+  ["block", "Block", ["block"]],
+  ["resource", "Resource", ["resource"]],
+  ["weapon", "Weapon", ["weapon"]],
+  ["equipment", "Equipment", ["equipment"]],
+];
+
+/** Red, yellow, blue, pitch 4 (the rare one), and no pitch (weapons, equipment). */
+export const PITCH_VALUES: [string, string][] = [
+  ["1", "Red"],
+  ["2", "Yellow"],
+  ["3", "Blue"],
+  ["4", "Pitch 4"],
+  ["none", "No pitch"],
+];
+export const pitchId = (pitch: number | null) =>
+  pitch === null ? "none" : String(pitch);
+
 export function cardFacets(
   context: { reviewedCardIds?: Set<string> } = {},
 ): Facet<CardSummary>[] {
   const facets: Facet<CardSummary>[] = [
     {
       id: "type",
-      label: "Type",
+      label: "Card type",
       mode: "any",
-      values: Object.entries(TYPE_LABELS).map(([id, label]) =>
-        value(id, label, (c) => c.type === id),
+      values: TYPE_VALUES.map(([id, label, types]) =>
+        value(id, label, (c) => types.includes(c.type)),
+      ),
+    },
+    {
+      id: "pitch",
+      label: "Pitch",
+      mode: "any",
+      placement: "bar",
+      values: PITCH_VALUES.map(([id, label]) =>
+        value(id, label, (c) =>
+          c.variants.some((v) => pitchId(v.pitch) === id),
+        ),
       ),
     },
     {
       id: "class",
       label: "Class",
       mode: "any",
+      placement: "bar",
       values: [
         value("Runeblade", "Runeblade", (c) => c.classes.includes("Runeblade")),
         value("Shadow", "Shadow", (c) => c.talents.includes("Shadow")),
@@ -68,19 +107,10 @@ export function cardFacets(
       ],
     },
     {
-      id: "pitch",
-      label: "Pitch",
-      mode: "any",
-      values: [1, 2, 3].map((p) =>
-        value(String(p), `Pitch ${p}`, (c) =>
-          c.variants.some((v) => v.pitch === p),
-        ),
-      ),
-    },
-    {
       id: "slot",
       label: "Equipment slot",
       mode: "any",
+      showWhen: (state) => state.type?.equipment !== "exclude",
       values: ["Head", "Chest", "Arms", "Legs", "Off-Hand"].map((slot) =>
         value(
           slot,
@@ -89,30 +119,23 @@ export function cardFacets(
         ),
       ),
     },
-    statFacet("cost", "Cost", [
-      ["0", "0", (n) => n === 0],
-      ["1", "1", (n) => n === 1],
-      ["2", "2", (n) => n === 2],
-      ["ge3", "3+", (n) => n >= 3],
-    ]),
     statFacet("power", "Power", [
-      ["le2", "2 or less", (n) => n <= 2],
-      ["3", "3", (n) => n === 3],
-      ["4", "4", (n) => n === 4],
-      ["5", "5", (n) => n === 5],
+      ["0-1", "0–1", (n) => n <= 1],
+      ["2-3", "2–3", (n) => n >= 2 && n <= 3],
+      ["4-5", "4–5", (n) => n >= 4 && n <= 5],
       ["ge6", "6+", (n) => n >= 6],
     ]),
     statFacet("defense", "Defense", [
-      ["0", "0", (n) => n === 0],
-      ["1", "1", (n) => n === 1],
+      ["0-1", "0–1", (n) => n <= 1],
       ["2", "2", (n) => n === 2],
-      ["3", "3", (n) => n === 3],
-      ["ge4", "4+", (n) => n >= 4],
+      ["ge3", "3+", (n) => n >= 3],
     ]),
     {
       id: "keywords",
       label: "Keywords",
       mode: "all",
+      kind: "feature",
+      section: "Mechanics",
       values: [
         value("go_again", "Go again", (c) => c.attributes.hasGoAgain),
         value("conditional_go_again", "Conditional go again", (c) =>
@@ -135,6 +158,8 @@ export function cardFacets(
       id: "creates",
       label: "Creates",
       mode: "all",
+      kind: "feature",
+      section: "Mechanics",
       values: [
         value("runechant", "Runechants", creates("runechant")),
         value("gate", "Gates to i'Arathael", creates("gate")),
@@ -145,6 +170,8 @@ export function cardFacets(
       id: "banish",
       label: "Plays from banish",
       mode: "any",
+      kind: "feature",
+      section: "Mechanics",
       values: [
         value("own_text", "By its own text", (c) =>
           banishPlayRoutes(c.attributes).includes("own_text"),
@@ -161,6 +188,8 @@ export function cardFacets(
       id: "tags",
       label: "Tags",
       mode: "all",
+      kind: "feature",
+      section: "Mechanics",
       values: [
         value(
           "banishes_from_hand",
@@ -206,6 +235,8 @@ export function cardFacets(
       id: "disrupts",
       label: "Disrupts",
       mode: "all",
+      kind: "feature",
+      section: "Mechanics",
       values: [
         value("hand", "Hand", disrupts("hand")),
         value("arsenal", "Arsenal", disrupts("arsenal")),
@@ -216,20 +247,42 @@ export function cardFacets(
       ],
     },
     {
-      id: "status",
-      label: "Status",
-      mode: "all",
+      id: "verified",
+      label: "Attributes",
+      mode: "any",
       values: [
-        value("verified", "Verified attributes", (c) => c.attributesVerified),
-        ...(context.reviewedCardIds
-          ? [
+        value("verified", "Verified", (c) => c.attributesVerified),
+        value("unverified", "Unverified", (c) => !c.attributesVerified),
+      ],
+    },
+    ...(context.reviewedCardIds
+      ? [
+          {
+            id: "reviewed",
+            label: "My reviews",
+            mode: "any" as const,
+            values: [
               value("reviewed", "Reviewed by me", (c) =>
                 context.reviewedCardIds!.has(c.id),
               ),
-            ]
-          : []),
-      ],
-    },
+              value(
+                "unreviewed",
+                "Not reviewed by me",
+                (c) => !context.reviewedCardIds!.has(c.id),
+              ),
+            ],
+          },
+        ]
+      : []),
   ];
   return facets;
+}
+
+/** Whether a pitch's rows or tiles are shown, given the pitch toggles. */
+export function pitchShown(state: FilterState, pitch: number | null): boolean {
+  const choices = state.pitch ?? {};
+  const id = pitchId(pitch);
+  if (choices[id] === "exclude") return false;
+  const includes = Object.values(choices).includes("include");
+  return !includes || choices[id] === "include";
 }

@@ -3,10 +3,11 @@ import { useEffect, useMemo, useState } from "react";
 import type { CardSummary } from "../cards/cardRepository.ts";
 import type { Deck, DeckSummary } from "../decks/deckRepository.ts";
 import type { FormatRules } from "../decks/deckRules.ts";
-import { cardFacets } from "../cards/facets.ts";
+import { cardFacets, pitchShown } from "../cards/facets.ts";
 import { useCards } from "../cards/useCards.ts";
 import { applyFilters } from "../filters/applyFilters.ts";
 import { FilteredLayout } from "../filters/FilteredLayout.tsx";
+import { FilterBar } from "../filters/FilterBar.tsx";
 import { FilterSidebar } from "../filters/FilterSidebar.tsx";
 import { fromSearch, toSearch } from "../filters/urlState.ts";
 import { useAppSelector } from "../hooks.ts";
@@ -138,12 +139,14 @@ export function RankingPage() {
     if (!data) return [];
     return rankVariants({
       variants: candidates.flatMap((c) =>
-        c.variants.map((v) => ({
-          cardId: c.id,
-          variantId: v.id,
-          name: c.name,
-          pitch: v.pitch,
-        })),
+        c.variants
+          .filter((v) => pitchShown(filterState, v.pitch))
+          .map((v) => ({
+            cardId: c.id,
+            variantId: v.id,
+            name: c.name,
+            pitch: v.pitch,
+          })),
       ),
       dimensions: data.dimensions,
       community: data.community,
@@ -253,7 +256,16 @@ export function RankingPage() {
       <h1>Ranking</h1>
       <FilteredLayout
         state={filterState}
+        facets={facets}
         onClear={() => update({}, {})}
+        bar={
+          <FilterBar
+            items={items}
+            facets={facets}
+            state={filterState}
+            onChange={(next) => update({}, next)}
+          />
+        }
         sidebar={
           <FilterSidebar
             items={items}

@@ -1,0 +1,76 @@
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  align-items: center;
+}
+.group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+.groupLabel {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-right: 0.15rem;
+}
+.pill {
+  --dot: transparent;
+  font: inherit;
+  font-size: 0.88rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--fg);
+  cursor: pointer;
+}
+.pill:hover {
+  border-color: var(--muted);
+}
+.pill[aria-pressed="false"] {
+  border-style: dashed;
+  color: var(--muted);
+  background: none;
+  text-decoration: line-through;
+}
+.pill[aria-pressed="false"] .dot {
+  opacity: 0.35;
+}
+.pill:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: var(--dot);
+  display: none;
+}
+.pitch1 .dot,
+.pitch2 .dot,
+.pitch3 .dot,
+.pitch4 .dot,
+.pitchnone .dot {
+  display: inline-block;
+}
+.pitch1 {
+  --dot: #d63c35;
+}
+.pitch2 {
+  --dot: #e6b422;
+}
+.pitch3 {
+  --dot: #3b7dd8;
+}
+.pitch4 {
+  --dot: #8a5cc7;
+}
+.pitchnone .dot {
+  border: 1px solid var(--muted);
+}

@@ -1,6 +1,9 @@
-// Tri-state facet filtering: each value is neutral, included or excluded.
-// "any" groups (a card has one value: type, class, pitch, slot) match ANY included value.
-// "all" groups (properties: keywords, tags) need EVERY included value. Excludes always remove.
+// Facet filtering behind ticked-by-default checkboxes. Each value is neutral (ticked),
+// excluded (unticked) or included ("Only").
+// "exclusive" groups describe what a card is (type, class, pitch, power): an item is hidden
+// only when every value it has is unticked, and never when it has none. "feature" groups
+// describe what some cards do (keywords, tags): unticking hides cards that have it.
+// "any" groups match ANY included value; "all" groups need EVERY included value.
 
 export type FilterChoice = "include" | "exclude";
 /** facetId -> valueId -> choice. Missing means neutral. */
@@ -17,7 +20,20 @@ export interface Facet<T> {
   label: string;
   mode: "any" | "all";
   values: FacetValue<T>[];
+  /** Defaults to "exclusive" for "any" groups and "feature" for "all" groups. */
+  kind?: "exclusive" | "feature";
+  /** "bar": toggles beside the search box. Defaults to the sidebar. */
+  placement?: "bar" | "side";
+  /** A collapsed sidebar section the group sits in, e.g. "Mechanics". */
+  section?: string;
+  /** Hide the group (e.g. equipment slot while equipment is unticked). */
+  showWhen?: (state: FilterState) => boolean;
+  /** Prefix values with the group in the summary ("Power 0–1 hidden"). */
+  summaryPrefix?: boolean;
 }
+
+export const kindOf = <T>(facet: Facet<T>) =>
+  facet.kind ?? (facet.mode === "any" ? "exclusive" : "feature");
 
 function passesFacet<T>(
   item: T,
@@ -26,7 +42,14 @@ function passesFacet<T>(
   extraInclude?: FacetValue<T>,
 ): boolean {
   const chosen = facet.values.filter((v) => choices?.[v.id]);
-  if (chosen.some((v) => choices![v.id] === "exclude" && v.test(item)))
+  if (kindOf(facet) === "exclusive") {
+    const has = facet.values.filter((v) => v.test(item));
+    if (
+      has.length > 0 &&
+      has.every((v) => choices?.[v.id] === "exclude" && v !== extraInclude)
+    )
+      return false;
+  } else if (chosen.some((v) => choices![v.id] === "exclude" && v.test(item)))
     return false;
   const includes = chosen.filter((v) => choices![v.id] === "include");
   if (extraInclude) includes.push(extraInclude);
@@ -86,5 +109,20 @@ export function activeCount(state: FilterState): number {
   return Object.values(state).reduce(
     (n, choices) => n + Object.keys(choices).length,
     0,
+  );
+}
+
+/** What's filtered, in words: "Generic hidden", "Only Go again". */
+export function filterSummary<T>(
+  state: FilterState,
+  facets: Facet<T>[],
+): string[] {
+  return facets.flatMap((facet) =>
+    facet.values.flatMap((v) => {
+      const choice = state[facet.id]?.[v.id];
+      if (!choice) return [];
+      const name = facet.summaryPrefix ? `${facet.label} ${v.label}` : v.label;
+      return [choice === "exclude" ? `${name} hidden` : `Only ${name}`];
+    }),
   );
 }

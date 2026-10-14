@@ -4,6 +4,7 @@ import { cardFacets } from "../cards/facets.ts";
 import { searchAndSort } from "../cards/filterCards.ts";
 import { applyFilters } from "../filters/applyFilters.ts";
 import { FilteredLayout } from "../filters/FilteredLayout.tsx";
+import { FilterBar } from "../filters/FilterBar.tsx";
 import { FilterSidebar } from "../filters/FilterSidebar.tsx";
 import { useUrlFilters } from "../filters/useUrlFilters.ts";
 import type { CardSummary } from "../cards/cardRepository.ts";
@@ -87,7 +88,16 @@ export function NeedsReviewPage() {
       </p>
       <FilteredLayout
         state={filters.state}
+        facets={facets}
         onClear={() => filters.setState({})}
+        bar={
+          <FilterBar
+            items={unreviewed}
+            facets={facets}
+            state={filters.state}
+            onChange={filters.setState}
+          />
+        }
         sidebar={
           <FilterSidebar
             items={unreviewed}

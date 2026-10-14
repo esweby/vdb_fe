@@ -7,6 +7,7 @@
 .toolbar > :first-child {
   flex: 1;
   min-width: 12rem;
+  margin-bottom: 0;
 }
 .select {
   display: flex;
@@ -17,8 +18,45 @@
 }
 .select select {
   font: inherit;
-  padding: 0.35rem;
+  padding: 0.4rem 0.6rem;
 }
 .count {
+  color: var(--muted);
+}
+.toolbar .select {
+  margin-bottom: 0;
+}
+.toolbar :global(input[type="search"]) {
+  width: 100%;
+}
+.viewToggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  overflow: hidden;
+  align-self: flex-end;
+}
+.viewToggle button {
+  font: inherit;
+  font-size: 0.85em;
+  padding: 0.4rem 0.75rem;
+  border: none;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+.viewToggle button[aria-pressed="true"] {
+  background: var(--fg);
+  color: var(--bg);
+}
+.tiles {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: 0.75rem;
+}
+.empty {
   color: var(--muted);
 }
