@@ -1,0 +1,32 @@
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+.pitches {
+  display: flex;
+  gap: 0.75rem;
+  border: none;
+  padding: 0;
+  margin: 0 0 0.75rem;
+}
+.pitches legend {
+  font-weight: 600;
+  padding: 0;
+}
+.select {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+.select select {
+  font: inherit;
+  padding: 0.35rem;
+}
+.count {
+  color: var(--muted);
+}

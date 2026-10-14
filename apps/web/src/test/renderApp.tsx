@@ -22,7 +22,11 @@ export async function renderApp(options: {
     history: createMemoryHistory({ initialEntries: [options.path] }),
   });
   render(
-    <App store={store} services={{ auth: options.auth, cards }} router={router} />,
+    <App
+      store={store}
+      services={{ auth: options.auth, cards }}
+      router={router}
+    />,
   );
   await act(() => router.load());
   return { router, store };
