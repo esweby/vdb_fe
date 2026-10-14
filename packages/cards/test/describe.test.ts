@@ -7,6 +7,7 @@ const generated = {
   hasUsurp: false,
   hasRuneGate: false,
   isGateTarget: false,
+  canAttack: false,
   groups: [],
   specialization: null,
 };
@@ -105,6 +106,7 @@ describe("describeAttributes", () => {
         hasUsurp: true,
         hasRuneGate: true,
         isGateTarget: false,
+        canAttack: false,
         groups: [],
         specialization: "Viserai",
         playableFromBanish: {},
@@ -439,6 +441,130 @@ describe("describeAttributes", () => {
       }),
     ).toEqual([
       "Your next attack action card this turn gets: costs X{r} less.",
+    ]);
+  });
+
+  it("describes equipment patterns", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        canAttack: true,
+        oneUse: true,
+        turnsBanishedFaceDown: [
+          { which: "blood_debt", amount: 1, trigger: "activated" },
+        ],
+        banishesSelf: [{ trigger: "would_be_dealt_damage", optional: true }],
+        grantsGoAgain: "target_attack_action",
+        disrupts: [
+          {
+            action: "discard",
+            from: "hand",
+            amount: 1,
+            target: "attacking_hero",
+            trigger: "on_defend",
+          },
+        ],
+        arcaneDamage: [
+          {
+            amount: 1,
+            trigger: "on_hit",
+            conditions: ["played_card_from_banish_this_turn"],
+          },
+        ],
+      }),
+    ).toEqual([
+      "Weapon attack: triggers your Runechants.",
+      "May banish itself when you would be dealt damage.",
+      "Deals 1 arcane damage when it hits, if you've played a card from your banished zone this turn.",
+      "The attacking hero discards 1 card when it defends.",
+      "Turns 1 blood debt card in your banished zone face-down when activated.",
+      "Target attack action card gets go again.",
+      "One use: destroyed or banished when used.",
+    ]);
+  });
+
+  it("describes banishing itself from hand", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        banishesSelf: [{ trigger: "activated", from: "hand" }],
+      }),
+    ).toEqual(["Banishes itself from your hand when activated."]);
+  });
+
+  it("describes banishing your defending cards after it defended", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        banishesOwn: [
+          {
+            from: "defending_cards",
+            trigger: "combat_chain_closes",
+            conditions: ["it_defended"],
+          },
+        ],
+        banishesSelf: [
+          { trigger: "combat_chain_closes", conditions: ["it_defended"] },
+        ],
+      }),
+    ).toEqual([
+      "Banishes all your defending cards on the chain when the combat chain closes, if it defended.",
+      "Banishes itself when the combat chain closes, if it defended.",
+    ]);
+  });
+
+  it("describes conditional bonuses", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        conditionalBonuses: [
+          {
+            effect: "plus_power",
+            amount: 2,
+            conditions: ["banished_card_is_shadow"],
+          },
+          {
+            effect: "plus_defense",
+            amount: 1,
+            conditions: ["banished_a_card"],
+          },
+          { effect: "dominate", conditions: ["banished_card_is_shadow"] },
+          { effect: "overpower", conditions: ["played_from_banish"] },
+          {
+            effect: "draw",
+            amount: 1,
+            conditions: ["banished_card_is_shadow"],
+          },
+        ],
+      }),
+    ).toEqual([
+      "Gets +2 power, if the banished card is Shadow.",
+      "Gets +1 defense, if you banished a card this way.",
+      "Gets dominate, if the banished card is Shadow.",
+      "Gets overpower, if it was played from your banished zone.",
+      "You draw 1 card, if the banished card is Shadow.",
+    ]);
+  });
+
+  it("describes temporary banishes of several action cards from hand", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        banishesOwn: [
+          {
+            from: "hand",
+            amount: "any",
+            which: "action",
+            trigger: "on_defend",
+            optional: true,
+            temporary: true,
+          },
+          { from: "hand", amount: 2, trigger: "on_play" },
+        ],
+      }),
+    ).toEqual([
+      "May banish any number of action cards from your hand when it defends (temporarily: they don't stay in your banished zone).",
+      "Banishes 2 cards from your hand when played.",
     ]);
   });
 

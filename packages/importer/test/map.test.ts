@@ -104,6 +104,7 @@ describe("toImportCards", () => {
       hasUsurp: false,
       hasRuneGate: false,
       isGateTarget: false,
+      canAttack: false,
       groups: ["runeblade_non_attack_action"],
       specialization: null,
     });
@@ -120,6 +121,11 @@ describe("toImportCards", () => {
     expect(card("Abyssal Bite").attributes.isGateTarget).toBe(true);
     expect(card("Grimoire of the Haunt").attributes.isGateTarget).toBe(false);
     expect(card("Become the Shadow Lord").attributes.isGateTarget).toBe(false);
+  });
+
+  it("marks weapons that can attack", () => {
+    expect(card("Nebula Blade").attributes.canAttack).toBe(true);
+    expect(card("Grimoire of the Haunt").attributes.canAttack).toBe(false);
   });
 
   it("detects Viserai specializations", () => {
@@ -206,6 +212,18 @@ describe("authored attributes", () => {
         },
       }),
     ).toThrow(/pitch 1/);
+  });
+
+  it("adds attribute-derived groups after merging authored attributes", () => {
+    const cards = toImportCards(entries, {
+      "Become the Shadow Lord": {
+        verified: false,
+        card: { banishesOwn: [{ from: "hand", trigger: "on_play" }] },
+      },
+    });
+    expect(
+      cards.find((c) => c.name === "Become the Shadow Lord")!.attributes.groups,
+    ).toEqual(["runeblade_non_attack_action", "banishes_from_hand"]);
   });
 
   it("rejects references to cards that aren't imported", () => {

@@ -164,6 +164,60 @@ describe("authoredAttributesSchema", () => {
     ).toBe(true);
   });
 
+  it("accepts equipment patterns", () => {
+    expect(
+      authoredAttributesSchema.safeParse({
+        oneUse: true,
+        turnsBanishedFaceDown: [
+          { which: "blood_debt", amount: 1, trigger: "activated" },
+        ],
+        banishesSelf: [{ trigger: "would_be_dealt_damage", optional: true }],
+        grantsGoAgain: "target_attack_action",
+        disrupts: [
+          {
+            action: "discard",
+            from: "hand",
+            amount: 1,
+            target: "attacking_hero",
+            trigger: "on_defend",
+          },
+        ],
+        arcaneDamage: [
+          {
+            amount: 1,
+            trigger: "on_hit",
+            conditions: ["played_card_from_banish_this_turn"],
+          },
+        ],
+      }).success,
+    ).toBe(true);
+  });
+
+  it("accepts conditional bonuses", () => {
+    expect(
+      authoredAttributesSchema.safeParse({
+        conditionalBonuses: [
+          {
+            effect: "plus_power",
+            amount: 2,
+            conditions: ["banished_card_is_shadow"],
+          },
+          { effect: "dominate", conditions: ["banished_card_is_shadow"] },
+          {
+            effect: "plus_defense",
+            amount: 1,
+            conditions: ["banished_a_card"],
+          },
+          {
+            effect: "draw",
+            amount: 1,
+            conditions: ["banished_card_is_shadow"],
+          },
+        ],
+      }).success,
+    ).toBe(true);
+  });
+
   it("accepts cards a card works with", () => {
     expect(
       authoredAttributesSchema.safeParse({
@@ -188,6 +242,18 @@ describe("authoredAttributesSchema", () => {
   it.each([
     ["an unknown grantsGoAgain", { grantsGoAgain: "every_card" }],
     ["go again without a condition", { goAgain: {} }],
+    [
+      "a conditional bonus without a condition",
+      { conditionalBonuses: [{ effect: "dominate" }] },
+    ],
+    [
+      "a power bonus without an amount",
+      {
+        conditionalBonuses: [
+          { effect: "plus_power", conditions: ["banished_card_is_shadow"] },
+        ],
+      },
+    ],
     [
       "a cost reduction without a condition",
       { costReductions: [{ amount: 2 }] },

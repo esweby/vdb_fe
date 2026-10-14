@@ -5,12 +5,14 @@ import { examples } from "./00-examples.ts";
 import { runechantCreators } from "./01-runechant-creators.ts";
 import { gateCreators } from "./02-gate-creators.ts";
 import { bloodDebtAndBanish } from "./03-blood-debt-and-banish.ts";
+import { weaponsAndEquipment } from "./04-weapons-and-equipment.ts";
 
 export const batches: Record<string, AuthoredAttributes> = {
   "00-examples": examples,
   "01-runechant-creators": runechantCreators,
   "02-gate-creators": gateCreators,
   "03-blood-debt-and-banish": bloodDebtAndBanish,
+  "04-weapons-and-equipment": weaponsAndEquipment,
 };
 
 export function allAuthored(): AuthoredAttributes {

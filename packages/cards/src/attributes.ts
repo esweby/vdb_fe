@@ -18,6 +18,7 @@ export const TRIGGERS = [
   "on_destroyed",
   "on_usurped",
   "would_go_to_graveyard",
+  "would_be_dealt_damage",
   "start_of_turn",
   "start_of_action_phase",
   "combat_chain_closes",
@@ -46,9 +47,17 @@ export const CONDITIONS = [
   "paid_optional_additional_cost",
   "defending_hero_has_soul_cards",
   "usurped_this_turn",
+  "played_card_from_banish_this_turn",
+  "it_defended",
+  "banished_a_card",
 ] as const;
 
-export const BANISH_ZONES = ["hand", "deck_top", "graveyard"] as const;
+export const BANISH_ZONES = [
+  "hand",
+  "deck_top",
+  "graveyard",
+  "defending_cards",
+] as const;
 
 /** The effect is given to a later card rather than happening on this one. */
 export const GRANTED_TO = [
@@ -58,6 +67,7 @@ export const GRANTED_TO = [
   "banished_card",
   "card_in_banished_zone_matching_pitch",
   "next_action_card_matching_pitch",
+  "target_attack_action",
 ] as const;
 
 const amount = z.union([z.number().int().positive(), z.literal("X")]);
@@ -90,6 +100,7 @@ export const playFromBanishEnablerSchema = z.strictObject({
 export const DISRUPT_TARGETS = [
   "opponent",
   "defending_hero",
+  "attacking_hero",
   "each_hero",
 ] as const;
 export const DISRUPT_ZONES = [
@@ -138,16 +149,55 @@ export const tokenCreationSchema = z.strictObject({
 
 export const ownBanishSchema = z.strictObject({
   from: z.enum(BANISH_ZONES),
+  /** How many (default 1). "any" for "any number of". */
+  amount: z.union([amount, z.literal("any")]).optional(),
+  /** Only action cards. */
+  which: z.enum(["action"]).optional(),
+  /** The cards move on (e.g. to the chain) rather than staying in your banished zone. */
+  temporary: z.boolean().optional(),
   trigger,
   conditions,
   optional: z.boolean().optional(),
 });
 
 export const selfBanishSchema = z.strictObject({
+  /** Where it banishes itself from, when that matters (e.g. "banish this from your hand"). */
+  from: z.enum(["hand"]).optional(),
   trigger,
   conditions,
   optional: z.boolean().optional(),
 });
+
+export const FACE_DOWN_WHICH = ["blood_debt", "shadow", "any"] as const;
+
+export const faceDownSchema = z.strictObject({
+  which: z.enum(FACE_DOWN_WHICH),
+  amount: z.union([amount, z.literal("all")]),
+  trigger,
+  conditions,
+  optional: z.boolean().optional(),
+});
+
+export const BONUS_EFFECTS = [
+  "plus_power",
+  "plus_defense",
+  "dominate",
+  "overpower",
+  "draw",
+] as const;
+
+const NUMERIC_BONUSES = new Set(["plus_power", "plus_defense", "draw"]);
+
+/** A bonus the card gets (or you get) when its conditions are met. */
+export const conditionalBonusSchema = z
+  .strictObject({
+    effect: z.enum(BONUS_EFFECTS),
+    amount: amount.optional(),
+    conditions: z.array(z.enum(CONDITIONS)).min(1),
+  })
+  .refine((b) => !NUMERIC_BONUSES.has(b.effect) || b.amount !== undefined, {
+    message: "plus_power, plus_defense and draw need an amount",
+  });
 
 export const arcaneDamageSchema = z.strictObject({
   amount,
@@ -165,6 +215,11 @@ export const authoredAttributesSchema = z.strictObject({
   playableFromBanish: z.strictObject({ conditions }).optional(),
   arcaneDamage: z.array(arcaneDamageSchema).optional(),
   costReducedPerRunechant: z.boolean().optional(),
+  conditionalBonuses: z.array(conditionalBonusSchema).optional(),
+  /** Destroyed or banished when used (one-shot equipment). */
+  oneUse: z.boolean().optional(),
+  /** Turns cards in your banished zone face-down (manages blood debt; removes Gate targets). */
+  turnsBanishedFaceDown: z.array(faceDownSchema).optional(),
   /** Fixed cost reductions, each with the condition that unlocks it. */
   costReductions: z
     .array(
@@ -211,6 +266,8 @@ export interface GeneratedAttributes {
   hasRuneGate: boolean;
   /** A blood debt action card, so a Gate to i'Arathael can play it from banish. */
   isGateTarget: boolean;
+  /** A weapon with an Attack ability; weapon attacks fire Runechants. */
+  canAttack: boolean;
   /** Groups the card belongs to (see groups.ts). */
   groups: CardGroup[];
   /** Hero named in "<Hero> Specialization", or null. */

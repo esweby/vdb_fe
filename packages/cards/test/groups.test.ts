@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { groupsOf } from "../src/groups.ts";
+import { attributeGroups, groupsOf } from "../src/groups.ts";
 
 const card = (
   name: string,
@@ -49,5 +49,114 @@ describe("groupsOf", () => {
       groupsOf(card("Fate Foreseen", "defense_reaction", [], ["Generic"])),
     ).toEqual([]);
     expect(groupsOf(card("Abyssal Bite", "action", [], []))).toEqual([]);
+  });
+});
+
+describe("attributeGroups", () => {
+  it("tags cards that banish a card from your hand", () => {
+    expect(
+      attributeGroups({ banishesOwn: [{ from: "hand", trigger: "on_play" }] }),
+    ).toEqual(["banishes_from_hand"]);
+  });
+
+  it("tags cards that banish themselves from your hand", () => {
+    expect(
+      attributeGroups({
+        banishesSelf: [{ trigger: "activated", from: "hand" }],
+      }),
+    ).toEqual(["banishes_from_hand"]);
+  });
+
+  it("tags cards that make every hero banish from hand", () => {
+    expect(
+      attributeGroups({
+        disrupts: [
+          {
+            action: "banish",
+            from: "hand",
+            amount: 1,
+            target: "each_hero",
+            trigger: "on_play",
+          },
+        ],
+      }),
+    ).toEqual(["banishes_from_hand"]);
+  });
+
+  it("doesn't tag other banishing", () => {
+    expect(
+      attributeGroups({
+        banishesOwn: [{ from: "deck_top", trigger: "on_play" }],
+        banishesSelf: [{ trigger: "activated" }],
+        disrupts: [
+          {
+            action: "banish",
+            from: "hand",
+            amount: 1,
+            target: "defending_hero",
+            trigger: "on_hit",
+          },
+        ],
+      }),
+    ).toEqual([]);
+  });
+
+  it("tags cards with payoffs for banishing a Shadow or Runeblade card", () => {
+    expect(
+      attributeGroups({
+        tokens: [
+          {
+            token: "runechant",
+            amount: 1,
+            trigger: "on_play",
+            conditions: ["banished_card_is_runeblade"],
+          },
+          {
+            token: "gate",
+            amount: 1,
+            trigger: "on_play",
+            conditions: ["banished_card_is_shadow"],
+          },
+        ],
+      }),
+    ).toEqual(["rewards_shadow_banish", "rewards_runeblade_banish"]);
+    expect(
+      attributeGroups({ goAgain: { conditions: ["banished_card_is_shadow"] } }),
+    ).toEqual(["rewards_shadow_banish"]);
+    expect(
+      attributeGroups({
+        conditionalBonuses: [
+          {
+            effect: "plus_power",
+            amount: 2,
+            conditions: ["banished_card_is_shadow"],
+          },
+        ],
+      }),
+    ).toEqual(["rewards_shadow_banish"]);
+  });
+
+  it("tags cards with an effect that fires when they're banished", () => {
+    expect(
+      attributeGroups({
+        tokens: [{ token: "gate", amount: 1, trigger: "on_banished" }],
+      }),
+    ).toEqual(["triggers_when_banished"]);
+  });
+
+  it("still tags temporary banishes from hand", () => {
+    expect(
+      attributeGroups({
+        banishesOwn: [
+          {
+            from: "hand",
+            amount: "any",
+            which: "action",
+            trigger: "on_defend",
+            temporary: true,
+          },
+        ],
+      }),
+    ).toEqual(["banishes_from_hand"]);
   });
 });

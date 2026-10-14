@@ -1,5 +1,6 @@
 // Maps dataset entries (one per name + pitch) to our cards and variants.
 import {
+  attributeGroups,
   authoredAttributesSchema,
   groupsOf,
   type AuthoredCardAttributes,
@@ -65,6 +66,7 @@ function generatedAttributes(
   specialization: string | null,
   type: string,
   groups: GeneratedAttributes["groups"],
+  text: string,
 ): GeneratedAttributes {
   const hasBloodDebt = keywords.includes("Blood Debt");
   return {
@@ -76,6 +78,8 @@ function generatedAttributes(
     isGateTarget:
       hasBloodDebt && (type === "action" || type === "attack_action"),
     groups,
+    // Weapon attacks fire Runechants; some weapons have no Attack ability.
+    canAttack: type === "weapon" && /:\s*Attack\b/.test(text),
     specialization,
   };
 }
@@ -167,6 +171,7 @@ export function toImportCards(
             classes,
             keywords,
           }),
+          first.functional_text_plain ?? "",
         ),
         ...(entry?.card ? validated(name, "card", entry.card) : {}),
         // Authored conditional go again means the keyword isn't natural go again.
@@ -177,6 +182,7 @@ export function toImportCards(
     };
   });
 
+  for (const card of cards) addAttributeGroups(card);
   checkReferences(cards);
   return cards;
 }
@@ -202,4 +208,15 @@ function checkReferences(cards: ImportCard[]): void {
       }
     }
   }
+}
+
+/** Adds groups derived from the merged attributes (card and every variant). */
+function addAttributeGroups(card: ImportCard): void {
+  const derived = [
+    card.attributes,
+    ...card.variants.map((v) => v.attributes),
+  ].flatMap((a) => attributeGroups(a));
+  card.attributes.groups = [
+    ...new Set([...card.attributes.groups, ...derived]),
+  ];
 }

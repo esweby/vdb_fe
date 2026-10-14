@@ -2,6 +2,7 @@
 import type { CardGroup } from "./groups.ts";
 import type {
   CardAttributes,
+  OwnBanish,
   CardRef,
   Tutor,
   Disruption,
@@ -22,6 +23,7 @@ const TRIGGER_TEXT: Record<Trigger, string> = {
   on_destroyed: "when it's destroyed",
   on_usurped: "when it's usurped",
   would_go_to_graveyard: "instead of going to your graveyard",
+  would_be_dealt_damage: "when you would be dealt damage",
   start_of_turn: "at the start of your turn",
   start_of_action_phase: "at the start of your action phase",
   combat_chain_closes: "when the combat chain closes",
@@ -55,6 +57,10 @@ const CONDITION_TEXT: Record<Condition, string> = {
   paid_optional_additional_cost: "you paid its optional additional cost",
   defending_hero_has_soul_cards: "the defending hero has cards in their soul",
   usurped_this_turn: "you've usurped this turn",
+  it_defended: "it defended",
+  banished_a_card: "you banished a card this way",
+  played_card_from_banish_this_turn:
+    "you've played a card from your banished zone this turn",
 };
 
 const TOKEN_TEXT: Record<Token, [one: string, many: string]> = {
@@ -67,6 +73,7 @@ const BANISH_TEXT = {
   hand: "a card from your hand",
   deck_top: "the top card of your deck",
   graveyard: "a card from your graveyard",
+  defending_cards: "all your defending cards on the chain",
 } as const;
 
 const GRANTED_TEXT: Record<GrantedTo, string> = {
@@ -79,6 +86,7 @@ const GRANTED_TEXT: Record<GrantedTo, string> = {
     "A card of this card's colour in your banished zone gets",
   next_action_card_matching_pitch:
     "Your next action card of this card's colour this turn gets",
+  target_attack_action: "Target attack action card gets",
 };
 
 /** "Creates 1 Runechant…" or, when granted, "Your next … gets: creates 1 Runechant…". */
@@ -91,6 +99,7 @@ function effect(text: string, grantedTo: GrantedTo | undefined): string {
 const DISRUPT_SUBJECT = {
   opponent: "An opponent",
   defending_hero: "The defending hero",
+  attacking_hero: "The attacking hero",
   each_hero: "Each hero (you included)",
 } as const;
 
@@ -131,6 +140,10 @@ const GROUP_TEXT: Record<CardGroup, string> = {
   runeblade_attack_action: "a Runeblade attack action card",
   runeblade_non_attack_action: "a Runeblade non-attack action card",
   rune_gate: "a Rune Gate card",
+  banishes_from_hand: "a card that banishes from hand",
+  rewards_shadow_banish: "a card that rewards banishing a Shadow card",
+  rewards_runeblade_banish: "a card that rewards banishing a Runeblade card",
+  triggers_when_banished: "a card with an effect when it's banished",
 };
 
 const GROUP_PLURAL: Record<CardGroup, string> = {
@@ -139,6 +152,10 @@ const GROUP_PLURAL: Record<CardGroup, string> = {
   runeblade_attack_action: "Runeblade attack action cards",
   runeblade_non_attack_action: "Runeblade non-attack action cards",
   rune_gate: "Rune Gate cards",
+  banishes_from_hand: "cards that banish from hand",
+  rewards_shadow_banish: "cards that reward banishing a Shadow card",
+  rewards_runeblade_banish: "cards that reward banishing a Runeblade card",
+  triggers_when_banished: "cards with an effect when they're banished",
 };
 
 const refText = (ref: CardRef) =>
@@ -150,6 +167,22 @@ const TUTOR_TO: Record<Tutor["to"], [string, string]> = {
   arena: ["puts it into the arena", "put it into the arena"],
   banished: ["banishes it", "banish it"],
 };
+
+function ownBanishText(b: OwnBanish): string {
+  const n = b.amount ?? 1;
+  if (b.from === "defending_cards" || (b.from === "deck_top" && n === 1)) {
+    return BANISH_TEXT[b.from];
+  }
+  if (b.from === "deck_top") return `the top ${n} cards of your deck`;
+  const kind = b.which === "action" ? "action card" : "card";
+  const count =
+    n === 1
+      ? `a ${kind}`
+      : n === "any"
+        ? `any number of ${kind}s`
+        : `${n} ${kind}s`;
+  return `${count} from your ${b.from}`;
+}
 
 function ifConditions(conditions: Condition[] | undefined): string {
   return conditions?.length
@@ -167,17 +200,24 @@ export function describeAttributes(attributes: CardAttributes): string[] {
     lines.push("Is a Runechant aura (sinchant).");
   }
 
+  if (attributes.canAttack) {
+    lines.push("Weapon attack: triggers your Runechants.");
+  }
+
   for (const b of attributes.banishesOwn ?? []) {
     const verb = b.optional ? "May banish" : "Banishes";
+    const temporary = b.temporary
+      ? " (temporarily: they don't stay in your banished zone)"
+      : "";
     lines.push(
-      `${verb} ${BANISH_TEXT[b.from]} ${TRIGGER_TEXT[b.trigger]}${ifConditions(b.conditions)}.`,
+      `${verb} ${ownBanishText(b)} ${TRIGGER_TEXT[b.trigger]}${ifConditions(b.conditions)}${temporary}.`,
     );
   }
 
   for (const b of attributes.banishesSelf ?? []) {
     const verb = b.optional ? "May banish" : "Banishes";
     lines.push(
-      `${verb} itself ${TRIGGER_TEXT[b.trigger]}${ifConditions(b.conditions)}.`,
+      `${verb} itself${b.from === "hand" ? " from your hand" : ""} ${TRIGGER_TEXT[b.trigger]}${ifConditions(b.conditions)}.`,
     );
   }
 
@@ -212,6 +252,22 @@ export function describeAttributes(attributes: CardAttributes): string[] {
     );
   }
 
+  for (const f of attributes.turnsBanishedFaceDown ?? []) {
+    const kind = { blood_debt: "blood debt ", shadow: "Shadow ", any: "" }[
+      f.which
+    ];
+    const what =
+      f.amount === "all"
+        ? `all ${kind}cards`
+        : f.amount === 1
+          ? `1 ${kind}card`
+          : `${f.amount} ${kind}cards`;
+    const verb = f.optional ? "May turn" : "Turns";
+    lines.push(
+      `${verb} ${what} in your banished zone face-down ${TRIGGER_TEXT[f.trigger]}${ifConditions(f.conditions)}.`,
+    );
+  }
+
   for (const t of attributes.tutors ?? []) {
     const [third, base] = TUTOR_TO[t.to];
     const sentence = t.optional
@@ -226,6 +282,17 @@ export function describeAttributes(attributes: CardAttributes): string[] {
     lines.push(
       `Lets you play ${refText(e.target)} from your banished zone this turn${ifConditions(e.conditions)}.`,
     );
+  }
+
+  for (const b of attributes.conditionalBonuses ?? []) {
+    const what = {
+      plus_power: `Gets +${b.amount} power`,
+      plus_defense: `Gets +${b.amount} defense`,
+      dominate: "Gets dominate",
+      overpower: "Gets overpower",
+      draw: `You draw ${b.amount} ${b.amount === 1 ? "card" : "cards"}`,
+    }[b.effect];
+    lines.push(`${what}${ifConditions(b.conditions)}.`);
   }
 
   if (attributes.playableFromBanish) {
@@ -269,6 +336,8 @@ export function describeAttributes(attributes: CardAttributes): string[] {
     lines.push(`${GRANTED_TEXT[attributes.grantsGoAgain]} go again.`);
   }
   if (attributes.hasBloodDebt) lines.push("Blood debt.");
+  if (attributes.oneUse)
+    lines.push("One use: destroyed or banished when used.");
   for (const sup of attributes.supports ?? []) {
     const what =
       "group" in sup.target ? GROUP_PLURAL[sup.target.group] : sup.target.card;
