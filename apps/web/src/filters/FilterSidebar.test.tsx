@@ -49,24 +49,37 @@ describe("FilterSidebar", () => {
     expect(go()).toHaveAccessibleName("Go again, 2 cards, not filtered");
   });
 
-  it("shows active filters as removable chips, and clears all", async () => {
+  it("doesn't add anything above the groups when filtering", async () => {
+    render(<Harness />);
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: /^Go again/ }));
+    expect(
+      screen.queryByRole("button", { name: /^Remove/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Clear all filters" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("clears one group with its own Clear button, shown only when it has a selection", async () => {
     render(<Harness />);
     const user = userEvent.setup();
+    expect(
+      screen.queryByRole("button", { name: "Clear Keywords" }),
+    ).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /^Go again/ }));
     await user.click(screen.getByRole("button", { name: /^Blood debt/ }));
     await user.click(screen.getByRole("button", { name: /^Blood debt/ }));
+    await user.click(screen.getByRole("button", { name: "Clear Keywords" }));
     expect(
-      screen.getByRole("button", { name: "Remove Include: Go again" }),
-    ).toBeInTheDocument();
-    await user.click(
-      screen.getByRole("button", { name: "Remove Exclude: Blood debt" }),
-    );
+      screen.getByRole("button", { name: /^Go again/ }),
+    ).toHaveAccessibleName(/not filtered$/);
     expect(
-      screen.queryByRole("button", { name: /^Remove Exclude/ }),
-    ).not.toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Clear all filters" }));
+      screen.getByRole("button", { name: /^Blood debt/ }),
+    ).toHaveAccessibleName(/not filtered$/);
     expect(
-      screen.queryByRole("button", { name: /^Remove/ }),
+      screen.queryByRole("button", { name: "Clear Keywords" }),
     ).not.toBeInTheDocument();
   });
 
