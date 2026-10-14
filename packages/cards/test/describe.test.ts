@@ -114,7 +114,7 @@ describe("describeAttributes", () => {
       "Viserai specialization.",
       "Can be played from your banished zone.",
       "Usurp.",
-      "Rune Gate.",
+      "Rune Gate: if you control at least as many Runechants as its cost, you may play it from your banished zone without paying its cost.",
       "Go again.",
       "Blood debt.",
       "Note: Unsure whether the Gate is optional.",
@@ -429,6 +429,15 @@ describe("describeAttributes", () => {
       "Can be played from your banished zone, if you've usurped this turn.",
       "Costs 6{r} less, if you've usurped this turn.",
     ]);
+  });
+
+  it("describes cards a card works with", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        supports: [{ target: { group: "rune_gate" } }],
+      }),
+    ).toEqual(["Works with Rune Gate cards."]);
   });
 
   it("describes nothing for a plain card", () => {

@@ -156,6 +156,14 @@ describe("authoredAttributesSchema", () => {
     ).toBe(true);
   });
 
+  it("accepts cards a card works with", () => {
+    expect(
+      authoredAttributesSchema.safeParse({
+        supports: [{ target: { group: "rune_gate" } }],
+      }).success,
+    ).toBe(true);
+  });
+
   it("accepts conditional and granted go again", () => {
     expect(
       authoredAttributesSchema.safeParse({

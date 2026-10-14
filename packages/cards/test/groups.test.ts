@@ -35,6 +35,15 @@ describe("groupsOf", () => {
     ]);
   });
 
+  it("puts cards with the Rune Gate keyword in rune_gate", () => {
+    expect(
+      groupsOf({
+        ...card("Vantom Banshee", "attack_action", ["Attack"], ["Runeblade"]),
+        keywords: ["Blood Debt", "Rune Gate"],
+      }),
+    ).toEqual(["runeblade_attack_action", "rune_gate"]);
+  });
+
   it("puts generic and Shadow-only cards in no Runeblade group", () => {
     expect(
       groupsOf(card("Fate Foreseen", "defense_reaction", [], ["Generic"])),
