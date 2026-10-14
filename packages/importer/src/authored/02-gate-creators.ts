@@ -4,15 +4,15 @@ import type { AuthoredAttributes } from "../map.ts";
 
 export const gateCreators: AuthoredAttributes = {
   "Breach Flesh": {
-    verified: false,
+    verified: true,
     card: { tokens: [{ token: "gate", amount: 1, trigger: "on_hit" }] },
   },
   "Corporeal Chasm": {
-    verified: false,
+    verified: true,
     card: { tokens: [{ token: "gate", amount: 1, trigger: "on_hit" }] },
   },
   "Countdown to Extinction": {
-    verified: false,
+    verified: true,
     card: {
       tokens: [{ token: "gate", amount: 1, trigger: "on_attack" }],
       notes:
@@ -20,7 +20,7 @@ export const gateCreators: AuthoredAttributes = {
     },
   },
   "Dam the Shadowake": {
-    verified: false,
+    verified: true,
     card: {
       tokens: [{ token: "gate", amount: 1, trigger: "on_defend" }],
       notes:
@@ -28,7 +28,7 @@ export const gateCreators: AuthoredAttributes = {
     },
   },
   "Harbinger of Destruction": {
-    verified: false,
+    verified: true,
     card: {
       banishesOwn: [{ from: "hand", trigger: "on_play" }],
       tokens: [
@@ -43,7 +43,7 @@ export const gateCreators: AuthoredAttributes = {
     },
   },
   "Open the Gate to i'Arathael": {
-    verified: false,
+    verified: true,
     card: {
       tokens: [
         { token: "gate", amount: 1, trigger: "on_hit" },
@@ -53,7 +53,7 @@ export const gateCreators: AuthoredAttributes = {
     },
   },
   "Planar Chaos": {
-    verified: false,
+    verified: true,
     card: {
       tokens: [{ token: "gate", amount: 1, trigger: "on_play" }],
       notes:
@@ -61,7 +61,7 @@ export const gateCreators: AuthoredAttributes = {
     },
   },
   "Pull from Beyond": {
-    verified: false,
+    verified: true,
     card: {
       banishesOwn: [{ from: "deck_top", trigger: "on_play" }],
       tokens: [
@@ -76,18 +76,18 @@ export const gateCreators: AuthoredAttributes = {
     },
   },
   "Rites of Nightfall": {
-    verified: false,
+    verified: true,
     card: { tokens: [{ token: "gate", amount: 1, trigger: "on_play" }] },
   },
   "Shadowake Gloomblade": {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       tokens: [{ token: "gate", amount: 1, trigger: "on_hit" }],
     },
   },
   "Step through Realms": {
-    verified: false,
+    verified: true,
     card: {
       tokens: [
         {
@@ -101,7 +101,7 @@ export const gateCreators: AuthoredAttributes = {
     },
   },
   "Unbound by Shadow": {
-    verified: false,
+    verified: true,
     card: {
       tokens: [
         {
