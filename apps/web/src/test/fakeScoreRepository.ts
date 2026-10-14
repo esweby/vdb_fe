@@ -1,3 +1,4 @@
+import { sampleCards } from "./fakeCardRepository.ts";
 import type {
   CardDetail,
   Dimension,
@@ -37,7 +38,7 @@ export const sampleDetail: CardDetail = {
     ],
   },
   attributesVerified: true,
-  variants: [{ id: "bsl3", pitch: 3, text: null }],
+  variants: [{ id: "bsl3", pitch: 3, text: null, attributes: {} }],
 };
 
 /** An in-memory ScoreRepository; `saved` records every write. */
@@ -49,7 +50,44 @@ export function fakeScoreRepository(initial: ScoreRow[] = []) {
     a.side === b.side &&
     a.dimensionId === b.dimensionId;
   const repository: ScoreRepository = {
-    getCard: async (id) => (id === sampleDetail.id ? sampleDetail : null),
+    async getCard(id) {
+      if (id === sampleDetail.id) return sampleDetail;
+      const summary = sampleCards.find((c) => c.id === id);
+      if (!summary) return null;
+      return {
+        ...sampleDetail,
+        id: summary.id,
+        name: summary.name,
+        type: summary.type,
+        classes: summary.classes,
+        talents: summary.talents,
+        text: null,
+        attributes: {
+          ...sampleDetail.attributes,
+          tokens: undefined,
+          hasGoAgain: false,
+        },
+        attributesVerified: false,
+        variants: summary.variants.map((v) => ({
+          id: v.id,
+          pitch: v.pitch,
+          text: "",
+          // Hocus Pocus gets a per-pitch attribute, to test per-pitch descriptions.
+          attributes:
+            summary.name === "Hocus Pocus"
+              ? {
+                  tokens: [
+                    {
+                      token: "runechant" as const,
+                      amount: v.pitch ?? 1,
+                      trigger: "on_attack" as const,
+                    },
+                  ],
+                }
+              : {},
+        })),
+      };
+    },
     listDimensions: async () => sampleDimensions,
     listMyScores: async () => rows,
     async saveScore(_cardId, key, score) {

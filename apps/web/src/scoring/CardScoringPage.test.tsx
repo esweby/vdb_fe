@@ -84,4 +84,17 @@ describe("card page", () => {
       await screen.findByRole("slider", { name: "Runechant creation" }),
     ).toHaveAttribute("aria-valuetext", "80");
   });
+
+  it("describes each pitch's own attributes", async () => {
+    await renderApp({
+      path: "/cards/card-hocus-pocus",
+      auth: fakeAuthService().service,
+    });
+    expect(
+      await screen.findByText("Pitch 1: Creates 1 Runechant when it attacks."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Pitch 3: Creates 3 Runechants when it attacks."),
+    ).toBeInTheDocument();
+  });
 });
