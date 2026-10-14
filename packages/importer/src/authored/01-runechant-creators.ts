@@ -2,9 +2,6 @@
 // Drafted from card text, all unverified. Review sheet: docs/reviews/01-runechant-creators.md
 import type { AuthoredAttributes } from "../map.ts";
 
-const CONDITIONAL_GO_AGAIN =
-  "Go again is listed as a keyword in the dataset, but on this card it's conditional.";
-
 export const runechantCreators: AuthoredAttributes = {
   "Arcane Cussing": {
     verified: true,
@@ -137,10 +134,12 @@ export const runechantCreators: AuthoredAttributes = {
     },
   },
   "Douse in Runeblood": {
-    verified: true,
+    verified: false,
     card: {
       tokens: [{ token: "runechant", amount: "X", trigger: "on_attack" }],
-      notes: `X is the number of non-attack action cards you've played this turn. Gets go again if X is 3 or more. ${CONDITIONAL_GO_AGAIN}`,
+      goAgain: {},
+      notes:
+        "X is the number of non-attack action cards you've played this turn. Gets go again if 3 or more Runechants are created this way.",
     },
   },
   "Dread Triptych": {
@@ -164,7 +163,7 @@ export const runechantCreators: AuthoredAttributes = {
     },
   },
   "Embrace Ursur": {
-    verified: true,
+    verified: false,
     card: {
       banishesOwn: [{ from: "hand", trigger: "on_attack", optional: true }],
       tokens: [
@@ -175,7 +174,7 @@ export const runechantCreators: AuthoredAttributes = {
           conditions: ["banished_card_is_runeblade"],
         },
       ],
-      notes: `Gets go again if the banished card is Shadow. ${CONDITIONAL_GO_AGAIN}`,
+      goAgain: { conditions: ["banished_card_is_shadow"] },
     },
   },
   "Enshrine Sin": {
@@ -273,10 +272,8 @@ export const runechantCreators: AuthoredAttributes = {
     },
   },
   "Mauvrion Skies": {
-    verified: true,
-    card: {
-      notes: "The next Runeblade attack action card also gets go again.",
-    },
+    verified: false,
+    card: { grantsGoAgain: "next_runeblade_attack_action" },
     variants: {
       1: {
         tokens: [
@@ -311,10 +308,11 @@ export const runechantCreators: AuthoredAttributes = {
     },
   },
   "Meat and Greet": {
-    verified: true,
+    verified: false,
     card: {
       tokens: [{ token: "runechant", amount: 1, trigger: "on_hit" }],
-      notes: `Gets go again if you've dealt arcane damage to an opposing hero this turn. ${CONDITIONAL_GO_AGAIN}`,
+      goAgain: { conditions: ["dealt_arcane_damage_this_turn"] },
+      notes: "The arcane damage must have been dealt to an opposing hero.",
     },
   },
   "Mordred Tide": {

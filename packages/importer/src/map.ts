@@ -150,6 +150,8 @@ export function toImportCards(
       attributes: {
         ...generatedAttributes(keywords, specializationOf(first)),
         ...(entry?.card ? validated(name, "card", entry.card) : {}),
+        // Authored conditional go again means the keyword isn't natural go again.
+        ...(entry?.card?.goAgain ? { hasGoAgain: false } : {}),
       },
       attributesVerified: entry?.verified ?? false,
       variants,
