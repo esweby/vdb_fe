@@ -100,7 +100,7 @@ insert into public.deck_cards (deck_id, variant_id, quantity, sideboard) values
   ('30000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000003', 2, true);
 
 select is(
-  (select lc.quantity from public.loadout_cards lc
+  (select lc.quantity::int from public.loadout_cards lc
      join public.deck_loadouts dl on dl.id = lc.loadout_id
     where dl.deck_id = '30000000-0000-0000-0000-000000000001' and dl.is_default
       and lc.variant_id = '20000000-0000-0000-0000-000000000001'),
@@ -129,7 +129,7 @@ update public.deck_cards set quantity = 1
   where deck_id = '30000000-0000-0000-0000-000000000001'
     and variant_id = '20000000-0000-0000-0000-000000000001';
 select is(
-  (select lc.quantity from public.loadout_cards lc
+  (select lc.quantity::int from public.loadout_cards lc
     where lc.variant_id = '20000000-0000-0000-0000-000000000001'),
   1, 'reducing the pool quantity clamps loadouts'
 );

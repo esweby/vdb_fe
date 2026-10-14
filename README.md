@@ -500,10 +500,12 @@ Edge Functions run on Deno, so how they import a workspace package (bundling, an
 ### Tables
 
 ```
-users            (id, ..., role, rating_weight default 1.0, preferences jsonb)
-                 -- role: user | scorer | curator | admin
-                 -- rating_weight: admin-only; never returned to non-admins or used client-side
+profiles         (id → auth.users, role, preferences jsonb)
+                 -- role: user | scorer | curator | admin (changed in the dashboard)
                  -- preferences: e.g. { scoreSidesTogether: true }
+rater_weights    (user_id → auth.users, rating_weight default 1.0)
+                 -- a separate table so it can be admin-only; never returned to non-admins or used client-side
+app_settings     (key, value jsonb)                      -- fringe_default, fringe_k, min_rating_count
 cards            (id, name, type, subtypes text[], classes text[], text,
                   attributes jsonb, fringe boolean default false)
                  -- type: action | attack_action | instant | weapon | equipment | ...
