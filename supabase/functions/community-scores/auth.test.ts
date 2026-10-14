@@ -11,8 +11,17 @@ const users: Record<string, string> = {
 };
 const getUserRole = async (token: string) => users[token] ?? null;
 
-const check = (authorization: string | null) =>
-  authorizeJobCaller({ authorization, serverKeys, getUserRole });
+const tokens = new Set(["valid-job-token"]);
+const consumeJobToken = async (token: string) => tokens.delete(token);
+
+const check = (authorization: string | null, jobToken: string | null = null) =>
+  authorizeJobCaller({
+    authorization,
+    jobToken,
+    serverKeys,
+    getUserRole,
+    consumeJobToken,
+  });
 
 describe("authorizeJobCaller", () => {
   it("allows the server (the daily schedule)", async () => {
@@ -55,9 +64,29 @@ describe("authorizeJobCaller", () => {
     expect(
       await authorizeJobCaller({
         authorization: "Bearer ",
+        jobToken: null,
         serverKeys: ["", undefined],
         getUserRole,
+        consumeJobToken,
       }),
     ).toEqual({ ok: false, status: 401 });
+  });
+
+  it("allows the daily job with a valid single-use token, once", async () => {
+    expect(await check(null, "valid-job-token")).toEqual({
+      ok: true,
+      caller: "server",
+    });
+    expect(await check(null, "valid-job-token")).toEqual({
+      ok: false,
+      status: 401,
+    });
+  });
+
+  it("refuses an unknown job token", async () => {
+    expect(await check(null, "made-up-token")).toEqual({
+      ok: false,
+      status: 401,
+    });
   });
 });
