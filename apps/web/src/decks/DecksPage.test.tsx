@@ -368,14 +368,15 @@ describe("deck analysis", () => {
       scores: fakeScoreRepository([], { community: sampleCommunity() })
         .repository,
     });
-    const table = await screen.findByRole("table", { name: "Dimensions" });
+    const table = await screen.findByRole("table", { name: "Ratings" });
     const row = await within(table).findByRole("row", {
-      name: /^Runechant creation/,
+      name: /^Overall/,
     });
     expect(
       within(row)
         .getAllByRole("cell")
         .map((c) => c.textContent),
-    ).toEqual(["5", "3", "0", "2", "74", "1"]);
+      // hp1 ×3 (overall 50) and hp3 ×2 (overall 30): average 42; Nebula Blade is always available
+    ).toEqual(["5", "3", "0", "2", "42", "1"]);
   });
 });

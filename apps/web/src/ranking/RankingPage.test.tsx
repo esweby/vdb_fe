@@ -19,14 +19,13 @@ const rankedNames = () =>
     .map((r) => within(r).getByRole("link").textContent);
 
 describe("ranking page", () => {
-  it("ranks deck cards by the priorities, leaving out unrated cards and weapons", async () => {
+  it("ranks deck cards by overall when balanced, leaving out unrated cards and weapons", async () => {
     await renderApp({
       path: "/ranking",
       auth: fakeAuthService().service,
       scores: scores(),
     });
     await screen.findByRole("table", { name: "Ranked by your priorities" });
-    // Equal weights: BSL (60+80)/2=70, HP1 50, HP2 40, HP3 30
     expect(rankedNames()).toEqual([
       "Become the Shadow Lord",
       "Hocus Pocus (pitch 1)",
@@ -36,20 +35,45 @@ describe("ranking page", () => {
     expect(ranked().getAllByRole("row")[1]).toHaveTextContent("70");
   });
 
-  it("re-ranks when a priority changes", async () => {
+  it("re-ranks when the risk slider moves", async () => {
     const { router } = await renderApp({
       path: "/ranking",
       auth: fakeAuthService().service,
       scores: scores(),
     });
     await screen.findByRole("table", { name: "Ranked by your priorities" });
-    const gate = screen.getByRole("slider", { name: "Gate creation" });
-    gate.focus();
-    await userEvent.setup().keyboard("{Home}");
-    await waitFor(() => expect(rankedNames()[0]).toBe("Hocus Pocus (pitch 1)"));
-    expect(router.state.location.search).toMatchObject({
-      w: ["gateCreation:0"],
+    const risk = screen.getByRole("slider", {
+      name: "Risk (floor ← → ceiling)",
     });
+    risk.focus();
+    await userEvent.setup().keyboard("{Home}");
+    // At full consistent, Become the Shadow Lord drops to its floor (20).
+    await waitFor(() => expect(rankedNames()[0]).toBe("Hocus Pocus (pitch 1)"));
+    expect(rankedNames().at(-1)).toBe("Become the Shadow Lord");
+    expect(router.state.location.search).toMatchObject({ risk: -100 });
+  });
+
+  it("has Consistent, Balanced and High-roll presets", async () => {
+    const { router } = await renderApp({
+      path: "/ranking",
+      auth: fakeAuthService().service,
+      scores: scores(),
+    });
+    await screen.findByRole("table", { name: "Ranked by your priorities" });
+    expect(screen.getByRole("button", { name: "Balanced" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: "Consistent" }));
+    // 70 − 0.5 × (70 − 20) = 45, under Hocus Pocus (pitch 1) at 50
+    await waitFor(() => expect(rankedNames()[0]).toBe("Hocus Pocus (pitch 1)"));
+    expect(router.state.location.search).toMatchObject({ risk: -50 });
+    expect(screen.getByRole("button", { name: "Consistent" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
   });
 
   it("marks the top N as the core", async () => {
@@ -144,8 +168,8 @@ describe("ranking page", () => {
             cardId: "card-hocus-pocus",
             variantId: null,
             side: null,
-            dimensionId: 1,
-            score: 100,
+            dimensionId: 3,
+            score: 60,
           },
         ],
       }),
@@ -153,11 +177,11 @@ describe("ranking page", () => {
     expect(
       await screen.findByRole("slider", { name: /Whose scores/ }),
     ).toBeInTheDocument();
-    // Mine: every Hocus Pocus pitch (100 + 0)/2 = 50 < BSL's community 70
+    // Mine: every Hocus Pocus pitch has overall 60, under BSL's community 70
     await waitFor(() =>
       expect(rankedNames()[0]).toBe("Become the Shadow Lord"),
     );
-    expect(ranked().getAllByRole("row")[2]).toHaveTextContent("50");
+    expect(ranked().getAllByRole("row")[2]).toHaveTextContent("60");
   });
 });
 

@@ -14,6 +14,7 @@ import type {
   ScoreRow,
 } from "./scoreRepository.ts";
 import { ScoreEditor } from "./ScoreEditor.tsx";
+import { spreadWarnings } from "./spread.ts";
 import styles from "./CardScoringPage.module.css";
 
 const route = getRouteApi("/cards/$cardId");
@@ -142,6 +143,21 @@ export function CardScoringPage() {
   const shownDimensions = showAllDimensions
     ? dimensions
     : dimensions.filter((d) => relevant.has(d.key));
+  const hidden = dimensions.length - shownDimensions.length;
+  const spreadKeys = new Set(["floor", "ceiling"]);
+  const askingSpread = shownDimensions.some((d) => spreadKeys.has(d.key));
+  const warnings = spreadWarnings(rows, dimensions, card.variants);
+
+  /** Clears floor and ceiling everywhere, so they resolve as overall. */
+  async function sameAsOverall() {
+    const ids = new Set(
+      dimensions.filter((d) => spreadKeys.has(d.key)).map((d) => d.id),
+    );
+    const toClear = [...rows]
+      .filter((r) => ids.has(r.dimensionId))
+      .sort((a, b) => a.dimensionId - b.dimensionId);
+    for (const r of toClear) await onSet(r, null);
+  }
 
   const lines = [
     ...describeAttributes(card.attributes),
@@ -226,18 +242,33 @@ export function CardScoringPage() {
               variants={card.variants}
               busy={busy}
             />
-            <label className={styles.showAll}>
-              <input
-                type="checkbox"
-                checked={showAllDimensions}
-                onChange={(e) => setShowAllDimensions(e.target.checked)}
-              />
-              Show all dimensions
-            </label>
-            {shownDimensions.length === 0 && (
+            {(hidden > 0 || showAllDimensions) && (
+              <label className={styles.showAll}>
+                <input
+                  type="checkbox"
+                  checked={showAllDimensions}
+                  onChange={(e) => setShowAllDimensions(e.target.checked)}
+                />
+                Rate floor and ceiling too
+              </label>
+            )}
+            {askingSpread && (
               <p className={styles.meta}>
-                This card doesn't do anything these dimensions measure.
+                Floor: none of its conditions are met, and it's blocked if it
+                has an on-hit. Ceiling: all of them are met and it hits.
+                Overall: a typical game on this side. Leave floor and ceiling
+                blank if they're the same as overall.{" "}
+                <Button variant="ghost" onClick={() => void sameAsOverall()}>
+                  Floor and ceiling same as overall
+                </Button>
               </p>
+            )}
+            {warnings.length > 0 && (
+              <ul role="status" className={styles.warnings}>
+                {warnings.map((w) => (
+                  <li key={w}>{w}</li>
+                ))}
+              </ul>
             )}
             <ScoreEditor
               sidesTogetherByDefault={sidesTogether}

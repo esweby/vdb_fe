@@ -8,6 +8,7 @@ const SOURCE_LABEL: Record<Source, string> = {
   inherited: "inherited",
   not_relevant: "not relevant",
   blank: "blank",
+  same_as_overall: "same as overall",
 };
 
 export function ReviewDialog(props: {
@@ -40,8 +41,8 @@ export function ReviewDialog(props: {
       }
     >
       <p>
-        Once reviewed, your scores count toward community scores. Blanks count
-        as 0.
+        Once reviewed, your scores count toward community scores. A blank floor
+        or ceiling counts as the same as overall; other blanks count as 0.
       </p>
       {fixes.length > 0 && (
         <div className={styles.fixes}>

@@ -1,9 +1,11 @@
 // What a review will count: every pitch and side on every dimension, and where each value
-// comes from (README "Mark reviewed"). Blanks count as 0 once the card is reviewed.
+// comes from (README "Mark reviewed"). Blanks count as 0 once the card is reviewed, except a
+// blank floor or ceiling, which counts as the same as overall (README "Floor, ceiling and overall").
 import type { Side } from "@vdb/scoring";
 import type { Dimension, ScoreRow } from "./scoreRepository.ts";
 
-export type Source = "set" | "inherited" | "not_relevant" | "blank";
+export type Source =
+  "set" | "inherited" | "not_relevant" | "blank" | "same_as_overall";
 
 export interface SummaryCell {
   dimensionId: number;
@@ -33,35 +35,46 @@ export function reviewSummary(
         r.side === side,
     )?.score;
 
+  const overall = dimensions.find((d) => d.key === "overall");
+  const fallsBack = (d: Dimension) =>
+    !!overall && (d.key === "floor" || d.key === "ceiling");
+
+  const cell = (
+    d: Dimension,
+    v: { id: string; pitch: number | null },
+    side: Side,
+  ): SummaryCell => {
+    const base = {
+      dimensionId: d.id,
+      variantId: v.id,
+      pitch: v.pitch,
+      side,
+    };
+    const own = find(d.id, v.id, side);
+    if (own !== undefined) {
+      return {
+        ...base,
+        value: own,
+        source: own === 0 ? "not_relevant" : "set",
+      };
+    }
+    for (const [variantId, s] of [
+      [v.id, null],
+      [null, side],
+      [null, null],
+    ] as const) {
+      const value = find(d.id, variantId, s);
+      if (value !== undefined) return { ...base, value, source: "inherited" };
+    }
+    if (fallsBack(d)) {
+      const same = cell(overall!, v, side);
+      return { ...base, value: same.value, source: "same_as_overall" };
+    }
+    return { ...base, value: 0, source: "blank" };
+  };
+
   return dimensions.flatMap((d) =>
-    variants.flatMap((v) =>
-      SIDES.map((side): SummaryCell => {
-        const base = {
-          dimensionId: d.id,
-          variantId: v.id,
-          pitch: v.pitch,
-          side,
-        };
-        const own = find(d.id, v.id, side);
-        if (own !== undefined) {
-          return {
-            ...base,
-            value: own,
-            source: own === 0 ? "not_relevant" : "set",
-          };
-        }
-        for (const [variantId, s] of [
-          [v.id, null],
-          [null, side],
-          [null, null],
-        ] as const) {
-          const value = find(d.id, variantId, s);
-          if (value !== undefined)
-            return { ...base, value, source: "inherited" };
-        }
-        return { ...base, value: 0, source: "blank" };
-      }),
-    ),
+    variants.flatMap((v) => SIDES.map((side) => cell(d, v, side))),
   );
 }
 
