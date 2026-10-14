@@ -240,10 +240,11 @@ function PoolSection(props: {
   onSet: (card: DeckCard) => void;
 }) {
   const { title, entries, copyLimit, onSet } = props;
+  // Red, yellow, blue, then cards without pitch; alphabetical within each.
+  const pitchOrder = (e: DeckEntry) => e.variant.pitch ?? 99;
   const sorted = [...entries].sort(
     (a, b) =>
-      a.card.name.localeCompare(b.card.name) ||
-      (a.variant.pitch ?? 0) - (b.variant.pitch ?? 0),
+      pitchOrder(a) - pitchOrder(b) || a.card.name.localeCompare(b.card.name),
   );
   const total = entries.reduce((n, e) => n + e.quantity, 0);
   return (
