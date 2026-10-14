@@ -97,7 +97,7 @@ const becomeTheShadowLord: Card = {
 };
 ```
 
-`tokens` is a map keyed by token, so a new token never needs a schema change. Eloquence is included in the `Token` type because it's in the token list. An example card that creates it will be added once a card in the pool is confirmed to do so.
+The full, current vocabulary (tokens, triggers, conditions, banishing, play from banish, arcane damage) is defined and explained in [docs/attribute-vocabulary.md](docs/attribute-vocabulary.md). The example above shows the original idea. The real format lists token creations as an array, each with a trigger and conditions, so one card can create the same token in several ways.
 
 Scores are **not** part of the card. They are queried separately:
 

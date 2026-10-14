@@ -1,14 +1,18 @@
 // Maps dataset entries (one per name + pitch) to our cards and variants.
-import { classifyTypes, isViseraiLegal, type DatasetCard } from "./classify.ts";
-
-export type Attributes = Record<string, unknown>;
+import {
+  authoredAttributesSchema,
+  type AuthoredCardAttributes,
+  type CardAttributes,
+  type GeneratedAttributes,
+} from "@vdb/cards";
+import { classifyTypes, isViseraiLegal, specializationOf, type DatasetCard } from "./classify.ts";
 
 export interface AuthoredEntry {
   /** Has a player checked these attributes? */
   verified: boolean;
-  card?: Attributes;
-  /** Overrides for a specific pitch, merged over the card's attributes. */
-  variants?: Partial<Record<number, Attributes>>;
+  card?: AuthoredCardAttributes;
+  /** Overrides for a specific pitch. Each key replaces the card's value for that key. */
+  variants?: Partial<Record<number, AuthoredCardAttributes>>;
 }
 
 /** Hand-authored attributes keyed by card name. */
@@ -21,7 +25,8 @@ export interface ImportVariant {
   power: number | null;
   defense: number | null;
   text: string | null;
-  attributes: Attributes;
+  /** Overrides merged over the card's attributes. */
+  attributes: AuthoredCardAttributes;
 }
 
 export interface ImportCard {
@@ -33,7 +38,7 @@ export interface ImportCard {
   talents: string[];
   keywords: string[];
   text: string | null;
-  attributes: Attributes;
+  attributes: CardAttributes;
   attributesVerified: boolean;
   variants: ImportVariant[];
 }
@@ -48,11 +53,27 @@ function toTypeKey(mainType: string, subtypes: string[]): string {
   return mainType.toLowerCase().replace(/[\s-]+/g, "_");
 }
 
-function generatedAttributes(keywords: string[]): Attributes {
+function generatedAttributes(keywords: string[], specialization: string | null): GeneratedAttributes {
   return {
     hasGoAgain: keywords.includes("Go again"),
     hasBloodDebt: keywords.includes("Blood Debt"),
+    hasUsurp: keywords.includes("Usurp"),
+    hasRuneGate: keywords.includes("Rune Gate"),
+    specialization,
   };
+}
+
+function validated(name: string, where: string, value: unknown): AuthoredCardAttributes {
+  const result = authoredAttributesSchema.safeParse(value);
+  if (!result.success) {
+    throw new Error(`Authored attributes for "${name}" (${where}) don't match the vocabulary: ${result.error.message}`);
+  }
+  return result.data;
+}
+
+/** A variant's full attributes: the card's, with the variant's overrides replacing matching keys. */
+export function variantAttributes(card: ImportCard, variant: ImportVariant): CardAttributes {
+  return { ...card.attributes, ...variant.attributes };
 }
 
 export function toImportCards(entries: DatasetCard[], authored: AuthoredAttributes): ImportCard[] {
@@ -87,7 +108,7 @@ export function toImportCards(entries: DatasetCard[], authored: AuthoredAttribut
     for (const [pitch, attributes] of Object.entries(entry?.variants ?? {})) {
       const variant = variants.find((v) => v.pitch === Number(pitch));
       if (!variant) throw new Error(`Authored attributes for "${name}" pitch ${pitch}, which doesn't exist`);
-      variant.attributes = { ...attributes };
+      variant.attributes = validated(name, `pitch ${pitch}`, attributes);
     }
 
     return {
@@ -99,7 +120,10 @@ export function toImportCards(entries: DatasetCard[], authored: AuthoredAttribut
       talents,
       keywords,
       text: texts.size === 1 ? first.functional_text_plain || null : null,
-      attributes: { ...generatedAttributes(keywords), ...entry?.card },
+      attributes: {
+        ...generatedAttributes(keywords, specializationOf(first)),
+        ...(entry?.card ? validated(name, "card", entry.card) : {}),
+      },
       attributesVerified: entry?.verified ?? false,
       variants,
     };
