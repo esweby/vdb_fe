@@ -133,6 +133,10 @@ If time runs out, ship in this order and stop where the budget ends. Never cut t
 4. M7 deck builder
 5. Polish: component library breadth, filters, preferences
 
+## Backlog (after phase one's loop works)
+
+- **Card image view:** a List / Images toggle on card lists. Needs `variants.image_url` (the dataset links to Legend Story's public images; pick the standard, non-foil, normal edition, latest printing) and a re-import. Most useful in the deck builder.
+
 ## Exit criteria
 
 1. Ships to the scoring group, who use it to score.
