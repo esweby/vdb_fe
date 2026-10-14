@@ -1,0 +1,24 @@
+# Working agreement
+
+The design is in [README.md](README.md), and the current plan is in [docs/phase-one.md](docs/phase-one.md).
+
+## Git
+
+- Never commit or push to `main`. Work on a branch and merge through a pull request once CI passes.
+
+## Test first
+
+- Write a failing test before writing the code that makes it pass. This applies to every change in behaviour: scoring rules, importer mapping, migrations, row level security and UI logic.
+- Unit tests use Vitest (`npm test`). Database tests (schema, constraints, row level security) use pgTAP in `supabase/tests` (`supabase test db`).
+- A rule in the README ("Reviews and blank scores", fringe default, scenario contract and so on) isn't implemented until a test covers it.
+- Bug fixes start with a test that reproduces the bug.
+
+## Game logic
+
+- Flesh and Blood rules, card interactions and synergy rules are checked by the maintainer or an experienced player. Anything drafted without that check is marked unverified.
+
+## Commands
+
+- `npm test`: unit tests
+- `npm run typecheck`: TypeScript
+- `supabase start` / `supabase test db`: local stack and database tests

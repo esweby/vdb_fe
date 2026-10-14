@@ -1,0 +1,6 @@
+{
+  "name": "@vdb/cards",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" }
+}
