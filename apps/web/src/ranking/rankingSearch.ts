@@ -29,7 +29,7 @@ const strings = (v: unknown) =>
   Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
 
 export function readRankingSearch(
-  search: Record<string, unknown>,
+  search: Partial<Record<keyof RankingSearch, unknown>>,
   dimensionKeys: string[],
 ): RankingSettings {
   const priorities = Object.fromEntries(

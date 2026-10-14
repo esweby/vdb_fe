@@ -11,6 +11,7 @@ import { SignInPage } from "./auth/SignInPage.tsx";
 import { CardScoringPage } from "./scoring/CardScoringPage.tsx";
 import { NeedsReviewPage } from "./scoring/NeedsReviewPage.tsx";
 import { AccountPage } from "./account/AccountPage.tsx";
+import { RankingPage } from "./ranking/RankingPage.tsx";
 import { CardsPage } from "./cards/CardsPage.tsx";
 import { Layout } from "./Layout.tsx";
 import { validateListSearch } from "./filters/useUrlFilters.ts";
@@ -66,7 +67,12 @@ const routeTree = rootRoute.addChildren([
     path: "/cards/$cardId",
     component: CardScoringPage,
   }),
-  page("/ranking", "Ranking"),
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/ranking",
+    validateSearch: (search: Record<string, unknown>) => search,
+    component: RankingPage,
+  }),
   createRoute({
     getParentRoute: () => rootRoute,
     path: "/needs-review",
