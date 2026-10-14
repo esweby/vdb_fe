@@ -66,3 +66,16 @@
   overflow: hidden;
   clip: rect(0 0 0 0);
 }
+
+.deckChoice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin: 1rem 0 0.5rem;
+}
+.deckChoice select {
+  font: inherit;
+  margin-left: 0.4rem;
+  padding: 0.2rem 0.4rem;
+}

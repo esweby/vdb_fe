@@ -17,7 +17,21 @@ export interface DimensionTotal {
   alwaysAvailable: number;
 }
 
+export interface DeckOverview {
+  /** Deck cards (copies), not counting sideboard or gear */
+  cards: number;
+  /** Per card with a cost */
+  averageCost: number;
+  /** Per card with a pitch */
+  averagePitch: number;
+  /** Average pitch minus average cost: spare resources per card */
+  resourceSurplus: number;
+  goAgain: number;
+  attacks: number;
+}
+
 export interface DeckAnalysis {
+  overview: DeckOverview;
   pitch: PitchCounts;
   costCurve: Record<"0" | "1" | "2" | "3+", number>;
   dimensions: DimensionTotal[];
@@ -76,5 +90,33 @@ export function analyseDeck(input: {
     };
   });
 
-  return { pitch, costCurve, dimensions, unscored };
+  return { overview: overviewOf(deck), pitch, costCurve, dimensions, unscored };
+}
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+function overviewOf(deck: DeckEntry[]): DeckOverview {
+  const average = (value: (e: DeckEntry) => number | null) => {
+    let n = 0;
+    let sum = 0;
+    for (const e of deck) {
+      const v = value(e);
+      if (v === null) continue;
+      n += e.quantity;
+      sum += v * e.quantity;
+    }
+    return n === 0 ? 0 : sum / n;
+  };
+  const count = (test: (e: DeckEntry) => boolean) =>
+    deck.filter(test).reduce((n, e) => n + e.quantity, 0);
+  const cost = average((e) => e.variant.cost);
+  const pitch = average((e) => e.variant.pitch);
+  return {
+    cards: count(() => true),
+    averageCost: round2(cost),
+    averagePitch: round2(pitch),
+    resourceSurplus: round2(pitch - cost),
+    goAgain: count((e) => !!e.card.attributes.hasGoAgain),
+    attacks: count((e) => e.card.type === "attack_action"),
+  };
 }
