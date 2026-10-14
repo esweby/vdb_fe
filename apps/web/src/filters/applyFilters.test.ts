@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   applyFilters,
   facetCounts,
+  filterSummary,
   type Facet,
   type FilterState,
 } from "./applyFilters.ts";
@@ -86,5 +87,87 @@ describe("facetCounts", () => {
   it("ANY groups count each value without the group's own includes", () => {
     const counts = facetCounts(cards, facets, { type: { action: "include" } });
     expect(counts.type).toEqual({ action: 2, instant: 1, weapon: 1 });
+  });
+});
+
+describe("exclusive groups (visible-set rules for ticked-by-default checkboxes)", () => {
+  type P = { name: string; pitches: number[]; power: number | null };
+  const items: P[] = [
+    { name: "Red only", pitches: [1], power: 1 },
+    { name: "Red and blue", pitches: [1, 3], power: 4 },
+    { name: "Blue only", pitches: [3], power: null },
+  ];
+  const exclusive: Facet<P>[] = [
+    {
+      id: "pitch",
+      label: "Pitch",
+      mode: "any",
+      kind: "exclusive",
+      values: [1, 3].map((p) => ({
+        id: String(p),
+        label: String(p),
+        test: (i: P) => i.pitches.includes(p),
+      })),
+    },
+    {
+      id: "power",
+      label: "Power",
+      mode: "any",
+      kind: "exclusive",
+      values: [
+        {
+          id: "low",
+          label: "0–3",
+          test: (i: P) => i.power !== null && i.power <= 3,
+        },
+        {
+          id: "high",
+          label: "4+",
+          test: (i: P) => i.power !== null && i.power >= 4,
+        },
+      ],
+    },
+  ];
+  const shown = (state: FilterState) =>
+    applyFilters(items, exclusive, state).map((i) => i.name);
+
+  it("hides an item only when every value it has is unticked", () => {
+    expect(shown({ pitch: { "1": "exclude" } })).toEqual([
+      "Red and blue",
+      "Blue only",
+    ]);
+  });
+
+  it("never hides an item that has no value in the group", () => {
+    expect(shown({ power: { low: "exclude", high: "exclude" } })).toEqual([
+      "Blue only",
+    ]);
+  });
+});
+
+describe("filterSummary", () => {
+  it("names hidden values and 'only' values, with the group for stat bands", () => {
+    const summaryFacets: Facet<Card>[] = [
+      { ...facets[0]!, kind: "exclusive" },
+      { ...facets[1]!, kind: "feature" },
+      {
+        id: "power",
+        label: "Power",
+        mode: "any",
+        kind: "exclusive",
+        summaryPrefix: true,
+        values: [{ id: "low", label: "0–1", test: () => true }],
+      },
+    ];
+    expect(
+      filterSummary(
+        {
+          type: { weapon: "exclude" },
+          tags: { go: "include" },
+          power: { low: "exclude" },
+        },
+        summaryFacets,
+      ),
+    ).toEqual(["weapon hidden", "Only go", "Power 0–1 hidden"]);
   });
 });

@@ -1,21 +1,46 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { describe, expect, it } from "vitest";
 import type { Facet, FilterState } from "./applyFilters.ts";
+import { FilterBar } from "./FilterBar.tsx";
 import { FilterSidebar } from "./FilterSidebar.tsx";
 
-type Card = { tags: string[] };
+type Card = { type: string; tags: string[] };
 const cards: Card[] = [
-  { tags: ["go"] },
-  { tags: ["go", "debt"] },
-  { tags: [] },
+  { type: "action", tags: ["go"] },
+  { type: "action", tags: ["go", "debt"] },
+  { type: "instant", tags: [] },
+  { type: "equipment", tags: [] },
 ];
 const facets: Facet<Card>[] = [
+  {
+    id: "type",
+    label: "Card type",
+    mode: "any",
+    kind: "exclusive",
+    values: ["action", "instant", "equipment"].map((t) => ({
+      id: t,
+      label: t[0]!.toUpperCase() + t.slice(1),
+      test: (c: Card) => c.type === t,
+    })),
+  },
+  {
+    id: "slot",
+    label: "Equipment slot",
+    mode: "any",
+    kind: "exclusive",
+    showWhen: (state) => state.type?.equipment !== "exclude",
+    values: [
+      { id: "head", label: "Head", test: (c) => c.type === "equipment" },
+    ],
+  },
   {
     id: "keywords",
     label: "Keywords",
     mode: "all",
+    kind: "feature",
+    section: "Mechanics",
     values: [
       { id: "go", label: "Go again", test: (c) => c.tags.includes("go") },
       { id: "debt", label: "Blood debt", test: (c) => c.tags.includes("debt") },
@@ -23,79 +48,114 @@ const facets: Facet<Card>[] = [
   },
 ];
 
-function Harness() {
-  const [state, setState] = useState<FilterState>({});
+let latest: FilterState = {};
+function Harness(props: { initial?: FilterState }) {
+  const [state, setState] = useState<FilterState>(props.initial ?? {});
+  latest = state;
   return (
-    <FilterSidebar
-      items={cards}
-      facets={facets}
-      state={state}
-      onChange={setState}
-    />
+    <>
+      <FilterBar
+        items={cards}
+        facets={[{ ...facets[0]!, placement: "bar" }]}
+        state={state}
+        onChange={setState}
+      />
+      <FilterSidebar
+        items={cards}
+        facets={facets}
+        state={state}
+        onChange={setState}
+      />
+    </>
   );
 }
 
-const include = (label: string) =>
-  screen.getByRole("button", { name: new RegExp(`^Include ${label},`) });
-const exclude = (label: string) =>
-  screen.getByRole("button", { name: `Exclude ${label}` });
+const sidebar = () =>
+  within(screen.getByRole("complementary", { name: "Filters" }));
+const box = (name: string) => sidebar().getByRole("checkbox", { name });
 
 describe("FilterSidebar", () => {
-  it("has a green include and a red exclude button for each value", async () => {
+  it("starts with every box ticked, and unticking hides those cards", async () => {
+    render(<Harness />);
+    expect(box("Action")).toBeChecked();
+    expect(box("Instant")).toBeChecked();
+    await userEvent.setup().click(box("Instant"));
+    expect(box("Instant")).not.toBeChecked();
+    expect(latest).toEqual({ type: { instant: "exclude" } });
+  });
+
+  it("shows how many cards each value has", () => {
+    render(<Harness />);
+    expect(box("Action").closest("label")?.parentElement).toHaveTextContent(
+      "2",
+    );
+  });
+
+  it("'Only' on a card type unticks every other type", async () => {
+    render(<Harness />);
+    await userEvent
+      .setup()
+      .click(sidebar().getByRole("button", { name: "Only Action" }));
+    expect(box("Action")).toBeChecked();
+    expect(box("Instant")).not.toBeChecked();
+    expect(box("Equipment")).not.toBeChecked();
+  });
+
+  it("'Only' on a mechanic shows just the cards that have it, and toggles off", async () => {
     render(<Harness />);
     const user = userEvent.setup();
-    expect(include("Go again")).toHaveAccessibleName(
-      "Include Go again, 2 cards",
+    const only = sidebar().getByRole("button", { name: "Only Go again" });
+    expect(only).toHaveAttribute("aria-pressed", "false");
+    await user.click(only);
+    expect(only).toHaveAttribute("aria-pressed", "true");
+    expect(latest).toEqual({ keywords: { go: "include" } });
+    await user.click(only);
+    expect(latest).toEqual({});
+  });
+
+  it("'All' ticks a whole group again", async () => {
+    render(
+      <Harness initial={{ type: { instant: "exclude", action: "exclude" } }} />,
     );
-    expect(include("Go again")).toHaveAttribute("aria-pressed", "false");
-    expect(exclude("Go again")).toHaveAttribute("aria-pressed", "false");
-
-    await user.click(include("Go again"));
-    expect(include("Go again")).toHaveAttribute("aria-pressed", "true");
-
-    // Exclude replaces include
-    await user.click(exclude("Go again"));
-    expect(exclude("Go again")).toHaveAttribute("aria-pressed", "true");
-    expect(include("Go again")).toHaveAttribute("aria-pressed", "false");
-
-    // Clicking the active button turns it off
-    await user.click(exclude("Go again"));
-    expect(exclude("Go again")).toHaveAttribute("aria-pressed", "false");
-  });
-
-  it("doesn't add anything above the groups when filtering", async () => {
-    render(<Harness />);
-    await userEvent.setup().click(include("Go again"));
+    await userEvent
+      .setup()
+      .click(sidebar().getByRole("button", { name: "Show all Card type" }));
+    expect(box("Instant")).toBeChecked();
+    expect(box("Action")).toBeChecked();
     expect(
-      screen.queryByRole("button", { name: /^Remove/ }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "Clear all filters" }),
+      sidebar().queryByRole("button", { name: "Show all Card type" }),
     ).not.toBeInTheDocument();
   });
 
-  it("clears one group with its own Clear button, shown only when it has a selection", async () => {
+  it("keeps mechanics in a collapsed section", () => {
     render(<Harness />);
-    const user = userEvent.setup();
-    expect(
-      screen.queryByRole("button", { name: "Clear Keywords" }),
-    ).not.toBeInTheDocument();
-    await user.click(include("Go again"));
-    await user.click(exclude("Blood debt"));
-    await user.click(screen.getByRole("button", { name: "Clear Keywords" }));
-    expect(include("Go again")).toHaveAttribute("aria-pressed", "false");
-    expect(exclude("Blood debt")).toHaveAttribute("aria-pressed", "false");
-    expect(
-      screen.queryByRole("button", { name: "Clear Keywords" }),
-    ).not.toBeInTheDocument();
+    const mechanics = sidebar().getByText("Mechanics").closest("details")!;
+    expect(mechanics).not.toHaveAttribute("open");
   });
 
-  it("updates counts as filters change", async () => {
+  it("hides the equipment slot group while equipment is unticked", async () => {
     render(<Harness />);
-    await userEvent.setup().click(include("Go again"));
-    // ALL group: cards with Go again and Blood debt
-    expect(include("Blood debt")).toHaveAccessibleName(
-      "Include Blood debt, 1 card",
-    );
+    expect(sidebar().getByText("Equipment slot")).toBeInTheDocument();
+    await userEvent.setup().click(box("Equipment"));
+    expect(sidebar().queryByText("Equipment slot")).not.toBeInTheDocument();
+  });
+
+  it("leaves bar groups out of the sidebar", () => {
+    render(<Harness />);
+    expect(
+      screen.getByRole("group", { name: "Card type" }),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("FilterBar", () => {
+  it("shows each value as a toggle that starts on, and turning it off hides those cards", async () => {
+    render(<Harness />);
+    const bar = within(screen.getByRole("group", { name: "Card type" }));
+    const instant = bar.getByRole("button", { name: "Instant" });
+    expect(instant).toHaveAttribute("aria-pressed", "true");
+    await userEvent.setup().click(instant);
+    expect(instant).toHaveAttribute("aria-pressed", "false");
+    expect(latest).toEqual({ type: { instant: "exclude" } });
   });
 });

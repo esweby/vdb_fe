@@ -15,7 +15,10 @@ const filters = () =>
 
 describe("cards page", () => {
   it("lists cards with their details", async () => {
-    await renderApp({ path: "/cards", auth: fakeAuthService().service });
+    await renderApp({
+      path: "/cards?view=list",
+      auth: fakeAuthService().service,
+    });
     expect(
       await screen.findByRole("link", { name: "Hocus Pocus" }),
     ).toBeInTheDocument();
@@ -27,73 +30,110 @@ describe("cards page", () => {
   });
 
   it("searches by name", async () => {
-    await renderApp({ path: "/cards", auth: fakeAuthService().service });
+    await renderApp({
+      path: "/cards?view=list",
+      auth: fakeAuthService().service,
+    });
     await screen.findByRole("link", { name: "Hocus Pocus" });
     await userEvent.setup().type(screen.getByLabelText("Search"), "shadow");
     await waitFor(() => expect(rowNames()).toEqual(["Become the Shadow Lord"]));
   });
 
-  it("includes and excludes with the sidebar, and keeps filters in the URL", async () => {
+  it("hides cards by turning off pitch and class toggles, and keeps filters in the URL", async () => {
     const { router } = await renderApp({
-      path: "/cards",
+      path: "/cards?view=list",
       auth: fakeAuthService().service,
     });
     await screen.findByRole("link", { name: "Hocus Pocus" });
     const user = userEvent.setup();
-    await user.click(
-      filters().getByRole("button", { name: /^Include Pitch 3,/ }),
-    );
+    const pitch = within(screen.getByRole("group", { name: "Pitch" }));
+    await user.click(pitch.getByRole("button", { name: "No pitch" }));
     expect(rowNames()).toEqual([
       "Become the Shadow Lord",
       "Fate Foreseen",
       "Hocus Pocus",
     ]);
-    await user.click(
-      filters().getByRole("button", { name: "Exclude Generic" }),
-    );
+    const cls = within(screen.getByRole("group", { name: "Class" }));
+    await user.click(cls.getByRole("button", { name: "Generic" }));
     expect(rowNames()).toEqual(["Become the Shadow Lord", "Hocus Pocus"]);
-    expect(router.state.location.search).toEqual({
-      inc: ["pitch:3"],
-      exc: ["class:Generic"],
-    });
+    expect(router.state.location.search.exc).toEqual(
+      expect.arrayContaining(["pitch:none", "class:Generic"]),
+    );
+    expect(
+      screen.getByText(/No pitch hidden · Generic hidden/),
+    ).toBeInTheDocument();
   });
 
   it("restores filters from the URL", async () => {
     await renderApp({
-      path: "/cards?inc=%5B%22keywords%3Ago_again%22%5D",
+      path: "/cards?inc=%5B%22keywords%3Ago_again%22%5D&view=list",
       auth: fakeAuthService().service,
     });
     await screen.findByRole("table", { name: /cards/i });
     expect(rowNames()).toEqual(["Become the Shadow Lord"]);
     expect(
-      filters().getByRole("button", { name: /^Include Go again,/ }),
+      filters().getByRole("button", { name: "Only Go again" }),
     ).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByText("1 filter active")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Only Go again/, { selector: "p *, p" }),
+    ).toBeInTheDocument();
   });
 
-  it("clears every filter from the status line above the results", async () => {
+  it("resets every filter from the line above the results", async () => {
     await renderApp({
-      path: "/cards?inc=%5B%22keywords%3Ago_again%22%2C%22pitch%3A3%22%5D",
+      path: "/cards?inc=%5B%22keywords%3Ago_again%22%5D&exc=%5B%22pitch%3A1%22%5D&view=list",
       auth: fakeAuthService().service,
     });
     await screen.findByRole("table", { name: /cards/i });
-    expect(screen.getByText("2 filters active")).toBeInTheDocument();
     await userEvent
       .setup()
-      .click(screen.getByRole("button", { name: "Clear all filters" }));
-    expect(await screen.findByText("No filters")).toBeInTheDocument();
+      .click(screen.getByRole("button", { name: "Reset filters" }));
     expect(rowNames()).toHaveLength(4);
+    expect(
+      screen.queryByRole("button", { name: "Reset filters" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows stand-in card tiles by default, one per pitch, and a list view", async () => {
+    const { router } = await renderApp({
+      path: "/cards",
+      auth: fakeAuthService().service,
+    });
+    expect(
+      await screen.findByRole("article", { name: "Hocus Pocus (red)" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("article", { name: "Hocus Pocus (blue)" }),
+    ).toBeInTheDocument();
+    const user = userEvent.setup();
+    // Turning a pitch off removes that pitch's tiles
+    await user.click(
+      within(screen.getByRole("group", { name: "Pitch" })).getByRole("button", {
+        name: "Red",
+      }),
+    );
+    expect(
+      screen.queryByRole("article", { name: "Hocus Pocus (red)" }),
+    ).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "List view" }));
+    await waitFor(() =>
+      expect(router.state.location.search).toMatchObject({ view: "list" }),
+    );
+    expect(screen.getByRole("table", { name: /cards/i })).toBeInTheDocument();
   });
 
   it("shows how many cards match", async () => {
-    await renderApp({ path: "/cards", auth: fakeAuthService().service });
+    await renderApp({
+      path: "/cards?view=list",
+      auth: fakeAuthService().service,
+    });
     await screen.findByRole("link", { name: "Hocus Pocus" });
     expect(screen.getByText("4 of 4 cards")).toBeInTheDocument();
   });
 
   it("links each card to its page", async () => {
     const { router } = await renderApp({
-      path: "/cards",
+      path: "/cards?view=list",
       auth: fakeAuthService().service,
     });
     await userEvent
@@ -109,7 +149,7 @@ describe("cards page", () => {
 
   it("shows cost, power and defense, and sorts by them", async () => {
     const { router } = await renderApp({
-      path: "/cards",
+      path: "/cards?view=list",
       auth: fakeAuthService().service,
     });
     await screen.findByRole("link", { name: "Hocus Pocus" });

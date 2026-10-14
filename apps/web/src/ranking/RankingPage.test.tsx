@@ -129,14 +129,31 @@ describe("ranking page", () => {
       scores: scores(),
     });
     await screen.findByRole("table", { name: "Ranked by your priorities" });
+    const user = userEvent.setup();
+    const cls = within(screen.getByRole("group", { name: "Class" }));
+    await user.click(cls.getByRole("button", { name: "Runeblade" }));
+    await user.click(cls.getByRole("button", { name: "Generic" }));
+    // Become the Shadow Lord is Shadow as well as Runeblade, so it stays
+    expect(rankedNames()).toEqual(["Become the Shadow Lord"]);
+  });
+
+  it("drops a pitch's rows when that pitch is turned off", async () => {
+    await renderApp({
+      path: "/ranking",
+      auth: fakeAuthService().service,
+      scores: scores(),
+    });
+    await screen.findByRole("table", { name: "Ranked by your priorities" });
     await userEvent
       .setup()
       .click(
-        within(
-          screen.getByRole("complementary", { name: "Filters" }),
-        ).getByRole("button", { name: /^Include Shadow,/ }),
+        within(screen.getByRole("group", { name: "Pitch" })).getByRole(
+          "button",
+          { name: "Red" },
+        ),
       );
-    expect(rankedNames()).toEqual(["Become the Shadow Lord"]);
+    expect(rankedNames()).not.toContain("Hocus Pocus (pitch 1)");
+    expect(rankedNames()).toContain("Hocus Pocus (pitch 2)");
   });
 
   it("offers the mine/community blend only when signed in", async () => {
