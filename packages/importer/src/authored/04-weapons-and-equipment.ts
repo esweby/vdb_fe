@@ -9,7 +9,7 @@ const DARKNESS =
 export const weaponsAndEquipment: AuthoredAttributes = {
   // Weapons
   "Annals of Sutcliffe": {
-    verified: false,
+    verified: true,
     card: {
       tokens: [
         {
@@ -24,7 +24,7 @@ export const weaponsAndEquipment: AuthoredAttributes = {
     },
   },
   "Dread Scythe": {
-    verified: false,
+    verified: true,
     card: {
       arcaneDamage: [{ amount: 1, trigger: "on_attack" }],
       notes:
@@ -32,7 +32,7 @@ export const weaponsAndEquipment: AuthoredAttributes = {
     },
   },
   "Galaxxi Black": {
-    verified: false,
+    verified: true,
     card: {
       arcaneDamage: [{ amount: 1, trigger: "on_hit" }],
       notes:
@@ -40,14 +40,14 @@ export const weaponsAndEquipment: AuthoredAttributes = {
     },
   },
   "Nebula Blade": {
-    verified: false,
+    verified: true,
     card: {
       tokens: [{ token: "runechant", amount: 1, trigger: "on_hit" }],
       notes: "+3 power if you've played a non-attack action card this turn.",
     },
   },
   "Rosetta Thorn": {
-    verified: false,
+    verified: true,
     card: {
       arcaneDamage: [
         {
@@ -62,7 +62,7 @@ export const weaponsAndEquipment: AuthoredAttributes = {
     },
   },
   "Scepter of Pain": {
-    verified: false,
+    verified: true,
     card: {
       arcaneDamage: [{ amount: 1, trigger: "activated" }],
       tokens: [{ token: "runechant", amount: "X", trigger: "activated" }],
@@ -71,7 +71,7 @@ export const weaponsAndEquipment: AuthoredAttributes = {
     },
   },
   "Seven Sin Nebula": {
-    verified: false,
+    verified: true,
     card: {
       tokens: [{ token: "runechant", amount: 1, trigger: "on_hit" }],
       notes:
@@ -81,7 +81,7 @@ export const weaponsAndEquipment: AuthoredAttributes = {
 
   // Equipment that creates Runechants or Eloquence
   "Grasp of the Arknight": {
-    verified: false,
+    verified: true,
     card: {
       tokens: [{ token: "runechant", amount: 1, trigger: "activated" }],
       notes:
@@ -89,7 +89,7 @@ export const weaponsAndEquipment: AuthoredAttributes = {
     },
   },
   "Grasp of the Darknight": {
-    verified: false,
+    verified: true,
     card: {
       oneUse: true,
       tokens: [{ token: "runechant", amount: 1, trigger: "activated" }],
@@ -97,7 +97,7 @@ export const weaponsAndEquipment: AuthoredAttributes = {
     },
   },
   "Grimoire of Fellingsong": {
-    verified: false,
+    verified: true,
     card: {
       oneUse: true,
       tokens: [{ token: "runechant", amount: 1, trigger: "activated" }],
@@ -105,7 +105,7 @@ export const weaponsAndEquipment: AuthoredAttributes = {
     },
   },
   "Grimoire of the Haunt": {
-    verified: false,
+    verified: true,
     card: {
       oneUse: true,
       banishesSelf: [{ trigger: "activated" }],
@@ -114,7 +114,7 @@ export const weaponsAndEquipment: AuthoredAttributes = {
     },
   },
   "Runehold Release": {
-    verified: false,
+    verified: true,
     card: {
       oneUse: true,
       tokens: [{ token: "runechant", amount: 1, trigger: "activated" }],
@@ -122,7 +122,7 @@ export const weaponsAndEquipment: AuthoredAttributes = {
     },
   },
   "Vexing Quillhand": {
-    verified: false,
+    verified: true,
     card: {
       oneUse: true,
       tokens: [{ token: "runechant", amount: 2, trigger: "activated" }],
@@ -132,7 +132,7 @@ export const weaponsAndEquipment: AuthoredAttributes = {
 
   // Blood debt equipment
   "Carrion Husk": {
-    verified: false,
+    verified: true,
     card: {
       banishesSelf: [
         { trigger: "combat_chain_closes" },
@@ -143,7 +143,7 @@ export const weaponsAndEquipment: AuthoredAttributes = {
     },
   },
   "Cloak of Darkness": {
-    verified: false,
+    verified: true,
     card: {
       oneUse: true,
       banishesSelf: [{ trigger: "would_be_dealt_damage", optional: true }],
@@ -151,7 +151,7 @@ export const weaponsAndEquipment: AuthoredAttributes = {
     },
   },
   "Dance of Darkness": {
-    verified: false,
+    verified: true,
     card: {
       oneUse: true,
       banishesSelf: [{ trigger: "would_be_dealt_damage", optional: true }],
@@ -159,11 +159,11 @@ export const weaponsAndEquipment: AuthoredAttributes = {
     },
   },
   "Embraforged Gauntlet": {
-    verified: false,
+    verified: true,
     card: { banishesSelf: [{ trigger: "would_go_to_graveyard" }] },
   },
   "Grasp of Darkness": {
-    verified: false,
+    verified: true,
     card: {
       oneUse: true,
       banishesSelf: [{ trigger: "would_be_dealt_damage", optional: true }],
@@ -171,7 +171,7 @@ export const weaponsAndEquipment: AuthoredAttributes = {
     },
   },
   "Shroud of Darkness": {
-    verified: false,
+    verified: true,
     card: {
       oneUse: true,
       banishesSelf: [{ trigger: "would_be_dealt_damage", optional: true }],
@@ -181,7 +181,7 @@ export const weaponsAndEquipment: AuthoredAttributes = {
 
   // Blood debt management
   "Grille of Repentance": {
-    verified: false,
+    verified: true,
     card: {
       oneUse: true,
       turnsBanishedFaceDown: [
@@ -190,7 +190,7 @@ export const weaponsAndEquipment: AuthoredAttributes = {
     },
   },
   "Path of Repentance": {
-    verified: false,
+    verified: true,
     card: {
       oneUse: true,
       turnsBanishedFaceDown: [
@@ -199,7 +199,7 @@ export const weaponsAndEquipment: AuthoredAttributes = {
     },
   },
   "Robe of Repentance": {
-    verified: false,
+    verified: true,
     card: {
       oneUse: true,
       turnsBanishedFaceDown: [
@@ -210,14 +210,14 @@ export const weaponsAndEquipment: AuthoredAttributes = {
 
   // Banishing from hand
   "Corrupted Crown": {
-    verified: false,
+    verified: true,
     card: {
       banishesOwn: [{ from: "hand", trigger: "on_defend", optional: true }],
       notes: "+1 defense if you banish a card.",
     },
   },
   "Ebon Fold": {
-    verified: false,
+    verified: true,
     card: {
       oneUse: true,
       banishesOwn: [{ from: "hand", trigger: "activated" }],
@@ -226,7 +226,7 @@ export const weaponsAndEquipment: AuthoredAttributes = {
     },
   },
   "Reach of the Abyss": {
-    verified: false,
+    verified: true,
     card: {
       notes:
         "When the combat chain closes, if it defended, banishes all the defending cards (yours), feeding your banished zone.",
@@ -235,7 +235,7 @@ export const weaponsAndEquipment: AuthoredAttributes = {
 
   // Granting and enabling
   "Gauntlet of Sword and Sorcery": {
-    verified: false,
+    verified: true,
     card: {
       arcaneDamage: [
         { amount: 1, trigger: "on_attack", grantedTo: "next_attack_action" },
@@ -245,14 +245,14 @@ export const weaponsAndEquipment: AuthoredAttributes = {
     },
   },
   "Spellbound Creepers": {
-    verified: false,
+    verified: true,
     card: {
       notes:
         "Once per turn, {r}: your next non-attack action card can be played as an instant. Only if you've attacked or defended with an attack action card this turn. Destroyed at end phase unless you've dealt enough arcane damage.",
     },
   },
   "Sutcliffe's Suede Hides": {
-    verified: false,
+    verified: true,
     card: {
       oneUse: true,
       grantsGoAgain: "target_attack_action",
@@ -263,7 +263,7 @@ export const weaponsAndEquipment: AuthoredAttributes = {
 
   // Arcane damage and auras
   "Aether Crackers": {
-    verified: false,
+    verified: true,
     card: {
       oneUse: true,
       arcaneDamage: [{ amount: 1, trigger: "your_attack_action_hits" }],
@@ -271,7 +271,7 @@ export const weaponsAndEquipment: AuthoredAttributes = {
     },
   },
   "Bloodtorn Bodice": {
-    verified: false,
+    verified: true,
     card: {
       oneUse: true,
       notes:
@@ -279,7 +279,7 @@ export const weaponsAndEquipment: AuthoredAttributes = {
     },
   },
   "Beckoning Haunt": {
-    verified: false,
+    verified: true,
     card: {
       oneUse: true,
       notes:
@@ -287,7 +287,7 @@ export const weaponsAndEquipment: AuthoredAttributes = {
     },
   },
   "Runebleed Robe": {
-    verified: false,
+    verified: true,
     card: {
       oneUse: true,
       notes:
@@ -295,7 +295,7 @@ export const weaponsAndEquipment: AuthoredAttributes = {
     },
   },
   "Amethyst Tiara": {
-    verified: false,
+    verified: true,
     card: {
       oneUse: true,
       notes: "Instant: destroy it. Your Runechants get Spellvoid 1 this turn.",
@@ -304,7 +304,7 @@ export const weaponsAndEquipment: AuthoredAttributes = {
 
   // Resources, recursion and other
   "Aether Ironweave": {
-    verified: false,
+    verified: true,
     card: {
       oneUse: true,
       notes:
@@ -312,7 +312,7 @@ export const weaponsAndEquipment: AuthoredAttributes = {
     },
   },
   "Crown of Dichotomy": {
-    verified: false,
+    verified: true,
     card: {
       oneUse: true,
       notes:
@@ -320,7 +320,7 @@ export const weaponsAndEquipment: AuthoredAttributes = {
     },
   },
   "Face Purgatory": {
-    verified: false,
+    verified: true,
     card: {
       disrupts: [
         {
@@ -336,7 +336,7 @@ export const weaponsAndEquipment: AuthoredAttributes = {
     },
   },
   "Vestige of Flagellation": {
-    verified: false,
+    verified: true,
     card: {
       notes:
         "The first time each turn an opponent would gain life, you lose that much instead and create that many Vigor tokens.",
@@ -345,10 +345,10 @@ export const weaponsAndEquipment: AuthoredAttributes = {
 
   // Defensive only (keywords such as Arcane Barrier, Temper and Blade Break are in the dataset)
   "Blackstone Greaves": {
-    verified: false,
+    verified: true,
     card: { notes: "+1 defense if you've dealt arcane damage this turn." },
   },
-  "Dyadic Carapace": { verified: false, card: {} },
-  "Helm of Might and Magic": { verified: false, card: {} },
-  "Helm of the Arknight": { verified: false, card: {} },
+  "Dyadic Carapace": { verified: true, card: {} },
+  "Helm of Might and Magic": { verified: true, card: {} },
+  "Helm of the Arknight": { verified: true, card: {} },
 };
