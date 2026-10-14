@@ -1,6 +1,7 @@
 // Plain-English descriptions of attributes, for review sheets and card pages.
 import type {
   CardAttributes,
+  Disruption,
   Condition,
   GrantedTo,
   Token,
@@ -78,6 +79,43 @@ function effect(text: string, grantedTo: GrantedTo | undefined): string {
     : text;
 }
 
+const DISRUPT_SUBJECT = {
+  opponent: "An opponent",
+  defending_hero: "The defending hero",
+  each_hero: "Each hero (you included)",
+} as const;
+
+const plural = (n: number | string, one: string, many: string) =>
+  n === 1 ? `1 ${one}` : `${n} ${many}`;
+
+/** The disruption as a verb phrase: [third person, base form]. */
+function disruptionPhrase(d: Disruption): [string, string] {
+  const all = d.amount === "all";
+  if (d.action === "discard") {
+    const rest = all ? "their hand" : plural(d.amount, "card", "cards");
+    return [`discards ${rest}`, `discard ${rest}`];
+  }
+  if (d.action === "destroy" || d.from === "auras") {
+    const verb = d.action === "destroy" ? "destroy" : "banish";
+    const rest = all
+      ? "all auras they control"
+      : `${plural(d.amount, "aura", "auras")} they control`;
+    return [
+      `${verb}${verb === "banish" ? "es" : "s"} ${rest}`,
+      `${verb} ${rest}`,
+    ];
+  }
+  const rest =
+    d.from === "deck_top"
+      ? all
+        ? "all cards from their deck"
+        : d.amount === 1
+          ? "the top card of their deck"
+          : `the top ${d.amount} cards of their deck`
+      : `${all ? "all cards" : plural(d.amount, "card", "cards")} from their ${d.from}`;
+  return [`banishes ${rest}`, `banish ${rest}`];
+}
+
 function ifConditions(conditions: Condition[] | undefined): string {
   return conditions?.length
     ? `, if ${conditions.map((c) => CONDITION_TEXT[c]).join(" and ")}`
@@ -124,6 +162,17 @@ export function describeAttributes(attributes: CardAttributes): string[] {
     );
   }
 
+  for (const d of attributes.disrupts ?? []) {
+    const [third, base] = disruptionPhrase(d);
+    const subject = DISRUPT_SUBJECT[d.target];
+    const sentence = d.optional
+      ? `May make ${subject[0]!.toLowerCase()}${subject.slice(1)} ${base}`
+      : `${subject} ${third}`;
+    lines.push(
+      `${sentence} ${TRIGGER_TEXT[d.trigger]}${ifConditions(d.conditions)}.`,
+    );
+  }
+
   if (attributes.playableFromBanish) {
     lines.push(
       `Can be played from your banished zone${ifConditions(attributes.playableFromBanish.conditions)}.`,
@@ -134,6 +183,11 @@ export function describeAttributes(attributes: CardAttributes): string[] {
   }
   if (attributes.rewardsPlayFromBanish) {
     lines.push("Is better when played from your banished zone.");
+  }
+  if (attributes.instantSpeed) {
+    lines.push(
+      `Can be played as an instant${ifConditions(attributes.instantSpeed.conditions)}.`,
+    );
   }
   if (attributes.costReducedPerRunechant)
     lines.push("Costs {r} less for each Runechant you control.");

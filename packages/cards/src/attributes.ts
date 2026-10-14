@@ -60,6 +60,48 @@ const trigger = z.enum(TRIGGERS);
 const conditions = z.array(z.enum(CONDITIONS)).optional();
 const grantedTo = z.enum(GRANTED_TO).optional();
 
+/** Who a disruption effect hits. `each_hero` includes you. */
+export const DISRUPT_TARGETS = [
+  "opponent",
+  "defending_hero",
+  "each_hero",
+] as const;
+export const DISRUPT_ZONES = [
+  "hand",
+  "arsenal",
+  "deck_top",
+  "graveyard",
+  "soul",
+  "auras",
+] as const;
+
+const disruptionCommon = {
+  amount: z.union([amount, z.literal("all")]),
+  target: z.enum(DISRUPT_TARGETS),
+  trigger,
+  conditions,
+  optional: z.boolean().optional(),
+};
+
+/** Effects on opponents' cards (or every hero's). */
+export const disruptionSchema = z.discriminatedUnion("action", [
+  z.strictObject({
+    action: z.literal("banish"),
+    from: z.enum(DISRUPT_ZONES),
+    ...disruptionCommon,
+  }),
+  z.strictObject({
+    action: z.literal("discard"),
+    from: z.literal("hand"),
+    ...disruptionCommon,
+  }),
+  z.strictObject({
+    action: z.literal("destroy"),
+    from: z.literal("auras"),
+    ...disruptionCommon,
+  }),
+]);
+
 export const tokenCreationSchema = z.strictObject({
   token: z.enum(TOKENS),
   amount,
@@ -97,6 +139,11 @@ export const authoredAttributesSchema = z.strictObject({
   playableFromBanish: z.strictObject({ conditions }).optional(),
   arcaneDamage: z.array(arcaneDamageSchema).optional(),
   costReducedPerRunechant: z.boolean().optional(),
+  disrupts: z.array(disruptionSchema).optional(),
+  /** "You may play this as though it were an instant", with its condition. */
+  instantSpeed: z
+    .strictObject({ conditions: z.array(z.enum(CONDITIONS)).min(1) })
+    .optional(),
   /** Conditional go again. Replaces the dataset's "Go again" keyword, which can't tell. */
   goAgain: z
     .strictObject({ conditions: z.array(z.enum(CONDITIONS)).min(1) })
@@ -130,5 +177,6 @@ export type TokenCreation = z.infer<typeof tokenCreationSchema>;
 export type OwnBanish = z.infer<typeof ownBanishSchema>;
 export type ArcaneDamage = z.infer<typeof arcaneDamageSchema>;
 export type SelfBanish = z.infer<typeof selfBanishSchema>;
+export type Disruption = z.infer<typeof disruptionSchema>;
 export type AuthoredCardAttributes = z.infer<typeof authoredAttributesSchema>;
 export type CardAttributes = GeneratedAttributes & AuthoredCardAttributes;
