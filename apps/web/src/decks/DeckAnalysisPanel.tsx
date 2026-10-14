@@ -87,70 +87,125 @@ export function DeckAnalysisPanel(props: {
     });
   }, [entries, data]);
 
-  return (
-    <div className={styles.analysis}>
-      <section aria-label="Pitch" className={styles.pitchMix}>
-        <h2>Pitch</h2>
-        {PITCHES.map((p) => (
-          <PitchRow
-            key={p}
-            pitch={p}
-            have={analysis.pitch[p]}
-            target={pitchTargets[p]}
-            onTarget={(target) => {
-              const next = { ...pitchTargets };
-              if (target === undefined) delete next[p];
-              else next[p] = target;
-              onTargetsChange(next);
-            }}
-          />
-        ))}
-        <p className={styles.muted}>
-          Cost curve:{" "}
-          {Object.entries(analysis.costCurve)
-            .map(([cost, n]) => `${cost}: ${n}`)
-            .join(" · ")}
-        </p>
-      </section>
+  const o = analysis.overview;
+  const percent = (n: number) =>
+    o.cards === 0 ? "0%" : `${Math.round((n / o.cards) * 100)}%`;
+  const stats: { label: string; value: string; detail: string }[] = [
+    {
+      label: "Average cost",
+      value: o.averageCost.toFixed(2),
+      detail: "Per card with a cost",
+    },
+    {
+      label: "Average pitch",
+      value: o.averagePitch.toFixed(2),
+      detail: "Per card with a pitch",
+    },
+    {
+      label: "Resource surplus",
+      value: `${o.resourceSurplus >= 0 ? "+" : ""}${o.resourceSurplus.toFixed(2)}`,
+      detail: "Pitch minus cost, per card",
+    },
+    {
+      label: "Go again",
+      value: percent(o.goAgain),
+      detail: `${o.goAgain} cards`,
+    },
+    {
+      label: "Attacks",
+      value: percent(o.attacks),
+      detail: `${o.attacks} cards`,
+    },
+  ];
 
-      {data && data.dimensions.length > 0 && (
-        <section className={styles.dimensions}>
-          <h2>Dimensions</h2>
-          <table aria-label="Dimensions">
-            <thead>
-              <tr>
-                <th scope="col">Dimension</th>
-                <th scope="col">Cards</th>
-                <th scope="col">Red</th>
-                <th scope="col">Yellow</th>
-                <th scope="col">Blue</th>
-                <th scope="col">Average</th>
-                <th scope="col">Always available</th>
-              </tr>
-            </thead>
-            <tbody>
-              {analysis.dimensions.map((d) => (
-                <tr key={d.key}>
-                  <th scope="row">{d.label}</th>
-                  <td>{d.cards}</td>
-                  <td>{d.byPitch[1]}</td>
-                  <td>{d.byPitch[2]}</td>
-                  <td>{d.byPitch[3]}</td>
-                  <td>{d.average}</td>
-                  <td>{d.alwaysAvailable}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <p className={styles.muted}>
-            Cards scoring above 0, by pitch. Weapons and equipment are counted
-            as always available.
-            {analysis.unscored > 0 &&
-              ` ${analysis.unscored} deck ${analysis.unscored === 1 ? "card has" : "cards have"} no scores yet.`}
-          </p>
+  return (
+    <>
+      <dl className={styles.overview}>
+        {stats.map((s) => (
+          <div key={s.label}>
+            <dt>{s.label}</dt>
+            <dd>
+              <strong>{s.value}</strong>
+              <span className={styles.muted}>{s.detail}</span>
+            </dd>
+          </div>
+        ))}
+      </dl>
+      <div className={styles.analysis}>
+        <section aria-label="Pitch" className={styles.pitchMix}>
+          <h2>Pitch</h2>
+          {PITCHES.map((p) => (
+            <PitchRow
+              key={p}
+              pitch={p}
+              have={analysis.pitch[p]}
+              target={pitchTargets[p]}
+              onTarget={(target) => {
+                const next = { ...pitchTargets };
+                if (target === undefined) delete next[p];
+                else next[p] = target;
+                onTargetsChange(next);
+              }}
+            />
+          ))}
+          <h2 className={styles.subheading}>Cost</h2>
+          {Object.entries(analysis.costCurve).map(([cost, n]) => (
+            <div key={cost} className={styles.curveRow}>
+              <span>{cost}</span>
+              <span className={styles.bar} aria-hidden="true">
+                <span
+                  style={{
+                    width: o.cards ? `${(n / o.cards) * 100}%` : 0,
+                    background: "var(--accent)",
+                  }}
+                />
+              </span>
+              <span className={styles.curveCount}>
+                {n} <span className={styles.muted}>{percent(n)}</span>
+              </span>
+            </div>
+          ))}
         </section>
-      )}
-    </div>
+
+        {data && data.dimensions.length > 0 && (
+          <section className={styles.dimensions}>
+            <h2>Dimensions</h2>
+            <table aria-label="Dimensions">
+              <thead>
+                <tr>
+                  <th scope="col">Dimension</th>
+                  <th scope="col">Cards</th>
+                  <th scope="col">Red</th>
+                  <th scope="col">Yellow</th>
+                  <th scope="col">Blue</th>
+                  <th scope="col">Average</th>
+                  <th scope="col">Always available</th>
+                </tr>
+              </thead>
+              <tbody>
+                {analysis.dimensions.map((d) => (
+                  <tr key={d.key}>
+                    <th scope="row">{d.label}</th>
+                    <td>{d.cards}</td>
+                    <td>{d.byPitch[1]}</td>
+                    <td>{d.byPitch[2]}</td>
+                    <td>{d.byPitch[3]}</td>
+                    <td>{d.average}</td>
+                    <td>{d.alwaysAvailable}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className={styles.muted}>
+              Cards scoring above 0, by pitch. Weapons and equipment are counted
+              as always available.
+              {analysis.unscored > 0 &&
+                ` ${analysis.unscored} deck ${analysis.unscored === 1 ? "card has" : "cards have"} no scores yet.`}
+            </p>
+          </section>
+        )}
+      </div>
+    </>
   );
 }
 
