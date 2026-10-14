@@ -65,6 +65,7 @@ function generatedAttributes(
   specialization: string | null,
   type: string,
   groups: GeneratedAttributes["groups"],
+  text: string,
 ): GeneratedAttributes {
   const hasBloodDebt = keywords.includes("Blood Debt");
   return {
@@ -76,6 +77,8 @@ function generatedAttributes(
     isGateTarget:
       hasBloodDebt && (type === "action" || type === "attack_action"),
     groups,
+    // Weapon attacks fire Runechants; some weapons have no Attack ability.
+    canAttack: type === "weapon" && /:\s*Attack\b/.test(text),
     specialization,
   };
 }
@@ -167,6 +170,7 @@ export function toImportCards(
             classes,
             keywords,
           }),
+          first.functional_text_plain ?? "",
         ),
         ...(entry?.card ? validated(name, "card", entry.card) : {}),
         // Authored conditional go again means the keyword isn't natural go again.

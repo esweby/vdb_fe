@@ -22,6 +22,7 @@ const TRIGGER_TEXT: Record<Trigger, string> = {
   on_destroyed: "when it's destroyed",
   on_usurped: "when it's usurped",
   would_go_to_graveyard: "instead of going to your graveyard",
+  would_be_dealt_damage: "when you would be dealt damage",
   start_of_turn: "at the start of your turn",
   start_of_action_phase: "at the start of your action phase",
   combat_chain_closes: "when the combat chain closes",
@@ -55,6 +56,8 @@ const CONDITION_TEXT: Record<Condition, string> = {
   paid_optional_additional_cost: "you paid its optional additional cost",
   defending_hero_has_soul_cards: "the defending hero has cards in their soul",
   usurped_this_turn: "you've usurped this turn",
+  played_card_from_banish_this_turn:
+    "you've played a card from your banished zone this turn",
 };
 
 const TOKEN_TEXT: Record<Token, [one: string, many: string]> = {
@@ -79,6 +82,7 @@ const GRANTED_TEXT: Record<GrantedTo, string> = {
     "A card of this card's colour in your banished zone gets",
   next_action_card_matching_pitch:
     "Your next action card of this card's colour this turn gets",
+  target_attack_action: "Target attack action card gets",
 };
 
 /** "Creates 1 Runechant…" or, when granted, "Your next … gets: creates 1 Runechant…". */
@@ -91,6 +95,7 @@ function effect(text: string, grantedTo: GrantedTo | undefined): string {
 const DISRUPT_SUBJECT = {
   opponent: "An opponent",
   defending_hero: "The defending hero",
+  attacking_hero: "The attacking hero",
   each_hero: "Each hero (you included)",
 } as const;
 
@@ -167,6 +172,10 @@ export function describeAttributes(attributes: CardAttributes): string[] {
     lines.push("Is a Runechant aura (sinchant).");
   }
 
+  if (attributes.canAttack) {
+    lines.push("Weapon attack: triggers your Runechants.");
+  }
+
   for (const b of attributes.banishesOwn ?? []) {
     const verb = b.optional ? "May banish" : "Banishes";
     lines.push(
@@ -209,6 +218,22 @@ export function describeAttributes(attributes: CardAttributes): string[] {
       : `${subject} ${third}`;
     lines.push(
       `${sentence} ${TRIGGER_TEXT[d.trigger]}${ifConditions(d.conditions)}.`,
+    );
+  }
+
+  for (const f of attributes.turnsBanishedFaceDown ?? []) {
+    const kind = { blood_debt: "blood debt ", shadow: "Shadow ", any: "" }[
+      f.which
+    ];
+    const what =
+      f.amount === "all"
+        ? `all ${kind}cards`
+        : f.amount === 1
+          ? `1 ${kind}card`
+          : `${f.amount} ${kind}cards`;
+    const verb = f.optional ? "May turn" : "Turns";
+    lines.push(
+      `${verb} ${what} in your banished zone face-down ${TRIGGER_TEXT[f.trigger]}${ifConditions(f.conditions)}.`,
     );
   }
 
@@ -269,6 +294,8 @@ export function describeAttributes(attributes: CardAttributes): string[] {
     lines.push(`${GRANTED_TEXT[attributes.grantsGoAgain]} go again.`);
   }
   if (attributes.hasBloodDebt) lines.push("Blood debt.");
+  if (attributes.oneUse)
+    lines.push("One use: destroyed or banished when used.");
   for (const sup of attributes.supports ?? []) {
     const what =
       "group" in sup.target ? GROUP_PLURAL[sup.target.group] : sup.target.card;
