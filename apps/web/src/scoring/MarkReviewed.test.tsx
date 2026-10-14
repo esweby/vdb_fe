@@ -95,6 +95,46 @@ describe("Mark reviewed", () => {
     );
   });
 
+  it("highlights a blank floor and ceiling on a card with conditions, until confirmed as the same as overall", async () => {
+    const fake = fakeScoreRepository([
+      { variantId: null, side: null, dimensionId: 3, score: 70 },
+    ]);
+    await renderApp({
+      path: "/cards/card-become-the-shadow-lord",
+      auth: signedIn("s@test.local"),
+      scores: fake.repository,
+    });
+    const user = userEvent.setup();
+    await user.click(
+      await screen.findByRole("button", { name: "Mark reviewed" }),
+    );
+    const dialog = within(
+      screen.getByRole("dialog", { name: "Mark reviewed" }),
+    );
+    const flagged = () =>
+      dialog
+        .getAllByText("70 (same as overall)")
+        .filter((cell) => cell.getAttribute("data-attention") === "true");
+    // Floor and ceiling, both sides
+    expect(flagged()).toHaveLength(4);
+    expect(
+      dialog.getByText(
+        "Floor and ceiling are blank, so they'll count as the same as overall. This card has conditions: check that's right.",
+      ),
+    ).toBeInTheDocument();
+    await user.click(
+      dialog.getByRole("button", { name: "Yes, same as overall" }),
+    );
+    expect(flagged()).toHaveLength(0);
+    expect(
+      dialog.queryByRole("button", { name: "Yes, same as overall" }),
+    ).not.toBeInTheDocument();
+    // Confirming the review isn't blocked either way
+    expect(
+      dialog.getByRole("button", { name: "Confirm review" }),
+    ).toBeEnabled();
+  });
+
   it("shows an existing review", async () => {
     const fake = fakeScoreRepository([], {
       reviewedAt: "2026-10-14T10:00:00Z",
