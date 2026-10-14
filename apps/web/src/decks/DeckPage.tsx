@@ -158,6 +158,8 @@ export function DeckPage() {
     void navigate({
       to: ".",
       replace: true,
+      // An in-page change (filters, Load more, settings): keep the scroll position.
+      resetScroll: false,
       search: {
         ...(next.tab === "stats" ? { tab: "stats" as const } : {}),
         ...(next.view === "list" ? { view: "list" as const } : {}),

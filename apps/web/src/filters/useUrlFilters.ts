@@ -6,9 +6,14 @@ import { fromSearch, toSearch, type FilterSearch } from "./urlState.ts";
 export interface ListSearch extends FilterSearch {
   q?: string;
   sort?: CardSort;
-  /** Card tiles by default; "list" for the table. */
-  view?: "list";
+  /** Small card tiles by default. */
+  view?: CardView;
+  /** 1-based; page 1 is left out of the URL. */
+  page?: number;
 }
+
+export type CardView = "small" | "large" | "list";
+export const CARD_VIEWS: CardView[] = ["small", "large", "list"];
 
 /** Validates list-page search params from the URL. */
 export function validateListSearch(
@@ -25,7 +30,11 @@ export function validateListSearch(
     ),
     inc: strings(search.inc)?.length ? strings(search.inc) : undefined,
     exc: strings(search.exc)?.length ? strings(search.exc) : undefined,
-    view: search.view === "list" ? "list" : undefined,
+    view: CARD_VIEWS.find((v) => v !== "small" && v === search.view),
+    page:
+      Number.isInteger(Number(search.page)) && Number(search.page) > 1
+        ? Number(search.page)
+        : undefined,
   };
 }
 
@@ -37,21 +46,27 @@ export function useUrlFilters(search: ListSearch) {
       state: FilterState;
       q: string;
       sort: CardSort;
-      view: "tiles" | "list";
+      view: CardView;
+      page: number;
     }>,
   ) => {
-    const view = patch.view ?? search.view ?? "tiles";
+    const view = patch.view ?? search.view ?? "small";
+    // Anything but a page change goes back to page 1.
+    const page = patch.page ?? 1;
     const state = patch.state ?? fromSearch(search);
     const q = patch.q ?? search.q ?? "";
     const sort = patch.sort ?? search.sort ?? "name";
     void navigate({
       to: ".",
       replace: true,
+      // An in-page change (filters, Load more, settings): keep the scroll position.
+      resetScroll: false,
       search: {
         ...(q ? { q } : {}),
         ...(sort !== "name" ? { sort } : {}),
         ...toSearch(state),
-        ...(view === "list" ? { view: "list" as const } : {}),
+        ...(view !== "small" ? { view } : {}),
+        ...(page > 1 ? { page } : {}),
       },
     });
   };
@@ -62,7 +77,9 @@ export function useUrlFilters(search: ListSearch) {
     setState: (state: FilterState) => update({ state }),
     setQ: (q: string) => update({ q }),
     setSort: (sort: CardSort) => update({ sort }),
-    view: search.view ?? ("tiles" as const),
-    setView: (view: "tiles" | "list") => update({ view }),
+    view: search.view ?? ("small" as CardView),
+    setView: (view: CardView) => update({ view }),
+    page: search.page ?? 1,
+    setPage: (page: number) => update({ page }),
   };
 }

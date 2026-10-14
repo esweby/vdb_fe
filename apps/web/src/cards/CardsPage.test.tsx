@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { fakeAuthService } from "../test/fakeAuthService.ts";
 import { renderApp } from "../test/renderApp.tsx";
+import { fakeCardRepository, sampleCards } from "../test/fakeCardRepository.ts";
 
 const table = () => screen.getByRole("table", { name: /cards/i });
 const rowNames = () =>
@@ -116,7 +117,7 @@ describe("cards page", () => {
     expect(
       screen.getByRole("article", { name: "Hocus Pocus (blue)" }),
     ).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "List view" }));
+    await user.click(screen.getByRole("button", { name: "List" }));
     await waitFor(() =>
       expect(router.state.location.search).toMatchObject({ view: "list" }),
     );
@@ -163,5 +164,73 @@ describe("cards page", () => {
       .selectOptions(screen.getByLabelText("Sort"), "power");
     await waitFor(() => expect(rowNames()[0]).toBe("Hocus Pocus"));
     expect(router.state.location.search).toMatchObject({ sort: "power" });
+  });
+
+  it("offers small and large cards, and a list", async () => {
+    const { router } = await renderApp({
+      path: "/cards",
+      auth: fakeAuthService().service,
+    });
+    await screen.findByRole("article", { name: "Hocus Pocus (red)" });
+    const views = within(screen.getByRole("group", { name: "View" }));
+    expect(views.getByRole("button", { name: "Small cards" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await userEvent
+      .setup()
+      .click(views.getByRole("button", { name: "Large cards" }));
+    await waitFor(() =>
+      expect(router.state.location.search).toMatchObject({ view: "large" }),
+    );
+    expect(screen.getByRole("list", { name: "Cards" })).toHaveAttribute(
+      "data-size",
+      "large",
+    );
+    expect(
+      views.queryByRole("button", { name: "Larger cards" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("loads more results under the ones shown, and starts again when filters change", async () => {
+    // 70 single-pitch cards: 60 small tiles in the first batch
+    const many = Array.from({ length: 70 }, (_, i) => ({
+      ...sampleCards[1]!,
+      id: `card-${i}`,
+      name: `Card ${String(i).padStart(2, "0")}`,
+      variants: [{ ...sampleCards[1]!.variants[0]!, id: `v-${i}` }],
+    }));
+    const { router } = await renderApp({
+      path: "/cards",
+      auth: fakeAuthService().service,
+      cards: fakeCardRepository(many),
+    });
+    await screen.findByRole("article", { name: "Card 00 (blue)" });
+    expect(screen.getAllByRole("article")).toHaveLength(60);
+    expect(screen.getByText(/^Showing 60 of 70 cards/)).toBeInTheDocument();
+    const user = userEvent.setup();
+    const more = screen.getByRole("button", { name: /^Load more/ });
+    expect(more).toHaveTextContent("10 left");
+    await user.click(more);
+    // The first batch stays; the rest is added under it
+    expect(screen.getAllByRole("article")).toHaveLength(70);
+    expect(
+      screen.getByRole("article", { name: "Card 00 (blue)" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("article", { name: "Card 69 (blue)" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^Load more/ }),
+    ).not.toBeInTheDocument();
+    expect(router.state.location.search).toMatchObject({ page: 2 });
+    expect(
+      screen.queryByRole("navigation", { name: "Pages" }),
+    ).not.toBeInTheDocument();
+    await user.type(screen.getByLabelText("Search"), "Card 0");
+    await waitFor(() =>
+      expect(router.state.location.search.page).toBeUndefined(),
+    );
+    expect(screen.getAllByRole("article")).toHaveLength(10);
   });
 });
