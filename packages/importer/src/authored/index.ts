@@ -3,10 +3,12 @@
 import type { AuthoredAttributes } from "../map.ts";
 import { examples } from "./00-examples.ts";
 import { runechantCreators } from "./01-runechant-creators.ts";
+import { gateCreators } from "./02-gate-creators.ts";
 
 export const batches: Record<string, AuthoredAttributes> = {
   "00-examples": examples,
   "01-runechant-creators": runechantCreators,
+  "02-gate-creators": gateCreators,
 };
 
 export function allAuthored(): AuthoredAttributes {

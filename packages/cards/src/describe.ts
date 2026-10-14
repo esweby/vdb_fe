@@ -60,6 +60,7 @@ const GRANTED_TEXT: Record<GrantedTo, string> = {
   next_attack_action: "Your next attack action card this turn gets",
   next_runeblade_attack_action:
     "Your next Runeblade attack action card this turn gets",
+  next_shadow_attack: "Your next Shadow attack this turn gets",
 };
 
 /** "Creates 1 Runechant…" or, when granted, "Your next … gets: creates 1 Runechant…". */
