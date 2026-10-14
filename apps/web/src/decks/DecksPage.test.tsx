@@ -134,6 +134,30 @@ describe("deck page", () => {
     ).toBeInTheDocument();
   });
 
+  it("caps each card at the copy limit", async () => {
+    const fake = withDeck([
+      { variantId: "hp1", quantity: 3, sideboard: false },
+    ]);
+    await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      decks: fake.repository,
+    });
+    expect(
+      await region("Deck").findByRole("button", {
+        name: "One more Hocus Pocus (red)",
+      }),
+    ).toBeDisabled();
+    await userEvent.setup().type(screen.getByLabelText("Find cards"), "hocus");
+    expect(
+      screen.getByRole("button", { name: "Add Hocus Pocus (red)" }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Add Hocus Pocus (blue)" }),
+    ).toBeEnabled();
+    expect(fake.saved).toEqual([]);
+  });
+
   it("says when a deck doesn't exist", async () => {
     await renderApp({
       path: "/decks/nope",

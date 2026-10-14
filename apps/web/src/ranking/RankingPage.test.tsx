@@ -225,6 +225,26 @@ describe("adding ranked cards to a deck", () => {
     expect(ranked().getByText("2 in deck")).toBeInTheDocument();
   });
 
+  it("can't add more than the copy limit", async () => {
+    await renderApp({
+      path: "/ranking?deck=deck-1",
+      auth: signedIn(),
+      scores: scores(),
+      decks: decks([{ variantId: "hp3", quantity: 3, sideboard: false }])
+        .repository,
+    });
+    expect(
+      await screen.findByRole("button", {
+        name: "Add Hocus Pocus (pitch 3) to Gate tempo",
+      }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", {
+        name: "Add Hocus Pocus (pitch 1) to Gate tempo",
+      }),
+    ).toBeEnabled();
+  });
+
   it("isn't offered to signed-out visitors", async () => {
     await renderApp({
       path: "/ranking",
