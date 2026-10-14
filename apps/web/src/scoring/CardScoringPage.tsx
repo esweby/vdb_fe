@@ -1,4 +1,8 @@
-import { describeAttributes, relevantDimensions } from "@vdb/cards";
+import {
+  describeAttributes,
+  hasConditions,
+  relevantDimensions,
+} from "@vdb/cards";
 import { getRouteApi, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { selectCanScore } from "../auth/authSlice.ts";
@@ -240,6 +244,10 @@ export function CardScoringPage() {
               rows={rows}
               dimensions={shownDimensions}
               variants={card.variants}
+              hasConditions={hasConditions(
+                card.attributes,
+                card.variants.map((v) => v.attributes),
+              )}
               busy={busy}
             />
             {(hidden > 0 || showAllDimensions) && (
