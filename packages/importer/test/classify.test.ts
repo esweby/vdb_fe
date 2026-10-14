@@ -41,6 +41,7 @@ describe("isViseraiLegal", () => {
       "Abyssal Bite",
       "Arcane Cussing",
       "Arcanite Skullcap",
+      "Arknight Shard",
       "Become the Shadow Lord",
       "Deathly Delight",
       "Fate Foreseen",
@@ -57,6 +58,7 @@ describe("isViseraiLegal", () => {
     ["other talents", "Angelic Attendant"],
     ["banned cards", "Belittle"],
     ["cards not legal in Classic Constructed", "Viserai"],
+    ["other heroes' specializations", "Doomsday"],
   ])("excludes %s", (_label, name) => {
     expect(byName(name).length).toBeGreaterThan(0);
     expect(byName(name).some(isViseraiLegal)).toBe(false);

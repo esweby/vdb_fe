@@ -4,9 +4,11 @@
   "type": "module",
   "scripts": {
     "import": "node src/cli.ts",
-    "test:integration": "vitest run --config vitest.integration.config.ts"
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "review-sheet": "node src/review-cli.ts"
   },
   "dependencies": {
-    "postgres": "^3.4.9"
+    "postgres": "^3.4.9",
+    "@vdb/cards": "*"
   }
 }

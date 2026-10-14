@@ -122,6 +122,27 @@
     "cc_banned": false
   },
   {
+    "unique_id": "pkMGCRh9fDT98dRgnQF8W",
+    "name": "Arknight Shard",
+    "pitch": "3",
+    "cost": "",
+    "power": "",
+    "defense": "",
+    "types": [
+      "Runeblade",
+      "Resource",
+      "Gem"
+    ],
+    "card_keywords": [
+      "Legendary",
+      "Viserai Specialization"
+    ],
+    "functional_text_plain": "Legendary Viserai Specialization\nWhen this is pitched, create a Runechant token.",
+    "type_text": "Runeblade Resource - Gem",
+    "cc_legal": true,
+    "cc_banned": false
+  },
+  {
     "unique_id": "N6bcFGQTBQ7pcWRkWTz8m",
     "name": "Battlefield Breaker",
     "pitch": "1",
@@ -327,6 +348,26 @@
     ],
     "functional_text_plain": "Rune Gate\nWhen the combat chain closes, gain {h} equal to the number of heroes who have lost {h} this turn.\nBlood Debt",
     "type_text": "Shadow Runeblade Action - Attack",
+    "cc_legal": true,
+    "cc_banned": false
+  },
+  {
+    "unique_id": "w7HdMtLpHDBRNJcKHWHpc",
+    "name": "Doomsday",
+    "pitch": "3",
+    "cost": "0",
+    "power": "",
+    "defense": "",
+    "types": [
+      "Shadow",
+      "Instant"
+    ],
+    "card_keywords": [
+      "Legendary",
+      "Levia Specialization"
+    ],
+    "functional_text_plain": "Legendary Levia Specialization\nPlay this only if there are 6 or more cards with blood debt in your banished zone.\nCreate a Blasmophet, the Soul Harvester token.",
+    "type_text": "Shadow Instant",
     "cc_legal": true,
     "cc_banned": false
   },
