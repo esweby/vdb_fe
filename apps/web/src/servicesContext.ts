@@ -2,12 +2,14 @@
 import { createContext, useContext } from "react";
 import type { AuthService } from "./auth/authService.ts";
 import type { CardRepository } from "./cards/cardRepository.ts";
+import type { DeckRepository } from "./decks/deckRepository.ts";
 import type { ScoreRepository } from "./scoring/scoreRepository.ts";
 
 export interface Services {
   auth: AuthService;
   cards: CardRepository;
   scores: ScoreRepository;
+  decks: DeckRepository;
 }
 
 export const ServicesContext = createContext<Services | null>(null);
