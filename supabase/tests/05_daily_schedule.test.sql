@@ -23,11 +23,11 @@ select throws_ok(
 );
 reset role;
 
--- Without the vault secrets (project_url, service_role_key) it does nothing rather than fail.
+-- Without the vault secret project_url it does nothing rather than fail.
 delete from vault.secrets where name in ('project_url', 'service_role_key');
 select lives_ok(
   $$select public.invoke_community_scores_job()$$,
-  'it runs without the vault secrets'
+  'it runs without project_url'
 );
 select is(
   public.invoke_community_scores_job(),
