@@ -51,11 +51,11 @@ These three tasks go first because any of them could change the plan.
 
 ### M1: Schema and security (3–4 days)
 
-- [ ] Migrations for every phase one table in the README.
-- [ ] Constraints: `UNIQUE NULLS NOT DISTINCT` on `card_scores` and `community_scores`; `variant` belongs to `card`; the `synergy_feedback` CHECK; loadout quantities ≤ pool quantities.
-- [ ] Row level security for each role: user, scorer, curator, admin. `rating_weight` is readable by admins only.
-- [ ] Seed the draft score dimensions.
-- [ ] Tests for row level security (e.g. pgTAP, or a script that signs in as each role).
+- [x] Migrations for every phase one table in the README. Synergy and scenario tables (and the `synergy_feedback` CHECK) move to phase two with their features.
+- [x] Constraints: `UNIQUE NULLS NOT DISTINCT` on `card_scores` and `community_scores`; a variant must belong to its card; loadouts always a subset of the pool (default loadout created, clamped, cleaned up by triggers).
+- [x] Row level security and column privileges for each role. `rating_weight` lives in its own `rater_weights` table so it can be admin-only.
+- [x] Seed the draft score dimensions and scoring settings (`app_settings`).
+- [x] pgTAP tests (65) for schema, constraints and row level security, run in CI as `db-test`.
 
 **Done when:** migrations apply cleanly to a fresh local database, and the row level security tests pass for every role.
 
