@@ -26,7 +26,7 @@ This page defines what we record about each card. Every hand-authored entry has 
 | `costReducedPerRunechant` | "Costs {r} less for each Runechant you control." | Rune Flash |
 | `notes` | Free text for the reviewer: doubts, or things the vocabulary can't express yet. | |
 
-**When an effect happens (`trigger`):** `on_play`, `on_attack`, `on_hit`, `on_defend`, `on_pitch`, `on_banished`, `on_leave_arena`, `on_destroyed`, `start_of_turn`, `start_of_action_phase`, `combat_chain_closes`, `activated` (an instant ability on the card), `your_attack_action_played` (when you play an attack action card), `your_attack_action_hits` (when an attack action card you control hits).
+**When an effect happens (`trigger`):** `on_play`, `on_attack`, `on_hit`, `on_defend`, `on_pitch`, `on_banished`, `on_leave_arena`, `on_destroyed`, `on_usurped`, `start_of_turn`, `start_of_action_phase`, `combat_chain_closes`, `activated` (an instant ability on the card), `your_attack_action_played` (when you play an attack action card), `your_attack_action_hits` (when an attack action card you control hits).
 
 **What has to be true (`conditions`):**
 
@@ -71,7 +71,7 @@ Seen while reading the cards. Each gets added in a small, tested change when its
 - Gate-specific effects beyond creating them (Planar Chaos)
 - Conditional go again: the dataset lists "Go again" as a keyword even when it's conditional (Embrace Ursur, Douse in Runeblood, Meat and Greet), so `hasGoAgain` can be too generous. Flagged in notes for now.
 
-Added for batch 1: `your_attack_action_played`, `your_attack_action_hits`, `played_attack_action_this_turn`, `grantedTo`.
+Added for batch 1: `your_attack_action_played`, `your_attack_action_hits`, `played_attack_action_this_turn`, `grantedTo`, `on_usurped` (Runechant of Lust, from review).
 
 ## Review workflow
 

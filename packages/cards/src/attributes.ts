@@ -15,6 +15,7 @@ export const TRIGGERS = [
   "on_banished",
   "on_leave_arena",
   "on_destroyed",
+  "on_usurped",
   "start_of_turn",
   "start_of_action_phase",
   "combat_chain_closes",

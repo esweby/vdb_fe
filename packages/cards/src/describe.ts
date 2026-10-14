@@ -10,6 +10,7 @@ const TRIGGER_TEXT: Record<Trigger, string> = {
   on_banished: "when it's banished",
   on_leave_arena: "when it leaves the arena",
   on_destroyed: "when it's destroyed",
+  on_usurped: "when it's usurped",
   start_of_turn: "at the start of your turn",
   start_of_action_phase: "at the start of your action phase",
   combat_chain_closes: "when the combat chain closes",

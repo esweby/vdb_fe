@@ -447,11 +447,13 @@ export const runechantCreators: AuthoredAttributes = {
     },
   },
   "Runechant of Lust": {
-    verified: false,
+    verified: true,
     card: {
-      tokens: [{ token: "runechant", amount: 1, trigger: "on_destroyed" }],
-      notes:
-        "Counts as a Runechant itself. When usurped, create another Runechant.",
+      tokens: [
+        { token: "runechant", amount: 1, trigger: "on_usurped" },
+        { token: "runechant", amount: 1, trigger: "on_destroyed" },
+      ],
+      notes: "Counts as a Runechant itself.",
     },
   },
   "Runechant of Pride": {
