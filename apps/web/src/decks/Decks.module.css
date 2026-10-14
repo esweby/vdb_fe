@@ -1,0 +1,515 @@
+.muted {
+  color: var(--muted);
+  font-weight: normal;
+}
+
+.create {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+.deckList {
+  padding-left: 1.2rem;
+}
+
+.problems {
+  color: var(--danger, #b3261e);
+  margin: 0 0 1rem;
+  padding-left: 1.2rem;
+}
+
+.editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 17rem;
+  gap: 3rem;
+  align-items: start;
+}
+@media (max-width: 800px) {
+  .editor {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .finder {
+    order: -1;
+  }
+}
+
+.section h2 {
+  font-size: 1.1rem;
+  margin: 1.25rem 0 0.4rem;
+}
+.rows,
+.results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.name {
+  flex: 1;
+}
+
+.pip {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  flex: none;
+  border: 1px solid var(--border);
+}
+.pitch1 {
+  --pitch: #d63c35;
+}
+.pitch2 {
+  --pitch: #e6b422;
+}
+.pitch3 {
+  --pitch: #3b7dd8;
+}
+.pip.pitch1,
+.pip.pitch2,
+.pip.pitch3 {
+  background: var(--pitch);
+  border-color: var(--pitch);
+}
+
+.quantity {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.quantity button,
+.add {
+  font: inherit;
+  min-width: 1.8rem;
+  height: 1.8rem;
+  border: 1px solid var(--border);
+  border-radius: 0.3rem;
+  background: none;
+  color: var(--fg);
+  cursor: pointer;
+}
+.quantity output {
+  min-width: 1.2ch;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.sideboard {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.85em;
+  color: var(--muted);
+}
+
+.finder {
+  position: sticky;
+  top: 1rem;
+}
+.results li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.adds {
+  display: inline-flex;
+  gap: 0.3rem;
+}
+.add {
+  padding: 0 0.45rem;
+  font-size: 0.85em;
+}
+.add.pitch1,
+.add.pitch2,
+.add.pitch3 {
+  border-color: var(--pitch);
+}
+.quantity button:focus-visible,
+.add:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.analysis {
+  display: grid;
+  grid-template-columns: minmax(16rem, 22rem) minmax(0, 1fr);
+  gap: 3rem;
+  align-items: start;
+  margin: 1rem 0 0.5rem;
+  padding: 1rem 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+@media (max-width: 800px) {
+  .analysis {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+  }
+}
+.analysis h2 {
+  font-size: 1.1rem;
+  margin: 0 0 0.5rem;
+}
+.pitchRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.2rem 0;
+}
+.pitchText {
+  min-width: 6.5rem;
+  font-variant-numeric: tabular-nums;
+}
+.bar {
+  flex: 1;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+.bar > span {
+  display: block;
+  height: 100%;
+  background: var(--pitch);
+}
+.target input {
+  font: inherit;
+  width: 4.5rem;
+  padding: 0.15rem 0.35rem;
+  border: 1px solid var(--border);
+  border-radius: 0.3rem;
+  background: none;
+  color: var(--fg);
+}
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.dimensions {
+  overflow-x: auto;
+}
+.dimensions table {
+  border-collapse: collapse;
+  width: 100%;
+  font-variant-numeric: tabular-nums;
+}
+.dimensions th,
+.dimensions td {
+  padding: 0.25rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+  text-align: right;
+}
+.dimensions th:first-child {
+  text-align: left;
+}
+.dimensions thead th {
+  font-size: 0.85em;
+  color: var(--muted);
+  font-weight: 600;
+}
+.quantity button:disabled,
+.add:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Deck page layout (header, tabs, columns) */
+.deckHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+  margin: 0.5rem 0 0.75rem;
+}
+.deckHeader h1 {
+  margin: 0 0 0.2rem;
+}
+.meta {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9em;
+}
+.pitchBar {
+  width: min(100%, 18rem);
+}
+.pitchBarTrack {
+  display: flex;
+  height: 0.6rem;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--border);
+}
+.pitchBarTrack > span {
+  background: var(--pitch);
+}
+.pitchBarEmpty {
+  flex: 1;
+}
+.pitchBarCounts {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.3rem;
+  font-size: 0.85em;
+  font-variant-numeric: tabular-nums;
+}
+.pitchBarCounts > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 1px solid var(--border);
+  margin: 1rem 0 1.25rem;
+}
+.tab {
+  font: inherit;
+  padding: 0.45rem 1rem;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 0.4rem 0.4rem 0 0;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  margin-bottom: -1px;
+}
+.tab[aria-selected="true"] {
+  color: var(--fg);
+  background: var(--bg, transparent);
+  border-color: var(--border);
+  font-weight: 600;
+}
+.tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2rem;
+  align-items: start;
+}
+@media (max-width: 1100px) {
+  .columns {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+@media (max-width: 640px) {
+  .columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.columns .section h2,
+.gearColumn .section h2 {
+  margin-top: 0;
+}
+.gearColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.copies {
+  min-width: 2ch;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+.pitchPip {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 0.7em;
+  font-weight: 700;
+  color: #fff;
+  background: var(--pitch, transparent);
+}
+/* Collapsed until the row is hovered or focused, so names get the room; still
+   reachable by keyboard (focusing a control expands it). Always shown on touch. */
+.controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+}
+.row:hover .controls,
+.row:focus-within .controls {
+  max-width: 10rem;
+  opacity: 1;
+  overflow: visible;
+}
+@media (hover: none) {
+  .controls {
+    max-width: none;
+    opacity: 1;
+    overflow: visible;
+  }
+}
+.controls button {
+  font: inherit;
+  min-width: 1.6rem;
+  height: 1.6rem;
+  border: 1px solid var(--border);
+  border-radius: 0.3rem;
+  background: none;
+  color: var(--fg);
+  cursor: pointer;
+}
+.controls button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.controls button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.row {
+  border-bottom: none;
+  padding: 0.15rem 0.25rem;
+  border-radius: 0.3rem;
+}
+.row:hover {
+  background: color-mix(in srgb, var(--fg) 5%, transparent);
+}
+
+/* Stats tab */
+.overview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0.75rem;
+  margin: 0 0 1.5rem;
+}
+.overview > div {
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.6rem 0.8rem;
+}
+.overview dt {
+  font-size: 0.85em;
+  color: var(--muted);
+}
+.overview dd {
+  margin: 0.2rem 0 0;
+  display: flex;
+  flex-direction: column;
+}
+.overview strong {
+  font-size: 1.4rem;
+  font-variant-numeric: tabular-nums;
+}
+.overview dd .muted {
+  font-size: 0.8em;
+}
+.subheading {
+  margin-top: 1rem !important;
+}
+.curveRow {
+  display: grid;
+  grid-template-columns: 2rem 1fr 5rem;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.15rem 0;
+  font-variant-numeric: tabular-nums;
+}
+.curveCount {
+  text-align: right;
+}
+
+/* Card view */
+.viewToggle {
+  display: inline-flex;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  overflow: hidden;
+}
+.viewToggle button {
+  font: inherit;
+  font-size: 0.85em;
+  padding: 0.3rem 0.75rem;
+  border: none;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+.viewToggle button[aria-pressed="true"] {
+  background: var(--fg);
+  color: var(--bg, #fff);
+}
+.viewToggle button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.tileColumns {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+.tileColumns .section h2 {
+  margin-top: 0;
+}
+.tileColumns .gearColumn {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 1.5rem 2rem;
+}
+.tiles {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: 0.75rem;
+}
+.gearColumn .tiles {
+  grid-template-columns: repeat(auto-fill, 9.5rem);
+}
+.tileControls {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.tileControls button {
+  font: inherit;
+  min-width: 1.6rem;
+  height: 1.6rem;
+  border: 1px solid var(--border);
+  border-radius: 0.3rem;
+  background: var(--bg, #fff);
+  color: var(--fg);
+  cursor: pointer;
+}
+.tileControls button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Weapons and equipment: one row across the top in card view. */
+.tileColumns .section:first-child .tiles {
+  grid-auto-flow: column;
+  grid-template-columns: none;
+  grid-auto-columns: 9.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}

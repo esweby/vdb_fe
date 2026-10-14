@@ -116,10 +116,10 @@ These three tasks go first because any of them could change the plan.
 
 ### M7: Minimal deck builder (3–4 days)
 
-- [ ] Card pool and default loadout, sideboard flag, weapon and equipment slots.
-- [ ] Copy limits, plus format limits from configuration.
-- [ ] Dimension totals and pitch breakdown, with "always available" (weapons and equipment) shown separately.
-- [ ] Add ranked cards to the deck.
+- [x] Card pool and default loadout, sideboard flag, weapon and equipment slots. In phase one the default loadout is the main deck: every non-sideboard card, every copy.
+- [x] Copy limits, plus format limits from configuration (`app_settings.format_classic_constructed`). **Unverified:** 3 copies per card and pitch, at least 60 deck cards, at most 80 in the pool, 2 hands for weapons and off-hand. Needs a player check.
+- [x] Dimension totals and pitch breakdown, with "always available" (weapons and equipment) shown separately. Pitch targets per deck (e.g. 22 blue, 18 red, 5 yellow).
+- [x] Add ranked cards to the deck. Cards already in the deck count as pinned.
 
 **Done when:** a user can build a legal deck from the ranking or by hand and save it.
 

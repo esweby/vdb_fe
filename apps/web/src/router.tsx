@@ -13,6 +13,8 @@ import { NeedsReviewPage } from "./scoring/NeedsReviewPage.tsx";
 import { AccountPage } from "./account/AccountPage.tsx";
 import { RankingPage } from "./ranking/RankingPage.tsx";
 import { CardsPage } from "./cards/CardsPage.tsx";
+import { DeckPage } from "./decks/DeckPage.tsx";
+import { DecksPage } from "./decks/DecksPage.tsx";
 import { Layout } from "./Layout.tsx";
 import { validateListSearch } from "./filters/useUrlFilters.ts";
 import { PlaceholderPage } from "./pages/PlaceholderPage.tsx";
@@ -80,7 +82,24 @@ const routeTree = rootRoute.addChildren([
     beforeLoad: requireScorer,
     component: NeedsReviewPage,
   }),
-  page("/decks", "Decks", requireSignedIn),
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/decks",
+    beforeLoad: requireSignedIn,
+    component: DecksPage,
+  }),
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/decks/$deckId",
+    validateSearch: (
+      search: Record<string, unknown>,
+    ): { tab?: "stats"; view?: "list" } => ({
+      ...(search.tab === "stats" ? { tab: "stats" as const } : {}),
+      ...(search.view === "list" ? { view: "list" as const } : {}),
+    }),
+    beforeLoad: requireSignedIn,
+    component: DeckPage,
+  }),
   createRoute({
     getParentRoute: () => rootRoute,
     path: "/account",

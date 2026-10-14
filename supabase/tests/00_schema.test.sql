@@ -41,8 +41,8 @@ select results_eq(
 );
 select results_eq(
   'select key from public.app_settings order by key',
-  array['fringe_default', 'fringe_k', 'min_rating_count'],
-  'scoring settings are seeded'
+  array['format_classic_constructed', 'fringe_default', 'fringe_k', 'min_rating_count'],
+  'scoring and format settings are seeded'
 );
 
 select * from finish();

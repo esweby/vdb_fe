@@ -1,0 +1,381 @@
+import { screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { describe, expect, it } from "vitest";
+import { fakeAuthService } from "../test/fakeAuthService.ts";
+import { fakeDeckRepository } from "../test/fakeDeckRepository.ts";
+import { renderApp } from "../test/renderApp.tsx";
+import { fakeCardRepository, sampleCards } from "../test/fakeCardRepository.ts";
+import { fakeScoreRepository } from "../test/fakeScoreRepository.ts";
+import { sampleCommunity } from "../test/sampleCommunity.ts";
+import type { DeckCard, PitchTargets } from "./deckRepository.ts";
+
+const auth = () =>
+  fakeAuthService({
+    users: { "u@test.local": { id: "u1", password: "pw", role: "user" } },
+    signedIn: { id: "u1", email: "u@test.local" },
+  }).service;
+
+const withDeck = (cards: DeckCard[] = [], pitchTargets: PitchTargets = {}) =>
+  fakeDeckRepository([
+    {
+      id: "deck-1",
+      name: "Gate tempo",
+      updatedAt: "2026-10-14T10:00:00Z",
+      cards,
+      pitchTargets,
+    },
+  ]);
+
+const region = (name: string) => within(screen.getByRole("region", { name }));
+
+describe("decks list", () => {
+  it("lists my decks and creates a new one", async () => {
+    const fake = withDeck();
+    const { router } = await renderApp({
+      path: "/decks",
+      auth: auth(),
+      decks: fake.repository,
+    });
+    expect(
+      await screen.findByRole("link", { name: "Gate tempo" }),
+    ).toBeInTheDocument();
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText("New deck name"), "Runechant aggro");
+    await user.click(screen.getByRole("button", { name: "Create deck" }));
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe("/decks/deck-2"),
+    );
+    expect(fake.saved).toEqual(["create Runechant aggro"]);
+  });
+});
+
+describe("deck page", () => {
+  it("adds cards by searching, and changes quantities", async () => {
+    const fake = withDeck();
+    await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      decks: fake.repository,
+    });
+    expect(
+      await screen.findByRole("heading", { name: "Gate tempo" }),
+    ).toBeInTheDocument();
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText("Find cards"), "hocus");
+    await user.click(
+      screen.getByRole("button", { name: "Add Hocus Pocus (red)" }),
+    );
+    expect(region("Deck").getByText("Hocus Pocus")).toBeInTheDocument();
+    await user.click(
+      region("Deck").getByRole("button", {
+        name: "One more Hocus Pocus (red)",
+      }),
+    );
+    expect(
+      region("Deck").getByLabelText("Copies of Hocus Pocus (red)"),
+    ).toHaveTextContent("2");
+    await user.click(
+      region("Deck").getByRole("button", {
+        name: "One fewer Hocus Pocus (red)",
+      }),
+    );
+    await user.click(
+      region("Deck").getByRole("button", {
+        name: "One fewer Hocus Pocus (red)",
+      }),
+    );
+    expect(region("Deck").queryByText("Hocus Pocus")).not.toBeInTheDocument();
+    expect(fake.saved).toEqual([
+      "set deck-1 hp1 1 main",
+      "set deck-1 hp1 2 main",
+      "set deck-1 hp1 1 main",
+      "set deck-1 hp1 0 main",
+    ]);
+  });
+
+  it("moves cards to the sideboard and back", async () => {
+    const fake = withDeck([
+      { variantId: "hp1", quantity: 2, sideboard: false },
+    ]);
+    await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      decks: fake.repository,
+    });
+    const user = userEvent.setup();
+    await user.click(
+      await screen.findByRole("checkbox", {
+        name: "Sideboard: Hocus Pocus (red)",
+      }),
+    );
+    expect(region("Sideboard").getByText("Hocus Pocus")).toBeInTheDocument();
+    expect(region("Deck").queryByText("Hocus Pocus")).not.toBeInTheDocument();
+    expect(fake.saved).toEqual(["set deck-1 hp1 2 side"]);
+  });
+
+  it("shows weapons apart from the deck, and what makes the deck illegal", async () => {
+    const fake = withDeck([
+      { variantId: "hp1", quantity: 3, sideboard: false },
+      { variantId: "nb", quantity: 1, sideboard: false },
+    ]);
+    await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      decks: fake.repository,
+    });
+    expect(
+      await region("Weapons and equipment").findByText("Nebula Blade"),
+    ).toBeInTheDocument();
+    expect(region("Deck").queryByText("Nebula Blade")).not.toBeInTheDocument();
+    expect(
+      screen.getByText("3 deck cards · 0 sideboard · 4 in the pool"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("The deck has 3 cards; it needs at least 60."),
+    ).toBeInTheDocument();
+  });
+
+  it("shows each card as a card-shaped tile with its basic details", async () => {
+    await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      decks: withDeck([
+        { variantId: "hp1", quantity: 3, sideboard: false },
+        { variantId: "nb", quantity: 1, sideboard: false },
+      ]).repository,
+    });
+    const tile = await region("Deck").findByRole("article", {
+      name: "Hocus Pocus (red)",
+    });
+    expect(within(tile).getByLabelText("Pitch 1")).toBeInTheDocument();
+    expect(within(tile).getByLabelText("Cost 0")).toBeInTheDocument();
+    expect(within(tile).getByLabelText("Power 4")).toBeInTheDocument();
+    expect(within(tile).getByLabelText("Defense 3")).toBeInTheDocument();
+    expect(
+      within(tile).getByText("Runeblade Attack action"),
+    ).toBeInTheDocument();
+    expect(within(tile).getByText("Blood Debt")).toBeInTheDocument();
+    expect(within(tile).getByText("3×")).toBeInTheDocument();
+    const blade = region("Weapons and equipment").getByRole("article", {
+      name: "Nebula Blade",
+    });
+    expect(
+      within(blade).getByText("Runeblade Weapon · Sword · 2H"),
+    ).toBeInTheDocument();
+    expect(within(blade).getByLabelText("Power 1")).toBeInTheDocument();
+  });
+
+  it("switches between card tiles and a compact list, keeping the choice in the URL", async () => {
+    const { router } = await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      decks: withDeck([{ variantId: "hp1", quantity: 3, sideboard: false }])
+        .repository,
+    });
+    await region("Deck").findByRole("article", { name: "Hocus Pocus (red)" });
+    const user = userEvent.setup();
+    expect(screen.getByRole("button", { name: "Card view" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await user.click(screen.getByRole("button", { name: "List view" }));
+    await waitFor(() =>
+      expect(router.state.location.search).toMatchObject({ view: "list" }),
+    );
+    expect(region("Deck").queryByRole("article")).not.toBeInTheDocument();
+    expect(region("Deck").getByText("3×")).toBeInTheDocument();
+  });
+
+  it("puts weapons and equipment together in one row above the deck", async () => {
+    const gear = (id: string, name: string, slot: string) => ({
+      ...sampleCards.find((c) => c.id === "card-nebula-blade")!,
+      id: `card-${id}`,
+      name,
+      type: "equipment",
+      subtypes: [slot],
+      variants: [
+        {
+          id,
+          pitch: null,
+          cost: null,
+          power: null,
+          defense: 1,
+          attributes: {},
+        },
+      ],
+    });
+    await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      cards: fakeCardRepository([
+        ...sampleCards,
+        gear("legs", "Arcane Lantern", "Legs"),
+        gear("head", "Crown of Seeds", "Head"),
+      ]),
+      decks: withDeck([
+        { variantId: "hp1", quantity: 3, sideboard: false },
+        { variantId: "legs", quantity: 1, sideboard: false },
+        { variantId: "nb", quantity: 1, sideboard: false },
+        { variantId: "head", quantity: 1, sideboard: false },
+      ]).repository,
+    });
+    const row = await screen.findByRole("region", {
+      name: "Weapons and equipment",
+    });
+    await within(row).findByRole("article", { name: "Crown of Seeds" });
+    expect(
+      within(row)
+        .getAllByRole("article")
+        .map((a) => a.getAttribute("aria-label")),
+    ).toEqual(["Nebula Blade", "Crown of Seeds", "Arcane Lantern"]);
+    // The art box names the slot, so it isn't lost when the type line is cut off.
+    expect(
+      within(
+        within(row).getByRole("article", { name: "Crown of Seeds" }),
+      ).getByText("Head"),
+    ).toBeInTheDocument();
+    expect(
+      within(
+        within(row).getByRole("article", { name: "Nebula Blade" }),
+      ).getByText("Sword · 2H"),
+    ).toBeInTheDocument();
+    const deck = screen.getByRole("region", { name: "Deck" });
+    expect(
+      row.compareDocumentPosition(deck) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("orders cards by pitch, then name", async () => {
+    await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      decks: withDeck([
+        { variantId: "hp3", quantity: 1, sideboard: false },
+        { variantId: "ff1", quantity: 1, sideboard: false },
+        { variantId: "bsl3", quantity: 1, sideboard: false },
+        { variantId: "hp1", quantity: 1, sideboard: false },
+        { variantId: "ff2", quantity: 1, sideboard: false },
+      ]).repository,
+    });
+    await region("Deck").findAllByText("Fate Foreseen");
+    expect(
+      region("Deck")
+        .getAllByRole("listitem")
+        .map((li) => within(li).getByRole("status").getAttribute("aria-label")),
+    ).toEqual([
+      "Copies of Fate Foreseen (red)",
+      "Copies of Hocus Pocus (red)",
+      "Copies of Fate Foreseen (yellow)",
+      "Copies of Become the Shadow Lord (blue)",
+      "Copies of Hocus Pocus (blue)",
+    ]);
+  });
+
+  it("caps each card at the copy limit", async () => {
+    const fake = withDeck([
+      { variantId: "hp1", quantity: 3, sideboard: false },
+    ]);
+    await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      decks: fake.repository,
+    });
+    expect(
+      await region("Deck").findByRole("button", {
+        name: "One more Hocus Pocus (red)",
+      }),
+    ).toBeDisabled();
+    await userEvent.setup().type(screen.getByLabelText("Find cards"), "hocus");
+    expect(
+      screen.getByRole("button", { name: "Add Hocus Pocus (red)" }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Add Hocus Pocus (blue)" }),
+    ).toBeEnabled();
+    expect(fake.saved).toEqual([]);
+  });
+
+  it("says when a deck doesn't exist", async () => {
+    await renderApp({
+      path: "/decks/nope",
+      auth: auth(),
+      decks: withDeck().repository,
+    });
+    expect(
+      await screen.findByRole("heading", { name: "Deck not found" }),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("deck analysis", () => {
+  const cards: DeckCard[] = [
+    { variantId: "hp1", quantity: 3, sideboard: false },
+    { variantId: "hp3", quantity: 2, sideboard: false },
+    { variantId: "nb", quantity: 1, sideboard: false },
+  ];
+
+  it("shows the pitch mix against the deck's targets, and saves new targets", async () => {
+    const fake = withDeck(cards, { 3: 22 });
+    await renderApp({
+      path: "/decks/deck-1?tab=stats",
+      auth: auth(),
+      decks: fake.repository,
+    });
+    const pitch = await screen.findByRole("region", { name: "Pitch" });
+    expect(within(pitch).getByText("Red 3")).toBeInTheDocument();
+    expect(within(pitch).getByText("Blue 2 / 22")).toBeInTheDocument();
+    const user = userEvent.setup();
+    await user.type(within(pitch).getByLabelText("Red target"), "18");
+    await user.tab();
+    expect(within(pitch).getByText("Red 3 / 18")).toBeInTheDocument();
+    expect(fake.saved).toEqual(["targets deck-1 1:18,3:22"]);
+  });
+
+  it("shows the pitch split in the header, and switches between Cards and Stats", async () => {
+    const { router } = await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      decks: withDeck(cards).repository,
+    });
+    expect(
+      await screen.findByRole("img", {
+        name: "Pitch: 3 red, 0 yellow, 2 blue",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Cards" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(region("Deck").getByText("3×")).toBeInTheDocument();
+    expect(screen.queryByText("Average cost")).not.toBeInTheDocument();
+
+    await userEvent.setup().click(screen.getByRole("tab", { name: "Stats" }));
+    await waitFor(() =>
+      expect(router.state.location.search).toMatchObject({ tab: "stats" }),
+    );
+    expect(screen.getByText("Average cost")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Pitch" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("region", { name: "Deck" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("totals each dimension by pitch, with weapons as always available", async () => {
+    await renderApp({
+      path: "/decks/deck-1?tab=stats",
+      auth: auth(),
+      decks: withDeck(cards).repository,
+      scores: fakeScoreRepository([], { community: sampleCommunity() })
+        .repository,
+    });
+    const table = await screen.findByRole("table", { name: "Dimensions" });
+    const row = await within(table).findByRole("row", {
+      name: /^Runechant creation/,
+    });
+    expect(
+      within(row)
+        .getAllByRole("cell")
+        .map((c) => c.textContent),
+    ).toEqual(["5", "3", "0", "2", "74", "1"]);
+  });
+});

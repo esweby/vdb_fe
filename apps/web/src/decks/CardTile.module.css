@@ -1,0 +1,165 @@
+.tile {
+  --pitch: var(--border);
+  position: relative;
+  aspect-ratio: 63 / 88;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.4rem 0.45rem 0.35rem;
+  border: 1px solid var(--border);
+  border-top: 0.45rem solid var(--pitch);
+  border-radius: 0.6rem;
+  background: color-mix(in srgb, var(--fg) 3%, var(--bg, #fff));
+  font-size: 0.78rem;
+  line-height: 1.25;
+  overflow: hidden;
+}
+.pitch1 {
+  --pitch: #d63c35;
+}
+.pitch2 {
+  --pitch: #e6b422;
+}
+.pitch3 {
+  --pitch: #3b7dd8;
+}
+
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 1.3rem;
+}
+.pitch {
+  display: inline-flex;
+  gap: 0.15rem;
+}
+.pitch > span {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--pitch);
+}
+.cost {
+  width: 1.3rem;
+  height: 1.3rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.name {
+  display: block;
+  text-align: center;
+  font-weight: 700;
+  padding: 0.2rem 0.25rem;
+  border: 1px solid var(--border);
+  border-radius: 0.3rem;
+  color: var(--fg);
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.name:hover {
+  text-decoration: underline;
+}
+
+.art {
+  flex: 1;
+  min-height: 2rem;
+  display: grid;
+  place-items: center;
+  border-radius: 0.3rem;
+  background: repeating-linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--pitch) 10%, transparent) 0 0.5rem,
+    color-mix(in srgb, var(--pitch) 18%, transparent) 0.5rem 1rem
+  );
+  color: var(--muted);
+  font-size: 0.85em;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.text {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.4rem;
+  min-height: 1.2rem;
+  font-weight: 600;
+}
+.noText {
+  color: var(--muted);
+  font-weight: normal;
+}
+
+.typeLine {
+  text-align: center;
+  font-size: 0.85em;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  padding-top: 0.2rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bottom {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+/* Sits on the art box's top-left corner, clear of the name banner. */
+.copies {
+  position: absolute;
+  top: 4.15rem;
+  left: 0.75rem;
+  padding: 0.05rem 0.45rem;
+  border-radius: 0.3rem;
+  background: var(--fg);
+  color: var(--bg, #fff);
+  font-weight: 700;
+  font-size: 0.9em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Hidden until the tile is hovered or focused; always visible on touch screens. */
+.controls {
+  position: absolute;
+  inset: auto 0 0 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem;
+  background: color-mix(in srgb, var(--bg, #fff) 92%, transparent);
+  border-top: 1px solid var(--border);
+  opacity: 0;
+  transform: translateY(100%);
+  transition:
+    opacity 0.1s,
+    transform 0.1s;
+}
+.tile:hover .controls,
+.tile:focus-within .controls {
+  opacity: 1;
+  transform: none;
+}
+@media (hover: none) {
+  .controls {
+    position: static;
+    opacity: 1;
+    transform: none;
+  }
+}
