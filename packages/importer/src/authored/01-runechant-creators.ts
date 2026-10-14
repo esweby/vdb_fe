@@ -186,7 +186,7 @@ export const runechantCreators: AuthoredAttributes = {
     },
   },
   "Envelop in Darkness": {
-    verified: false,
+    verified: true,
     card: {
       tokens: [{ token: "runechant", amount: 1, trigger: "on_play" }],
       supports: [
@@ -206,7 +206,7 @@ export const runechantCreators: AuthoredAttributes = {
     },
   },
   "Funeral Moon": {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       tokens: [{ token: "runechant", amount: 1, trigger: "on_play" }],
@@ -535,7 +535,7 @@ export const runechantCreators: AuthoredAttributes = {
     },
   },
   "Runic Reclamation": {
-    verified: false,
+    verified: true,
     card: {
       disrupts: [
         {
@@ -572,7 +572,7 @@ export const runechantCreators: AuthoredAttributes = {
     },
   },
   "Sonata Dystopia": {
-    verified: false,
+    verified: true,
     card: {
       tokens: [
         {

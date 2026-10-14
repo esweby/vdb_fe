@@ -48,7 +48,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Bloodsong Gloomblade": {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       disrupts: [
@@ -90,7 +90,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Corrupt and Conquer": {
-    verified: false,
+    verified: true,
     card: {
       rewardsPlayFromBanish: true,
       disrupts: [
@@ -107,7 +107,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   Cull: {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       disrupts: [
@@ -123,7 +123,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Cullingsong Gloomblade": {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       disrupts: [
@@ -158,7 +158,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Deep Recesses of Existence": {
-    verified: false,
+    verified: true,
     card: {
       banishesSelf: [{ trigger: "combat_chain_closes", optional: true }],
       disrupts: [
@@ -216,7 +216,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Dimenxxional Vortex": {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       costReductions: [{ amount: 2, conditions: ["played_from_banish"] }],
@@ -264,7 +264,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Embrace Sin": {
-    verified: false,
+    verified: true,
     card: {
       enablesPlayFromBanish: [{ target: { group: "runechant_aura" } }],
       notes: "Your next attack this turn also gets +2 power.",
@@ -282,7 +282,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Fasting Carcass": {
-    verified: false,
+    verified: true,
     card: { grantsGoAgain: "next_action_card_matching_pitch" },
   },
   "Ghostly Visit": {
@@ -290,7 +290,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     card: { playableFromBanish: {} },
   },
   "Grim Feast": {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       costReductions: [{ amount: 2, conditions: ["played_from_banish"] }],
@@ -313,7 +313,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Hungering Demigon": {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       disrupts: [
@@ -330,7 +330,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Invert Existence": {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       disrupts: [
@@ -349,7 +349,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Lunartide Plunderer": {
-    verified: false,
+    verified: true,
     card: {
       banishesSelf: [{ trigger: "on_hit" }],
       disrupts: [
@@ -369,7 +369,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     card: { playableFromBanish: {} },
   },
   "Painful Passage": {
-    verified: false,
+    verified: true,
     card: {
       banishesOwn: [{ from: "hand", trigger: "on_play", optional: true }],
       grantsGoAgain: "banished_card",
@@ -392,7 +392,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Plundersong Gloomblade": {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       disrupts: [
@@ -407,7 +407,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Putrid Stirrings": {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       supports: [
@@ -427,7 +427,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Rattle Bones": {
-    verified: false,
+    verified: true,
     card: {
       banishesOwn: [{ from: "graveyard", trigger: "on_play" }],
       enablesPlayFromBanish: [{ target: { group: "runeblade_attack_action" } }],
@@ -439,7 +439,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Requiem for the Damned": {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       tokens: [{ token: "eloquence", amount: 1, trigger: "on_play" }],
@@ -585,7 +585,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Sinspeaker Gloomblade": {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       tutors: [
@@ -626,7 +626,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Tear Through the Portal": {
-    verified: false,
+    verified: true,
     card: { grantsGoAgain: "card_in_banished_zone_matching_pitch" },
   },
   "Tome of Torment": {
@@ -676,7 +676,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Vile Inquisition": {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       costReductions: [{ amount: 2, conditions: ["played_from_banish"] }],
@@ -706,7 +706,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Widespread Annihilation": {
-    verified: false,
+    verified: true,
     card: {
       disrupts: [
         {
@@ -722,7 +722,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Widespread Destruction": {
-    verified: false,
+    verified: true,
     card: {
       disrupts: [
         {
@@ -738,7 +738,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Widespread Ruin": {
-    verified: false,
+    verified: true,
     card: {
       disrupts: [
         {

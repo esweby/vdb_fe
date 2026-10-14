@@ -12,7 +12,7 @@ export const gateCreators: AuthoredAttributes = {
     card: { tokens: [{ token: "gate", amount: 1, trigger: "on_hit" }] },
   },
   "Countdown to Extinction": {
-    verified: false,
+    verified: true,
     card: {
       tokens: [{ token: "gate", amount: 1, trigger: "on_attack" }],
       tutors: [
