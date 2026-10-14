@@ -19,6 +19,7 @@ export const TRIGGERS = [
   "on_usurped",
   "would_go_to_graveyard",
   "would_be_dealt_damage",
+  "your_end_phase",
   "start_of_turn",
   "start_of_action_phase",
   "combat_chain_closes",
@@ -37,6 +38,8 @@ export const CONDITIONS = [
   "played_non_attack_action_this_turn",
   "dealt_arcane_damage_this_turn",
   "played_or_created_aura_this_turn",
+  "played_or_created_2_or_more_auras_this_turn",
+  "played_or_created_3_or_more_auras_this_turn",
   "played_from_banish",
   "top_card_matches_pitch",
   "destroyed_own_aura",
@@ -50,6 +53,9 @@ export const CONDITIONS = [
   "played_card_from_banish_this_turn",
   "it_defended",
   "banished_a_card",
+  "discarded_attack_action",
+  "discarded_non_attack_action",
+  "x_is_2_or_more",
 ] as const;
 
 export const BANISH_ZONES = [
@@ -68,6 +74,7 @@ export const GRANTED_TO = [
   "card_in_banished_zone_matching_pitch",
   "next_action_card_matching_pitch",
   "target_attack_action",
+  "all_attack_actions_this_turn",
 ] as const;
 
 const amount = z.union([z.number().int().positive(), z.literal("X")]);
@@ -113,6 +120,7 @@ export const DISRUPT_ZONES = [
 ] as const;
 
 const disruptionCommon = {
+  grantedTo,
   amount: z.union([amount, z.literal("all")]),
   target: z.enum(DISRUPT_TARGETS),
   trigger,
@@ -184,6 +192,7 @@ export const BONUS_EFFECTS = [
   "dominate",
   "overpower",
   "draw",
+  "arcane_cant_be_prevented",
 ] as const;
 
 const NUMERIC_BONUSES = new Set(["plus_power", "plus_defense", "draw"]);
@@ -193,7 +202,12 @@ export const conditionalBonusSchema = z
   .strictObject({
     effect: z.enum(BONUS_EFFECTS),
     amount: amount.optional(),
-    conditions: z.array(z.enum(CONDITIONS)).min(1),
+    conditions,
+    /** Given to a later card instead of this one (then no condition is needed). */
+    grantedTo,
+  })
+  .refine((b) => (b.conditions?.length ?? 0) > 0 || b.grantedTo, {
+    message: "A bonus needs a condition or a grantedTo",
   })
   .refine((b) => !NUMERIC_BONUSES.has(b.effect) || b.amount !== undefined, {
     message: "plus_power, plus_defense and draw need an amount",
@@ -224,7 +238,11 @@ export const authoredAttributesSchema = z.strictObject({
   costReductions: z
     .array(
       z
-        .strictObject({ amount, conditions, grantedTo })
+        .strictObject({
+          amount: z.union([amount, z.literal("per_runechant")]),
+          conditions,
+          grantedTo,
+        })
         .refine((c) => (c.conditions?.length ?? 0) > 0 || c.grantedTo, {
           message: "A cost reduction needs a condition or a grantedTo",
         }),
@@ -252,7 +270,15 @@ export const authoredAttributesSchema = z.strictObject({
   /** The card gets better when played from your banished zone (e.g. with a Gate). */
   rewardsPlayFromBanish: z.boolean().optional(),
   /** Gives go again to a later card. */
-  grantsGoAgain: z.enum(GRANTED_TO).optional(),
+  grantsGoAgain: z
+    .union([
+      z.enum(GRANTED_TO),
+      z.strictObject({
+        to: z.enum(GRANTED_TO),
+        conditions: z.array(z.enum(CONDITIONS)).min(1),
+      }),
+    ])
+    .optional(),
   /** Doubts or context for the reviewer. Shown on the review sheet. */
   notes: z.string().optional(),
 });

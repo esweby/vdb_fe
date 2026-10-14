@@ -33,6 +33,10 @@ describe("authored batches", () => {
     expect(Object.keys(batches)).toContain("03-blood-debt-and-banish");
   });
 
+  it("includes batch 5, the remaining cards", () => {
+    expect(Object.keys(batches)).toContain("05-remaining");
+  });
+
   it("includes batch 4, weapons and equipment", () => {
     expect(Object.keys(batches)).toContain("04-weapons-and-equipment");
   });

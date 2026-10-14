@@ -568,6 +568,96 @@ describe("describeAttributes", () => {
     ]);
   });
 
+  it("describes batch 5 patterns", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        tutors: [
+          {
+            target: { group: "runeblade_non_attack_action" },
+            to: "hand",
+            trigger: "on_play",
+            conditions: ["discarded_attack_action"],
+          },
+        ],
+        arcaneDamage: [
+          { amount: 2, trigger: "your_end_phase" },
+          {
+            amount: 1,
+            trigger: "on_attack",
+            grantedTo: "all_attack_actions_this_turn",
+          },
+        ],
+        disrupts: [
+          {
+            action: "discard",
+            from: "hand",
+            amount: 1,
+            target: "defending_hero",
+            trigger: "on_hit",
+            grantedTo: "next_runeblade_attack_action",
+          },
+        ],
+        costReductions: [
+          {
+            amount: "per_runechant",
+            grantedTo: "next_runeblade_attack_action",
+          },
+        ],
+        goAgain: { conditions: ["x_is_2_or_more"] },
+      }),
+    ).toEqual([
+      "Deals 2 arcane damage at the beginning of your end phase.",
+      "Your attack action cards this turn get: deals 1 arcane damage when it attacks.",
+      "Your next Runeblade attack action card this turn gets: the defending hero discards 1 card when it hits.",
+      "Searches your deck for a Runeblade non-attack action card and puts it into your hand when played, if you discarded an attack action card.",
+      "Your next Runeblade attack action card this turn gets: costs {r} less for each Runechant you control.",
+      "Gets go again, if X is 2 or more.",
+    ]);
+  });
+
+  it("describes Machinations of Dominion's granted overpower and conditional go again", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        conditionalBonuses: [
+          { effect: "overpower", grantedTo: "next_runeblade_attack_action" },
+        ],
+        grantsGoAgain: {
+          to: "next_runeblade_attack_action",
+          conditions: ["played_or_created_aura_this_turn"],
+        },
+      }),
+    ).toEqual([
+      "Your next Runeblade attack action card this turn gets overpower.",
+      "Your next Runeblade attack action card this turn gets go again, if you've played or created an aura this turn.",
+    ]);
+  });
+
+  it("describes Swarming Gloomveil's aura thresholds", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        goAgain: { conditions: ["played_or_created_aura_this_turn"] },
+        conditionalBonuses: [
+          {
+            effect: "plus_power",
+            amount: 1,
+            conditions: ["played_or_created_2_or_more_auras_this_turn"],
+          },
+          {
+            effect: "arcane_cant_be_prevented",
+            conditions: ["played_or_created_3_or_more_auras_this_turn"],
+          },
+        ],
+      }),
+    ).toEqual([
+      "Gets +1 power, if you've played or created 2 or more auras this turn.",
+      "When it hits a hero, they can't prevent your arcane damage this turn, if you've played or created 3 or more auras this turn.",
+      "Gets go again, if you've played or created an aura this turn.",
+    ]);
+  });
+
   it("describes cards a card works with", () => {
     expect(
       describeAttributes({

@@ -243,6 +243,16 @@ describe("authoredAttributesSchema", () => {
     ["an unknown grantsGoAgain", { grantsGoAgain: "every_card" }],
     ["go again without a condition", { goAgain: {} }],
     [
+      "granted go again with an empty condition list",
+      {
+        grantsGoAgain: { to: "next_runeblade_attack_action", conditions: [] },
+      },
+    ],
+    [
+      "a bonus with neither a condition nor a grantedTo",
+      { conditionalBonuses: [{ effect: "overpower" }] },
+    ],
+    [
       "a conditional bonus without a condition",
       { conditionalBonuses: [{ effect: "dominate" }] },
     ],
