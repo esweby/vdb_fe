@@ -8,7 +8,7 @@ import { CardTile } from "../decks/CardTile.tsx";
 import { useUrlFilters } from "../filters/useUrlFilters.ts";
 import { useAppSelector } from "../hooks.ts";
 import { useServices } from "../servicesContext.ts";
-import { Pagination, Table, TextField, type Column } from "../ui/index.ts";
+import { Table, TextField, type Column } from "../ui/index.ts";
 import { CARD_VIEWS, type CardView } from "../filters/useUrlFilters.ts";
 import type { CardSummary } from "./cardRepository.ts";
 import { cardFacets, pitchShown } from "./facets.ts";
@@ -29,7 +29,7 @@ const VIEW_LABELS: Record<CardView, string> = {
   large: "Large cards",
   list: "List",
 };
-/** Results per page: fewer as cards get bigger, and multiples of common column counts so rows fill. */
+/** Results per batch: fewer as cards get bigger, and multiples of common column counts so rows fill. */
 const PER_PAGE: Record<CardView, number> = {
   small: 60,
   large: 40,
@@ -102,26 +102,21 @@ export function CardsPage() {
     [shown, filters.state],
   );
 
+  // Load more: the URL's page is how many batches are shown, so refresh and back keep them.
   const perPage = PER_PAGE[filters.view];
   const total = filters.view === "list" ? shown.length : tiles.length;
-  const pageCount = Math.max(1, Math.ceil(total / perPage));
-  const page = Math.min(filters.page, pageCount);
-  const from = (page - 1) * perPage;
+  const loaded = Math.min(filters.page * perPage, total);
+  const left = total - loaded;
   // One count, in the unit on screen: cards in the list, a tile per pitch in card views.
   const everything =
     filters.view === "list"
       ? items.length
       : items.reduce((n, c) => n + c.variants.length, 0);
   const n = (x: number) => x.toLocaleString("en-GB");
-  const to = Math.min(from + perPage, total);
   const countText =
-    pageCount > 1
-      ? `${n(from + 1)}–${n(to)} of ${n(total)} cards${total < everything ? ` (of ${n(everything)})` : ""}`
+    left > 0
+      ? `Showing ${n(loaded)} of ${n(total)} cards${total < everything ? ` (of ${n(everything)})` : ""}`
       : `${n(total)} of ${n(everything)} cards`;
-  const goTo = (next: number) => {
-    filters.setPage(next);
-    document.querySelector("h1")?.scrollIntoView?.({ block: "start" });
-  };
 
   return (
     <>
@@ -194,7 +189,7 @@ export function CardsPage() {
             <Table
               caption="Cards"
               columns={columns}
-              rows={shown.slice(from, from + perPage)}
+              rows={shown.slice(0, loaded)}
               rowKey={(c) => c.id}
               empty="No cards match these filters"
             />
@@ -206,14 +201,22 @@ export function CardsPage() {
               aria-label="Cards"
               data-size={filters.view}
             >
-              {tiles.slice(from, from + perPage).map(({ card, variant }) => (
+              {tiles.slice(0, loaded).map(({ card, variant }) => (
                 <li key={variant.id}>
                   <CardTile card={card} variant={variant} />
                 </li>
               ))}
             </ul>
           )}
-          <Pagination page={page} pageCount={pageCount} onChange={goTo} />
+          {left > 0 && (
+            <button
+              type="button"
+              className={styles.loadMore}
+              onClick={() => filters.setPage(filters.page + 1)}
+            >
+              Load more <span className={styles.left}>· {n(left)} left</span>
+            </button>
+          )}
         </FilteredLayout>
       )}
     </>

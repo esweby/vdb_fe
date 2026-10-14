@@ -59,6 +59,8 @@ export function useUrlFilters(search: ListSearch) {
     void navigate({
       to: ".",
       replace: true,
+      // An in-page change (filters, Load more, settings): keep the scroll position.
+      resetScroll: false,
       search: {
         ...(q ? { q } : {}),
         ...(sort !== "name" ? { sort } : {}),
