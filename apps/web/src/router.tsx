@@ -8,7 +8,7 @@ import {
 import { authSettled } from "./auth/listenToAuth.ts";
 import { selectCanScore, selectIsSignedIn } from "./auth/authSlice.ts";
 import { SignInPage } from "./auth/SignInPage.tsx";
-import { CardPage } from "./cards/CardPage.tsx";
+import { CardScoringPage } from "./scoring/CardScoringPage.tsx";
 import { CardsPage } from "./cards/CardsPage.tsx";
 import { Layout } from "./Layout.tsx";
 import { PlaceholderPage } from "./pages/PlaceholderPage.tsx";
@@ -60,7 +60,7 @@ const routeTree = rootRoute.addChildren([
   createRoute({
     getParentRoute: () => rootRoute,
     path: "/cards/$cardId",
-    component: CardPage,
+    component: CardScoringPage,
   }),
   page("/ranking", "Ranking"),
   page("/needs-review", "Needs review", requireScorer),

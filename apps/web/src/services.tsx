@@ -1,10 +1,12 @@
 import { createContext, useContext, type ReactNode } from "react";
 import type { AuthService } from "./auth/authService.ts";
 import type { CardRepository } from "./cards/cardRepository.ts";
+import type { ScoreRepository } from "./scoring/scoreRepository.ts";
 
 export interface Services {
   auth: AuthService;
   cards: CardRepository;
+  scores: ScoreRepository;
 }
 
 const ServicesContext = createContext<Services | null>(null);

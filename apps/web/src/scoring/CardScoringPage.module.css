@@ -1,0 +1,8 @@
+.meta {
+  color: var(--muted);
+}
+.text {
+  border-left: 3px solid var(--border);
+  padding-left: 0.75rem;
+  white-space: pre-line;
+}
