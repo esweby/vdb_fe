@@ -60,6 +60,35 @@ describe("Slider", () => {
     ).toHaveAttribute("aria-valuetext", "0");
   });
 
+  it("shows a tick and label for every step above the track, hidden from screen readers", () => {
+    render(<Harness initial={50} />);
+    const scale = screen.getByTestId("slider-scale");
+    expect(scale).toHaveAttribute("aria-hidden", "true");
+    expect(
+      [...scale.querySelectorAll("span")].map((s) => s.textContent),
+    ).toEqual([
+      "0",
+      "10",
+      "20",
+      "30",
+      "40",
+      "50",
+      "60",
+      "70",
+      "80",
+      "90",
+      "100",
+    ]);
+  });
+
+  it("highlights the tick for the current value", () => {
+    render(<Harness initial={70} />);
+    const current = screen
+      .getByTestId("slider-scale")
+      .querySelector("[data-current]");
+    expect(current).toHaveTextContent("70");
+  });
+
   it("moves in steps of 10 with the keyboard", async () => {
     render(<Harness initial={50} />);
     const slider = screen.getByRole("slider", { name: "Gate creation" });
