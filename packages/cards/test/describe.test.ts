@@ -6,6 +6,7 @@ const generated = {
   hasBloodDebt: false,
   hasUsurp: false,
   hasRuneGate: false,
+  isGateTarget: false,
   specialization: null,
 };
 
@@ -102,6 +103,7 @@ describe("describeAttributes", () => {
         hasBloodDebt: true,
         hasUsurp: true,
         hasRuneGate: true,
+        isGateTarget: false,
         specialization: "Viserai",
         playableFromBanish: {},
         notes: "Unsure whether the Gate is optional.",
@@ -190,9 +192,35 @@ describe("describeAttributes", () => {
     ).toEqual(["Gets go again, if the banished card is Shadow."]);
   });
 
-  it("describes conditional go again whose condition is only in the notes", () => {
-    expect(describeAttributes({ ...generated, goAgain: {} })).toEqual([
-      "Gets go again under a condition (see note).",
+  it("describes Gate targets and cards that reward being played from banish", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        isGateTarget: true,
+        rewardsPlayFromBanish: true,
+      }),
+    ).toEqual([
+      "Can be played from your banished zone with a Gate.",
+      "Is better when played from your banished zone.",
+    ]);
+  });
+
+  it("describes the new go again conditions", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        goAgain: {
+          conditions: [
+            "dealt_damage_to_defending_hero_this_turn",
+            "dealt_arcane_damage_to_opponent_this_turn",
+            "created_3_or_more_runechants",
+            "paid_optional_additional_cost",
+            "defending_hero_has_soul_cards",
+          ],
+        },
+      }),
+    ).toEqual([
+      "Gets go again, if you've dealt damage to the defending hero this turn and you've dealt arcane damage to an opponent this turn and it created 3 or more Runechants and you paid its optional additional cost and the defending hero has cards in their soul.",
     ]);
   });
 

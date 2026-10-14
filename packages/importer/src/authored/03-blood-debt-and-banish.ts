@@ -5,21 +5,21 @@ import type { AuthoredAttributes } from "../map.ts";
 
 export const bloodDebtAndBanish: AuthoredAttributes = {
   "Abyssal Bite": {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       notes: "Your next Shadow attack this turn gets +1 power.",
     },
   },
   "Abyssal Force": {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       notes: "Your next Shadow attack this turn gets overpower.",
     },
   },
   "Abyssal Rush": {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       grantsGoAgain: "next_shadow_attack",
@@ -27,21 +27,21 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Beseech the Demigon": {
-    verified: false,
+    verified: true,
     card: {
       notes:
         "Gives an attack action card in your banished zone +3/+2/+1 power (red/yellow/blue).",
     },
   },
   "Blood Tribute": {
-    verified: false,
+    verified: true,
     card: {
       banishesOwn: [{ from: "deck_top", trigger: "on_play" }],
       notes: "Opt 3/2/1 (red/yellow/blue) first.",
     },
   },
   "Bloodfrenzy Gloomblade": {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       goAgain: {},
