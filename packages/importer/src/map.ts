@@ -1,5 +1,6 @@
 // Maps dataset entries (one per name + pitch) to our cards and variants.
 import {
+  attributeGroups,
   authoredAttributesSchema,
   groupsOf,
   type AuthoredCardAttributes,
@@ -181,6 +182,7 @@ export function toImportCards(
     };
   });
 
+  for (const card of cards) addAttributeGroups(card);
   checkReferences(cards);
   return cards;
 }
@@ -206,4 +208,15 @@ function checkReferences(cards: ImportCard[]): void {
       }
     }
   }
+}
+
+/** Adds groups derived from the merged attributes (card and every variant). */
+function addAttributeGroups(card: ImportCard): void {
+  const derived = [
+    card.attributes,
+    ...card.variants.map((v) => v.attributes),
+  ].flatMap((a) => attributeGroups(a));
+  card.attributes.groups = [
+    ...new Set([...card.attributes.groups, ...derived]),
+  ];
 }

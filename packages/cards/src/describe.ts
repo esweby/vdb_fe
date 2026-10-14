@@ -136,6 +136,7 @@ const GROUP_TEXT: Record<CardGroup, string> = {
   runeblade_attack_action: "a Runeblade attack action card",
   runeblade_non_attack_action: "a Runeblade non-attack action card",
   rune_gate: "a Rune Gate card",
+  banishes_from_hand: "a card that banishes from hand",
 };
 
 const GROUP_PLURAL: Record<CardGroup, string> = {
@@ -144,6 +145,7 @@ const GROUP_PLURAL: Record<CardGroup, string> = {
   runeblade_attack_action: "Runeblade attack action cards",
   runeblade_non_attack_action: "Runeblade non-attack action cards",
   rune_gate: "Rune Gate cards",
+  banishes_from_hand: "cards that banish from hand",
 };
 
 const refText = (ref: CardRef) =>
@@ -186,7 +188,7 @@ export function describeAttributes(attributes: CardAttributes): string[] {
   for (const b of attributes.banishesSelf ?? []) {
     const verb = b.optional ? "May banish" : "Banishes";
     lines.push(
-      `${verb} itself ${TRIGGER_TEXT[b.trigger]}${ifConditions(b.conditions)}.`,
+      `${verb} itself${b.from === "hand" ? " from your hand" : ""} ${TRIGGER_TEXT[b.trigger]}${ifConditions(b.conditions)}.`,
     );
   }
 

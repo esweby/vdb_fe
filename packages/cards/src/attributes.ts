@@ -148,6 +148,8 @@ export const ownBanishSchema = z.strictObject({
 });
 
 export const selfBanishSchema = z.strictObject({
+  /** Where it banishes itself from, when that matters (e.g. "banish this from your hand"). */
+  from: z.enum(["hand"]).optional(),
   trigger,
   conditions,
   optional: z.boolean().optional(),

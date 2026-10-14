@@ -275,9 +275,9 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     card: { banishesSelf: [{ trigger: "would_go_to_graveyard" }] },
   },
   "Fallen Herald": {
-    verified: true,
+    verified: false,
     card: {
-      banishesSelf: [{ trigger: "activated" }],
+      banishesSelf: [{ from: "hand", trigger: "activated" }],
       notes: "Banish it from hand to prevent the next 4 damage.",
     },
   },
@@ -634,9 +634,9 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     card: { playableFromBanish: {}, notes: "Draw a card." },
   },
   "Tribute to Greater Power": {
-    verified: true,
+    verified: false,
     card: {
-      banishesSelf: [{ trigger: "activated" }],
+      banishesSelf: [{ from: "hand", trigger: "activated" }],
       notes:
         "Banish it from hand: your next attack gets overpower. Overpower is listed as a keyword but is granted to another attack.",
     },

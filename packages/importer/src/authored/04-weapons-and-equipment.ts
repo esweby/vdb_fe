@@ -261,6 +261,16 @@ export const weaponsAndEquipment: AuthoredAttributes = {
     },
   },
 
+  "Snapdragon Scalers": {
+    verified: false,
+    card: {
+      oneUse: true,
+      grantsGoAgain: "target_attack_action",
+      notes:
+        "Generic. Attack reaction: destroy it. Only an attack action card costing 1 or less.",
+    },
+  },
+
   // Arcane damage and auras
   "Aether Crackers": {
     verified: true,
