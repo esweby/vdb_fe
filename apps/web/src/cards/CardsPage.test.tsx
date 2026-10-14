@@ -64,8 +64,23 @@ describe("cards page", () => {
     await screen.findByRole("table", { name: /cards/i });
     expect(rowNames()).toEqual(["Become the Shadow Lord"]);
     expect(
-      screen.getByRole("button", { name: "Remove Include: Go again" }),
-    ).toBeInTheDocument();
+      filters().getByRole("button", { name: /^Go again,/ }),
+    ).toHaveAccessibleName(/included$/);
+    expect(screen.getByText("1 filter active")).toBeInTheDocument();
+  });
+
+  it("clears every filter from the status line above the results", async () => {
+    await renderApp({
+      path: "/cards?inc=%5B%22keywords%3Ago_again%22%2C%22pitch%3A3%22%5D",
+      auth: fakeAuthService().service,
+    });
+    await screen.findByRole("table", { name: /cards/i });
+    expect(screen.getByText("2 filters active")).toBeInTheDocument();
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: "Clear all filters" }));
+    expect(await screen.findByText("No filters")).toBeInTheDocument();
+    expect(rowNames()).toHaveLength(4);
   });
 
   it("shows how many cards match", async () => {
