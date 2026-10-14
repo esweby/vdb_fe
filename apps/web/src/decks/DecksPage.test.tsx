@@ -206,7 +206,7 @@ describe("deck analysis", () => {
   it("shows the pitch mix against the deck's targets, and saves new targets", async () => {
     const fake = withDeck(cards, { 3: 22 });
     await renderApp({
-      path: "/decks/deck-1",
+      path: "/decks/deck-1?tab=stats",
       auth: auth(),
       decks: fake.repository,
     });
@@ -220,9 +220,38 @@ describe("deck analysis", () => {
     expect(fake.saved).toEqual(["targets deck-1 1:18,3:22"]);
   });
 
+  it("shows the pitch split in the header, and switches between Cards and Stats", async () => {
+    const { router } = await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      decks: withDeck(cards).repository,
+    });
+    expect(
+      await screen.findByRole("img", {
+        name: "Pitch: 3 red, 0 yellow, 2 blue",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Cards" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(region("Deck").getByText("3×")).toBeInTheDocument();
+    expect(screen.queryByText("Average cost")).not.toBeInTheDocument();
+
+    await userEvent.setup().click(screen.getByRole("tab", { name: "Stats" }));
+    await waitFor(() =>
+      expect(router.state.location.search).toMatchObject({ tab: "stats" }),
+    );
+    expect(screen.getByText("Average cost")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Pitch" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("region", { name: "Deck" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("totals each dimension by pitch, with weapons as always available", async () => {
     await renderApp({
-      path: "/decks/deck-1",
+      path: "/decks/deck-1?tab=stats",
       auth: auth(),
       decks: withDeck(cards).repository,
       scores: fakeScoreRepository([], { community: sampleCommunity() })
