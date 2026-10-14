@@ -274,6 +274,87 @@ describe("describeAttributes", () => {
     ]);
   });
 
+  it("describes disruption, naming who is affected", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        disrupts: [
+          {
+            action: "banish",
+            from: "hand",
+            amount: 1,
+            target: "each_hero",
+            trigger: "on_play",
+          },
+          {
+            action: "banish",
+            from: "arsenal",
+            amount: "all",
+            target: "defending_hero",
+            trigger: "on_hit",
+          },
+          {
+            action: "banish",
+            from: "deck_top",
+            amount: 1,
+            target: "opponent",
+            trigger: "on_play",
+          },
+          {
+            action: "banish",
+            from: "graveyard",
+            amount: 2,
+            target: "opponent",
+            trigger: "on_play",
+            optional: true,
+          },
+          {
+            action: "banish",
+            from: "soul",
+            amount: 1,
+            target: "defending_hero",
+            trigger: "on_hit",
+          },
+          {
+            action: "discard",
+            from: "hand",
+            amount: 1,
+            target: "defending_hero",
+            trigger: "on_hit",
+            conditions: ["dealt_arcane_damage_this_turn"],
+          },
+          {
+            action: "destroy",
+            from: "auras",
+            amount: 1,
+            target: "defending_hero",
+            trigger: "on_hit",
+            optional: true,
+          },
+        ],
+      }),
+    ).toEqual([
+      "Each hero (you included) banishes 1 card from their hand when played.",
+      "The defending hero banishes all cards from their arsenal when it hits.",
+      "An opponent banishes the top card of their deck when played.",
+      "May make an opponent banish 2 cards from their graveyard when played.",
+      "The defending hero banishes 1 card from their soul when it hits.",
+      "The defending hero discards 1 card when it hits, if you've dealt arcane damage this turn.",
+      "May make the defending hero destroy 1 aura they control when it hits.",
+    ]);
+  });
+
+  it("describes conditional instant speed", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        instantSpeed: { conditions: ["hero_lost_life_this_turn"] },
+      }),
+    ).toEqual([
+      "Can be played as an instant, if a hero has lost life this turn.",
+    ]);
+  });
+
   it("describes nothing for a plain card", () => {
     expect(describeAttributes(generated)).toEqual([]);
   });

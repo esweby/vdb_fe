@@ -82,6 +82,46 @@ describe("authoredAttributesSchema", () => {
     ).toBe(true);
   });
 
+  it("accepts disruption and conditional instant speed", () => {
+    expect(
+      authoredAttributesSchema.safeParse({
+        disrupts: [
+          {
+            action: "banish",
+            from: "hand",
+            amount: 1,
+            target: "each_hero",
+            trigger: "on_play",
+          },
+          {
+            action: "banish",
+            from: "arsenal",
+            amount: "all",
+            target: "defending_hero",
+            trigger: "on_hit",
+          },
+          {
+            action: "discard",
+            from: "hand",
+            amount: 1,
+            target: "defending_hero",
+            trigger: "on_hit",
+            conditions: ["dealt_arcane_damage_this_turn"],
+          },
+          {
+            action: "destroy",
+            from: "auras",
+            amount: 1,
+            target: "defending_hero",
+            trigger: "on_hit",
+            optional: true,
+          },
+        ],
+        instantSpeed: { conditions: ["hero_lost_life_this_turn"] },
+      }).success,
+    ).toBe(true);
+  });
+
   it("accepts conditional and granted go again", () => {
     expect(
       authoredAttributesSchema.safeParse({
@@ -98,6 +138,49 @@ describe("authoredAttributesSchema", () => {
   it.each([
     ["an unknown grantsGoAgain", { grantsGoAgain: "every_card" }],
     ["go again without a condition", { goAgain: {} }],
+    ["instant speed without a condition", { instantSpeed: {} }],
+    [
+      "an unknown disruption target",
+      {
+        disrupts: [
+          {
+            action: "banish",
+            from: "hand",
+            amount: 1,
+            target: "everyone",
+            trigger: "on_play",
+          },
+        ],
+      },
+    ],
+    [
+      "discarding from somewhere other than hand",
+      {
+        disrupts: [
+          {
+            action: "discard",
+            from: "arsenal",
+            amount: 1,
+            target: "defending_hero",
+            trigger: "on_hit",
+          },
+        ],
+      },
+    ],
+    [
+      "destroying something other than auras",
+      {
+        disrupts: [
+          {
+            action: "destroy",
+            from: "hand",
+            amount: 1,
+            target: "defending_hero",
+            trigger: "on_hit",
+          },
+        ],
+      },
+    ],
     ["go again with an empty condition list", { goAgain: { conditions: [] } }],
     ["an unknown key inside goAgain", { goAgain: { always: true } }],
     [
