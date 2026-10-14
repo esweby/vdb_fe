@@ -87,6 +87,7 @@ export function NeedsReviewPage() {
       </p>
       <FilteredLayout
         state={filters.state}
+        onClear={() => filters.setState({})}
         sidebar={
           <FilterSidebar
             items={unreviewed}

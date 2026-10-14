@@ -36,10 +36,26 @@ export const sampleDetail: CardDetail = {
         trigger: "on_play",
         conditions: ["banished_card_is_runeblade"],
       },
+      {
+        token: "gate",
+        amount: 1,
+        trigger: "on_play",
+        conditions: ["banished_card_is_shadow"],
+      },
     ],
   },
   attributesVerified: true,
-  variants: [{ id: "bsl3", pitch: 3, text: null, attributes: {} }],
+  variants: [
+    {
+      id: "bsl3",
+      pitch: 3,
+      cost: 0,
+      power: null,
+      defense: 3,
+      text: null,
+      attributes: {},
+    },
+  ],
 };
 
 /** An in-memory ScoreRepository; `saved` records every write. */
@@ -84,6 +100,9 @@ export function fakeScoreRepository(
         variants: summary.variants.map((v) => ({
           id: v.id,
           pitch: v.pitch,
+          cost: v.cost,
+          power: v.power,
+          defense: v.defense,
           text: "",
           // Hocus Pocus gets a per-pitch attribute, to test per-pitch descriptions.
           attributes:

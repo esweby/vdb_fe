@@ -8,21 +8,13 @@ import {
 } from "./applyFilters.ts";
 import styles from "./FilterSidebar.module.css";
 
-const NEXT: Record<string, FilterChoice | undefined> = {
-  neutral: "include",
-  include: "exclude",
-  exclude: undefined,
-};
-const STATE_TEXT = {
-  neutral: "not filtered",
-  include: "included",
-  exclude: "excluded",
-};
 const plural = (n: number) => `${n} ${n === 1 ? "card" : "cards"}`;
 
 /**
- * Ecommerce-style facet sidebar. Each value cycles neutral → include (green) → exclude (red).
- * Counts show how many results you'd get by including that value.
+ * Ecommerce-style facet sidebar. Each value has a green include and a red exclude
+ * button; clicking the active one turns it off.
+ * Counts show how many results you'd get by including that value. Selections stay
+ * highlighted in place; each group has its own Clear.
  */
 export function FilterSidebar<T>(props: {
   items: T[];
@@ -50,40 +42,8 @@ export function FilterSidebar<T>(props: {
     onChange(next);
   };
 
-  const active = facets.flatMap((f) =>
-    f.values
-      .filter((v) => state[f.id]?.[v.id])
-      .map((v) => ({ facet: f, value: v, choice: state[f.id]![v.id]! })),
-  );
-
   return (
     <aside className={styles.sidebar} aria-label="Filters">
-      {active.length > 0 && (
-        <div className={styles.active}>
-          {active.map(({ facet, value, choice }) => {
-            const label = `${choice === "include" ? "Include" : "Exclude"}: ${value.label}`;
-            return (
-              <button
-                key={`${facet.id}:${value.id}`}
-                type="button"
-                className={`${styles.chip} ${styles[choice]}`}
-                aria-label={`Remove ${label}`}
-                onClick={() => set(facet.id, value.id, undefined)}
-              >
-                {label} ×
-              </button>
-            );
-          })}
-          <button
-            type="button"
-            className={styles.clear}
-            onClick={() => onChange({})}
-          >
-            Clear all filters
-          </button>
-        </div>
-      )}
-
       {facets.map((facet) => {
         const shown = facet.values.filter(
           (v) => (totals[facet.id]?.[v.id] ?? 0) > 0 || state[facet.id]?.[v.id],
@@ -98,29 +58,66 @@ export function FilterSidebar<T>(props: {
               <span className={styles.mode}>
                 {facet.mode === "any" ? "any" : "all"}
               </span>
+              {selected > 0 && (
+                <button
+                  type="button"
+                  className={styles.clearGroup}
+                  aria-label={`Clear ${facet.label}`}
+                  onClick={(e) => {
+                    // Inside <summary>: don't also toggle the group open or closed.
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const next = { ...state };
+                    delete next[facet.id];
+                    onChange(next);
+                  }}
+                >
+                  Clear
+                </button>
+              )}
             </summary>
             <ul>
               {shown.map((v) => {
                 const choice = state[facet.id]?.[v.id] ?? "neutral";
                 const count = counts[facet.id]?.[v.id] ?? 0;
                 return (
-                  <li key={v.id}>
+                  <li
+                    key={v.id}
+                    className={`${styles.value} ${styles[choice]}`}
+                  >
+                    <span className={styles.label}>{v.label}</span>
+                    <span className={styles.count}>{count}</span>
                     <button
                       type="button"
-                      className={`${styles.value} ${styles[choice]}`}
-                      aria-label={`${v.label}, ${plural(count)}, ${STATE_TEXT[choice]}`}
-                      title="Click to include, again to exclude, again to clear"
-                      onClick={() => set(facet.id, v.id, NEXT[choice])}
+                      className={`${styles.toggle} ${styles.includeButton}`}
+                      aria-label={`Include ${v.label}, ${plural(count)}`}
+                      aria-pressed={choice === "include"}
+                      title="Include"
+                      onClick={() =>
+                        set(
+                          facet.id,
+                          v.id,
+                          choice === "include" ? undefined : "include",
+                        )
+                      }
                     >
-                      <span className={styles.marker} aria-hidden="true">
-                        {choice === "include"
-                          ? "✓"
-                          : choice === "exclude"
-                            ? "✕"
-                            : ""}
-                      </span>
-                      <span className={styles.label}>{v.label}</span>
-                      <span className={styles.count}>{count}</span>
+                      ✓
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.toggle} ${styles.excludeButton}`}
+                      aria-label={`Exclude ${v.label}`}
+                      aria-pressed={choice === "exclude"}
+                      title="Exclude"
+                      onClick={() =>
+                        set(
+                          facet.id,
+                          v.id,
+                          choice === "exclude" ? undefined : "exclude",
+                        )
+                      }
+                    >
+                      ✕
                     </button>
                   </li>
                 );

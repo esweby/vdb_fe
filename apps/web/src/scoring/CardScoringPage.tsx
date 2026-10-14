@@ -1,4 +1,4 @@
-import { describeAttributes } from "@vdb/cards";
+import { describeAttributes, relevantDimensions } from "@vdb/cards";
 import { getRouteApi, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { selectCanScore } from "../auth/authSlice.ts";
@@ -53,6 +53,7 @@ export function CardScoringPage() {
   const [reviewing, setReviewing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [sidesTogether, setSidesTogether] = useState(true);
+  const [showAllDimensions, setShowAllDimensions] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -131,6 +132,17 @@ export function CardScoringPage() {
     );
   }
 
+  const relevant = new Set(
+    relevantDimensions(
+      dimensions.map((d) => d.key),
+      card.attributes,
+      card.variants.map((v) => v.attributes),
+    ),
+  );
+  const shownDimensions = showAllDimensions
+    ? dimensions
+    : dimensions.filter((d) => relevant.has(d.key));
+
   const lines = [
     ...describeAttributes(card.attributes),
     ...card.variants.flatMap((v) =>
@@ -161,6 +173,19 @@ export function CardScoringPage() {
           ))
         )}
       </section>
+
+      <ul className={styles.stats}>
+        {card.variants.map((v) => {
+          const stats = [
+            v.cost !== null ? `cost ${v.cost}` : null,
+            v.power !== null ? `power ${v.power}` : null,
+            v.defense !== null ? `defense ${v.defense}` : null,
+          ].filter(Boolean);
+          if (stats.length === 0) return null;
+          const prefix = v.pitch !== null ? `Pitch ${v.pitch}: ` : "";
+          return <li key={v.id}>{prefix + stats.join(" · ")}</li>;
+        })}
+      </ul>
 
       {lines.length > 0 && (
         <section>
@@ -197,13 +222,26 @@ export function CardScoringPage() {
                 void onSet({ variantId: null, side: null, dimensionId }, score)
               }
               rows={rows}
-              dimensions={dimensions}
+              dimensions={shownDimensions}
               variants={card.variants}
               busy={busy}
             />
+            <label className={styles.showAll}>
+              <input
+                type="checkbox"
+                checked={showAllDimensions}
+                onChange={(e) => setShowAllDimensions(e.target.checked)}
+              />
+              Show all dimensions
+            </label>
+            {shownDimensions.length === 0 && (
+              <p className={styles.meta}>
+                This card doesn't do anything these dimensions measure.
+              </p>
+            )}
             <ScoreEditor
               sidesTogetherByDefault={sidesTogether}
-              dimensions={dimensions}
+              dimensions={shownDimensions}
               variants={card.variants}
               rows={rows}
               onSet={(key, score) => void onSet(key, score)}
