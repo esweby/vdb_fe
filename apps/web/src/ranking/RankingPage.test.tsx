@@ -5,6 +5,8 @@ import { fakeAuthService } from "../test/fakeAuthService.ts";
 import { fakeScoreRepository } from "../test/fakeScoreRepository.ts";
 import { renderApp } from "../test/renderApp.tsx";
 import { sampleCommunity } from "../test/sampleCommunity.ts";
+import { fakeDeckRepository } from "../test/fakeDeckRepository.ts";
+import type { DeckCard } from "../decks/deckRepository.ts";
 
 const scores = (over = {}) =>
   fakeScoreRepository([], { community: sampleCommunity(), ...over }).repository;
@@ -156,5 +158,79 @@ describe("ranking page", () => {
       expect(rankedNames()[0]).toBe("Become the Shadow Lord"),
     );
     expect(ranked().getAllByRole("row")[2]).toHaveTextContent("50");
+  });
+});
+
+describe("adding ranked cards to a deck", () => {
+  const signedIn = () =>
+    fakeAuthService({
+      users: { "u@test.local": { id: "u1", password: "pw", role: "user" } },
+      signedIn: { id: "u1", email: "u@test.local" },
+    }).service;
+  const decks = (cards: DeckCard[] = []) =>
+    fakeDeckRepository([
+      {
+        id: "deck-1",
+        name: "Gate tempo",
+        updatedAt: "2026-10-14T10:00:00Z",
+        cards,
+        pitchTargets: {},
+      },
+    ]);
+
+  it("adds cards to the chosen deck, keeping the choice in the URL", async () => {
+    const fake = decks();
+    const { router } = await renderApp({
+      path: "/ranking",
+      auth: signedIn(),
+      scores: scores(),
+      decks: fake.repository,
+    });
+    const user = userEvent.setup();
+    await user.selectOptions(
+      await screen.findByLabelText("Add to deck"),
+      "Gate tempo",
+    );
+    await waitFor(() =>
+      expect(router.state.location.search).toMatchObject({ deck: "deck-1" }),
+    );
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Add Hocus Pocus (pitch 1) to Gate tempo",
+      }),
+    );
+    expect(fake.saved).toEqual(["set deck-1 hp1 1 main"]);
+    expect(ranked().getByText("1 in deck")).toBeInTheDocument();
+    await user.click(
+      screen.getByRole("button", { name: "Add Nebula Blade to Gate tempo" }),
+    );
+    expect(fake.saved).toEqual([
+      "set deck-1 hp1 1 main",
+      "set deck-1 nb 1 main",
+    ]);
+  });
+
+  it("treats cards already in the deck as pinned", async () => {
+    await renderApp({
+      path: "/ranking?deck=deck-1",
+      auth: signedIn(),
+      scores: scores(),
+      decks: decks([{ variantId: "hp3", quantity: 2, sideboard: false }]),
+    });
+    await screen.findByRole("button", {
+      name: "Add Hocus Pocus (pitch 3) to Gate tempo",
+    });
+    expect(rankedNames()[0]).toBe("Hocus Pocus (pitch 3)");
+    expect(ranked().getByText("2 in deck")).toBeInTheDocument();
+  });
+
+  it("isn't offered to signed-out visitors", async () => {
+    await renderApp({
+      path: "/ranking",
+      auth: fakeAuthService().service,
+      scores: scores(),
+    });
+    await screen.findByRole("table", { name: "Ranked by your priorities" });
+    expect(screen.queryByLabelText("Add to deck")).not.toBeInTheDocument();
   });
 });
