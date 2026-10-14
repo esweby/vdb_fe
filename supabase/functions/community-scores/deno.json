@@ -1,0 +1,5 @@
+{
+  "imports": {
+    "@vdb/scoring": "../../../packages/scoring/src/index.ts"
+  }
+}
