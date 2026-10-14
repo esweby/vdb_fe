@@ -123,19 +123,45 @@ These three tasks go first because any of them could change the plan.
 
 **Done when:** a user can build a legal deck from the ranking or by hand and save it.
 
+### M8: Journey pass and minimum polish (4–5 days)
+
+Scorers are volunteers. If the app feels like a prototype they won't engage, and the ranking depends on their scores. So the app ships to them only once it meets a minimum polish bar, walked through journey by journey.
+
+**Journeys,** in priority order:
+
+1. **Scorer:** sign in → Needs review → score a card → Mark reviewed → next card.
+2. **Builder:** priorities → ranked cards → add to a deck → fix legality problems → check the pitch mix.
+3. **Browsing:** find a card → see what it does and its scores → filter and compare.
+4. **First visit:** signed out → understand what the app is → sign up.
+
+**Minimum polish bar,** for every screen in those journeys:
+
+- [ ] **No dead ends or placeholders.** A real home page explains the app and points to the next step. Every page has a way forward.
+- [ ] **Every state is designed:** loading, empty (with the next action), error (in plain words, with a retry) and saved (visible confirmation).
+- [ ] **Consistent look:** one type scale, spacing scale and colour tokens. Pitch colours everywhere a pitch appears. Dark mode checked.
+- [ ] **Card images** on the card page and in the deck builder, moved forward from the backlog. Recognising cards by their art is what makes it feel like a FaB tool.
+- [ ] **Works on a phone** for scoring and browsing. Deck building can be desktop-first.
+- [ ] **Fast scoring:** "Next card" after Mark reviewed, and sensible keyboard focus, so a scorer can work through a list without reaching for the mouse each time.
+- [ ] **Accessible:** keyboard reachable, visible focus, labelled controls (mostly true already, because the tests query by role and name).
+
+**How:** Claude walks each journey in the browser at desktop and phone widths and lists the friction. The maintainer walks the same journeys and adds to the list. Fixes land as small test-first PRs. A second pass follows after the scoring group has used the app for a week or two.
+
+**Done when:** a new scorer can review 10 cards without asking how, and the maintainer would be happy to show the app to the scoring group.
+
 ## Cut line
 
 If time runs out, ship in this order and stop where the budget ends. Never cut the scoring model; cut interface features instead.
 
 1. M0–M3, the foundations. Can't be cut.
-2. M5 scoring UI (without polish)
+2. M5 scoring UI
 3. M6 ranking
-4. M7 deck builder
-5. Polish: component library breadth, filters, preferences
+4. M8 minimum polish for the scorer journey. Below this bar the scoring group won't engage, so it ships before the deck builder is complete.
+5. M7 deck builder, plus M8 for the builder journey
+6. Polish beyond the bar: component library breadth, preferences, image view toggles
 
 ## Backlog (after phase one's loop works)
 
-- **Card image view:** a List / Images toggle on card lists. Needs `variants.image_url` (the dataset links to Legend Story's public images; pick the standard, non-foil, normal edition, latest printing) and a re-import. Most useful in the deck builder.
+- **Card image view:** a List / Images toggle on card lists. Images on the card page and in the deck builder move forward into M8. Needs `variants.image_url` (the dataset links to Legend Story's public images; pick the standard, non-foil, normal edition, latest printing) and a re-import. Most useful in the deck builder.
 
 ## Exit criteria
 
