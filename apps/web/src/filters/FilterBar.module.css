@@ -1,76 +1,128 @@
 .bar {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem 1.5rem;
+  gap: 0.75rem 2rem;
   align-items: center;
 }
 .group {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.4rem;
 }
 .groupLabel {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
   color: var(--muted);
-  margin-right: 0.15rem;
+  margin-right: 0.25rem;
 }
+
+/* On (the default) is filled in its own colour; off is a quiet hollow outline. */
 .pill {
-  --dot: transparent;
+  --tone: var(--accent);
   font: inherit;
-  font-size: 0.88rem;
+  font-size: 0.92rem;
+  font-weight: 600;
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.25rem 0.7rem;
-  border: 1px solid var(--border);
+  gap: 0.45rem;
+  height: 2.1rem;
+  padding: 0 0.9rem 0 0.75rem;
+  border: 1.5px solid var(--tone);
   border-radius: 999px;
-  background: var(--bg);
+  background: color-mix(in srgb, var(--tone) 16%, var(--bg));
   color: var(--fg);
   cursor: pointer;
+  transition:
+    background 0.12s,
+    border-color 0.12s,
+    color 0.12s;
 }
 .pill:hover {
-  border-color: var(--muted);
+  background: color-mix(in srgb, var(--tone) 26%, var(--bg));
 }
 .pill[aria-pressed="false"] {
-  border-style: dashed;
-  color: var(--muted);
+  font-weight: 500;
+  border-color: var(--border);
   background: none;
-  text-decoration: line-through;
+  color: var(--muted);
 }
-.pill[aria-pressed="false"] .dot {
-  opacity: 0.35;
+.pill[aria-pressed="false"]:hover {
+  border-color: var(--tone);
+  color: var(--fg);
 }
 .pill:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 1px;
+  outline-offset: 2px;
 }
+
+/* Class toggles show a tick when on; pitch toggles show their colour dot. */
 .dot {
-  width: 0.6rem;
-  height: 0.6rem;
+  width: 0.85rem;
+  height: 0.85rem;
   border-radius: 50%;
-  background: var(--dot);
-  display: none;
+  flex: none;
+  display: grid;
+  place-items: center;
+  font-size: 0.65rem;
+  color: var(--bg);
+  background: var(--tone);
+  border: 1.5px solid var(--tone);
+}
+.dot::after {
+  content: "✓";
+}
+.pill[aria-pressed="false"] .dot {
+  background: none;
+  border-color: var(--muted);
+}
+.pill[aria-pressed="false"] .dot::after {
+  content: "";
+}
+.pitch1,
+.pitch2,
+.pitch3,
+.pitch4,
+.pitchnone {
+  padding-left: 0.6rem;
+}
+.pitch1 .dot::after,
+.pitch2 .dot::after,
+.pitch3 .dot::after,
+.pitch4 .dot::after,
+.pitchnone .dot::after {
+  content: "";
+}
+.pitch1 {
+  --tone: #d63c35;
+}
+.pitch2 {
+  --tone: #d9a514;
+}
+.pitch3 {
+  --tone: #3b7dd8;
+}
+.pitch4 {
+  --tone: #8a5cc7;
+}
+.pitchnone {
+  --tone: #8a8a8a;
 }
 .pitch1 .dot,
 .pitch2 .dot,
 .pitch3 .dot,
 .pitch4 .dot,
 .pitchnone .dot {
-  display: inline-block;
+  width: 0.95rem;
+  height: 0.95rem;
 }
-.pitch1 {
-  --dot: #d63c35;
-}
-.pitch2 {
-  --dot: #e6b422;
-}
-.pitch3 {
-  --dot: #3b7dd8;
-}
-.pitch4 {
-  --dot: #8a5cc7;
-}
-.pitchnone .dot {
-  border: 1px solid var(--muted);
+.pill[aria-pressed="false"].pitch1 .dot,
+.pill[aria-pressed="false"].pitch2 .dot,
+.pill[aria-pressed="false"].pitch3 .dot,
+.pill[aria-pressed="false"].pitch4 .dot,
+.pill[aria-pressed="false"].pitchnone .dot {
+  border-color: var(--tone);
+  opacity: 0.6;
 }

@@ -60,3 +60,10 @@
 .empty {
   color: var(--muted);
 }
+/* Search, sort and the view toggle share one height, so they line up. */
+.toolbar :global(input),
+.toolbar select,
+.viewToggle {
+  height: 2.3rem;
+  box-sizing: border-box;
+}

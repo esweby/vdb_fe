@@ -1,7 +1,7 @@
 .sidebar {
   display: flex;
   flex-direction: column;
-  gap: 1.1rem;
+  gap: 0.35rem;
   font-size: 0.92rem;
 }
 .facet ul {
@@ -9,11 +9,36 @@
   margin: 0;
   padding: 0;
 }
-.heading {
+.heading,
+.sectionHeading {
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
-  margin: 0 0 0.3rem;
+  gap: 0.4rem;
+  cursor: pointer;
+  list-style: none;
+}
+.heading::-webkit-details-marker,
+.sectionHeading::-webkit-details-marker {
+  display: none;
+}
+/* A chevron that turns when the group opens. */
+.heading::before,
+.sectionHeading::before {
+  content: "›";
+  display: inline-block;
+  width: 0.6rem;
+  transition: transform 0.15s;
+}
+details[open] > .heading::before,
+details[open] > .sectionHeading::before {
+  transform: rotate(90deg);
+}
+.heading > span,
+.sectionHeading > span {
+  flex: 1;
+}
+.heading {
+  padding: 0.2rem 0;
   font-size: 0.8rem;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -99,13 +124,16 @@
 }
 .section {
   border-top: 1px solid var(--border);
-  padding-top: 0.75rem;
+  padding-top: 0.5rem;
+  margin-top: 0.4rem;
 }
-.section > summary {
-  cursor: pointer;
+.sectionHeading {
   font-weight: 600;
-  margin-bottom: 0.6rem;
+  padding: 0.2rem 0;
 }
 .section .facet {
-  margin-bottom: 0.9rem;
+  margin-left: 0.6rem;
+}
+.facet[open] > ul {
+  margin: 0.15rem 0 0.6rem;
 }

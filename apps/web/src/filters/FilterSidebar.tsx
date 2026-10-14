@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   activeCount,
   facetCounts,
@@ -97,15 +97,22 @@ export function FilterSidebar<T>(props: {
     const changed = Object.keys(state[facet.id] ?? {}).length > 0;
     const feature = kindOf(facet) === "feature";
     return (
-      <div key={facet.id} className={styles.facet}>
-        <h3 className={styles.heading}>
-          {facet.label}
-          {changed && (
+      <Collapsible
+        key={facet.id}
+        title={facet.label}
+        changed={changed}
+        className={styles.facet}
+        summaryClassName={styles.heading}
+        action={
+          changed && (
             <button
               type="button"
               className={styles.all}
               aria-label={`Show all ${facet.label}`}
-              onClick={() => {
+              onClick={(e) => {
+                // Inside <summary>: don't also open or close the group.
+                e.preventDefault();
+                e.stopPropagation();
                 const next = { ...state };
                 delete next[facet.id];
                 onChange(next);
@@ -113,8 +120,9 @@ export function FilterSidebar<T>(props: {
             >
               All
             </button>
-          )}
-        </h3>
+          )
+        }
+      >
         <ul>
           {shown.map((v) => {
             const ticked = isTicked(facet, state, v.id);
@@ -148,21 +156,57 @@ export function FilterSidebar<T>(props: {
             );
           })}
         </ul>
-      </div>
+      </Collapsible>
     );
   };
 
   return (
     <aside className={styles.sidebar} aria-label="Filters">
       {loose.map(group)}
-      {sections.map((name) => (
-        <details key={name} className={styles.section}>
-          <summary>{name}</summary>
-          {side.filter((f) => f.section === name).map(group)}
-        </details>
-      ))}
+      {sections.map((name) => {
+        const inSection = side.filter((f) => f.section === name);
+        return (
+          <Collapsible
+            key={name}
+            title={name}
+            changed={inSection.some((f) => !!state[f.id])}
+            className={styles.section}
+            summaryClassName={styles.sectionHeading}
+          >
+            {inSection.map(group)}
+          </Collapsible>
+        );
+      })}
     </aside>
   );
 }
 
 export { activeCount };
+
+/** A group that starts collapsed, and opens itself when it has active filters. */
+function Collapsible(props: {
+  title: string;
+  changed: boolean;
+  className?: string;
+  summaryClassName?: string;
+  action?: ReactNode;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(props.changed);
+  useEffect(() => {
+    if (props.changed) setOpen(true);
+  }, [props.changed]);
+  return (
+    <details
+      className={props.className}
+      open={open}
+      onToggle={(e) => setOpen(e.currentTarget.open)}
+    >
+      <summary className={props.summaryClassName}>
+        <span>{props.title}</span>
+        {props.action}
+      </summary>
+      {props.children}
+    </details>
+  );
+}
