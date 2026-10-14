@@ -225,6 +225,27 @@ describe("describeAttributes", () => {
     ]);
   });
 
+  it("describes cards that banish themselves", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        banishesSelf: [
+          { trigger: "would_go_to_graveyard" },
+          { trigger: "activated" },
+          {
+            trigger: "combat_chain_closes",
+            optional: true,
+            conditions: ["hero_lost_life_this_turn"],
+          },
+        ],
+      }),
+    ).toEqual([
+      "Banishes itself instead of going to your graveyard.",
+      "Banishes itself when activated.",
+      "May banish itself when the combat chain closes, if a hero has lost life this turn.",
+    ]);
+  });
+
   it("describes nothing for a plain card", () => {
     expect(describeAttributes(generated)).toEqual([]);
   });

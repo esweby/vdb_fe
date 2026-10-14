@@ -70,6 +70,18 @@ describe("authoredAttributesSchema", () => {
     ).toBe(true);
   });
 
+  it("accepts cards that banish themselves", () => {
+    expect(
+      authoredAttributesSchema.safeParse({
+        banishesSelf: [
+          { trigger: "would_go_to_graveyard" },
+          { trigger: "activated" },
+          { trigger: "combat_chain_closes", optional: true },
+        ],
+      }).success,
+    ).toBe(true);
+  });
+
   it("accepts conditional and granted go again", () => {
     expect(
       authoredAttributesSchema.safeParse({
