@@ -192,8 +192,8 @@ describe("cards page", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("pages through results, and goes back to page 1 when filters change", async () => {
-    // 70 single-pitch cards: 60 small tiles fit on page 1
+  it("loads more results under the ones shown, and starts again when filters change", async () => {
+    // 70 single-pitch cards: 60 small tiles in the first batch
     const many = Array.from({ length: 70 }, (_, i) => ({
       ...sampleCards[1]!,
       id: `card-${i}`,
@@ -207,18 +207,26 @@ describe("cards page", () => {
     });
     await screen.findByRole("article", { name: "Card 00 (blue)" });
     expect(screen.getAllByRole("article")).toHaveLength(60);
-    // One count line, in the unit on screen (a tile per pitch)
-    expect(screen.getByText(/^1–60 of 70 cards/)).toBeInTheDocument();
-    expect(screen.queryByText(/Showing/)).not.toBeInTheDocument();
+    expect(screen.getByText(/^Showing 60 of 70 cards/)).toBeInTheDocument();
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: "Next page" }));
-    await waitFor(() =>
-      expect(router.state.location.search).toMatchObject({ page: 2 }),
-    );
-    expect(screen.getAllByRole("article")).toHaveLength(10);
+    const more = screen.getByRole("button", { name: /^Load more/ });
+    expect(more).toHaveTextContent("10 left");
+    await user.click(more);
+    // The first batch stays; the rest is added under it
+    expect(screen.getAllByRole("article")).toHaveLength(70);
+    expect(
+      screen.getByRole("article", { name: "Card 00 (blue)" }),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("article", { name: "Card 69 (blue)" }),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^Load more/ }),
+    ).not.toBeInTheDocument();
+    expect(router.state.location.search).toMatchObject({ page: 2 });
+    expect(
+      screen.queryByRole("navigation", { name: "Pages" }),
+    ).not.toBeInTheDocument();
     await user.type(screen.getByLabelText("Search"), "Card 0");
     await waitFor(() =>
       expect(router.state.location.search.page).toBeUndefined(),
