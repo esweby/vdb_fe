@@ -54,6 +54,7 @@ const CONDITION_TEXT: Record<Condition, string> = {
   created_3_or_more_runechants: "it created 3 or more Runechants",
   paid_optional_additional_cost: "you paid its optional additional cost",
   defending_hero_has_soul_cards: "the defending hero has cards in their soul",
+  usurped_this_turn: "you've usurped this turn",
 };
 
 const TOKEN_TEXT: Record<Token, [one: string, many: string]> = {
@@ -233,6 +234,9 @@ export function describeAttributes(attributes: CardAttributes): string[] {
     lines.push(
       `Can be played as an instant${ifConditions(attributes.instantSpeed.conditions)}.`,
     );
+  }
+  for (const c of attributes.costReductions ?? []) {
+    lines.push(`Costs ${c.amount}{r} less${ifConditions(c.conditions)}.`);
   }
   if (attributes.costReducedPerRunechant)
     lines.push("Costs {r} less for each Runechant you control.");

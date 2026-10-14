@@ -45,6 +45,7 @@ export const CONDITIONS = [
   "created_3_or_more_runechants",
   "paid_optional_additional_cost",
   "defending_hero_has_soul_cards",
+  "usurped_this_turn",
 ] as const;
 
 export const BANISH_ZONES = ["hand", "deck_top", "graveyard"] as const;
@@ -164,6 +165,15 @@ export const authoredAttributesSchema = z.strictObject({
   playableFromBanish: z.strictObject({ conditions }).optional(),
   arcaneDamage: z.array(arcaneDamageSchema).optional(),
   costReducedPerRunechant: z.boolean().optional(),
+  /** Fixed cost reductions, each with the condition that unlocks it. */
+  costReductions: z
+    .array(
+      z.strictObject({
+        amount,
+        conditions: z.array(z.enum(CONDITIONS)).min(1),
+      }),
+    )
+    .optional(),
   disrupts: z.array(disruptionSchema).optional(),
   /** Searches your deck for a group or named card. */
   tutors: z.array(tutorSchema).optional(),
