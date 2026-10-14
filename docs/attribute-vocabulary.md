@@ -22,10 +22,11 @@ This page defines what we record about each card. Every hand-authored entry has 
 | `banishesOwn` | Cards this card banishes from **your own** hand, top of deck or graveyard, and whether it's optional. These feed Gates and play-from-banish. | Become the Shadow Lord: a card from hand, `on_play` |
 | `playableFromBanish` | The card can be played from your banished zone, with any conditions. | Bounding Demigon: if you've played a non-attack action this turn |
 | `arcaneDamage` | Arcane damage the card deals: amount, when and conditions. | Arcanic Crackle: 1 `on_attack` |
+| `grantedTo` (on `tokens` and `arcaneDamage`) | The effect is given to a later card: `next_attack_action` or `next_runeblade_attack_action`. | Mauvrion Skies: your next Runeblade attack action creates 3 Runechants when it hits |
 | `costReducedPerRunechant` | "Costs {r} less for each Runechant you control." | Rune Flash |
 | `notes` | Free text for the reviewer: doubts, or things the vocabulary can't express yet. | |
 
-**When an effect happens (`trigger`):** `on_play`, `on_attack`, `on_hit`, `on_defend`, `on_pitch`, `on_banished`, `on_leave_arena`, `on_destroyed`, `start_of_turn`, `start_of_action_phase`, `combat_chain_closes`, `activated` (an instant ability on the card).
+**When an effect happens (`trigger`):** `on_play`, `on_attack`, `on_hit`, `on_defend`, `on_pitch`, `on_banished`, `on_leave_arena`, `on_destroyed`, `start_of_turn`, `start_of_action_phase`, `combat_chain_closes`, `activated` (an instant ability on the card), `your_attack_action_played` (when you play an attack action card), `your_attack_action_hits` (when an attack action card you control hits).
 
 **What has to be true (`conditions`):**
 
@@ -33,7 +34,7 @@ This page defines what we record about each card. Every hand-authored entry has 
 | --- | --- |
 | `banished_card_is_runeblade` / `banished_card_is_shadow` | the banished card is Runeblade / Shadow |
 | `pitched_attack_action` / `pitched_non_attack_action` | an attack / non-attack action card was pitched to play it |
-| `played_non_attack_action_this_turn` | you've played a non-attack action card this turn |
+| `played_attack_action_this_turn` / `played_non_attack_action_this_turn` | you've played an attack / non-attack action card this turn |
 | `dealt_arcane_damage_this_turn` | you've dealt arcane damage this turn |
 | `played_or_created_aura_this_turn` | you've played or created an aura this turn |
 | `played_from_banish` | it was played from your banished zone |
@@ -65,10 +66,12 @@ Review sheet line: *Banishes a card from your hand when played. Creates 1 Runech
 
 Seen while reading the cards. Each gets added in a small, tested change when its batch comes up, not in advance:
 
-- Conditions involving attack actions played this turn (Revel in Runeblood)
-- Effects that modify token creation rather than creating tokens (Mordred Tide: "create that many plus 1")
-- Effects granted to *another* card ("the next Runeblade attack… gets 'When this hits, create 3 Runechants'", e.g. Mauvrion Skies, Runic Reaping)
+- Effects that modify token creation rather than creating tokens (Mordred Tide: "create that many plus 1"). Recorded as a note for now.
+- Conditions on opponents' auras (Runic Reclamation). Recorded as a note for now.
 - Gate-specific effects beyond creating them (Planar Chaos)
+- Conditional go again: the dataset lists "Go again" as a keyword even when it's conditional (Embrace Ursur, Douse in Runeblood, Meat and Greet), so `hasGoAgain` can be too generous. Flagged in notes for now.
+
+Added for batch 1: `your_attack_action_played`, `your_attack_action_hits`, `played_attack_action_this_turn`, `grantedTo`.
 
 ## Review workflow
 
