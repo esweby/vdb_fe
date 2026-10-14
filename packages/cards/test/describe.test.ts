@@ -616,6 +616,48 @@ describe("describeAttributes", () => {
     ]);
   });
 
+  it("describes Machinations of Dominion's granted overpower and conditional go again", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        conditionalBonuses: [
+          { effect: "overpower", grantedTo: "next_runeblade_attack_action" },
+        ],
+        grantsGoAgain: {
+          to: "next_runeblade_attack_action",
+          conditions: ["played_or_created_aura_this_turn"],
+        },
+      }),
+    ).toEqual([
+      "Your next Runeblade attack action card this turn gets overpower.",
+      "Your next Runeblade attack action card this turn gets go again, if you've played or created an aura this turn.",
+    ]);
+  });
+
+  it("describes Swarming Gloomveil's aura thresholds", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        goAgain: { conditions: ["played_or_created_aura_this_turn"] },
+        conditionalBonuses: [
+          {
+            effect: "plus_power",
+            amount: 1,
+            conditions: ["played_or_created_2_or_more_auras_this_turn"],
+          },
+          {
+            effect: "arcane_cant_be_prevented",
+            conditions: ["played_or_created_3_or_more_auras_this_turn"],
+          },
+        ],
+      }),
+    ).toEqual([
+      "Gets +1 power, if you've played or created 2 or more auras this turn.",
+      "When it hits a hero, they can't prevent your arcane damage this turn, if you've played or created 3 or more auras this turn.",
+      "Gets go again, if you've played or created an aura this turn.",
+    ]);
+  });
+
   it("describes cards a card works with", () => {
     expect(
       describeAttributes({
