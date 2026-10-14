@@ -6,7 +6,13 @@ import styles from "./ui.module.css";
  * Keyboard: arrows move by step, Home/End jump to the ends.
  */
 export function Slider(props: {
+  /** The accessible name. */
   label: string;
+  /**
+   * What's shown above the slider, when it should differ from `label` (e.g. just "Forsaken"
+   * under a "Gate creation" heading). null shows nothing. The accessible name stays `label`.
+   */
+  visibleLabel?: string | null;
   value: number | null;
   onChange: (value: number) => void;
   min?: number;
@@ -41,9 +47,17 @@ export function Slider(props: {
 
   return (
     <div className={styles.field}>
-      <label htmlFor={id} className={styles.label}>
-        {label}
-      </label>
+      {props.visibleLabel === undefined ? (
+        <label htmlFor={id} className={styles.label}>
+          {label}
+        </label>
+      ) : (
+        props.visibleLabel && (
+          <span className={styles.label} aria-hidden="true">
+            {props.visibleLabel}
+          </span>
+        )
+      )}
       <div className={styles.scaleRow}>
         <div
           className={styles.scale}
@@ -73,6 +87,7 @@ export function Slider(props: {
           step={step}
           value={value ?? min}
           aria-valuetext={text}
+          aria-label={props.visibleLabel === undefined ? undefined : label}
           onChange={(e) => onChange(Number(e.target.value))}
           onKeyDown={onKeyDown}
         />

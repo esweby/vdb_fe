@@ -46,7 +46,9 @@ describe("account page", () => {
       scores: fake.repository,
     });
     expect(
-      await screen.findByRole("slider", { name: "Gate creation, Forsaken" }),
+      await screen.findByRole("slider", {
+        name: "Runechant creation, Forsaken",
+      }),
     ).toBeInTheDocument();
   });
 });

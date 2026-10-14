@@ -9,3 +9,8 @@
 .review {
   margin: 0.5rem 0 1rem;
 }
+.showAll {
+  display: block;
+  margin-bottom: 0.75rem;
+  color: var(--muted);
+}

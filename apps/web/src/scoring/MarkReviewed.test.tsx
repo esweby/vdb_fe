@@ -15,7 +15,7 @@ const signedIn = (email: "s@test.local" | "u@test.local") =>
 describe("Mark reviewed", () => {
   it("shows the summary before confirming, highlighting blanks that count as 0", async () => {
     const fake = fakeScoreRepository([
-      { variantId: null, side: null, dimensionId: 1, score: 80 },
+      { variantId: "hp1", side: null, dimensionId: 1, score: 80 },
     ]);
     await renderApp({
       path: "/cards/card-hocus-pocus",
@@ -90,8 +90,8 @@ describe("Mark reviewed", () => {
     expect(
       within(screen.getByRole("dialog")).queryAllByText("0 (blank)"),
     ).toHaveLength(
-      // Gate creation is still fully blank: 3 pitches x 2 sides
-      6,
+      // Gate creation isn't relevant to Hocus Pocus, so nothing is left blank.
+      0,
     );
   });
 

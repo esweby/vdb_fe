@@ -36,6 +36,12 @@ export const sampleDetail: CardDetail = {
         trigger: "on_play",
         conditions: ["banished_card_is_runeblade"],
       },
+      {
+        token: "gate",
+        amount: 1,
+        trigger: "on_play",
+        conditions: ["banished_card_is_shadow"],
+      },
     ],
   },
   attributesVerified: true,
