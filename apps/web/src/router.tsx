@@ -8,6 +8,8 @@ import {
 import { authSettled } from "./auth/listenToAuth.ts";
 import { selectCanScore, selectIsSignedIn } from "./auth/authSlice.ts";
 import { SignInPage } from "./auth/SignInPage.tsx";
+import { CardPage } from "./cards/CardPage.tsx";
+import { CardsPage } from "./cards/CardsPage.tsx";
 import { Layout } from "./Layout.tsx";
 import { PlaceholderPage } from "./pages/PlaceholderPage.tsx";
 import type { AppStore } from "./store.ts";
@@ -50,7 +52,16 @@ const page = (
 
 const routeTree = rootRoute.addChildren([
   page("/", "Viserai Deck Builder"),
-  page("/cards", "Cards"),
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/cards",
+    component: CardsPage,
+  }),
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/cards/$cardId",
+    component: CardPage,
+  }),
   page("/ranking", "Ranking"),
   page("/needs-review", "Needs review", requireScorer),
   page("/decks", "Decks", requireSignedIn),
