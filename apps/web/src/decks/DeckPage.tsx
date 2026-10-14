@@ -5,6 +5,7 @@ import { useCards } from "../cards/useCards.ts";
 import { useServices } from "../servicesContext.ts";
 import { Tag, TextField } from "../ui/index.ts";
 import { analyseDeck } from "./deckAnalysis.ts";
+import { CardTile } from "./CardTile.tsx";
 import { DeckAnalysisPanel } from "./DeckAnalysisPanel.tsx";
 import type { Deck, DeckCard, PitchTargets } from "./deckRepository.ts";
 import {
@@ -23,6 +24,7 @@ const route = getRouteApi("/decks/$deckId");
 const MAX_RESULTS = 12;
 
 type Tab = "cards" | "stats";
+type View = "tiles" | "list";
 const TABS: { id: Tab; label: string }[] = [
   { id: "cards", label: "Cards" },
   { id: "stats", label: "Stats" },
@@ -30,7 +32,7 @@ const TABS: { id: Tab; label: string }[] = [
 
 export function DeckPage() {
   const { deckId } = route.useParams();
-  const { tab = "cards" } = route.useSearch();
+  const { tab = "cards", view = "tiles" } = route.useSearch();
   const navigate = useNavigate();
   const { decks } = useServices();
   const { items: cards } = useCards();
@@ -151,12 +153,17 @@ export function DeckPage() {
   const main = entries.filter((e) => !e.sideboard);
   const ofSection = (section: string) =>
     main.filter((e) => sectionOf(e.card) === section);
-  const setTab = (next: Tab) =>
+  const go = (next: { tab: Tab; view: View }) =>
     void navigate({
       to: ".",
       replace: true,
-      search: next === "cards" ? {} : { tab: next },
+      search: {
+        ...(next.tab === "stats" ? { tab: "stats" as const } : {}),
+        ...(next.view === "list" ? { view: "list" as const } : {}),
+      },
     });
+  const setTab = (next: Tab) => go({ tab: next, view });
+  const setView = (next: View) => go({ tab, view: next });
 
   return (
     <>
@@ -216,34 +223,56 @@ export function DeckPage() {
           />
         ) : (
           <div className={styles.editor}>
-            <div className={styles.columns}>
-              <PoolSection
-                title="Deck"
-                heading={`Deck ${counts.deck}${rules ? ` / ${rules.deckMin}` : ""}`}
-                entries={ofSection("deck")}
-                copyLimit={copyLimit}
-                onSet={(card) => void setCard(card)}
-              />
-              <div className={styles.gearColumn}>
+            <div>
+              <div className={styles.viewToggle}>
+                {(["tiles", "list"] as const).map((v) => (
+                  <button
+                    key={v}
+                    type="button"
+                    aria-pressed={view === v}
+                    onClick={() => setView(v)}
+                  >
+                    {v === "tiles" ? "Card view" : "List view"}
+                  </button>
+                ))}
+              </div>
+              <div
+                className={
+                  view === "tiles" ? styles.tileColumns : styles.columns
+                }
+              >
                 <PoolSection
-                  title="Weapons"
-                  entries={ofSection("weapon")}
+                  title="Deck"
+                  heading={`Deck ${counts.deck}${rules ? ` / ${rules.deckMin}` : ""}`}
+                  entries={ofSection("deck")}
                   copyLimit={copyLimit}
+                  view={view}
                   onSet={(card) => void setCard(card)}
                 />
+                <div className={styles.gearColumn}>
+                  <PoolSection
+                    title="Weapons"
+                    entries={ofSection("weapon")}
+                    copyLimit={copyLimit}
+                    view={view}
+                    onSet={(card) => void setCard(card)}
+                  />
+                  <PoolSection
+                    title="Equipment"
+                    entries={ofSection("equipment")}
+                    copyLimit={copyLimit}
+                    view={view}
+                    onSet={(card) => void setCard(card)}
+                  />
+                </div>
                 <PoolSection
-                  title="Equipment"
-                  entries={ofSection("equipment")}
+                  title="Sideboard"
+                  entries={entries.filter((e) => e.sideboard)}
                   copyLimit={copyLimit}
+                  view={view}
                   onSet={(card) => void setCard(card)}
                 />
               </div>
-              <PoolSection
-                title="Sideboard"
-                entries={entries.filter((e) => e.sideboard)}
-                copyLimit={copyLimit}
-                onSet={(card) => void setCard(card)}
-              />
             </div>
 
             <section className={styles.finder} aria-label="Add cards">
@@ -330,9 +359,10 @@ function PoolSection(props: {
   heading?: string;
   entries: DeckEntry[];
   copyLimit: number;
+  view: View;
   onSet: (card: DeckCard) => void;
 }) {
-  const { title, entries, copyLimit, onSet } = props;
+  const { title, entries, copyLimit, view, onSet } = props;
   // Red, yellow, blue, then cards without pitch; alphabetical within each.
   const pitchOrder = (e: DeckEntry) => e.variant.pitch ?? 99;
   const sorted = [...entries].sort(
@@ -340,25 +370,72 @@ function PoolSection(props: {
       pitchOrder(a) - pitchOrder(b) || a.card.name.localeCompare(b.card.name),
   );
   const total = entries.reduce((n, e) => n + e.quantity, 0);
+
+  const controls = (e: DeckEntry) => {
+    const label = variantName(e.card, e.variant);
+    const set = (change: Partial<DeckCard>) =>
+      onSet({
+        variantId: e.variant.id,
+        quantity: e.quantity,
+        sideboard: e.sideboard,
+        ...change,
+      });
+    const full = e.quantity >= copyLimit;
+    return (
+      <>
+        <button
+          type="button"
+          aria-label={`One fewer ${label}`}
+          onClick={() => set({ quantity: e.quantity - 1 })}
+        >
+          −
+        </button>
+        <button
+          type="button"
+          aria-label={`One more ${label}`}
+          disabled={full}
+          title={full ? `At most ${copyLimit} copies` : undefined}
+          onClick={() => set({ quantity: e.quantity + 1 })}
+        >
+          +
+        </button>
+        <label
+          className={styles.sideboard}
+          title={e.sideboard ? "Move to the deck" : "Move to the sideboard"}
+        >
+          <input
+            type="checkbox"
+            aria-label={`Sideboard: ${label}`}
+            checked={e.sideboard}
+            onChange={(ev) => set({ sideboard: ev.target.checked })}
+          />
+          SB
+        </label>
+      </>
+    );
+  };
+
   return (
     <section aria-label={title} className={styles.section}>
       <h2>{props.heading ?? `${title} ${total}`}</h2>
       {sorted.length === 0 ? (
         <p className={styles.muted}>None</p>
+      ) : view === "tiles" ? (
+        <ul className={styles.tiles}>
+          {sorted.map((e) => (
+            <li key={e.variant.id}>
+              <CardTile card={e.card} variant={e.variant} quantity={e.quantity}>
+                <span className={styles.tileControls}>{controls(e)}</span>
+              </CardTile>
+            </li>
+          ))}
+        </ul>
       ) : (
         <ul className={styles.rows}>
           {sorted.map((e) => {
             const label = variantName(e.card, e.variant);
-            const set = (change: Partial<DeckCard>) =>
-              onSet({
-                variantId: e.variant.id,
-                quantity: e.quantity,
-                sideboard: e.sideboard,
-                ...change,
-              });
             const slot = slotOf(e.card);
             const hands = e.card.subtypes.find((s) => s === "1H" || s === "2H");
-            const full = e.quantity >= copyLimit;
             return (
               <li key={e.variant.id} className={styles.row}>
                 <output
@@ -383,38 +460,7 @@ function PoolSection(props: {
                 {(slot || hands) && (
                   <span className={styles.muted}>{slot ?? hands}</span>
                 )}
-                <span className={styles.controls}>
-                  <button
-                    type="button"
-                    aria-label={`One fewer ${label}`}
-                    onClick={() => set({ quantity: e.quantity - 1 })}
-                  >
-                    −
-                  </button>
-                  <button
-                    type="button"
-                    aria-label={`One more ${label}`}
-                    disabled={full}
-                    title={full ? `At most ${copyLimit} copies` : undefined}
-                    onClick={() => set({ quantity: e.quantity + 1 })}
-                  >
-                    +
-                  </button>
-                  <label
-                    className={styles.sideboard}
-                    title={
-                      e.sideboard ? "Move to the deck" : "Move to the sideboard"
-                    }
-                  >
-                    <input
-                      type="checkbox"
-                      aria-label={`Sideboard: ${label}`}
-                      checked={e.sideboard}
-                      onChange={(ev) => set({ sideboard: ev.target.checked })}
-                    />
-                    SB
-                  </label>
-                </span>
+                <span className={styles.controls}>{controls(e)}</span>
               </li>
             );
           })}

@@ -91,8 +91,12 @@ const routeTree = rootRoute.addChildren([
   createRoute({
     getParentRoute: () => rootRoute,
     path: "/decks/$deckId",
-    validateSearch: (search: Record<string, unknown>): { tab?: "stats" } =>
-      search.tab === "stats" ? { tab: "stats" } : {},
+    validateSearch: (
+      search: Record<string, unknown>,
+    ): { tab?: "stats"; view?: "list" } => ({
+      ...(search.tab === "stats" ? { tab: "stats" as const } : {}),
+      ...(search.view === "list" ? { view: "list" as const } : {}),
+    }),
     beforeLoad: requireSignedIn,
     component: DeckPage,
   }),
