@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { fakeAuthService } from "../test/fakeAuthService.ts";
 import { fakeDeckRepository } from "../test/fakeDeckRepository.ts";
 import { renderApp } from "../test/renderApp.tsx";
+import { fakeCardRepository, sampleCards } from "../test/fakeCardRepository.ts";
 import { fakeScoreRepository } from "../test/fakeScoreRepository.ts";
 import { sampleCommunity } from "../test/sampleCommunity.ts";
 import type { DeckCard, PitchTargets } from "./deckRepository.ts";
@@ -123,7 +124,7 @@ describe("deck page", () => {
       decks: fake.repository,
     });
     expect(
-      await region("Weapons").findByText("Nebula Blade"),
+      await region("Weapons and equipment").findByText("Nebula Blade"),
     ).toBeInTheDocument();
     expect(region("Deck").queryByText("Nebula Blade")).not.toBeInTheDocument();
     expect(
@@ -155,7 +156,7 @@ describe("deck page", () => {
     ).toBeInTheDocument();
     expect(within(tile).getByText("Blood Debt")).toBeInTheDocument();
     expect(within(tile).getByText("3×")).toBeInTheDocument();
-    const blade = region("Weapons").getByRole("article", {
+    const blade = region("Weapons and equipment").getByRole("article", {
       name: "Nebula Blade",
     });
     expect(
@@ -183,6 +184,65 @@ describe("deck page", () => {
     );
     expect(region("Deck").queryByRole("article")).not.toBeInTheDocument();
     expect(region("Deck").getByText("3×")).toBeInTheDocument();
+  });
+
+  it("puts weapons and equipment together in one row above the deck", async () => {
+    const gear = (id: string, name: string, slot: string) => ({
+      ...sampleCards.find((c) => c.id === "card-nebula-blade")!,
+      id: `card-${id}`,
+      name,
+      type: "equipment",
+      subtypes: [slot],
+      variants: [
+        {
+          id,
+          pitch: null,
+          cost: null,
+          power: null,
+          defense: 1,
+          attributes: {},
+        },
+      ],
+    });
+    await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      cards: fakeCardRepository([
+        ...sampleCards,
+        gear("legs", "Arcane Lantern", "Legs"),
+        gear("head", "Crown of Seeds", "Head"),
+      ]),
+      decks: withDeck([
+        { variantId: "hp1", quantity: 3, sideboard: false },
+        { variantId: "legs", quantity: 1, sideboard: false },
+        { variantId: "nb", quantity: 1, sideboard: false },
+        { variantId: "head", quantity: 1, sideboard: false },
+      ]).repository,
+    });
+    const row = await screen.findByRole("region", {
+      name: "Weapons and equipment",
+    });
+    await within(row).findByRole("article", { name: "Crown of Seeds" });
+    expect(
+      within(row)
+        .getAllByRole("article")
+        .map((a) => a.getAttribute("aria-label")),
+    ).toEqual(["Nebula Blade", "Crown of Seeds", "Arcane Lantern"]);
+    // The art box names the slot, so it isn't lost when the type line is cut off.
+    expect(
+      within(
+        within(row).getByRole("article", { name: "Crown of Seeds" }),
+      ).getByText("Head"),
+    ).toBeInTheDocument();
+    expect(
+      within(
+        within(row).getByRole("article", { name: "Nebula Blade" }),
+      ).getByText("Sword · 2H"),
+    ).toBeInTheDocument();
+    const deck = screen.getByRole("region", { name: "Deck" });
+    expect(
+      row.compareDocumentPosition(deck) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it("orders cards by pitch, then name", async () => {

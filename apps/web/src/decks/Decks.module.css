@@ -504,3 +504,12 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+/* Weapons and equipment: one row across the top in card view. */
+.tileColumns .section:first-child .tiles {
+  grid-auto-flow: column;
+  grid-template-columns: none;
+  grid-auto-columns: 9.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}

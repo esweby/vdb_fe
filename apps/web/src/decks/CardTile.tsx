@@ -67,7 +67,9 @@ export function CardTile(props: {
         {card.name}
       </Link>
       <div className={styles.art} aria-hidden="true">
-        {TYPE_LABELS[card.type] ?? card.type}
+        {GEAR.includes(card.type) && card.subtypes.length > 0
+          ? card.subtypes.join(" · ")
+          : (TYPE_LABELS[card.type] ?? card.type)}
       </div>
       <div className={styles.text}>
         {card.keywords.length > 0 ? (
