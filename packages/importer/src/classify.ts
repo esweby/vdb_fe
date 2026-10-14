@@ -94,8 +94,15 @@ export function classifyTypes(types: string[]): ClassifiedTypes {
   return result;
 }
 
+/** Hero named in "<Hero> Specialization" on the card, or null. */
+export function specializationOf(card: DatasetCard): string | null {
+  return /\b([A-Z][\w']+) Specialization\b/.exec(card.functional_text_plain ?? "")?.[1] ?? null;
+}
+
 export function isViseraiLegal(card: DatasetCard): boolean {
   if (!card.cc_legal || card.cc_banned) return false;
+  const specialization = specializationOf(card);
+  if (specialization !== null && specialization !== "Viserai") return false;
   const { mainType, classes, talents } = classifyTypes(card.types);
   if (mainType === null || NEVER_IN_DECK.has(mainType)) return false;
   if (classes.length === 0 && talents.length === 0) return false;

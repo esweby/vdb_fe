@@ -64,7 +64,14 @@ These three tasks go first because any of them could change the plan.
 - [x] Importer (`packages/importer`, `npm run import -w @vdb/importer`): downloads the pinned dataset commit, upserts `cards` (keyed by name) and `variants` (keyed by the dataset's `unique_id`). Safe to re-run; keeps `fringe` and `hidden`. Refuses a non-local database without `--yes-remote`.
 - [ ] Legality filter (`src/classify.ts`), **to be checked by a player**. First run: 633 cards, 1,047 variants (173 action, 224 attack action, 34 instant, 19 defense reaction, 7 attack reaction, 7 block, 9 resource, 9 weapons, 151 equipment).
 - [x] Map dataset fields to ours: types → `type`, `subtypes`, `classes`, `talents`; keywords → `hasGoAgain`, `hasBloodDebt`. Text and attributes are stored per variant as well, because pitch variants can differ (e.g. "create 3/2/1 Runechants").
-- [ ] Hand-author the Viserai-specific `attributes` (`tokens`, `conditions`, blood debt and so on), Runeblade and Shadow cards first, generics as needed.
+- [x] Attribute vocabulary (`packages/cards`, [docs/attribute-vocabulary.md](attribute-vocabulary.md)), validated by the importer, with plain-English descriptions and a review sheet generator.
+- [x] Other heroes' specializations excluded (removed Doomsday, Eclipse, Oblivion, Soul Harvest, Soul Reaping, Flail of Agony). Pool: 627 cards, 1,041 variants.
+- [ ] Hand-author attributes in review batches, Runeblade and Shadow cards first (234 → now 228 after the specialization fix), generics as needed:
+  1. Runechant creators
+  2. Gate creators
+  3. Blood debt, banish and play from banish
+  4. Weapons and equipment
+  5. Everything else
 - [ ] A player checks a sample of authored attributes, and every condition.
 
 **Done when:** every legal card is in the database, weapons and equipment have their slots, and every Runeblade and Shadow card has checked attributes.
