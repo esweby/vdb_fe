@@ -44,9 +44,14 @@ export const sampleDetail: CardDetail = {
 /** An in-memory ScoreRepository; `saved` records every write. */
 export function fakeScoreRepository(
   initial: ScoreRow[] = [],
-  options: { reviewedAt?: string | null } = {},
+  options: {
+    reviewedAt?: string | null;
+    reviewedCardIds?: string[];
+    preferences?: { scoreSidesTogether?: boolean };
+  } = {},
 ) {
   let reviewedAt = options.reviewedAt ?? null;
+  let preferences = { ...options.preferences };
   let rows = [...initial];
   const saved: string[] = [];
   const same = (a: ScoreKey, b: ScoreKey) =>
@@ -101,6 +106,16 @@ export function fakeScoreRepository(
       rows = [...rows.filter((r) => !same(r, key)), { ...key, score }];
     },
     getMyReview: async () => reviewedAt,
+    listMyReviewedCardIds: async () => options.reviewedCardIds ?? [],
+    getPreferences: async () => preferences,
+    async savePreferences(_userId, next) {
+      preferences = next;
+      saved.push(
+        `preferences ${Object.entries(next)
+          .map(([k, v]) => `${k}=${v}`)
+          .join(",")}`,
+      );
+    },
     async markReviewed(cardId) {
       saved.push(`review ${cardId}`);
       reviewedAt = "2026-10-14T12:00:00Z";
