@@ -46,6 +46,12 @@ export interface ScoreRepository {
   listMyScores(userId: string, cardId: string): Promise<ScoreRow[]>;
   saveScore(cardId: string, key: ScoreKey, score: number): Promise<void>;
   clearScore(cardId: string, key: ScoreKey): Promise<void>;
+  /** When the signed-in user marked this card reviewed, or null. */
+  getMyReview(userId: string, cardId: string): Promise<string | null>;
+  /** Marks the card reviewed; returns the timestamp. */
+  markReviewed(cardId: string): Promise<string>;
+  /** Asks the community score job to recalculate (scorers only; the function checks). */
+  runCommunityJob(): Promise<void>;
 }
 
 export function supabaseScoreRepository(
@@ -109,6 +115,38 @@ export function supabaseScoreRepository(
         },
         { onConflict: "user_id,card_id,variant_id,side,dimension_id" },
       );
+      if (error) throw error;
+    },
+    async getMyReview(user, cardId) {
+      const { data, error } = await client
+        .from("card_reviews")
+        .select("reviewed_at")
+        .eq("user_id", user)
+        .eq("card_id", cardId)
+        .maybeSingle();
+      if (error) throw error;
+      return data?.reviewed_at ?? null;
+    },
+    async markReviewed(cardId) {
+      const { data, error } = await client
+        .from("card_reviews")
+        .upsert(
+          {
+            user_id: await userId(),
+            card_id: cardId,
+            reviewed_at: new Date().toISOString(),
+          },
+          { onConflict: "user_id,card_id" },
+        )
+        .select("reviewed_at")
+        .single();
+      if (error) throw error;
+      return data.reviewed_at;
+    },
+    async runCommunityJob() {
+      const { error } = await client.functions.invoke("community-scores", {
+        method: "POST",
+      });
       if (error) throw error;
     },
     async clearScore(cardId, key) {

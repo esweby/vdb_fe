@@ -1,10 +1,12 @@
 import { describeAttributes } from "@vdb/cards";
 import { getRouteApi, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { selectCanScore } from "../auth/authSlice.ts";
 import { classOf, TYPE_LABELS } from "../cards/filterCards.ts";
 import { useAppSelector } from "../hooks.ts";
 import { useServices } from "../services.tsx";
-import { Tag } from "../ui/index.ts";
+import { Button, Tag } from "../ui/index.ts";
+import { ReviewDialog } from "./ReviewDialog.tsx";
 import type {
   CardDetail,
   Dimension,
@@ -32,13 +34,24 @@ const sameKey = (a: ScoreKey, b: ScoreKey) =>
   a.side === b.side &&
   a.dimensionId === b.dimensionId;
 
+const formatDate = (iso: string) =>
+  new Date(iso).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+
 export function CardScoringPage() {
   const { cardId } = route.useParams();
   const { scores } = useServices();
   const user = useAppSelector((s) => s.auth.user);
+  const canScore = useAppSelector(selectCanScore);
   const [card, setCard] = useState<CardDetail | null | undefined>(undefined);
   const [dimensions, setDimensions] = useState<Dimension[]>([]);
   const [rows, setRows] = useState<ScoreRow[]>([]);
+  const [reviewedAt, setReviewedAt] = useState<string | null>(null);
+  const [reviewing, setReviewing] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -58,11 +71,13 @@ export function CardScoringPage() {
     Promise.all([
       scores.listDimensions(),
       scores.listMyScores(user.id, cardId),
+      scores.getMyReview(user.id, cardId),
     ]).then(
-      ([d, r]) => {
+      ([d, r, reviewed]) => {
         if (!live) return;
         setDimensions(d);
         setRows(r);
+        setReviewedAt(reviewed);
       },
       (e) => live && setError(String(e.message ?? e)),
     );
@@ -83,6 +98,23 @@ export function CardScoringPage() {
     } catch (e) {
       setRows(previous);
       setError(`Couldn't save: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }
+
+  async function confirmReview() {
+    setBusy(true);
+    try {
+      setReviewedAt(await scores.markReviewed(cardId));
+      setReviewing(false);
+      // Scorers' reviews count toward community scores: recalculate now.
+      // The daily job catches anything this misses.
+      if (canScore) await scores.runCommunityJob().catch(() => {});
+    } catch (e) {
+      setError(
+        `Couldn't mark reviewed: ${e instanceof Error ? e.message : String(e)}`,
+      );
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -143,17 +175,37 @@ export function CardScoringPage() {
 
       <section>
         <h2>Your scores</h2>
-        {user ? (
-          dimensions.length > 0 && (
+        {!user && <Link to="/sign-in">Sign in to score this card</Link>}
+        {user && dimensions.length > 0 && (
+          <>
+            <div className={styles.review}>
+              {reviewedAt ? (
+                <Tag tone="accent">Reviewed {formatDate(reviewedAt)}</Tag>
+              ) : (
+                <Button variant="primary" onClick={() => setReviewing(true)}>
+                  Mark reviewed
+                </Button>
+              )}
+            </div>
+            <ReviewDialog
+              open={reviewing}
+              onClose={() => setReviewing(false)}
+              onConfirm={() => void confirmReview()}
+              onFix={(dimensionId, score) =>
+                void onSet({ variantId: null, side: null, dimensionId }, score)
+              }
+              rows={rows}
+              dimensions={dimensions}
+              variants={card.variants}
+              busy={busy}
+            />
             <ScoreEditor
               dimensions={dimensions}
               variants={card.variants}
               rows={rows}
               onSet={(key, score) => void onSet(key, score)}
             />
-          )
-        ) : (
-          <Link to="/sign-in">Sign in to score this card</Link>
+          </>
         )}
       </section>
     </>

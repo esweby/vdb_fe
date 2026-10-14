@@ -42,7 +42,11 @@ export const sampleDetail: CardDetail = {
 };
 
 /** An in-memory ScoreRepository; `saved` records every write. */
-export function fakeScoreRepository(initial: ScoreRow[] = []) {
+export function fakeScoreRepository(
+  initial: ScoreRow[] = [],
+  options: { reviewedAt?: string | null } = {},
+) {
+  let reviewedAt = options.reviewedAt ?? null;
   let rows = [...initial];
   const saved: string[] = [];
   const same = (a: ScoreKey, b: ScoreKey) =>
@@ -95,6 +99,15 @@ export function fakeScoreRepository(initial: ScoreRow[] = []) {
         `save ${key.dimensionId}:${key.variantId ?? "card"}:${key.side ?? "both"}=${score}`,
       );
       rows = [...rows.filter((r) => !same(r, key)), { ...key, score }];
+    },
+    getMyReview: async () => reviewedAt,
+    async markReviewed(cardId) {
+      saved.push(`review ${cardId}`);
+      reviewedAt = "2026-10-14T12:00:00Z";
+      return reviewedAt;
+    },
+    async runCommunityJob() {
+      saved.push("job");
     },
     async clearScore(_cardId, key) {
       saved.push(
