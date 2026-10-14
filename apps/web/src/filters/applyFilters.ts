@@ -117,12 +117,21 @@ export function filterSummary<T>(
   state: FilterState,
   facets: Facet<T>[],
 ): string[] {
-  return facets.flatMap((facet) =>
-    facet.values.flatMap((v) => {
+  return facets.flatMap((facet) => {
+    // Quick filters read as one phrase: "Pitch: Red, Blue".
+    const selected =
+      facet.placement === "bar"
+        ? facet.values.filter((v) => state[facet.id]?.[v.id] === "include")
+        : [];
+    const rest = facet.values.flatMap((v) => {
       const choice = state[facet.id]?.[v.id];
       if (!choice) return [];
       const name = facet.summaryPrefix ? `${facet.label} ${v.label}` : v.label;
+      if (choice === "include" && selected.includes(v)) return [];
       return [choice === "exclude" ? `${name} hidden` : `Only ${name}`];
-    }),
-  );
+    });
+    return selected.length > 0
+      ? [`${facet.label}: ${selected.map((v) => v.label).join(", ")}`, ...rest]
+      : rest;
+  });
 }
