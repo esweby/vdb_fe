@@ -134,7 +134,7 @@ export const runechantCreators: AuthoredAttributes = {
     },
   },
   "Douse in Runeblood": {
-    verified: false,
+    verified: true,
     card: {
       tokens: [{ token: "runechant", amount: "X", trigger: "on_attack" }],
       goAgain: { conditions: ["created_3_or_more_runechants"] },
@@ -163,7 +163,7 @@ export const runechantCreators: AuthoredAttributes = {
     },
   },
   "Embrace Ursur": {
-    verified: false,
+    verified: true,
     card: {
       banishesOwn: [{ from: "hand", trigger: "on_attack", optional: true }],
       tokens: [
@@ -272,7 +272,7 @@ export const runechantCreators: AuthoredAttributes = {
     },
   },
   "Mauvrion Skies": {
-    verified: false,
+    verified: true,
     card: { grantsGoAgain: "next_runeblade_attack_action" },
     variants: {
       1: {
@@ -308,7 +308,7 @@ export const runechantCreators: AuthoredAttributes = {
     },
   },
   "Meat and Greet": {
-    verified: false,
+    verified: true,
     card: {
       tokens: [{ token: "runechant", amount: 1, trigger: "on_hit" }],
       goAgain: { conditions: ["dealt_arcane_damage_to_opponent_this_turn"] },

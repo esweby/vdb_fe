@@ -48,14 +48,14 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Bloodsong Gloomblade": {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       notes: "When it hits, may banish an aura the hit hero controls.",
     },
   },
   "Bounding Demigon": {
-    verified: false,
+    verified: true,
     card: {
       rewardsPlayFromBanish: true,
       playableFromBanish: {
@@ -65,7 +65,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Chains of Mephetis": {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       notes:
@@ -73,7 +73,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Consuming Aftermath": {
-    verified: false,
+    verified: true,
     card: {
       banishesOwn: [{ from: "hand", trigger: "on_play", optional: true }],
       notes:
@@ -81,7 +81,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Corrupt and Conquer": {
-    verified: false,
+    verified: true,
     card: {
       rewardsPlayFromBanish: true,
       notes:
@@ -89,7 +89,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   Cull: {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       banishesOwn: [{ from: "hand", trigger: "on_play" }],
@@ -98,34 +98,34 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Cullingsong Gloomblade": {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       notes: "When it hits, the hit hero banishes a card from their hand.",
     },
   },
   "Dabble in Darkness": {
-    verified: false,
+    verified: true,
     card: {
       banishesOwn: [{ from: "deck_top", trigger: "on_attack" }],
       notes: "Loses power equal to the banished card's pitch value.",
     },
   },
   "Darkest Hour": {
-    verified: false,
+    verified: true,
     card: {
       notes:
         "Your next Shadow attack gets +4/+3/+1 power (red/yellow/blue). Can be paid for by putting a card from hand on top of your deck.",
     },
   },
   "Deathly Delight": {
-    verified: false,
+    verified: true,
     card: {
       notes: "Gain life equal to the number of heroes who lost life this turn.",
     },
   },
   "Deep Recesses of Existence": {
-    verified: false,
+    verified: true,
     card: {
       banishesSelf: [{ trigger: "combat_chain_closes", optional: true }],
       notes:
@@ -133,32 +133,32 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Demonbound Gloomblade": {
-    verified: false,
+    verified: true,
     card: { playableFromBanish: {} },
   },
   "Depths of Despair": {
-    verified: false,
+    verified: true,
     card: {
       banishesSelf: [{ trigger: "combat_chain_closes" }],
       notes: "Only after it has defended.",
     },
   },
   "Dimenxxional Crossroads": {
-    verified: false,
+    verified: true,
     card: {
       notes:
         "Deals 1 arcane damage the first time each turn you play an attack action card, and the first time a non-attack action card, from the banished zone. Destroyed if you lose life on your turn.",
     },
   },
   "Dimenxxional Ferryman": {
-    verified: false,
+    verified: true,
     card: {
       notes:
         "Puts itself and a blood debt action card from your banished zone on the bottom of your deck.",
     },
   },
   "Dimenxxional Gateway": {
-    verified: false,
+    verified: true,
     card: {
       banishesOwn: [
         {
@@ -173,7 +173,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Dimenxxional Vortex": {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       notes:
@@ -189,7 +189,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Eloquent Eulogy": {
-    verified: false,
+    verified: true,
     card: {
       tokens: [
         {
@@ -202,7 +202,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   Embalm: {
-    verified: false,
+    verified: true,
     card: {
       rewardsPlayFromBanish: true,
       playableFromBanish: {},
@@ -212,36 +212,36 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Embrace Sin": {
-    verified: false,
+    verified: true,
     card: {
       notes:
         "Your next attack gets +2 power, and you may play an aura with Runechant in its name from your banished zone this turn.",
     },
   },
   "Engulfing Shadows": {
-    verified: false,
+    verified: true,
     card: { banishesSelf: [{ trigger: "would_go_to_graveyard" }] },
   },
   "Fallen Herald": {
-    verified: false,
+    verified: true,
     card: {
       banishesSelf: [{ trigger: "activated" }],
       notes: "Banish it from hand to prevent the next 4 damage.",
     },
   },
   "Fasting Carcass": {
-    verified: false,
+    verified: true,
     card: {
       notes:
         "The next red/yellow/blue action card you play this turn (matching its colour) gets go again. Granting to a card of a colour isn't in the vocabulary yet.",
     },
   },
   "Ghostly Visit": {
-    verified: false,
+    verified: true,
     card: { playableFromBanish: {} },
   },
   "Grim Feast": {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       notes:
@@ -249,14 +249,14 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Guardian of the Shadowrealm": {
-    verified: false,
+    verified: true,
     card: {
       notes:
         "While in your banished zone, pay {r}{r} to return it to your hand (an action, not playing it from banish).",
     },
   },
   "Howl from Beyond": {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       notes:
@@ -264,7 +264,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Hungering Demigon": {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       notes:
@@ -272,7 +272,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Invert Existence": {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       notes:
@@ -280,18 +280,18 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Lunartide Plunderer": {
-    verified: false,
+    verified: true,
     card: {
       banishesSelf: [{ trigger: "on_hit" }],
       notes: "Also banishes a card from the hit hero's soul.",
     },
   },
   "Mutated Mass": {
-    verified: false,
+    verified: true,
     card: { playableFromBanish: {} },
   },
   "Painful Passage": {
-    verified: false,
+    verified: true,
     card: {
       banishesOwn: [{ from: "hand", trigger: "on_play", optional: true }],
       notes:
@@ -299,28 +299,28 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Permanent Interment": {
-    verified: false,
+    verified: true,
     card: {
       notes:
         "Pay up to {r}{r}{r} to turn that many Shadow cards in your banished zone face-down for +1 power each. Uses up your banished zone.",
     },
   },
   "Piercing Shadow Vise": {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       notes: "+2 power if you've dealt arcane damage to an opponent this turn.",
     },
   },
   "Plundersong Gloomblade": {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       notes: "When it hits, the hit hero banishes a card from their arsenal.",
     },
   },
   "Putrid Stirrings": {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       notes:
@@ -328,7 +328,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Rally the Shadow Horde": {
-    verified: false,
+    verified: true,
     card: {
       banishesOwn: [{ from: "hand", trigger: "activated", optional: true }],
       notes:
@@ -336,7 +336,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Rattle Bones": {
-    verified: false,
+    verified: true,
     card: {
       banishesOwn: [{ from: "graveyard", trigger: "on_play" }],
       notes:
@@ -344,7 +344,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Requiem for the Damned": {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       tokens: [{ token: "eloquence", amount: 1, trigger: "on_play" }],
@@ -352,7 +352,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Rift Bind": {
-    verified: false,
+    verified: true,
     card: {
       rewardsPlayFromBanish: true,
       playableFromBanish: {},
@@ -361,11 +361,11 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Rift Skitter": {
-    verified: false,
+    verified: true,
     card: {},
   },
   "Rifted Torment": {
-    verified: false,
+    verified: true,
     card: {
       rewardsPlayFromBanish: true,
       playableFromBanish: {},
@@ -375,14 +375,14 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Rip Through Reality": {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       goAgain: { conditions: ["dealt_arcane_damage_to_opponent_this_turn"] },
     },
   },
   "Runic Fellingsong": {
-    verified: false,
+    verified: true,
     card: {
       banishesOwn: [
         { from: "graveyard", trigger: "on_attack", optional: true },
@@ -392,7 +392,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Seeds of Agony": {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       arcaneDamage: [
@@ -403,7 +403,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Seeping Shadows": {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       grantsGoAgain: "next_attack_action",
@@ -412,7 +412,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Shadow of Ursur": {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       banishesOwn: [{ from: "hand", trigger: "on_play", optional: true }],
@@ -422,7 +422,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Shadow Puppetry": {
-    verified: false,
+    verified: true,
     card: {
       grantsGoAgain: "next_attack_action",
       notes:
@@ -430,14 +430,14 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Shadowrealm Bloodhound": {
-    verified: false,
+    verified: true,
     card: {
       banishesOwn: [{ from: "hand", trigger: "on_attack", optional: true }],
       goAgain: { conditions: ["banished_card_is_shadow"] },
     },
   },
   "Shadowrealm Harrower": {
-    verified: false,
+    verified: true,
     card: {
       rewardsPlayFromBanish: true,
       notes:
@@ -445,7 +445,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Shadowrealm Harvester": {
-    verified: false,
+    verified: true,
     card: {
       rewardsPlayFromBanish: true,
       notes:
@@ -453,7 +453,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Shadowrealm Reaper": {
-    verified: false,
+    verified: true,
     card: {
       rewardsPlayFromBanish: true,
       goAgain: { conditions: ["played_from_banish"] },
@@ -461,21 +461,21 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Shadowrealm Ripper": {
-    verified: false,
+    verified: true,
     card: {
       banishesOwn: [{ from: "hand", trigger: "on_attack", optional: true }],
       notes: "+2 power if the banished card is Shadow.",
     },
   },
   "Shadowrealm Walker": {
-    verified: false,
+    verified: true,
     card: {
       banishesOwn: [{ from: "hand", trigger: "on_attack", optional: true }],
       notes: "+2 power if the banished card is Shadow.",
     },
   },
   "Sigil of Silphidae": {
-    verified: false,
+    verified: true,
     card: {
       banishesOwn: [
         { from: "graveyard", trigger: "on_play", optional: true },
@@ -490,7 +490,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Sinspeaker Gloomblade": {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       notes:
@@ -498,7 +498,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Sonata Arcanix": {
-    verified: false,
+    verified: true,
     card: {
       banishesSelf: [{ trigger: "on_play" }],
       arcaneDamage: [{ amount: "X", trigger: "on_play" }],
@@ -507,35 +507,35 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Soul Butcher": {
-    verified: false,
+    verified: true,
     card: { notes: "+2 power if the defending hero has cards in their soul." },
   },
   "Soul Cleaver": {
-    verified: false,
+    verified: true,
     card: {
       goAgain: { conditions: ["defending_hero_has_soul_cards"] },
     },
   },
   "Spew Shadow": {
-    verified: false,
+    verified: true,
     card: {
       notes:
         "Lets you play an attack action card costing 2/1/0 or less (red/yellow/blue) from your banished zone this turn.",
     },
   },
   "Tear Through the Portal": {
-    verified: false,
+    verified: true,
     card: {
       notes:
         "A red/yellow/blue action card (matching its colour) in your banished zone gets go again.",
     },
   },
   "Tome of Torment": {
-    verified: false,
+    verified: true,
     card: { playableFromBanish: {}, notes: "Draw a card." },
   },
   "Tribute to Greater Power": {
-    verified: false,
+    verified: true,
     card: {
       banishesSelf: [{ trigger: "activated" }],
       notes:
@@ -543,7 +543,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Unhallowed Rites": {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {
         conditions: ["played_non_attack_action_this_turn"],
@@ -553,7 +553,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Usurp the Shadow Throne": {
-    verified: false,
+    verified: true,
     card: {
       playableFromBanish: {},
       notes:
