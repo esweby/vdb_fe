@@ -418,6 +418,19 @@ describe("describeAttributes", () => {
     ).toEqual(["Is a Runechant aura (sinchant)."]);
   });
 
+  it("describes Usurp the Shadow Throne's usurp condition", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        costReductions: [{ amount: 6, conditions: ["usurped_this_turn"] }],
+        playableFromBanish: { conditions: ["usurped_this_turn"] },
+      }),
+    ).toEqual([
+      "Can be played from your banished zone, if you've usurped this turn.",
+      "Costs 6{r} less, if you've usurped this turn.",
+    ]);
+  });
+
   it("describes nothing for a plain card", () => {
     expect(describeAttributes(generated)).toEqual([]);
   });

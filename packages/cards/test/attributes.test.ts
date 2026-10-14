@@ -144,6 +144,18 @@ describe("authoredAttributesSchema", () => {
     ).toBe(true);
   });
 
+  it("accepts conditional cost reductions", () => {
+    expect(
+      authoredAttributesSchema.safeParse({
+        costReductions: [
+          { amount: 6, conditions: ["usurped_this_turn"] },
+          { amount: 2, conditions: ["played_from_banish"] },
+        ],
+        playableFromBanish: { conditions: ["usurped_this_turn"] },
+      }).success,
+    ).toBe(true);
+  });
+
   it("accepts conditional and granted go again", () => {
     expect(
       authoredAttributesSchema.safeParse({
@@ -160,6 +172,10 @@ describe("authoredAttributesSchema", () => {
   it.each([
     ["an unknown grantsGoAgain", { grantsGoAgain: "every_card" }],
     ["go again without a condition", { goAgain: {} }],
+    [
+      "a cost reduction without a condition",
+      { costReductions: [{ amount: 2 }] },
+    ],
     [
       "an unknown card group",
       { enablesPlayFromBanish: [{ target: { group: "sinchants" } }] },
