@@ -149,7 +149,7 @@ Every card is rated on how good it is, at three points (proposal agreed with the
 
 Side is not a condition: the per-side ratings already cover the two sides.
 
-**Only cards with conditions are asked for floor and ceiling.** A card has conditions when any recorded effect has a condition, or happens on a hit (UNVERIFIED rule, `hasConditions` in `packages/cards`). Cards without authored attributes count as having none; scorers can still choose "Rate floor and ceiling too". Weapons and equipment follow the same rules: a weapon with an on-hit has a condition.
+**Only cards with conditions are asked for floor and ceiling.** A card has conditions when any recorded effect has a condition, or happens on a hit (rule checked by the maintainer, `hasConditions` in `packages/cards`). Cards without authored attributes count as having none; scorers can still choose "Rate floor and ceiling too". Weapons and equipment follow the same rules: a weapon with an on-hit has a condition.
 
 **A blank floor or ceiling means "the same as overall"**, at every level, instead of 0. So a card with no conditions collapses to floor = ceiling = overall without anyone rating it three times, and "Floor and ceiling same as overall" on a card with conditions just clears them. The scoring form flags, but doesn't reject, an overall outside [floor, ceiling].
 
