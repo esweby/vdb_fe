@@ -4,7 +4,9 @@ import { describe, expect, it } from "vitest";
 import { fakeAuthService } from "../test/fakeAuthService.ts";
 import { fakeDeckRepository } from "../test/fakeDeckRepository.ts";
 import { renderApp } from "../test/renderApp.tsx";
-import type { DeckCard } from "./deckRepository.ts";
+import { fakeScoreRepository } from "../test/fakeScoreRepository.ts";
+import { sampleCommunity } from "../test/sampleCommunity.ts";
+import type { DeckCard, PitchTargets } from "./deckRepository.ts";
 
 const auth = () =>
   fakeAuthService({
@@ -12,13 +14,14 @@ const auth = () =>
     signedIn: { id: "u1", email: "u@test.local" },
   }).service;
 
-const withDeck = (cards: DeckCard[] = []) =>
+const withDeck = (cards: DeckCard[] = [], pitchTargets: PitchTargets = {}) =>
   fakeDeckRepository([
     {
       id: "deck-1",
       name: "Gate tempo",
       updatedAt: "2026-10-14T10:00:00Z",
       cards,
+      pitchTargets,
     },
   ]);
 
@@ -140,5 +143,49 @@ describe("deck page", () => {
     expect(
       await screen.findByRole("heading", { name: "Deck not found" }),
     ).toBeInTheDocument();
+  });
+});
+
+describe("deck analysis", () => {
+  const cards: DeckCard[] = [
+    { variantId: "hp1", quantity: 3, sideboard: false },
+    { variantId: "hp3", quantity: 2, sideboard: false },
+    { variantId: "nb", quantity: 1, sideboard: false },
+  ];
+
+  it("shows the pitch mix against the deck's targets, and saves new targets", async () => {
+    const fake = withDeck(cards, { 3: 22 });
+    await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      decks: fake.repository,
+    });
+    const pitch = await screen.findByRole("region", { name: "Pitch" });
+    expect(within(pitch).getByText("Red 3")).toBeInTheDocument();
+    expect(within(pitch).getByText("Blue 2 / 22")).toBeInTheDocument();
+    const user = userEvent.setup();
+    await user.type(within(pitch).getByLabelText("Red target"), "18");
+    await user.tab();
+    expect(within(pitch).getByText("Red 3 / 18")).toBeInTheDocument();
+    expect(fake.saved).toEqual(["targets deck-1 1:18,3:22"]);
+  });
+
+  it("totals each dimension by pitch, with weapons as always available", async () => {
+    await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      decks: withDeck(cards).repository,
+      scores: fakeScoreRepository([], { community: sampleCommunity() })
+        .repository,
+    });
+    const table = await screen.findByRole("table", { name: "Dimensions" });
+    const row = await within(table).findByRole("row", {
+      name: /^Runechant creation/,
+    });
+    expect(
+      within(row)
+        .getAllByRole("cell")
+        .map((c) => c.textContent),
+    ).toEqual(["5", "3", "0", "2", "74", "1"]);
   });
 });

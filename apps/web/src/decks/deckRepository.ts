@@ -15,8 +15,12 @@ export interface DeckCard {
   sideboard: boolean;
 }
 
+/** Target number of deck cards per pitch (1 red, 2 yellow, 3 blue); missing = no target. */
+export type PitchTargets = Partial<Record<1 | 2 | 3, number>>;
+
 export interface Deck extends DeckSummary {
   cards: DeckCard[];
+  pitchTargets: PitchTargets;
 }
 
 export interface DeckRepository {
@@ -25,6 +29,7 @@ export interface DeckRepository {
   getDeck(id: string): Promise<Deck | null>;
   /** Adds, updates or (with quantity 0) removes a card in the pool. */
   setCard(deckId: string, card: DeckCard): Promise<void>;
+  setPitchTargets(deckId: string, targets: PitchTargets): Promise<void>;
   getFormatRules(): Promise<FormatRules>;
 }
 

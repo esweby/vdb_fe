@@ -22,6 +22,7 @@ export function fakeDeckRepository(initial: Deck[] = []) {
         name,
         updatedAt: "2026-10-14T12:00:00Z",
         cards: [],
+        pitchTargets: {},
       };
       decks = [...decks, deck];
       return { id: deck.id, name, updatedAt: deck.updatedAt };
@@ -41,6 +42,16 @@ export function fakeDeckRepository(initial: Deck[] = []) {
                 ...(card.quantity > 0 ? [card] : []),
               ],
             },
+      );
+    },
+    async setPitchTargets(deckId, targets) {
+      saved.push(
+        `targets ${deckId} ${Object.entries(targets)
+          .map(([p, n]) => `${p}:${n}`)
+          .join(",")}`,
+      );
+      decks = decks.map((d) =>
+        d.id === deckId ? { ...d, pitchTargets: targets } : d,
       );
     },
     getFormatRules: async () => sampleRules,

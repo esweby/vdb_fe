@@ -2,7 +2,7 @@
 -- and format rules are configuration.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(7);
+select plan(9);
 
 insert into auth.users (id, email) values ('00000000-0000-0000-0000-00000000000d', 'd@test.local');
 insert into public.cards (id, external_id, name, type) values
@@ -44,6 +44,12 @@ select ok(
   (select value ? 'copyLimit' and value ? 'deckMin' and value ? 'poolMax' and value ? 'weaponHands'
      from public.app_settings where key = 'format_classic_constructed'),
   'Classic Constructed format rules are configuration'
+);
+
+select col_default_is('public', 'decks', 'pitch_targets', '{}'::jsonb, 'decks have no pitch targets by default');
+select throws_ok(
+  $$update public.decks set pitch_targets = '{"3": -1}' where id = '30000000-0000-0000-0000-0000000000d1'$$,
+  '23514', null, 'pitch targets cannot be negative'
 );
 
 set local role anon;
