@@ -1,15 +1,7 @@
+// Search and sort for card lists. Facet filtering lives in facets.ts / filters/.
 import type { CardSummary } from "./cardRepository.ts";
 
-export type CardClass = "Runeblade" | "Shadow" | "Generic";
-
-export interface CardFilters {
-  search: string;
-  /** Empty = any pitch. A card matches if any variant has one of these pitches. */
-  pitches: number[];
-  type: string | null;
-  cardClass: CardClass | null;
-  sort: "name" | "type";
-}
+export type CardSort = "name" | "type";
 
 export const TYPE_LABELS: Record<string, string> = {
   action: "Action",
@@ -26,32 +18,22 @@ export const TYPE_LABELS: Record<string, string> = {
 const TYPE_ORDER = Object.keys(TYPE_LABELS);
 
 /** "Shadow Runeblade", "Runeblade", "Shadow" or "Generic". */
-export function classOf(card: CardSummary): string {
+export function classOf(
+  card: Pick<CardSummary, "talents" | "classes">,
+): string {
   return [...card.talents, ...card.classes].join(" ");
 }
 
-function inClass(card: CardSummary, cardClass: CardClass): boolean {
-  return cardClass === "Shadow"
-    ? card.talents.includes("Shadow")
-    : card.classes.includes(cardClass);
-}
-
-export function filterCards(
+export function searchAndSort(
   cards: CardSummary[],
-  f: CardFilters,
+  search: string,
+  sort: CardSort,
 ): CardSummary[] {
-  const search = f.search.trim().toLowerCase();
+  const q = search.trim().toLowerCase();
   return cards
-    .filter((c) => !search || c.name.toLowerCase().includes(search))
-    .filter(
-      (c) =>
-        f.pitches.length === 0 ||
-        c.variants.some((v) => v.pitch !== null && f.pitches.includes(v.pitch)),
-    )
-    .filter((c) => !f.type || c.type === f.type)
-    .filter((c) => !f.cardClass || inClass(c, f.cardClass))
+    .filter((c) => !q || c.name.toLowerCase().includes(q))
     .sort((a, b) =>
-      f.sort === "type"
+      sort === "type"
         ? TYPE_ORDER.indexOf(a.type) - TYPE_ORDER.indexOf(b.type) ||
           a.name.localeCompare(b.name)
         : a.name.localeCompare(b.name),

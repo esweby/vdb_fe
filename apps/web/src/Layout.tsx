@@ -2,7 +2,7 @@ import { Link, Outlet } from "@tanstack/react-router";
 import { useSelector } from "react-redux";
 import { selectCanScore, selectIsSignedIn } from "./auth/authSlice.ts";
 import type { RootState } from "./store.ts";
-import { useServices } from "./services.tsx";
+import { useServices } from "./servicesContext.ts";
 import styles from "./Layout.module.css";
 import { Button } from "./ui/index.ts";
 

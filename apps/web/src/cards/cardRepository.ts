@@ -1,5 +1,6 @@
 // Card data the app reads, behind an interface so tests can use a fake.
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { AuthoredCardAttributes, CardAttributes } from "@vdb/cards";
 
 export interface VariantSummary {
   id: string;
@@ -7,6 +8,8 @@ export interface VariantSummary {
   cost: number | null;
   power: number | null;
   defense: number | null;
+  /** This pitch's overrides, merged over the card's attributes. */
+  attributes: AuthoredCardAttributes;
 }
 
 export interface CardSummary {
@@ -16,6 +19,9 @@ export interface CardSummary {
   subtypes: string[];
   classes: string[];
   talents: string[];
+  keywords: string[];
+  attributes: CardAttributes;
+  attributesVerified: boolean;
   variants: VariantSummary[];
 }
 
@@ -34,7 +40,7 @@ export function supabaseCardRepository(client: SupabaseClient): CardRepository {
         const { data, error } = await client
           .from("cards")
           .select(
-            "id, name, type, subtypes, classes, talents, variants(id, pitch, cost, power, defense)",
+            "id, name, type, subtypes, classes, talents, keywords, attributes, attributesVerified:attributes_verified, variants(id, pitch, cost, power, defense, attributes)",
           )
           .eq("hidden", false)
           .order("name")

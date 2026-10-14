@@ -1,0 +1,132 @@
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  --include: #1f7a3f;
+  --include-bg: #e4f4e9;
+  --exclude: #b3261e;
+  --exclude-bg: #fbe5e3;
+}
+@media (prefers-color-scheme: dark) {
+  .sidebar {
+    --include: #7fd69a;
+    --include-bg: #16301f;
+    --exclude: #ff8a80;
+    --exclude-bg: #3a1714;
+  }
+}
+
+.active {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.chip {
+  font: inherit;
+  font-size: 0.85em;
+  border-radius: 999px;
+  padding: 0.1rem 0.6rem;
+  cursor: pointer;
+  border: 1px solid currentColor;
+}
+.clear {
+  font: inherit;
+  font-size: 0.85em;
+  background: none;
+  border: none;
+  color: var(--accent);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.facet summary {
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0;
+}
+.badge {
+  background: var(--accent);
+  color: var(--accent-fg);
+  border-radius: 999px;
+  padding: 0 0.45rem;
+  font-size: 0.75em;
+}
+.mode {
+  margin-left: auto;
+  font-weight: normal;
+  font-size: 0.75em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.facet ul {
+  list-style: none;
+  margin: 0 0 0.5rem;
+  padding: 0;
+}
+
+.value {
+  font: inherit;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.2rem 0.35rem;
+  border: 1px solid transparent;
+  border-radius: 0.35rem;
+  background: none;
+  color: var(--fg);
+  cursor: pointer;
+  text-align: left;
+}
+.value:hover {
+  border-color: var(--border);
+}
+.value:focus-visible,
+.chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.marker {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 0.25rem;
+  font-size: 0.8em;
+}
+.label {
+  flex: 1;
+}
+.count {
+  color: var(--muted);
+  font-size: 0.85em;
+}
+
+.include {
+  color: var(--include);
+  background: var(--include-bg);
+}
+.include .marker {
+  background: var(--include);
+  border-color: var(--include);
+  color: var(--include-bg);
+}
+.exclude {
+  color: var(--exclude);
+  background: var(--exclude-bg);
+}
+.exclude .marker {
+  background: var(--exclude);
+  border-color: var(--exclude);
+  color: var(--exclude-bg);
+}
+.exclude .label {
+  text-decoration: line-through;
+}

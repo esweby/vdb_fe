@@ -13,6 +13,7 @@ import { NeedsReviewPage } from "./scoring/NeedsReviewPage.tsx";
 import { AccountPage } from "./account/AccountPage.tsx";
 import { CardsPage } from "./cards/CardsPage.tsx";
 import { Layout } from "./Layout.tsx";
+import { validateListSearch } from "./filters/useUrlFilters.ts";
 import { PlaceholderPage } from "./pages/PlaceholderPage.tsx";
 import type { AppStore } from "./store.ts";
 
@@ -57,6 +58,7 @@ const routeTree = rootRoute.addChildren([
   createRoute({
     getParentRoute: () => rootRoute,
     path: "/cards",
+    validateSearch: validateListSearch,
     component: CardsPage,
   }),
   createRoute({
@@ -68,6 +70,7 @@ const routeTree = rootRoute.addChildren([
   createRoute({
     getParentRoute: () => rootRoute,
     path: "/needs-review",
+    validateSearch: validateListSearch,
     beforeLoad: requireScorer,
     component: NeedsReviewPage,
   }),
