@@ -125,3 +125,45 @@ describe("computeCommunityScores", () => {
     });
   });
 });
+
+describe("computeCommunityScores with floor and ceiling", () => {
+  it("resolves a blank floor and ceiling to each scorer's overall", () => {
+    const FLOOR = 1;
+    const CEILING = 2;
+    const OVERALL = 3;
+    const rows = computeCommunityScores({
+      cards: [{ id: "card-a", fringe: false, variantIds: ["a-red"] }],
+      dimensionIds: [FLOOR, CEILING, OVERALL],
+      fallbacks: { [FLOOR]: OVERALL, [CEILING]: OVERALL },
+      settings,
+      scorers: [
+        {
+          userId: "alice",
+          weight: 1,
+          reviewedCardIds: ["card-a"],
+          scores: [
+            {
+              cardId: "card-a",
+              variantId: null,
+              side: null,
+              dimensionId: OVERALL,
+              score: 60,
+            },
+            {
+              cardId: "card-a",
+              variantId: null,
+              side: null,
+              dimensionId: CEILING,
+              score: 90,
+            },
+          ],
+        },
+      ],
+    });
+    const forsaken = (d: number) =>
+      rows.find((r) => r.side === "forsaken" && r.dimensionId === d)?.score;
+    expect([forsaken(FLOOR), forsaken(CEILING), forsaken(OVERALL)]).toEqual([
+      60, 90, 60,
+    ]);
+  });
+});

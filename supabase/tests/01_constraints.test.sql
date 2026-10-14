@@ -27,19 +27,19 @@ select is(
 select throws_ok(
   $$insert into public.card_scores (user_id, card_id, dimension_id, score)
     values ('00000000-0000-0000-0000-00000000000a', '10000000-0000-0000-0000-000000000001',
-            (select id from public.score_dimensions where key = 'utility'), 101)$$,
+            (select id from public.score_dimensions where key = 'overall'), 101)$$,
   '23514', null, 'scores above 100 are rejected'
 );
 select throws_ok(
   $$insert into public.card_scores (user_id, card_id, dimension_id, score)
     values ('00000000-0000-0000-0000-00000000000a', '10000000-0000-0000-0000-000000000001',
-            (select id from public.score_dimensions where key = 'utility'), -10)$$,
+            (select id from public.score_dimensions where key = 'overall'), -10)$$,
   '23514', null, 'negative scores are rejected'
 );
 select lives_ok(
   $$insert into public.card_scores (user_id, card_id, variant_id, side, dimension_id, score)
     select '00000000-0000-0000-0000-00000000000a', '10000000-0000-0000-0000-000000000001', v, s,
-           (select id from public.score_dimensions where key = 'utility'), 50
+           (select id from public.score_dimensions where key = 'overall'), 50
     from (values (null::uuid), ('20000000-0000-0000-0000-000000000001'::uuid)) as vv(v),
          (values (null::public.side), ('forsaken'::public.side)) as ss(s)$$,
   'one score per scope: card, card + side, variant, variant + side'
@@ -47,34 +47,34 @@ select lives_ok(
 select throws_ok(
   $$insert into public.card_scores (user_id, card_id, dimension_id, score)
     values ('00000000-0000-0000-0000-00000000000a', '10000000-0000-0000-0000-000000000001',
-            (select id from public.score_dimensions where key = 'utility'), 60)$$,
+            (select id from public.score_dimensions where key = 'overall'), 60)$$,
   '23505', null, 'a second card-level score for the same dimension is rejected (NULLS NOT DISTINCT)'
 );
 select throws_ok(
   $$insert into public.card_scores (user_id, card_id, variant_id, side, dimension_id, score)
     values ('00000000-0000-0000-0000-00000000000a', '10000000-0000-0000-0000-000000000001',
             '20000000-0000-0000-0000-000000000001', 'forsaken',
-            (select id from public.score_dimensions where key = 'utility'), 60)$$,
+            (select id from public.score_dimensions where key = 'overall'), 60)$$,
   '23505', null, 'a second variant + side score for the same dimension is rejected'
 );
 select throws_ok(
   $$insert into public.card_scores (user_id, card_id, variant_id, dimension_id, score)
     values ('00000000-0000-0000-0000-00000000000a', '10000000-0000-0000-0000-000000000001',
             '20000000-0000-0000-0000-000000000003',
-            (select id from public.score_dimensions where key = 'utility'), 60)$$,
+            (select id from public.score_dimensions where key = 'overall'), 60)$$,
   '23503', null, 'a variant must belong to the scored card'
 );
 
 -- community_scores
 select lives_ok(
   $$insert into public.community_scores (card_id, dimension_id, score, rating_count, total_weight, scores_version)
-    values ('10000000-0000-0000-0000-000000000001', (select id from public.score_dimensions where key = 'utility'),
+    values ('10000000-0000-0000-0000-000000000001', (select id from public.score_dimensions where key = 'overall'),
             50, 2, 2, 1)$$,
   'community card-level score inserts'
 );
 select throws_ok(
   $$insert into public.community_scores (card_id, dimension_id, score, rating_count, total_weight, scores_version)
-    values ('10000000-0000-0000-0000-000000000001', (select id from public.score_dimensions where key = 'utility'),
+    values ('10000000-0000-0000-0000-000000000001', (select id from public.score_dimensions where key = 'overall'),
             60, 3, 3, 1)$$,
   '23505', null, 'a second community card-level score for the same dimension is rejected'
 );

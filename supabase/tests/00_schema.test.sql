@@ -36,8 +36,8 @@ select columns_are('public', 'community_scores', array[
 
 select results_eq(
   'select key from public.score_dimensions order by sort_order',
-  array['runechantCreation', 'gateCreation', 'banish', 'playableFromBanish', 'enablesTraverse', 'utility'],
-  'draft score dimensions are seeded in order'
+  array['floor', 'ceiling', 'overall'],
+  'the three ratings (floor, ceiling, overall) are the score dimensions, in order'
 );
 select results_eq(
   'select key from public.app_settings order by key',
