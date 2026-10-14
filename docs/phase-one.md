@@ -27,6 +27,11 @@ Checked the `the-fab-cube/flesh-and-blood-cards` dataset.
 
 **Response to the pool size (decided):** import everything. There's no focus pool flag. Generics surface on their own: scorers score the generics they actually build with, and unreviewed ones stay out of the ranking. The "needs review" list and attribute authoring put Runeblade and Shadow cards first. Clearly irrelevant generics, such as old equipment, can be hidden later with a flag.
 
+## Working agreement
+
+- **Test first.** Each checklist item starts with a failing test: Vitest for TypeScript, pgTAP for schema, constraints and row level security. A "done when" isn't met until tests show it.
+- **Branches and pull requests only.** CI (typecheck and unit tests, plus database tests from M1) must pass before merging to `main`.
+
 ## Milestones
 
 Each milestone ends with something that works. "Days" means part-time working sessions, and the numbers are rough. Excluding card data, they add up to about 19–26 sessions. That fits 3–4 weeks only at around 5–6 sessions a week, so the cut line below matters.
@@ -35,11 +40,12 @@ Each milestone ends with something that works. "Days" means part-time working se
 
 These three tasks go first because any of them could change the plan.
 
-- [ ] Install the Supabase CLI and Docker. `supabase init`, local stack running.
-- [ ] Confirm how the GitHub integration applies `supabase/migrations` to the hosted project, and which branch it deploys from.
-- [ ] Check the hosted project's Postgres version is 15 or later (needed for `UNIQUE NULLS NOT DISTINCT`).
-- [ ] Workspace (npm workspaces): `apps/web`, `packages/cards`, `packages/scoring`, `supabase/`.
-- [ ] **Spike:** a Supabase Edge Function imports a function from `packages/scoring` and runs locally and when deployed.
+- [x] Install the Supabase CLI and Docker. `supabase init`, local stack running.
+- [x] Confirm how the GitHub integration applies `supabase/migrations`: production deploys are off for now, and there's no branching on the free plan.
+- [x] Hosted Postgres is 17.11 (local matches), so `UNIQUE NULLS NOT DISTINCT` is available.
+- [x] Workspace (npm workspaces): `packages/cards`, `packages/scoring`, `supabase/`. `apps/web` comes in M4.
+- [x] **Spike:** the `community-scores` Edge Function imports `@vdb/scoring` through `deno.json`. It works locally and when deployed.
+- [x] CI: typecheck and unit tests on every pull request.
 
 **Done when:** a trivial function from `packages/scoring` is called by both a test in the web app and a deployed Edge Function.
 
