@@ -46,6 +46,7 @@ export const BANISH_ZONES = ["hand", "deck_top", "graveyard"] as const;
 export const GRANTED_TO = [
   "next_attack_action",
   "next_runeblade_attack_action",
+  "next_shadow_attack",
 ] as const;
 
 const amount = z.union([z.number().int().positive(), z.literal("X")]);

@@ -24,4 +24,8 @@ describe("authored batches", () => {
   it("includes batch 1, Runechant creators", () => {
     expect(Object.keys(batches)).toContain("01-runechant-creators");
   });
+
+  it("includes batch 2, Gate creators", () => {
+    expect(Object.keys(batches)).toContain("02-gate-creators");
+  });
 });
