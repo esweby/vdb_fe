@@ -10,3 +10,4 @@ export function normalise(score: number): number {
 export * from "./community.ts";
 export * from "./compute.ts";
 export * from "./resolve.ts";
+export * from "./input.ts";
