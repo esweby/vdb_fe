@@ -19,6 +19,7 @@ export const TRIGGERS = [
   "on_usurped",
   "would_go_to_graveyard",
   "would_be_dealt_damage",
+  "your_end_phase",
   "start_of_turn",
   "start_of_action_phase",
   "combat_chain_closes",
@@ -50,6 +51,9 @@ export const CONDITIONS = [
   "played_card_from_banish_this_turn",
   "it_defended",
   "banished_a_card",
+  "discarded_attack_action",
+  "discarded_non_attack_action",
+  "x_is_2_or_more",
 ] as const;
 
 export const BANISH_ZONES = [
@@ -68,6 +72,7 @@ export const GRANTED_TO = [
   "card_in_banished_zone_matching_pitch",
   "next_action_card_matching_pitch",
   "target_attack_action",
+  "all_attack_actions_this_turn",
 ] as const;
 
 const amount = z.union([z.number().int().positive(), z.literal("X")]);
@@ -113,6 +118,7 @@ export const DISRUPT_ZONES = [
 ] as const;
 
 const disruptionCommon = {
+  grantedTo,
   amount: z.union([amount, z.literal("all")]),
   target: z.enum(DISRUPT_TARGETS),
   trigger,
@@ -224,7 +230,11 @@ export const authoredAttributesSchema = z.strictObject({
   costReductions: z
     .array(
       z
-        .strictObject({ amount, conditions, grantedTo })
+        .strictObject({
+          amount: z.union([amount, z.literal("per_runechant")]),
+          conditions,
+          grantedTo,
+        })
         .refine((c) => (c.conditions?.length ?? 0) > 0 || c.grantedTo, {
           message: "A cost reduction needs a condition or a grantedTo",
         }),

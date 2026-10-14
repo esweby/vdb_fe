@@ -24,6 +24,7 @@ const TRIGGER_TEXT: Record<Trigger, string> = {
   on_usurped: "when it's usurped",
   would_go_to_graveyard: "instead of going to your graveyard",
   would_be_dealt_damage: "when you would be dealt damage",
+  your_end_phase: "at the beginning of your end phase",
   start_of_turn: "at the start of your turn",
   start_of_action_phase: "at the start of your action phase",
   combat_chain_closes: "when the combat chain closes",
@@ -59,6 +60,9 @@ const CONDITION_TEXT: Record<Condition, string> = {
   usurped_this_turn: "you've usurped this turn",
   it_defended: "it defended",
   banished_a_card: "you banished a card this way",
+  discarded_attack_action: "you discarded an attack action card",
+  discarded_non_attack_action: "you discarded a non-attack action card",
+  x_is_2_or_more: "X is 2 or more",
   played_card_from_banish_this_turn:
     "you've played a card from your banished zone this turn",
 };
@@ -87,6 +91,7 @@ const GRANTED_TEXT: Record<GrantedTo, string> = {
   next_action_card_matching_pitch:
     "Your next action card of this card's colour this turn gets",
   target_attack_action: "Target attack action card gets",
+  all_attack_actions_this_turn: "Your attack action cards this turn get",
 };
 
 /** "Creates 1 Runechant…" or, when granted, "Your next … gets: creates 1 Runechant…". */
@@ -248,7 +253,10 @@ export function describeAttributes(attributes: CardAttributes): string[] {
       ? `May make ${subject[0]!.toLowerCase()}${subject.slice(1)} ${base}`
       : `${subject} ${third}`;
     lines.push(
-      `${sentence} ${TRIGGER_TEXT[d.trigger]}${ifConditions(d.conditions)}.`,
+      effect(
+        `${sentence} ${TRIGGER_TEXT[d.trigger]}${ifConditions(d.conditions)}.`,
+        d.grantedTo,
+      ),
     );
   }
 
@@ -314,7 +322,7 @@ export function describeAttributes(attributes: CardAttributes): string[] {
   for (const c of attributes.costReductions ?? []) {
     lines.push(
       effect(
-        `Costs ${c.amount}{r} less${ifConditions(c.conditions)}.`,
+        `Costs ${c.amount === "per_runechant" ? "{r} less for each Runechant you control" : `${c.amount}{r} less`}${ifConditions(c.conditions)}.`,
         c.grantedTo,
       ),
     );

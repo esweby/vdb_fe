@@ -6,6 +6,7 @@ import { runechantCreators } from "./01-runechant-creators.ts";
 import { gateCreators } from "./02-gate-creators.ts";
 import { bloodDebtAndBanish } from "./03-blood-debt-and-banish.ts";
 import { weaponsAndEquipment } from "./04-weapons-and-equipment.ts";
+import { remaining } from "./05-remaining.ts";
 
 export const batches: Record<string, AuthoredAttributes> = {
   "00-examples": examples,
@@ -13,6 +14,7 @@ export const batches: Record<string, AuthoredAttributes> = {
   "02-gate-creators": gateCreators,
   "03-blood-debt-and-banish": bloodDebtAndBanish,
   "04-weapons-and-equipment": weaponsAndEquipment,
+  "05-remaining": remaining,
 };
 
 export function allAuthored(): AuthoredAttributes {
