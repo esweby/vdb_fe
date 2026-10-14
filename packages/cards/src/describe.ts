@@ -45,6 +45,10 @@ const CONDITION_TEXT: Record<Condition, string> = {
   dealt_arcane_damage_this_turn: "you've dealt arcane damage this turn",
   played_or_created_aura_this_turn:
     "you've played or created an aura this turn",
+  played_or_created_2_or_more_auras_this_turn:
+    "you've played or created 2 or more auras this turn",
+  played_or_created_3_or_more_auras_this_turn:
+    "you've played or created 3 or more auras this turn",
   played_from_banish: "it was played from your banished zone",
   top_card_matches_pitch:
     "the banished or revealed card matches this card's colour",
@@ -293,14 +297,29 @@ export function describeAttributes(attributes: CardAttributes): string[] {
   }
 
   for (const b of attributes.conditionalBonuses ?? []) {
+    const conds = ifConditions(b.conditions);
+    if (b.grantedTo) {
+      const what = {
+        plus_power: `+${b.amount} power`,
+        plus_defense: `+${b.amount} defense`,
+        dominate: "dominate",
+        overpower: "overpower",
+        draw: `"draw ${b.amount}"`,
+        arcane_cant_be_prevented: `"when this hits a hero, they can't prevent your arcane damage this turn"`,
+      }[b.effect];
+      lines.push(`${GRANTED_TEXT[b.grantedTo]} ${what}${conds}.`);
+      continue;
+    }
     const what = {
       plus_power: `Gets +${b.amount} power`,
       plus_defense: `Gets +${b.amount} defense`,
       dominate: "Gets dominate",
       overpower: "Gets overpower",
       draw: `You draw ${b.amount} ${b.amount === 1 ? "card" : "cards"}`,
+      arcane_cant_be_prevented:
+        "When it hits a hero, they can't prevent your arcane damage this turn",
     }[b.effect];
-    lines.push(`${what}${ifConditions(b.conditions)}.`);
+    lines.push(`${what}${conds}.`);
   }
 
   if (attributes.playableFromBanish) {
@@ -341,7 +360,10 @@ export function describeAttributes(attributes: CardAttributes): string[] {
     lines.push("Go again.");
   }
   if (attributes.grantsGoAgain) {
-    lines.push(`${GRANTED_TEXT[attributes.grantsGoAgain]} go again.`);
+    const g = attributes.grantsGoAgain;
+    const [to, conditions] =
+      typeof g === "string" ? [g, undefined] : [g.to, g.conditions];
+    lines.push(`${GRANTED_TEXT[to]} go again${ifConditions(conditions)}.`);
   }
   if (attributes.hasBloodDebt) lines.push("Blood debt.");
   if (attributes.oneUse)

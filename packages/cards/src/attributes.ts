@@ -38,6 +38,8 @@ export const CONDITIONS = [
   "played_non_attack_action_this_turn",
   "dealt_arcane_damage_this_turn",
   "played_or_created_aura_this_turn",
+  "played_or_created_2_or_more_auras_this_turn",
+  "played_or_created_3_or_more_auras_this_turn",
   "played_from_banish",
   "top_card_matches_pitch",
   "destroyed_own_aura",
@@ -190,6 +192,7 @@ export const BONUS_EFFECTS = [
   "dominate",
   "overpower",
   "draw",
+  "arcane_cant_be_prevented",
 ] as const;
 
 const NUMERIC_BONUSES = new Set(["plus_power", "plus_defense", "draw"]);
@@ -199,7 +202,12 @@ export const conditionalBonusSchema = z
   .strictObject({
     effect: z.enum(BONUS_EFFECTS),
     amount: amount.optional(),
-    conditions: z.array(z.enum(CONDITIONS)).min(1),
+    conditions,
+    /** Given to a later card instead of this one (then no condition is needed). */
+    grantedTo,
+  })
+  .refine((b) => (b.conditions?.length ?? 0) > 0 || b.grantedTo, {
+    message: "A bonus needs a condition or a grantedTo",
   })
   .refine((b) => !NUMERIC_BONUSES.has(b.effect) || b.amount !== undefined, {
     message: "plus_power, plus_defense and draw need an amount",
@@ -262,7 +270,15 @@ export const authoredAttributesSchema = z.strictObject({
   /** The card gets better when played from your banished zone (e.g. with a Gate). */
   rewardsPlayFromBanish: z.boolean().optional(),
   /** Gives go again to a later card. */
-  grantsGoAgain: z.enum(GRANTED_TO).optional(),
+  grantsGoAgain: z
+    .union([
+      z.enum(GRANTED_TO),
+      z.strictObject({
+        to: z.enum(GRANTED_TO),
+        conditions: z.array(z.enum(CONDITIONS)).min(1),
+      }),
+    ])
+    .optional(),
   /** Doubts or context for the reviewer. Shown on the review sheet. */
   notes: z.string().optional(),
 });
