@@ -100,6 +100,36 @@ describe("describeAttributes", () => {
     ]);
   });
 
+  it("describes effects granted to your next attack", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        tokens: [{ token: "runechant", amount: 3, trigger: "on_hit", grantedTo: "next_runeblade_attack_action" }],
+        arcaneDamage: [{ amount: 1, trigger: "on_attack", grantedTo: "next_attack_action" }],
+      }),
+    ).toEqual([
+      "Your next Runeblade attack action card this turn gets: creates 3 Runechants when it hits.",
+      "Your next attack action card this turn gets: deals 1 arcane damage when it attacks.",
+    ]);
+  });
+
+  it("describes triggers from your other attacks", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        tokens: [
+          { token: "runechant", amount: 1, trigger: "your_attack_action_played" },
+          { token: "runechant", amount: 2, trigger: "your_attack_action_hits" },
+          { token: "runechant", amount: 4, trigger: "on_play", conditions: ["played_attack_action_this_turn"] },
+        ],
+      }),
+    ).toEqual([
+      "Creates 1 Runechant when you play an attack action card.",
+      "Creates 2 Runechants when an attack action card you control hits.",
+      "Creates 4 Runechants when played, if you've played an attack action card this turn.",
+    ]);
+  });
+
   it("describes nothing for a plain card", () => {
     expect(describeAttributes(generated)).toEqual([]);
   });
