@@ -47,7 +47,7 @@ describe("account page", () => {
     });
     expect(
       await screen.findByRole("slider", {
-        name: "Runechant creation, Forsaken",
+        name: "Overall, Forsaken",
       }),
     ).toBeInTheDocument();
   });
