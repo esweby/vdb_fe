@@ -173,6 +173,10 @@ export function CardScoringView(props: {
   }
   const shownVariant =
     summary?.variants.find((v) => v.id === variantId) ?? summary?.variants[0];
+  // The middle column describes the pitch being looked at, not every pitch.
+  const chosen =
+    card.variants.find((v) => v.id === (shownVariant?.id ?? variantId)) ??
+    card.variants[0];
 
   const relevant = new Set(
     relevantDimensions(
@@ -213,12 +217,17 @@ export function CardScoringView(props: {
 
   const lines = [
     ...describeAttributes(card.attributes),
-    ...card.variants.flatMap((v) =>
-      describeAttributes({ ...NO_GENERATED, ...v.attributes }).map(
-        (line) => `Pitch ${v.pitch ?? "–"}: ${line}`,
-      ),
-    ),
+    ...(chosen
+      ? describeAttributes({ ...NO_GENERATED, ...chosen.attributes })
+      : []),
   ];
+  const stats = chosen
+    ? [
+        chosen.cost !== null ? `Cost ${chosen.cost}` : null,
+        chosen.power !== null ? `Power ${chosen.power}` : null,
+        chosen.defense !== null ? `Defense ${chosen.defense}` : null,
+      ].filter(Boolean)
+    : [];
   return (
     <>
       {showTitle && <h1>{card.name}</h1>}
@@ -234,15 +243,27 @@ export function CardScoringView(props: {
 
       <div className={styles.columns}>
         <section aria-label="Card" className={styles.cardColumn}>
-          {summary && summary.variants.length > 1 && (
+          {summary && shownVariant && (
+            <div className={styles.tile}>
+              <CardTile card={summary} variant={shownVariant} />
+            </div>
+          )}
+          {card.variants.length > 1 && (
             <div className={styles.pitches} role="group" aria-label="Pitch">
-              {summary.variants.map((v) => (
+              {card.variants.map((v) => (
                 <button
                   key={v.id}
                   type="button"
-                  aria-pressed={v.id === shownVariant?.id}
+                  className={styles[`pitch${v.pitch ?? "none"}`]}
+                  aria-pressed={v.id === chosen?.id}
+                  title={
+                    v.pitch === null
+                      ? "No pitch"
+                      : `Show the ${PITCH_LABELS[v.pitch]?.toLowerCase() ?? `pitch ${v.pitch}`} version`
+                  }
                   onClick={() => setVariantId(v.id)}
                 >
+                  <span className={styles.pitchDot} aria-hidden="true" />
                   {v.pitch === null
                     ? "No pitch"
                     : (PITCH_LABELS[v.pitch] ?? `Pitch ${v.pitch}`)}
@@ -250,38 +271,15 @@ export function CardScoringView(props: {
               ))}
             </div>
           )}
-          {summary && shownVariant && (
-            <div className={styles.tile}>
-              <CardTile card={summary} variant={shownVariant} />
-            </div>
-          )}
         </section>
 
         <section aria-label="Details" className={styles.details}>
           <div className={styles.text}>
-            {card.text ? (
-              <p>{card.text}</p>
-            ) : (
-              card.variants.map((v) => (
-                <p key={v.id}>
-                  <strong>Pitch {v.pitch ?? "–"}:</strong> {v.text}
-                </p>
-              ))
-            )}
+            <p>{card.text ?? chosen?.text}</p>
           </div>
-
-          <ul className={styles.stats}>
-            {card.variants.map((v) => {
-              const stats = [
-                v.cost !== null ? `cost ${v.cost}` : null,
-                v.power !== null ? `power ${v.power}` : null,
-                v.defense !== null ? `defense ${v.defense}` : null,
-              ].filter(Boolean);
-              if (stats.length === 0) return null;
-              const prefix = v.pitch !== null ? `Pitch ${v.pitch}: ` : "";
-              return <li key={v.id}>{prefix + stats.join(" · ")}</li>;
-            })}
-          </ul>
+          {stats.length > 0 && (
+            <p className={styles.stats}>{stats.join(" · ")}</p>
+          )}
 
           {lines.length > 0 && (
             <>
