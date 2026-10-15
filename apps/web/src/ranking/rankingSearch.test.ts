@@ -9,6 +9,7 @@ describe("ranking URL state", () => {
       sideFocus: 50,
       order: "score",
       core: {},
+      prefs: {},
     });
     expect(writeRankingSearch(readRankingSearch({}))).toEqual({});
   });
@@ -20,6 +21,7 @@ describe("ranking URL state", () => {
       sideFocus: 0,
       order: "fits" as const,
       core: { a1: 3, b2: 1 },
+      prefs: { usurp: 100, runeGate: 0 },
     };
     expect(readRankingSearch(writeRankingSearch(state))).toEqual(state);
   });
@@ -33,6 +35,12 @@ describe("ranking URL state", () => {
     expect(readRankingSearch({ order: "random" })).toMatchObject({
       order: "score",
     });
+  });
+
+  it("keeps preferences between 0 and 100 and drops neutral ones", () => {
+    expect(
+      readRankingSearch({ pref: { usurp: 150, runeGate: 50, x: "y" } }).prefs,
+    ).toEqual({ usurp: 100 });
   });
 
   it("keeps only whole, positive copies in the core", () => {

@@ -115,6 +115,38 @@ describe("engine board", () => {
     expect(router.state.location.search).toMatchObject({ risk: -50 });
   });
 
+  it("floats preferred cards and their companions, without changing scores", async () => {
+    // At Consistent, Hocus Pocus (red) 50 leads Become the Shadow Lord 45. Avoiding Gate
+    // targets sinks Hocus Pocus by 25 and Become the Shadow Lord (a Gate maker) by half that.
+    await open(
+      `/ranking?risk=-50&pref=${encodeURIComponent(JSON.stringify({ gateTargets: 0 }))}`,
+    );
+    expect(laneNames("Make Runechants")[0]).toBe("Become the Shadow Lord");
+    expect(lane("Make Runechants")[0]).toHaveTextContent("45");
+  });
+
+  it("marks preferred cards on the board", async () => {
+    await open(
+      `/ranking?pref=${encodeURIComponent(JSON.stringify({ gateTargets: 100 }))}`,
+    );
+    for (const li of lane("Gate targets")) {
+      expect(li).toHaveTextContent("preferred");
+    }
+  });
+
+  it("sets preferences with sliders in the core tray", async () => {
+    const { user, router } = await open();
+    const slider = tray().getByRole("slider", { name: "Usurp cards" });
+    slider.focus();
+    await user.keyboard("{End}");
+    expect(router.state.location.search).toMatchObject({
+      pref: { usurp: 100 },
+    });
+    for (const name of ["Rune Gate cards", "Gate targets", "Disruption"]) {
+      expect(tray().getByRole("slider", { name })).toBeInTheDocument();
+    }
+  });
+
   it("puts the chosen side's engine first", async () => {
     const { user } = await open();
     const engines = () =>

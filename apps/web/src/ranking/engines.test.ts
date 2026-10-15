@@ -9,6 +9,7 @@ describe("engineOrder", () => {
       "banish",
       "aura",
       "tempo",
+      "usurp",
     ]);
     expect(engineOrder("usurper")[0]!.id).toBe("gate");
     expect(engineOrder("forsaken")[0]!.id).toBe("runechant");
