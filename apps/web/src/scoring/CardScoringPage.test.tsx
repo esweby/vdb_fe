@@ -181,4 +181,16 @@ describe("card page", () => {
       screen.getByText("Pitch 3: cost 0 · power 2 · defense 3"),
     ).toBeInTheDocument();
   });
+
+  it("lays the card, its details and scoring side by side", async () => {
+    await renderApp({
+      path,
+      auth: fakeAuthService().service,
+      scores: fakeScoreRepository().repository,
+    });
+    await screen.findByRole("heading", { name: "Become the Shadow Lord" });
+    for (const name of ["Card", "Details", "Scores"]) {
+      expect(screen.getByRole("region", { name })).toBeInTheDocument();
+    }
+  });
 });

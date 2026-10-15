@@ -133,19 +133,97 @@ describe("cards page", () => {
     expect(screen.getByText("4 of 4 cards")).toBeInTheDocument();
   });
 
-  it("links each card to its page", async () => {
+  it("opens a card in a pop-over over the card database, and closes it again", async () => {
     const { router } = await renderApp({
+      path: "/cards",
+      auth: fakeAuthService().service,
+    });
+    const tile = await screen.findByRole("article", {
+      name: "Hocus Pocus (red)",
+    });
+    const user = userEvent.setup();
+    await user.click(within(tile).getByRole("link", { name: "Hocus Pocus" }));
+    const dialog = await screen.findByRole("dialog", { name: "Hocus Pocus" });
+    expect(router.state.location.pathname).toBe("/cards");
+    expect(router.state.location.search).toMatchObject({
+      card: "card-hocus-pocus",
+    });
+    // Side by side: the card, its details, and scoring
+    for (const name of ["Card", "Details", "Scores"]) {
+      expect(within(dialog).getByRole("region", { name })).toBeInTheDocument();
+    }
+    expect(
+      within(within(dialog).getByRole("region", { name: "Card" })).getByRole(
+        "article",
+        { name: "Hocus Pocus (red)" },
+      ),
+    ).toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: "Close" }));
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+    );
+    expect(router.state.location.search.card).toBeUndefined();
+    expect(
+      screen.getByRole("article", { name: "Hocus Pocus (red)" }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the pitch that was clicked, and switches pitch in the pop-over", async () => {
+    await renderApp({ path: "/cards", auth: fakeAuthService().service });
+    const tile = await screen.findByRole("article", {
+      name: "Hocus Pocus (yellow)",
+    });
+    const user = userEvent.setup();
+    await user.click(within(tile).getByRole("link", { name: "Hocus Pocus" }));
+    const card = within(
+      within(await screen.findByRole("dialog")).getByRole("region", {
+        name: "Card",
+      }),
+    );
+    expect(
+      card.getByRole("article", { name: "Hocus Pocus (yellow)" }),
+    ).toBeInTheDocument();
+    await user.click(card.getByRole("button", { name: "Blue" }));
+    expect(
+      card.getByRole("article", { name: "Hocus Pocus (blue)" }),
+    ).toBeInTheDocument();
+  });
+
+  it("steps through the current results with Next and Previous card", async () => {
+    await renderApp({
       path: "/cards?view=list",
       auth: fakeAuthService().service,
     });
-    await userEvent
-      .setup()
-      .click(await screen.findByRole("link", { name: "Nebula Blade" }));
-    await waitFor(() =>
-      expect(router.state.location.pathname).toBe("/cards/card-nebula-blade"),
+    const user = userEvent.setup();
+    await user.click(
+      await screen.findByRole("link", { name: "Become the Shadow Lord" }),
+    );
+    const dialog = () => screen.getByRole("dialog");
+    await screen.findByRole("dialog", { name: "Become the Shadow Lord" });
+    expect(
+      within(dialog()).getByRole("button", { name: "Previous card" }),
+    ).toBeDisabled();
+    await user.click(
+      within(dialog()).getByRole("button", { name: "Next card" }),
     );
     expect(
-      await screen.findByRole("heading", { name: "Nebula Blade" }),
+      await screen.findByRole("dialog", { name: "Fate Foreseen" }),
+    ).toBeInTheDocument();
+    await user.click(
+      within(dialog()).getByRole("button", { name: "Previous card" }),
+    );
+    expect(
+      await screen.findByRole("dialog", { name: "Become the Shadow Lord" }),
+    ).toBeInTheDocument();
+  });
+
+  it("opens a card straight from a shared link", async () => {
+    await renderApp({
+      path: "/cards?card=card-nebula-blade",
+      auth: fakeAuthService().service,
+    });
+    expect(
+      await screen.findByRole("dialog", { name: "Nebula Blade" }),
     ).toBeInTheDocument();
   });
 
