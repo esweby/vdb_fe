@@ -109,14 +109,16 @@ export const ROLES: RoleDef[] = [
     id: "rune_gate",
     name: "Rune Gate",
     engine: "runechant",
-    kind: "payoff",
+    // Recorded, not linked: attacks spend Runechants anyway (maintainer, 15 Oct 2026).
+    kind: null,
     matches: (c) => c.attributes.hasRuneGate,
   },
   {
     id: "runechant_discount",
     name: "Runechant discount",
     engine: "runechant",
-    kind: "payoff",
+    // Recorded, not linked: attacks spend Runechants anyway (maintainer, 15 Oct 2026).
+    kind: null,
     matches: (c) =>
       any(
         c,
@@ -129,7 +131,8 @@ export const ROLES: RoleDef[] = [
     id: "arcane_payoff",
     name: "Arcane payoff",
     engine: "runechant",
-    kind: "payoff",
+    // Recorded, not linked: attacks spend Runechants anyway (maintainer, 15 Oct 2026).
+    kind: null,
     matches: (c) =>
       mentions(c, [
         "dealt_arcane_damage_this_turn",

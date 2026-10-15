@@ -18,16 +18,16 @@ Counts are cards in the current pool of 627, including weapons and equipment. 29
 
 ## Runechant engine
 
-Forsaken: create Runechants to banish your top card; create 3 in a turn to traverse.
+Forsaken: create Runechants to banish your top card; create 3 in a turn to traverse. Only the makers are linked: attacks spend Runechants anyway, so the cards that use them are recorded but don't fit anything (**checked**).
 
 | Role                | Kind      | Rule                                                                                        | Cards | For example                                    |
 | ------------------- | --------- | ------------------------------------------------------------------------------------------- | ----: | ---------------------------------------------- |
 | Runechant generator | generator | Creates Runechants itself                                                                   |    57 | Arcane Cussing, Arknight Ascendancy            |
 | Runechant burst     | generator | Creates X, or 3 or more, at once (one card can trigger traverse)                            |    17 | Arcane Cussing, Blessing of Occult             |
 | Runechant granter   | generator | Gives Runechant creation to a later card                                                    |     3 | Mauvrion Skies, Runic Reaping, Sonata Dystopia |
-| Rune Gate           | payoff    | The Rune Gate keyword                                                                       |    10 | Widespread Ruin, Deathly Delight               |
-| Runechant discount  | payoff    | Costs less for each Runechant                                                               |    10 | Amplify the Arknight, Bequest the Vast Beyond  |
-| Arcane payoff       | payoff    | Needs arcane damage dealt, or 3 or more Runechants created                                  |     9 | Arcanic Spike, Consuming Volition              |
+| Rune Gate           | none      | The Rune Gate keyword                                                                       |    10 | Widespread Ruin, Deathly Delight               |
+| Runechant discount  | none      | Costs less for each Runechant                                                               |    10 | Amplify the Arknight, Bequest the Vast Beyond  |
+| Arcane payoff       | none      | Needs arcane damage dealt, or 3 or more Runechants created                                  |     9 | Arcanic Spike, Consuming Volition              |
 | Runechant trigger   | none      | An attack action card, or a weapon that attacks. Not linked: most of the deck. **Checked.** |   228 | Widespread Ruin, Nebula Blade                  |
 
 ## Gate engine
