@@ -289,6 +289,8 @@ describe("deck page", () => {
     const [add] = blade.getAllByRole("button");
     expect(add).toHaveAccessibleName("Add Nebula Blade");
     expect(add).toHaveTextContent("+");
+    // The picture is inside the button (here the stand-in, which shows the name).
+    expect(add).toHaveTextContent("Nebula Blade");
     await userEvent.setup().click(add!);
     expect(fake.saved).toEqual(["set deck-1 nb 1 main"]);
   });
