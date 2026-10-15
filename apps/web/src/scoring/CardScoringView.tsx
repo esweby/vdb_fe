@@ -56,10 +56,15 @@ export function CardScoringView(props: {
   showTitle?: boolean;
   /** In the card database's pop-over: a sticky footer with Skip and "Mark reviewed and next". */
   inPopover?: boolean;
-  /** The next card in the results, if there is one. */
+  /** The next stop in the results (Skip), if there is one. */
   onNext?: () => void;
+  /** The next different card, for after a review (defaults to onNext). */
+  onNextCard?: () => void;
+  /** Tells the pop-over which pitch is being looked at. */
+  onChooseVariant?: (variantId: string) => void;
 }) {
   const { cardId, showTitle, inPopover, onNext } = props;
+  const onNextCard = props.onNextCard ?? onNext;
   const { items } = useCards();
   const summary = items.find((c) => c.id === cardId);
   const [variantId, setVariantId] = useState(props.initialVariantId);
@@ -141,7 +146,7 @@ export function CardScoringView(props: {
       // The daily job catches anything this misses.
       if (canScore) await scores.runCommunityJob().catch(() => {});
       // In the pop-over, reviewing moves on to the next card.
-      if (inPopover) onNext?.();
+      if (inPopover) onNextCard?.();
     } catch (e) {
       setError(
         `Couldn't mark reviewed: ${e instanceof Error ? e.message : String(e)}`,
@@ -241,7 +246,10 @@ export function CardScoringView(props: {
                       ? "No pitch"
                       : `Show the ${PITCH_LABELS[v.pitch]?.toLowerCase() ?? `pitch ${v.pitch}`} version`
                   }
-                  onClick={() => setVariantId(v.id)}
+                  onClick={() => {
+                    setVariantId(v.id);
+                    props.onChooseVariant?.(v.id);
+                  }}
                 >
                   <span className={styles.pitchDot} aria-hidden="true" />
                   {v.pitch === null
@@ -421,7 +429,7 @@ export function CardScoringView(props: {
             {reviewedAt ? (
               <>
                 <Tag tone="accent">Reviewed {formatDate(reviewedAt)}</Tag>
-                <Button disabled={!onNext} onClick={() => onNext?.()}>
+                <Button disabled={!onNextCard} onClick={() => onNextCard?.()}>
                   Next card
                 </Button>
               </>
@@ -432,7 +440,7 @@ export function CardScoringView(props: {
                 </Button>
                 {user && dimensions.length > 0 && (
                   <Button variant="primary" onClick={() => setReviewing(true)}>
-                    {onNext ? "Mark reviewed and next" : "Mark reviewed"}
+                    {onNextCard ? "Mark reviewed and next" : "Mark reviewed"}
                   </Button>
                 )}
               </>
