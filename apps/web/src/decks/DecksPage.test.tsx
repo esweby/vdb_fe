@@ -275,6 +275,24 @@ describe("deck page", () => {
     expect(names()).toEqual(["Become the Shadow Lord"]);
   });
 
+  it("adds a card without a pitch by clicking its picture, which shows a +", async () => {
+    const fake = withDeck();
+    await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      decks: fake.repository,
+    });
+    const blade = within(
+      await screen.findByRole("listitem", { name: "Nebula Blade" }),
+    );
+    // One button: the picture itself, with a + over it.
+    const [add] = blade.getAllByRole("button");
+    expect(add).toHaveAccessibleName("Add Nebula Blade");
+    expect(add).toHaveTextContent("+");
+    await userEvent.setup().click(add!);
+    expect(fake.saved).toEqual(["set deck-1 nb 1 main"]);
+  });
+
   it("adds a pitch with the R, Y and B buttons under each card", async () => {
     const fake = withDeck();
     await renderApp({
