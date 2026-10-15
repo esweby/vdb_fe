@@ -1,8 +1,6 @@
 import { useMemo, useState } from "react";
 import type { CardSummary } from "../cards/cardRepository.ts";
 import { cardFacets, pitchShown } from "../cards/facets.ts";
-import { searchAndSort } from "../cards/filterCards.ts";
-import { pitchName } from "../cards/pitch.ts";
 import {
   activeCount,
   applyFilters,
@@ -21,6 +19,15 @@ const PITCHES: [string, string][] = [
   ["3", "Blue"],
 ];
 const CLASSES = ["Runeblade", "Shadow", "Generic"];
+const GEAR = ["weapon", "equipment"];
+const PITCH_LETTER: Record<number, string> = { 1: "R", 2: "Y", 3: "B" };
+
+/** Matches the name, a keyword (Usurp, Blood Debt, Go again…) or the type line. */
+const matches = (card: CardSummary, q: string) =>
+  !q ||
+  card.name.toLowerCase().includes(q) ||
+  card.keywords.some((k) => k.toLowerCase().includes(q)) ||
+  typeLine(card).toLowerCase().includes(q);
 
 /**
  * Cards to add to a deck: shown straight away, narrowed by a search, quiet pitch and class
@@ -38,11 +45,18 @@ export function CardFinder(props: {
   const [more, setMore] = useState(false);
   const [shown, setShown] = useState(PAGE);
 
-  const found = useMemo(
-    () =>
-      applyFilters(searchAndSort(props.cards, query, "name"), facets, state),
-    [props.cards, query, state],
-  );
+  // Weapons and equipment first (they don't take deck space), then deck cards, by name.
+  const found = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const searched = props.cards
+      .filter((c) => matches(c, q))
+      .sort(
+        (a, b) =>
+          Number(GEAR.includes(b.type)) - Number(GEAR.includes(a.type)) ||
+          a.name.localeCompare(b.name),
+      );
+    return applyFilters(searched, facets, state);
+  }, [props.cards, query, state]);
 
   const toggle = (facet: string, value: string) => {
     const choices = { ...state[facet] };
@@ -59,18 +73,44 @@ export function CardFinder(props: {
 
   return (
     <div className={styles.finder}>
-      <label className={styles.search}>
-        <span className={styles.visuallyHidden}>Find cards</span>
-        <input
-          type="search"
-          placeholder="Find cards"
-          value={query}
-          onChange={(e) => {
-            setQuery(e.target.value);
-            setShown(PAGE);
-          }}
-        />
-      </label>
+      <div className={styles.searchRow}>
+        <label className={styles.search}>
+          <span className={styles.visuallyHidden}>Find cards</span>
+          <input
+            type="search"
+            placeholder="Name or keyword"
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setShown(PAGE);
+            }}
+          />
+        </label>
+        <button
+          type="button"
+          className={styles.more}
+          aria-expanded={more}
+          aria-label="More filters"
+          onClick={() => setMore(!more)}
+        >
+          <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+            <path
+              d="M3 5h18 M6 12h12 M10 19h4"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              fill="none"
+            />
+          </svg>
+          Filters
+          {moreCount > 0 && (
+            <span className={styles.count} aria-hidden="true">
+              {moreCount}
+            </span>
+          )}
+          <span aria-hidden="true">{more ? "▴" : "▾"}</span>
+        </button>
+      </div>
 
       <div className={styles.quick}>
         <div className={styles.pips} role="group" aria-label="Pitch">
@@ -99,21 +139,6 @@ export function CardFinder(props: {
             </button>
           ))}
         </div>
-        <button
-          type="button"
-          className={styles.more}
-          aria-expanded={more}
-          aria-label="More filters"
-          onClick={() => setMore(!more)}
-        >
-          Filters
-          {moreCount > 0 && (
-            <span className={styles.count} aria-hidden="true">
-              {moreCount}
-            </span>
-          )}
-          <span aria-hidden="true">{more ? "▴" : "▾"}</span>
-        </button>
       </div>
 
       {more && (
@@ -154,39 +179,43 @@ export function CardFinder(props: {
           );
           const image = variants.find((v) => v.imageUrl)?.imageUrl;
           return (
-            <li key={card.id} aria-label={card.name} className={styles.row}>
-              <span className={styles.thumb} aria-hidden="true">
-                {image && <img src={image} alt="" loading="lazy" />}
-              </span>
-              <span className={styles.info}>
-                <span className={styles.name}>{card.name}</span>
-                <span className={styles.type}>{typeLine(card)}</span>
+            <li key={card.id} aria-label={card.name} className={styles.tile}>
+              <span className={styles.art} title={card.name}>
+                {image ? (
+                  <img src={image} alt="" loading="lazy" />
+                ) : (
+                  <span className={styles.standIn}>{card.name}</span>
+                )}
               </span>
               <span className={styles.adds}>
                 {variants.map((v) => {
                   const q = props.quantityOf(v.id);
                   const full = props.atLimit(v.id);
                   return (
-                    <button
-                      key={v.id}
-                      type="button"
-                      className={styles.add}
-                      data-pitch={v.pitch ?? "none"}
-                      aria-label={`Add ${variantName(card, v)}`}
-                      disabled={full}
-                      title={
-                        full
-                          ? `At most ${props.copyLimit} copies`
-                          : `Add ${variantName(card, v)}`
-                      }
-                      onClick={() => props.onAdd(v.id)}
-                    >
-                      <span aria-hidden="true">+</span>
-                      {v.pitch === null
-                        ? ""
-                        : ` ${pitchName(v.pitch).charAt(0)}`}
-                      {q ? <span className={styles.have}>{q}</span> : null}
-                    </button>
+                    <span key={v.id} className={styles.addWrap}>
+                      <button
+                        type="button"
+                        className={styles.add}
+                        data-pitch={v.pitch ?? "none"}
+                        aria-label={`Add ${variantName(card, v)}`}
+                        disabled={full}
+                        title={
+                          full
+                            ? `At most ${props.copyLimit} copies`
+                            : `Add ${variantName(card, v)}`
+                        }
+                        onClick={() => props.onAdd(v.id)}
+                      >
+                        {v.pitch === null
+                          ? "+"
+                          : (PITCH_LETTER[v.pitch] ?? String(v.pitch))}
+                      </button>
+                      {q ? (
+                        <span className={styles.have} aria-hidden="true">
+                          {q}
+                        </span>
+                      ) : null}
+                    </span>
                   );
                 })}
               </span>

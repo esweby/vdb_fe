@@ -22,7 +22,7 @@
 /* Add cards on the left (like the card database's filters), the deck on the right. */
 .editor {
   display: grid;
-  grid-template-columns: 21rem minmax(0, 1fr);
+  grid-template-columns: 24rem minmax(0, 1fr);
   gap: 2.5rem;
   align-items: start;
 }
