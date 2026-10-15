@@ -401,23 +401,62 @@ describe("the core", () => {
     expect(panel().getByText("Red 2 of 18")).toBeInTheDocument();
   });
 
-  it("fills each pitch to its target", async () => {
-    const { user } = await open("/ranking?tab=setup");
-    for (const [name, n] of [
-      ["Red target", "3"],
-      ["Yellow target", "0"],
-      ["Blue target", "3"],
-    ] as const) {
+  const setTargets = async (
+    user: ReturnType<typeof userEvent.setup>,
+    targets: [string, string][],
+  ) => {
+    for (const [name, n] of targets) {
       const input = panel().getByRole("spinbutton", { name });
       await user.clear(input);
       await user.type(input, n);
     }
-    await user.click(panel().getByRole("button", { name: "Fill to targets" }));
-    await goTab("Board");
+  };
+
+  it("finishing Set up builds the core to the pitch targets and shows the board", async () => {
+    const { user } = await open("/ranking?tab=setup");
+    await setTargets(user, [
+      ["Red target", "3"],
+      ["Yellow target", "0"],
+      ["Blue target", "3"],
+    ]);
+    await user.click(panel().getByRole("button", { name: "Build the core →" }));
+    expect(screen.getByRole("tab", { name: /Board/ })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
     expect(trayCards()).toEqual([
       "3 × Hocus Pocus (red)",
       "3 × Become the Shadow Lord",
     ]);
+  });
+
+  it("keeps the cards already in the core when building", async () => {
+    const { user } = await open(`/ranking?tab=setup&${core({ hp3: 2 })}`);
+    await setTargets(user, [
+      ["Red target", "3"],
+      ["Yellow target", "0"],
+      ["Blue target", "5"],
+    ]);
+    await user.click(panel().getByRole("button", { name: "Build the core →" }));
+    expect(trayCards()).toEqual([
+      "3 × Hocus Pocus (red)",
+      "3 × Become the Shadow Lord",
+      "2 × Hocus Pocus (blue)",
+    ]);
+  });
+
+  it("can go to the board without adding cards", async () => {
+    const { user } = await open("/ranking?tab=setup");
+    await user.click(
+      panel().getByRole("button", {
+        name: "Go to the board without adding cards",
+      }),
+    );
+    expect(screen.getByRole("tab", { name: /Board/ })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(trayCards()).toEqual([]);
   });
 
   it("adds the core to the chosen deck", async () => {

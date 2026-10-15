@@ -96,13 +96,15 @@ export function SetupTab(props: {
   targets: PitchTargets;
   onTargets: (targets: PitchTargets) => void;
   pitchCounts: Record<number, number>;
-  onFill: () => void;
+  /** Fill the core to the pitch targets and show the board. */
+  onBuild: () => void;
   questions: StrategyQuestion[];
   myAnswers: Record<string, number>;
   community: Record<string, CommunityAnswer>;
   signedIn: boolean;
   onAnswer: (key: string, answer: number) => void;
-  onDone: () => void;
+  /** Show the board without adding cards. */
+  onSkip: () => void;
 }) {
   const { settings } = props;
   return (
@@ -196,8 +198,8 @@ export function SetupTab(props: {
         <header>
           <h2 id="setup-targets">Pitch targets</h2>
           <p>
-            Copies of each pitch the core aims for. Fill to targets adds cards
-            in the board's order.
+            Copies of each pitch the core aims for. Build the core fills each
+            pitch from the board, best first, keeping any cards you've added.
           </p>
         </header>
         {PITCHES.map((pitch) => {
@@ -235,7 +237,6 @@ export function SetupTab(props: {
             </div>
           );
         })}
-        <Button onClick={props.onFill}>Fill to targets</Button>
       </section>
 
       <section className={styles.formCard} aria-labelledby="setup-strategy">
@@ -260,8 +261,11 @@ export function SetupTab(props: {
       </section>
 
       <div className={styles.setupNext}>
-        <Button variant="primary" onClick={props.onDone}>
-          See the board →
+        <Button variant="ghost" onClick={props.onSkip}>
+          Go to the board without adding cards
+        </Button>
+        <Button variant="primary" onClick={props.onBuild}>
+          Build the core →
         </Button>
       </div>
     </form>
