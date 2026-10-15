@@ -309,9 +309,13 @@ describe("fits", () => {
     expect(fits(["gate_generator"], ["gate_target"])).toBe(true);
   });
 
-  it("a support fits its engine's generators", () => {
-    expect(fits(["runechant_trigger"], ["runechant_generator"])).toBe(true);
+  it("Runechant triggers are recorded but don't fit anything (maintainer, 15 Oct 2026)", () => {
+    expect(fits(["runechant_trigger"], ["runechant_generator"])).toBe(false);
     expect(fits(["runechant_trigger"], ["rune_gate"])).toBe(false);
+    expect(ROLES.find((r) => r.id === "runechant_trigger")).toMatchObject({
+      engine: "runechant",
+      kind: null,
+    });
   });
 
   it("doesn't link across engines, two payoffs, or roles outside the engines", () => {
