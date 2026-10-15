@@ -428,7 +428,12 @@ function PoolSection(props: {
         <ul className={styles.tiles}>
           {sorted.map((e) => (
             <li key={e.variant.id}>
-              <CardTile card={e.card} variant={e.variant} quantity={e.quantity}>
+              <CardTile
+                card={e.card}
+                variant={e.variant}
+                quantity={e.quantity}
+                enlargeable
+              >
                 <span className={styles.tileControls}>{controls(e)}</span>
               </CardTile>
             </li>

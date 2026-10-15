@@ -1,0 +1,25 @@
+.magnify {
+  display: grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgb(20 15 40 / 0.75);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.3);
+}
+.magnify:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+.large {
+  display: block;
+  width: min(25rem, 80vw);
+  max-height: 75vh;
+  margin: 0 auto;
+  object-fit: contain;
+  border-radius: 4.6% / 3.3%;
+}

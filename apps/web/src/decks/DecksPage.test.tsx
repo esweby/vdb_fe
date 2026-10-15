@@ -245,11 +245,15 @@ describe("deck page", () => {
         .getAllByRole("listitem")
         .map((li) => li.getAttribute("aria-label")),
     ).toEqual([
-      // Weapons and equipment first, then deck cards, each by name.
+      // Weapons and equipment first, then deck cards by name, a tile for each pitch.
       "Nebula Blade",
-      "Become the Shadow Lord",
-      "Fate Foreseen",
-      "Hocus Pocus",
+      "Become the Shadow Lord (blue)",
+      "Fate Foreseen (red)",
+      "Fate Foreseen (yellow)",
+      "Fate Foreseen (blue)",
+      "Hocus Pocus (red)",
+      "Hocus Pocus (yellow)",
+      "Hocus Pocus (blue)",
     ]);
     expect(finder.getByText("4 cards")).toBeInTheDocument();
   });
@@ -269,10 +273,14 @@ describe("deck page", () => {
         .map((li) => li.getAttribute("aria-label"));
     const user = userEvent.setup();
     await user.type(finder.getByLabelText("Find cards"), "blood debt");
-    expect(names()).toEqual(["Hocus Pocus"]);
+    expect(names()).toEqual([
+      "Hocus Pocus (red)",
+      "Hocus Pocus (yellow)",
+      "Hocus Pocus (blue)",
+    ]);
     await user.clear(finder.getByLabelText("Find cards"));
     await user.type(finder.getByLabelText("Find cards"), "go again");
-    expect(names()).toEqual(["Become the Shadow Lord"]);
+    expect(names()).toEqual(["Become the Shadow Lord (blue)"]);
   });
 
   it("adds a card without a pitch to the deck or the sideboard from symbols over its picture", async () => {
@@ -382,25 +390,76 @@ describe("deck page", () => {
     expect(fake.saved).toEqual(["set deck-1 fp 0 main"]);
   });
 
-  it("adds a pitch with the R, Y and B buttons under each card", async () => {
+  it("gives each pitch its own tile, with deck and sideboard buttons down the side", async () => {
     const fake = withDeck();
     await renderApp({
       path: "/decks/deck-1",
       auth: auth(),
       decks: fake.repository,
     });
-    const hocus = within(
-      await screen.findByRole("listitem", { name: "Hocus Pocus" }),
+    const yellow = within(
+      await screen.findByRole("listitem", { name: "Hocus Pocus (yellow)" }),
     );
-    expect(hocus.getAllByRole("button").map((b) => b.textContent)).toEqual([
-      "R",
-      "Y",
-      "B",
+    const actions = within(
+      yellow.getByRole("group", { name: "Hocus Pocus (yellow)" }),
+    );
+    expect(
+      actions.getAllByRole("button").map((b) => b.getAttribute("aria-label")),
+    ).toEqual([
+      "Add Hocus Pocus (yellow)",
+      "Add Hocus Pocus (yellow) to the sideboard",
     ]);
-    await userEvent
-      .setup()
-      .click(hocus.getByRole("button", { name: "Add Hocus Pocus (yellow)" }));
-    expect(fake.saved).toEqual(["set deck-1 hp2 1 main"]);
+    const user = userEvent.setup();
+    await user.click(
+      actions.getByRole("button", { name: "Add Hocus Pocus (yellow)" }),
+    );
+    await user.click(
+      within(
+        screen.getByRole("listitem", { name: "Hocus Pocus (blue)" }),
+      ).getByRole("button", {
+        name: "Add Hocus Pocus (blue) to the sideboard",
+      }),
+    );
+    expect(fake.saved).toEqual([
+      "set deck-1 hp2 1 main",
+      "set deck-1 hp3 1 side",
+    ]);
+  });
+
+  it("pages through the cards to add rather than scrolling on and on", async () => {
+    const blade = sampleCards.find((c) => c.id === "card-nebula-blade")!;
+    const many = Array.from({ length: 30 }, (_, i) => ({
+      ...blade,
+      id: `card-${i}`,
+      name: `Zz blade ${String(i).padStart(2, "0")}`,
+      variants: [{ ...blade.variants[0]!, id: `zz${i}` }],
+    }));
+    await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      cards: fakeCardRepository([...sampleCards, ...many]),
+      decks: withDeck().repository,
+    });
+    const finder = within(
+      await screen.findByRole("region", { name: "Add cards" }),
+    );
+    const tiles = () =>
+      within(finder.getByRole("list", { name: "Cards to add" })).getAllByRole(
+        "listitem",
+      );
+    const pages = within(finder.getByRole("navigation", { name: "Pages" }));
+    expect(tiles()).toHaveLength(24);
+    expect(pages.getByText("Page 1 of 2")).toBeInTheDocument();
+    expect(pages.getByRole("button", { name: "Previous page" })).toBeDisabled();
+    const user = userEvent.setup();
+    await user.click(pages.getByRole("button", { name: "Next page" }));
+    expect(tiles()).toHaveLength(14);
+    expect(pages.getByText("Page 2 of 2")).toBeInTheDocument();
+    expect(pages.getByRole("button", { name: "Next page" })).toBeDisabled();
+    // A new search starts again at page 1.
+    await user.type(finder.getByLabelText("Find cards"), "zz");
+    expect(tiles()).toHaveLength(24);
+    expect(pages.getByText("Page 1 of 2")).toBeInTheDocument();
   });
 
   it("narrows the cards to add by pitch, offering only that pitch", async () => {
@@ -448,7 +507,7 @@ describe("deck page", () => {
       within(finder.getByRole("list", { name: "Cards to add" }))
         .getAllByRole("listitem")
         .map((li) => li.getAttribute("aria-label")),
-    ).toEqual(["Become the Shadow Lord"]);
+    ).toEqual(["Become the Shadow Lord (blue)"]);
     await user.click(finder.getByRole("button", { name: "Clear filters" }));
     expect(finder.getByText("4 cards")).toBeInTheDocument();
   });
@@ -632,6 +691,70 @@ describe("deck page", () => {
     expect(
       row.compareDocumentPosition(deck) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+  });
+
+  it("enlarges a card's picture from a magnifying glass, in Add cards and in the deck", async () => {
+    const withImage = sampleCards.map((c) =>
+      c.id === "card-hocus-pocus"
+        ? {
+            ...c,
+            variants: c.variants.map((v) => ({
+              ...v,
+              imageUrl: `https://img/${v.id}.webp`,
+            })),
+          }
+        : c,
+    );
+    await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      cards: fakeCardRepository(withImage),
+      decks: withDeck([{ variantId: "hp1", quantity: 2, sideboard: false }])
+        .repository,
+    });
+    const user = userEvent.setup();
+    const toAdd = within(
+      await screen.findByRole("list", { name: "Cards to add" }),
+    ).getByRole("listitem", { name: "Hocus Pocus (red)" });
+    await user.click(
+      within(toAdd).getByRole("button", { name: "Enlarge Hocus Pocus (red)" }),
+    );
+    const dialog = screen.getByRole("dialog", { name: "Hocus Pocus (red)" });
+    // Opened over the whole page, not inside the tile (which would clip and restyle it).
+    expect(toAdd).not.toContainElement(dialog);
+    expect(
+      within(dialog).getByRole("img", { name: "Hocus Pocus (red)" }),
+    ).toHaveAttribute("src", "https://img/hp1.webp");
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+    const inDeck = await region("Deck").findByRole("article", {
+      name: "Hocus Pocus (red)",
+    });
+    await user.click(
+      within(inDeck).getByRole("button", {
+        name: "Enlarge Hocus Pocus (red)",
+      }),
+    );
+    expect(
+      within(
+        screen.getByRole("dialog", { name: "Hocus Pocus (red)" }),
+      ).getByRole("img", { name: "Hocus Pocus (red)" }),
+    ).toHaveAttribute("src", "https://img/hp1.webp");
+  });
+
+  it("offers no magnifying glass for a card without a picture", async () => {
+    await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      decks: withDeck().repository,
+    });
+    const toAdd = within(
+      await screen.findByRole("list", { name: "Cards to add" }),
+    ).getByRole("listitem", { name: "Hocus Pocus (red)" });
+    expect(
+      within(toAdd).queryByRole("button", { name: /^Enlarge/ }),
+    ).not.toBeInTheDocument();
   });
 
   it("shows the card image when there is one, and the stand-in if it fails to load", async () => {

@@ -224,3 +224,21 @@
   left: auto;
   right: 0.5em;
 }
+
+/* The magnifying glass: top left of a pictured card, on hover or focus. */
+.enlarge {
+  position: absolute;
+  top: 0.5em;
+  left: 0.5em;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.tile:hover .enlarge,
+.enlarge:focus-visible {
+  opacity: 1;
+}
+@media (hover: none) {
+  .enlarge {
+    opacity: 1;
+  }
+}

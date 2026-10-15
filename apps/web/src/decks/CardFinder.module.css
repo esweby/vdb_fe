@@ -165,18 +165,16 @@
   cursor: pointer;
 }
 
-/* A grid of cards, three to a row, each with R / Y / B (or +) underneath to add that pitch. */
+/* A grid of tiles, three to a row, one for each pitch of a card. */
 .results {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.75rem 0.5rem;
+  gap: 0.5rem;
 }
 .tile {
-  display: grid;
-  gap: 0.3rem;
   min-width: 0;
 }
 .art {
@@ -186,6 +184,17 @@
   border-radius: 0.3rem;
   overflow: hidden;
   background: color-mix(in srgb, var(--fg) 8%, var(--bg));
+  /* The pitch along the bottom edge, so red, yellow and blue read apart at a glance. */
+  box-shadow: inset 0 -4px 0 var(--tile-pitch, transparent);
+}
+.tile[data-pitch="1"] {
+  --tile-pitch: var(--pitch-1);
+}
+.tile[data-pitch="2"] {
+  --tile-pitch: var(--pitch-2);
+}
+.tile[data-pitch="3"] {
+  --tile-pitch: var(--pitch-3);
 }
 .art img {
   display: block;
@@ -197,135 +206,111 @@
   display: flex;
   align-items: flex-end;
   height: 100%;
-  padding: 0.35rem;
+  padding: 0.35rem 0.35rem 0.6rem;
   box-sizing: border-box;
   font-family: var(--font-display);
   font-size: 0.7rem;
   line-height: 1.2;
 }
-.adds {
+
+/* Pages of tiles: ‹ Page 1 of 9 ›. */
+.pager {
   display: flex;
-  gap: 0.2rem;
-}
-.addWrap {
-  position: relative;
-  flex: 1;
-  display: flex;
-}
-.add {
-  flex: 1;
-  height: 1.6rem;
-  padding: 0;
-  border: none;
-  border-radius: 0.3rem;
-  background: var(--pitch-none);
-  font: inherit;
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: #fff;
-  cursor: pointer;
-}
-.add[data-pitch="1"] {
-  background: var(--pitch-1);
-}
-.add[data-pitch="2"] {
-  background: var(--pitch-2);
-  color: #2b2100;
-}
-.add[data-pitch="3"] {
-  background: var(--pitch-3);
-}
-.add:hover:not(:disabled) {
-  filter: brightness(1.1);
-}
-.add:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-.have {
-  position: absolute;
-  top: -0.45rem;
-  right: -0.2rem;
-  min-width: 0.95rem;
-  padding: 0 0.2rem;
-  border-radius: 999px;
-  background: var(--fg);
-  color: var(--bg);
-  font-size: 0.66rem;
-  font-weight: 600;
-  line-height: 0.95rem;
-  text-align: center;
-  pointer-events: none;
-}
-.showMore {
-  justify-self: center;
-  padding: 0.35rem 1rem;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: none;
-  font: inherit;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
   font-size: 0.82rem;
+  color: var(--muted);
+}
+.pager button {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
+  font: inherit;
+  font-size: 1.1rem;
+  line-height: 1;
   color: var(--fg);
   cursor: pointer;
 }
+.pager button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
 
-/* Symbols over the picture of a card without a pitch: + for the deck, SB for the sideboard. */
-.overlay {
+/* Down the right of the picture on hover: + for the deck, SB for the sideboard. */
+.actions {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 4px;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: center;
   gap: 0.35rem;
-  background: rgb(20 15 40 / 0.45);
+  padding: 0 0.35rem;
+  background: linear-gradient(to left, rgb(20 15 40 / 0.55), transparent);
   opacity: 0;
   transition: opacity 0.12s;
 }
-.tile:hover .overlay,
-.overlay:focus-within {
+.enlarge {
+  position: absolute;
+  top: 0.35rem;
+  left: 0.35rem;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.tile:hover .actions,
+.actions:focus-within,
+.tile:hover .enlarge,
+.enlarge:focus-visible {
   opacity: 1;
 }
 @media (pointer: coarse) {
-  .overlay {
+  .actions,
+  .enlarge {
     opacity: 1;
-    align-items: flex-end;
-    padding-bottom: 0.35rem;
+  }
+  .actions {
     background: none;
   }
 }
-.overlayButton {
-  width: 2.1rem;
-  height: 2.1rem;
+.action {
+  width: 1.9rem;
+  height: 1.9rem;
   padding: 0;
   border: none;
   border-radius: 50%;
   background: var(--accent);
   color: var(--accent-fg);
   font: inherit;
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   font-weight: 700;
   line-height: 1;
   cursor: pointer;
   box-shadow: 0 2px 6px rgb(0 0 0 / 0.3);
 }
-.overlayButton[data-sideboard] {
+.action[data-sideboard] {
   background: var(--surface);
   color: var(--fg);
-  font-size: 0.72rem;
+  font-size: 0.66rem;
   letter-spacing: 0.04em;
 }
-.overlayButton:disabled {
+.action:disabled {
   opacity: 0.45;
   cursor: default;
 }
-.overlayButton:focus-visible {
+.action:focus-visible {
   outline: 2px solid #fff;
   outline-offset: 2px;
 }
 .haveOnArt {
   position: absolute;
-  top: 0.3rem;
-  right: 0.3rem;
+  top: 0.35rem;
+  left: 50%;
+  transform: translateX(-50%);
   padding: 0 0.35rem;
   border-radius: 999px;
   background: var(--fg);
@@ -336,7 +321,8 @@
   pointer-events: none;
 }
 @media (prefers-reduced-motion: reduce) {
-  .overlay {
+  .actions,
+  .enlarge {
     transition: none;
   }
 }

@@ -8,11 +8,13 @@ import {
 } from "../filters/applyFilters.ts";
 import { FilterSidebar } from "../filters/FilterSidebar.tsx";
 import { typeLine } from "./CardTile.tsx";
+import { Enlarge } from "./Enlarge.tsx";
 import { variantName } from "./deckRules.ts";
 import styles from "./CardFinder.module.css";
 
 const facets = cardFacets();
-const PAGE = 30;
+/** Tiles per page: eight rows of three. */
+const PAGE = 24;
 const PITCHES: [string, string][] = [
   ["1", "Red"],
   ["2", "Yellow"],
@@ -20,7 +22,6 @@ const PITCHES: [string, string][] = [
 ];
 const CLASSES = ["Runeblade", "Shadow", "Generic"];
 const GEAR = ["weapon", "equipment"];
-const PITCH_LETTER: Record<number, string> = { 1: "R", 2: "Y", 3: "B" };
 
 /** Matches the name, a keyword (Usurp, Blood Debt, Go again…) or the type line. */
 const matches = (card: CardSummary, q: string) =>
@@ -46,7 +47,7 @@ export function CardFinder(props: {
   const [query, setQuery] = useState("");
   const [state, setState] = useState<FilterState>({});
   const [more, setMore] = useState(false);
-  const [shown, setShown] = useState(PAGE);
+  const [page, setPage] = useState(0);
 
   // Weapons and equipment first (they don't take deck space), then deck cards, by name.
   const found = useMemo(() => {
@@ -61,12 +62,22 @@ export function CardFinder(props: {
     return applyFilters(searched, facets, state);
   }, [props.cards, query, state]);
 
+  // A tile for each pitch shown, paged rather than scrolling on and on.
+  const tiles = found.flatMap((card) =>
+    card.variants
+      .filter((v) => pitchShown(state, v.pitch))
+      .map((variant) => ({ card, variant })),
+  );
+  const pages = Math.max(1, Math.ceil(tiles.length / PAGE));
+  const current = Math.min(page, pages - 1);
+  const at = current * PAGE;
+
   const toggle = (facet: string, value: string) => {
     const choices = { ...state[facet] };
     if (choices[value] === "include") delete choices[value];
     else choices[value] = "include";
     setState({ ...state, [facet]: choices });
-    setShown(PAGE);
+    setPage(0);
   };
   const on = (facet: string, value: string) =>
     state[facet]?.[value] === "include";
@@ -85,7 +96,7 @@ export function CardFinder(props: {
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
-              setShown(PAGE);
+              setPage(0);
             }}
           />
         </label>
@@ -152,7 +163,7 @@ export function CardFinder(props: {
             state={state}
             onChange={(next) => {
               setState(next);
-              setShown(PAGE);
+              setPage(0);
             }}
           />
         </div>
@@ -167,7 +178,7 @@ export function CardFinder(props: {
             onClick={() => {
               setQuery("");
               setState({});
-              setShown(PAGE);
+              setPage(0);
             }}
           >
             Clear filters
@@ -176,123 +187,93 @@ export function CardFinder(props: {
       </p>
 
       <ul className={styles.results} aria-label="Cards to add">
-        {found.slice(0, shown).map((card) => {
-          const variants = card.variants.filter((v) =>
-            pitchShown(state, v.pitch),
-          );
-          const image = variants.find((v) => v.imageUrl)?.imageUrl;
-          const art = image ? (
-            <img src={image} alt="" loading="lazy" />
-          ) : (
-            <span className={styles.standIn}>{card.name}</span>
-          );
-          // Cards without a pitch (weapons, equipment): add to the deck or the sideboard from
-          // symbols over the picture, shown on hover (always on touch screens).
-          const single = variants.length === 1 && variants[0]!.pitch === null;
-          if (single) {
-            const v = variants[0]!;
-            const q = props.quantityOf(v.id);
-            const place = props.placeOf(v.id);
-            const full = props.atLimit(v.id);
-            return (
-              <li key={card.id} aria-label={card.name} className={styles.tile}>
-                <span className={styles.art} title={card.name}>
-                  {art}
-                  <span
-                    className={styles.overlay}
-                    role="group"
-                    aria-label={card.name}
-                  >
-                    <button
-                      type="button"
-                      className={styles.overlayButton}
-                      aria-label={`Add ${card.name}`}
-                      title={
-                        full
-                          ? `At most ${props.limitOf(v.id)} ${props.limitOf(v.id) === 1 ? "copy" : "copies"}`
-                          : "Add to the deck"
-                      }
-                      disabled={full}
-                      onClick={() => props.onAdd(v.id)}
-                    >
-                      +
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.overlayButton}
-                      data-sideboard=""
-                      aria-label={`Add ${card.name} to the sideboard`}
-                      title={
-                        place === "deck"
-                          ? "Already in the deck: move it from the deck list"
-                          : full
-                            ? `At most ${props.limitOf(v.id)} ${props.limitOf(v.id) === 1 ? "copy" : "copies"}`
-                            : "Add to the sideboard"
-                      }
-                      disabled={place === "deck" || full}
-                      onClick={() => props.onAdd(v.id, true)}
-                    >
-                      SB
-                    </button>
-                  </span>
-                  {q ? (
-                    <span className={styles.haveOnArt} aria-hidden="true">
-                      {place === "sideboard" ? `${q} SB` : q}
-                    </span>
-                  ) : null}
-                </span>
-              </li>
-            );
-          }
+        {tiles.slice(at, at + PAGE).map(({ card, variant: v }) => {
+          const name = variantName(card, v);
+          const q = props.quantityOf(v.id);
+          const place = props.placeOf(v.id);
+          const full = props.atLimit(v.id);
+          const limit = props.limitOf(v.id);
+          const atMost = `At most ${limit} ${limit === 1 ? "copy" : "copies"}`;
           return (
-            <li key={card.id} aria-label={card.name} className={styles.tile}>
-              <span className={styles.art} title={card.name}>
-                {art}
-              </span>
-              <span className={styles.adds}>
-                {variants.map((v) => {
-                  const q = props.quantityOf(v.id);
-                  const full = props.atLimit(v.id);
-                  return (
-                    <span key={v.id} className={styles.addWrap}>
-                      <button
-                        type="button"
-                        className={styles.add}
-                        data-pitch={v.pitch ?? "none"}
-                        aria-label={`Add ${variantName(card, v)}`}
-                        disabled={full}
-                        title={
-                          full
-                            ? `At most ${props.limitOf(v.id)} ${props.limitOf(v.id) === 1 ? "copy" : "copies"}`
-                            : `Add ${variantName(card, v)}`
-                        }
-                        onClick={() => props.onAdd(v.id)}
-                      >
-                        {v.pitch === null
-                          ? "+"
-                          : (PITCH_LETTER[v.pitch] ?? String(v.pitch))}
-                      </button>
-                      {q ? (
-                        <span className={styles.have} aria-hidden="true">
-                          {q}
-                        </span>
-                      ) : null}
-                    </span>
-                  );
-                })}
+            <li
+              key={v.id}
+              aria-label={name}
+              className={styles.tile}
+              data-pitch={v.pitch ?? "none"}
+            >
+              <span className={styles.art} title={name}>
+                {v.imageUrl ? (
+                  <img src={v.imageUrl} alt="" loading="lazy" />
+                ) : (
+                  <span className={styles.standIn}>{name}</span>
+                )}
+                {/* Down the right on hover (always on touch screens): deck, sideboard, enlarge. */}
+                <span className={styles.actions} role="group" aria-label={name}>
+                  <button
+                    type="button"
+                    className={styles.action}
+                    aria-label={`Add ${name}`}
+                    title={full ? atMost : "Add to the deck"}
+                    disabled={full}
+                    onClick={() => props.onAdd(v.id)}
+                  >
+                    +
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.action}
+                    data-sideboard=""
+                    aria-label={`Add ${name} to the sideboard`}
+                    title={
+                      place === "deck"
+                        ? "Already in the deck: move it from the deck list"
+                        : full
+                          ? atMost
+                          : "Add to the sideboard"
+                    }
+                    disabled={place === "deck" || full}
+                    onClick={() => props.onAdd(v.id, true)}
+                  >
+                    SB
+                  </button>
+                </span>
+                {v.imageUrl && (
+                  <Enlarge
+                    name={name}
+                    src={v.imageUrl}
+                    className={styles.enlarge}
+                  />
+                )}
+                {q ? (
+                  <span className={styles.haveOnArt} aria-hidden="true">
+                    {place === "sideboard" ? `${q} SB` : q}
+                  </span>
+                ) : null}
               </span>
             </li>
           );
         })}
       </ul>
-      {found.length > shown && (
-        <button
-          type="button"
-          className={styles.showMore}
-          onClick={() => setShown(shown + PAGE)}
-        >
-          Show more · {(found.length - shown).toLocaleString("en-GB")} left
-        </button>
+      {pages > 1 && (
+        <nav className={styles.pager} aria-label="Pages">
+          <button
+            type="button"
+            aria-label="Previous page"
+            disabled={current === 0}
+            onClick={() => setPage(current - 1)}
+          >
+            ‹
+          </button>
+          <span>{`Page ${current + 1} of ${pages}`}</span>
+          <button
+            type="button"
+            aria-label="Next page"
+            disabled={current >= pages - 1}
+            onClick={() => setPage(current + 1)}
+          >
+            ›
+          </button>
+        </nav>
       )}
     </div>
   );
