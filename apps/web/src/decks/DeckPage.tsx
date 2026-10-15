@@ -373,26 +373,36 @@ function PoolSection(props: {
     const full = e.quantity >= limit;
     return (
       <>
-        <button
-          type="button"
-          aria-label={`One fewer ${label}`}
-          onClick={() => set({ quantity: e.quantity - 1 })}
-        >
-          −
-        </button>
-        <button
-          type="button"
-          aria-label={`One more ${label}`}
-          disabled={full}
-          title={
-            full
-              ? `At most ${limit} ${limit === 1 ? "copy" : "copies"}`
-              : undefined
-          }
-          onClick={() => set({ quantity: e.quantity + 1 })}
-        >
-          +
-        </button>
+        {limit === 1 ? (
+          // Only one allowed (equipment): nothing to count, just remove it.
+          <button
+            type="button"
+            aria-label={`Remove ${label}`}
+            title="Remove"
+            onClick={() => set({ quantity: 0 })}
+          >
+            ✕
+          </button>
+        ) : (
+          <>
+            <button
+              type="button"
+              aria-label={`One fewer ${label}`}
+              onClick={() => set({ quantity: e.quantity - 1 })}
+            >
+              −
+            </button>
+            <button
+              type="button"
+              aria-label={`One more ${label}`}
+              disabled={full}
+              title={full ? `At most ${limit} copies` : undefined}
+              onClick={() => set({ quantity: e.quantity + 1 })}
+            >
+              +
+            </button>
+          </>
+        )}
         <label
           className={styles.sideboard}
           title={e.sideboard ? "Move to the deck" : "Move to the sideboard"}
