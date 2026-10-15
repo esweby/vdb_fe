@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, Slider } from "../ui/index.ts";
 import { cellValue } from "./inherited.ts";
 import type { Dimension, ScoreKey, ScoreRow } from "./scoreRepository.ts";
@@ -6,6 +6,11 @@ import styles from "./ScoreEditor.module.css";
 
 const SIDE_LABEL = { forsaken: "Forsaken", usurper: "Usurper" } as const;
 
+/**
+ * Sliders for each rating. What's shown always matches what's saved: a rating with per-side
+ * scores opens split by side, and going back to one score for both sides removes them (the
+ * same for per-pitch scores), so no hidden score ever counts.
+ */
 export function ScoreEditor(props: {
   dimensions: Dimension[];
   variants: { id: string; pitch: number | null }[];
@@ -16,15 +21,70 @@ export function ScoreEditor(props: {
   /** Dimensions shown greyed out and disabled, keeping their place, with why. */
   locked?: { ids: number[]; reason: string };
 }) {
-  const [sidesTogether, setSidesTogether] = useState(
-    props.sidesTogetherByDefault ?? true,
+  const { rows, onSet } = props;
+  const hasSideRows = (dimensionId: number) =>
+    rows.some((r) => r.dimensionId === dimensionId && r.side !== null);
+  const hasPitchRows = rows.some((r) => r.variantId !== null);
+
+  /** dimension id -> split by side */
+  const [split, setSplit] = useState<Record<number, boolean>>(() =>
+    Object.fromEntries(
+      props.dimensions.map((d) => [
+        d.id,
+        hasSideRows(d.id) || props.sidesTogetherByDefault === false,
+      ]),
+    ),
   );
-  const [perPitch, setPerPitch] = useState(false);
+  const [perPitch, setPerPitch] = useState(hasPitchRows);
   const multiPitch = props.variants.length > 1;
 
-  const sides: ScoreKey["side"][] = sidesTogether
-    ? [null]
-    : ["forsaken", "usurper"];
+  // Scores often load after the editor appears: open anything with per-side or per-pitch
+  // scores, so they're never hidden. It only ever opens; closing is the user's choice.
+  useEffect(() => {
+    setSplit((current) => {
+      const opened = props.dimensions.filter(
+        (d) =>
+          rows.some((r) => r.dimensionId === d.id && r.side !== null) &&
+          !current[d.id],
+      );
+      if (opened.length === 0) return current;
+      return {
+        ...current,
+        ...Object.fromEntries(opened.map((d) => [d.id, true])),
+      };
+    });
+    if (rows.some((r) => r.variantId !== null)) setPerPitch(true);
+  }, [rows, props.dimensions]);
+
+  function setTogether(dimensionId: number, together: boolean) {
+    if (together) {
+      for (const r of rows) {
+        if (r.dimensionId === dimensionId && r.side !== null) {
+          onSet({ variantId: r.variantId, side: r.side, dimensionId }, null);
+        }
+      }
+    }
+    setSplit((s) => ({ ...s, [dimensionId]: !together }));
+  }
+
+  function setPitchSeparately(separate: boolean) {
+    if (!separate) {
+      for (const r of rows) {
+        if (r.variantId !== null) {
+          onSet(
+            {
+              variantId: r.variantId,
+              side: r.side,
+              dimensionId: r.dimensionId,
+            },
+            null,
+          );
+        }
+      }
+    }
+    setPerPitch(separate);
+  }
+
   const variants: (string | null)[] = [
     null,
     ...(multiPitch && perPitch ? props.variants.map((v) => v.id) : []),
@@ -34,29 +94,25 @@ export function ScoreEditor(props: {
 
   return (
     <div>
-      <div className={styles.toggles}>
-        <label>
-          <input
-            type="checkbox"
-            checked={sidesTogether}
-            onChange={(e) => setSidesTogether(e.target.checked)}
-          />
-          Same score for both sides
-        </label>
-        {multiPitch && (
+      {multiPitch && (
+        <div className={styles.toggles}>
           <label>
             <input
               type="checkbox"
               checked={perPitch}
-              onChange={(e) => setPerPitch(e.target.checked)}
+              onChange={(e) => setPitchSeparately(e.target.checked)}
             />
             Score each pitch separately
           </label>
-        )}
-      </div>
+        </div>
+      )}
 
       {props.dimensions.map((dimension) => {
         const locked = props.locked?.ids.includes(dimension.id) ?? false;
+        const together = !split[dimension.id];
+        const sides: ScoreKey["side"][] = together
+          ? [null]
+          : ["forsaken", "usurper"];
         return (
           <fieldset
             key={dimension.id}
@@ -67,6 +123,15 @@ export function ScoreEditor(props: {
             {locked && (
               <p className={styles.lockedReason}>{props.locked!.reason}</p>
             )}
+            <label className={styles.sideToggle}>
+              <input
+                type="checkbox"
+                aria-label={`Same score for both sides: ${dimension.label}`}
+                checked={together}
+                onChange={(e) => setTogether(dimension.id, e.target.checked)}
+              />
+              Same score for both sides
+            </label>
             {variants.flatMap((variantId) =>
               sides.map((side) => {
                 const key: ScoreKey = {
@@ -74,7 +139,7 @@ export function ScoreEditor(props: {
                   side,
                   dimensionId: dimension.id,
                 };
-                const { own, inherited } = cellValue(props.rows, key);
+                const { own, inherited } = cellValue(rows, key);
                 const suffix = [
                   variantId !== null
                     ? `pitch ${pitchOf(variantId) ?? "–"}`
@@ -98,7 +163,7 @@ export function ScoreEditor(props: {
                           : null
                       }
                       value={own}
-                      onChange={(score) => props.onSet(key, score)}
+                      onChange={(score) => onSet(key, score)}
                     />
                     <div className={styles.cellFooter}>
                       {own === null && inherited !== null && (
@@ -106,16 +171,13 @@ export function ScoreEditor(props: {
                           Inherits {inherited}
                         </span>
                       )}
-                      <Button
-                        variant="ghost"
-                        onClick={() => props.onSet(key, 0)}
-                      >
+                      <Button variant="ghost" onClick={() => onSet(key, 0)}>
                         {named("Not relevant")}
                       </Button>
                       <Button
                         variant="ghost"
                         disabled={own === null}
-                        onClick={() => props.onSet(key, null)}
+                        onClick={() => onSet(key, null)}
                       >
                         {named("Clear")}
                       </Button>
