@@ -39,7 +39,8 @@ export function CardFinder(props: {
   /** Whether a card is already in the deck or the sideboard (a card is in one or the other). */
   placeOf: (variantId: string) => "deck" | "sideboard" | undefined;
   atLimit: (variantId: string) => boolean;
-  copyLimit: number;
+  /** Copies allowed of a card and pitch (equipment: one). */
+  limitOf: (variantId: string) => number;
   onAdd: (variantId: string, toSideboard?: boolean) => void;
 }) {
   const [query, setQuery] = useState("");
@@ -208,7 +209,7 @@ export function CardFinder(props: {
                       aria-label={`Add ${card.name}`}
                       title={
                         full
-                          ? `At most ${props.copyLimit} copies`
+                          ? `At most ${props.limitOf(v.id)} ${props.limitOf(v.id) === 1 ? "copy" : "copies"}`
                           : "Add to the deck"
                       }
                       disabled={full}
@@ -225,7 +226,7 @@ export function CardFinder(props: {
                         place === "deck"
                           ? "Already in the deck: move it from the deck list"
                           : full
-                            ? `At most ${props.copyLimit} copies`
+                            ? `At most ${props.limitOf(v.id)} ${props.limitOf(v.id) === 1 ? "copy" : "copies"}`
                             : "Add to the sideboard"
                       }
                       disabled={place === "deck" || full}
@@ -262,7 +263,7 @@ export function CardFinder(props: {
                         disabled={full}
                         title={
                           full
-                            ? `At most ${props.copyLimit} copies`
+                            ? `At most ${props.limitOf(v.id)} ${props.limitOf(v.id) === 1 ? "copy" : "copies"}`
                             : `Add ${variantName(card, v)}`
                         }
                         onClick={() => props.onAdd(v.id)}

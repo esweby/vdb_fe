@@ -31,6 +31,14 @@ export const PITCH_NAMES: Record<number, string> = {
   3: "blue",
 };
 
+/**
+ * Copies allowed of a card and pitch: one of each piece of equipment (checked by the maintainer,
+ * 15 Oct 2026); weapons and deck cards follow the format's copy limit.
+ */
+export function copyLimitFor(card: CardSummary, rules: FormatRules): number {
+  return card.type === "equipment" ? 1 : rules.copyLimit;
+}
+
 export function sectionOf(card: CardSummary): DeckSection {
   if (card.type === "weapon") return "weapon";
   if (card.type === "equipment") return "equipment";
@@ -86,9 +94,10 @@ export function deckProblems(
     );
   }
   for (const e of entries) {
-    if (e.quantity > rules.copyLimit) {
+    const limit = copyLimitFor(e.card, rules);
+    if (e.quantity > limit) {
       problems.push(
-        `${variantName(e.card, e.variant)} has ${e.quantity} copies; at most ${rules.copyLimit} are allowed.`,
+        `${variantName(e.card, e.variant)} has ${e.quantity} copies; at most ${limit} ${limit === 1 ? "is" : "are"} allowed.`,
       );
     }
   }
