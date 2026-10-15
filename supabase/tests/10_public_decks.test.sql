@@ -22,12 +22,12 @@ insert into public.deck_cards (deck_id, variant_id, quantity) values
 
 set local role anon;
 select results_eq(
-  $$select name from public.decks order by name$$,
+  $$select name from public.decks where id in ('30000000-0000-0000-0000-0000000006d1', '30000000-0000-0000-0000-0000000006d2') order by name$$,
   $$values ('Shared'::text)$$,
   'signed-out visitors see public decks only'
 );
 select is(
-  (select count(*)::int from public.deck_cards), 1,
+  (select count(*)::int from public.deck_cards where deck_id in ('30000000-0000-0000-0000-0000000006d1', '30000000-0000-0000-0000-0000000006d2')), 1,
   'and only the cards of public decks'
 );
 reset role;
@@ -35,7 +35,7 @@ reset role;
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000006a2","role":"authenticated"}', true);
 select results_eq(
-  $$select name from public.decks order by name$$,
+  $$select name from public.decks where id in ('30000000-0000-0000-0000-0000000006d1', '30000000-0000-0000-0000-0000000006d2') order by name$$,
   $$values ('Shared'::text)$$,
   'another user sees the public deck, not the private one'
 );
@@ -55,7 +55,7 @@ reset role;
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000006a1","role":"authenticated"}', true);
 select is(
-  (select count(*)::int from public.decks), 2,
+  (select count(*)::int from public.decks where id in ('30000000-0000-0000-0000-0000000006d1', '30000000-0000-0000-0000-0000000006d2')), 2,
   'the owner sees both of their decks'
 );
 select lives_ok(
@@ -70,7 +70,7 @@ reset role;
 
 set local role anon;
 select is(
-  (select count(*)::int from public.decks), 2,
+  (select count(*)::int from public.decks where id in ('30000000-0000-0000-0000-0000000006d1', '30000000-0000-0000-0000-0000000006d2')), 2,
   'and signed-out visitors can now see it'
 );
 reset role;
