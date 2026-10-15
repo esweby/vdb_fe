@@ -18,11 +18,56 @@
   outline: 2px solid #fff;
   outline-offset: 2px;
 }
+/* The lightbox: the card large and on its own, over a dark backdrop. */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+  background: rgb(8 6 16 / 0.86);
+  backdrop-filter: blur(3px);
+  cursor: zoom-out;
+  animation: fade 0.15s ease-out;
+}
 .large {
   display: block;
-  width: min(25rem, 80vw);
-  max-height: 75vh;
-  margin: 0 auto;
+  height: min(88vh, 140vw);
+  max-width: 100%;
+  aspect-ratio: 5 / 7;
   object-fit: contain;
   border-radius: 4.6% / 3.3%;
+  box-shadow: 0 20px 60px rgb(0 0 0 / 0.6);
+}
+.close {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: 1px solid rgb(255 255 255 / 0.3);
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.1);
+  color: #fff;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+.close:hover {
+  background: rgb(255 255 255 / 0.2);
+}
+.close:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lightbox {
+    animation: none;
+  }
 }
