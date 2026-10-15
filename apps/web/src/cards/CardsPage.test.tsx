@@ -71,9 +71,7 @@ describe("cards page", () => {
     });
     await screen.findByRole("table", { name: /cards/i });
     expect(rowNames()).toEqual(["Become the Shadow Lord"]);
-    expect(
-      filters().getByRole("button", { name: "Only Go again" }),
-    ).toHaveAttribute("aria-pressed", "true");
+    expect(filters().getByRole("checkbox", { name: "Go again" })).toBeChecked();
     expect(
       screen.getByText(/Only Go again/, { selector: "p *, p" }),
     ).toBeInTheDocument();
