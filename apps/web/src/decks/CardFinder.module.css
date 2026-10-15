@@ -1,0 +1,251 @@
+/* Add cards: a search, a quiet row of toggles, and compact result rows. */
+.finder {
+  --pitch-1: #d63c35;
+  --pitch-2: #e6b422;
+  --pitch-3: #3b7dd8;
+  --pitch-none: #8a8a8a;
+  display: grid;
+  gap: 0.6rem;
+}
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.search input {
+  width: 100%;
+  box-sizing: border-box;
+  height: 2.3rem;
+  padding: 0 0.75rem 0 2.1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  font: inherit;
+  color: var(--fg);
+  background: var(--surface)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%237a7a86' stroke-width='2' stroke-linecap='round' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E")
+    no-repeat 0.7rem center;
+}
+.search input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* Small and quiet: pitch dots, class chips and a Filters toggle on one line. */
+.quick {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+.pips {
+  display: flex;
+  gap: 0.3rem;
+}
+.pip {
+  width: 1.15rem;
+  height: 1.15rem;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid var(--pitch-1);
+  background: transparent;
+  cursor: pointer;
+}
+.pip[data-pitch="2"] {
+  border-color: var(--pitch-2);
+}
+.pip[data-pitch="3"] {
+  border-color: var(--pitch-3);
+}
+.pip[aria-pressed="true"] {
+  background: var(--pitch-1);
+}
+.pip[data-pitch="2"][aria-pressed="true"] {
+  background: var(--pitch-2);
+}
+.pip[data-pitch="3"][aria-pressed="true"] {
+  background: var(--pitch-3);
+}
+.chips {
+  display: flex;
+  gap: 0.25rem;
+}
+.chips button,
+.more {
+  padding: 0.15rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: none;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--muted);
+  cursor: pointer;
+}
+.chips button[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--fg);
+}
+.more {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-left: auto;
+}
+.more[aria-expanded="true"] {
+  color: var(--fg);
+}
+.count {
+  min-width: 1rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-size: 0.72rem;
+  text-align: center;
+}
+.pip:focus-visible,
+.chips button:focus-visible,
+.more:focus-visible,
+.add:focus-visible,
+.clear:focus-visible,
+.showMore:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.moreFilters {
+  max-height: 22rem;
+  overflow-y: auto;
+  padding: 0.5rem 0.25rem 0.5rem 0;
+  border-block: 1px solid var(--border);
+}
+.moreFilters > aside {
+  position: static;
+  max-height: none;
+}
+
+.status {
+  display: flex;
+  justify-content: space-between;
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.clear {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+/* One compact row per card: thumbnail, name and type, then a + for each pitch. */
+.results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.row {
+  display: grid;
+  grid-template-columns: 2.1rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.thumb {
+  width: 2.1rem;
+  height: 2.9rem;
+  border-radius: 0.2rem;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--fg) 8%, var(--bg));
+}
+.thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.info {
+  display: grid;
+  min-width: 0;
+}
+.name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.type {
+  font-size: 0.74rem;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.adds {
+  display: flex;
+  gap: 0.25rem;
+}
+.add {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.1rem;
+  height: 1.8rem;
+  padding: 0 0.35rem;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--pitch-none);
+  border-radius: 0.35rem;
+  background: var(--surface);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--fg);
+  cursor: pointer;
+}
+.add[data-pitch="1"] {
+  border-left-color: var(--pitch-1);
+}
+.add[data-pitch="2"] {
+  border-left-color: var(--pitch-2);
+}
+.add[data-pitch="3"] {
+  border-left-color: var(--pitch-3);
+}
+.add:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+}
+.add:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.have {
+  position: absolute;
+  top: -0.45rem;
+  right: -0.35rem;
+  min-width: 0.95rem;
+  padding: 0 0.2rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-size: 0.66rem;
+  line-height: 0.95rem;
+}
+.showMore {
+  justify-self: center;
+  padding: 0.35rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: none;
+  font: inherit;
+  font-size: 0.82rem;
+  color: var(--fg);
+  cursor: pointer;
+}
