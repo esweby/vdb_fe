@@ -5,6 +5,7 @@ import type { Deck } from "../decks/deckRepository.ts";
 import { fakeAuthService } from "../test/fakeAuthService.ts";
 import { fakeDeckRepository } from "../test/fakeDeckRepository.ts";
 import { fakeScoreRepository } from "../test/fakeScoreRepository.ts";
+import { fakeStrategyRepository } from "../test/fakeStrategyRepository.ts";
 import { renderApp } from "../test/renderApp.tsx";
 import { sampleCommunity } from "../test/sampleCommunity.ts";
 
@@ -39,15 +40,23 @@ async function open(
   } = {},
 ) {
   const fake = fakeDeckRepository(opts.decks ?? [gateTempo()]);
+  const strategy = fakeStrategyRepository({
+    community: { traverse_to_usurper: { average: 7.5, answers: 2 } },
+  });
   const app = await renderApp({
     path,
     auth: opts.signedIn ? signedIn() : fakeAuthService().service,
     scores: opts.scores ?? scores(),
     decks: fake.repository,
+    strategy: strategy.repository,
   });
-  await screen.findByRole("region", { name: "Your core" });
-  return { ...app, fake, user: userEvent.setup() };
+  await screen.findByRole("tablist", { name: "Build steps" });
+  const user = userEvent.setup();
+  return { ...app, fake, strategy, user };
 }
+const goTab = (name: string) =>
+  userEvent.setup().click(screen.getByRole("tab", { name: new RegExp(name) }));
+const panel = () => within(screen.getByRole("tabpanel"));
 const lane = (name: string) =>
   within(screen.getByRole("list", { name })).getAllByRole("listitem");
 const laneNames = (name: string) =>
@@ -104,12 +113,14 @@ describe("engine board", () => {
   it("re-orders the lanes by play style", async () => {
     const { user, router } = await open();
     expect(laneNames("Make Runechants")[0]).toBe("Become the Shadow Lord");
+    await goTab("Set up");
     await user.click(
-      within(tray().getByRole("group", { name: "Play style" })).getByRole(
+      within(panel().getByRole("group", { name: "Play style" })).getByRole(
         "button",
         { name: "Consistent" },
       ),
     );
+    await goTab("Board");
     // 70 − 0.5 × (70 − 20) = 45, under Hocus Pocus (red) at 50
     expect(laneNames("Make Runechants")[0]).toBe("Hocus Pocus (red)");
     expect(router.state.location.search).toMatchObject({ risk: -50 });
@@ -134,16 +145,17 @@ describe("engine board", () => {
     }
   });
 
-  it("sets preferences with sliders in the core tray", async () => {
+  it("sets preferences with sliders in Set up", async () => {
     const { user, router } = await open();
-    const slider = tray().getByRole("slider", { name: "Usurp cards" });
+    await goTab("Set up");
+    const slider = panel().getByRole("slider", { name: "Usurp cards" });
     slider.focus();
     await user.keyboard("{End}");
     expect(router.state.location.search).toMatchObject({
       pref: { usurp: 100 },
     });
     for (const name of ["Rune Gate cards", "Gate targets", "Disruption"]) {
-      expect(tray().getByRole("slider", { name })).toBeInTheDocument();
+      expect(panel().getByRole("slider", { name })).toBeInTheDocument();
     }
   });
 
@@ -155,11 +167,13 @@ describe("engine board", () => {
         .map((r) => r.getAttribute("aria-label"))
         .filter((n) => n?.endsWith(" engine"));
     expect(engines()[0]).toBe("Runechant engine");
+    await goTab("Set up");
     await user.click(
-      within(tray().getByRole("group", { name: "Side" })).getByRole("button", {
+      within(panel().getByRole("group", { name: "Side" })).getByRole("button", {
         name: "Usurper",
       }),
     );
+    await goTab("Board");
     expect(engines()[0]).toBe("Gate engine");
   });
 
@@ -213,15 +227,85 @@ describe("engine board", () => {
   });
 
   it("offers whose scores to use only when signed in", async () => {
-    await open();
+    await open("/ranking?tab=setup");
     expect(screen.queryByRole("group", { name: "Whose scores" })).toBeNull();
   });
 
-  it("keeps the priorities with the core", async () => {
+  it("keeps the priorities in Set up", async () => {
     await open("/ranking", { signedIn: true });
+    await goTab("Set up");
     for (const name of ["Play style", "Side", "Whose scores"]) {
-      expect(tray().getByRole("group", { name })).toBeInTheDocument();
+      expect(panel().getByRole("group", { name })).toBeInTheDocument();
     }
+    expect(screen.queryByRole("region", { name: "Your core" })).toBeNull();
+  });
+});
+
+describe("tabs", () => {
+  it("splits building into Set up, Board and Readings, kept in the URL", async () => {
+    const { router } = await open();
+    expect(screen.getByRole("tab", { name: /Board/ })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    await goTab("Set up");
+    expect(router.state.location.search).toMatchObject({ tab: "setup" });
+    expect(screen.queryByRole("list", { name: "Make Gates" })).toBeNull();
+    await goTab("Readings");
+    expect(router.state.location.search).toMatchObject({ tab: "readings" });
+  });
+
+  it("opens on the tab in the URL", async () => {
+    await open("/ranking?tab=setup");
+    expect(screen.getByRole("tab", { name: /Set up/ })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+  });
+});
+
+describe("strategy questions", () => {
+  it("saves your answer and shows the scoring group's average beside it", async () => {
+    const { user, strategy } = await open("/ranking?tab=setup", {
+      signedIn: true,
+    });
+    const question = within(
+      await panel().findByRole("group", {
+        name: "How important is traversing to Usurper?",
+      }),
+    );
+    expect(
+      question.getByText("Scoring group 7.5 · 2 answers"),
+    ).toBeInTheDocument();
+    await user.click(question.getByRole("button", { name: "8" }));
+    expect(strategy.saved).toEqual(["traverse_to_usurper 8"]);
+    expect(question.getByRole("button", { name: "8" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+  });
+
+  it("says when the scoring group hasn't answered yet", async () => {
+    await open("/ranking?tab=setup", { signedIn: true });
+    const question = within(
+      await panel().findByRole("group", {
+        name: "Once on Usurper, how keen are you to flip back to Forsaken?",
+      }),
+    );
+    expect(
+      question.getByText("No answers from the scoring group yet"),
+    ).toBeInTheDocument();
+  });
+
+  it("asks signed-out visitors to sign in to answer", async () => {
+    await open("/ranking?tab=setup");
+    const question = within(
+      await panel().findByRole("group", {
+        name: "How important is traversing to Usurper?",
+      }),
+    );
+    expect(question.getByRole("button", { name: "8" })).toBeDisabled();
+    expect(panel().getAllByText("Sign in to answer.")[0]).toBeInTheDocument();
   });
 });
 
@@ -263,50 +347,54 @@ describe("the core", () => {
     expect(lane("Make Gates")[0]).toHaveTextContent("fits 1");
   });
 
-  it("weighs each engine and says what's missing", async () => {
-    await open(`/ranking?${core({ bsl3: 3 })}`);
-    const gate = within(tray().getByRole("group", { name: "Gate engine" }));
+  it("weighs each engine in Readings and says what's missing", async () => {
+    await open(`/ranking?tab=readings&${core({ bsl3: 3 })}`);
+    const gate = within(panel().getByRole("group", { name: "Gate engine" }));
     expect(gate.getByText("3 make")).toBeInTheDocument();
     expect(gate.getByText("0 targets")).toBeInTheDocument();
     expect(gate.getByText("No Gate targets yet.")).toBeInTheDocument();
   });
 
   it("weighs the Runechant engine by its makers alone", async () => {
-    await open(`/ranking?${core({ bsl3: 3 })}`);
+    await open(`/ranking?tab=readings&${core({ bsl3: 3 })}`);
     const runechant = within(
-      tray().getByRole("group", { name: "Runechant engine" }),
+      panel().getByRole("group", { name: "Runechant engine" }),
     );
     expect(runechant.getByText("3 make")).toBeInTheDocument();
     expect(runechant.queryByText(/use/)).toBeNull();
   });
 
   it("only weighs engines that have cards in the core", async () => {
-    await open();
-    expect(tray().queryByRole("group", { name: "Gate engine" })).toBeNull();
+    await open("/ranking?tab=readings");
+    expect(panel().queryByRole("group", { name: "Gate engine" })).toBeNull();
     expect(
-      tray().getByText("Add cards to see how each engine balances."),
+      panel().getByText("Add cards to see how each engine balances."),
     ).toBeInTheDocument();
   });
 
   it("counts deck cards and compares pitch with the targets", async () => {
     await open(`/ranking?${core({ bsl3: 3, hp1: 2 })}`);
-    expect(tray().getByText("5 of 60 deck cards")).toBeInTheDocument();
-    expect(tray().getByText("Blue 3 of 22")).toBeInTheDocument();
-    expect(tray().getByText("Red 2 of 18")).toBeInTheDocument();
+    // The count is in the header, on every tab.
+    expect(screen.getByText("5 of 60 deck cards")).toBeInTheDocument();
+    await goTab("Set up");
+    expect(screen.getByText("5 of 60 deck cards")).toBeInTheDocument();
+    expect(panel().getByText("Blue 3 of 22")).toBeInTheDocument();
+    expect(panel().getByText("Red 2 of 18")).toBeInTheDocument();
   });
 
   it("fills each pitch to its target", async () => {
-    const { user } = await open();
+    const { user } = await open("/ranking?tab=setup");
     for (const [name, n] of [
       ["Red target", "3"],
       ["Yellow target", "0"],
       ["Blue target", "3"],
     ] as const) {
-      const input = tray().getByRole("spinbutton", { name });
+      const input = panel().getByRole("spinbutton", { name });
       await user.clear(input);
       await user.type(input, n);
     }
-    await user.click(tray().getByRole("button", { name: "Fill to targets" }));
+    await user.click(panel().getByRole("button", { name: "Fill to targets" }));
+    await goTab("Board");
     expect(trayCards()).toEqual([
       "3 × Hocus Pocus (red)",
       "3 × Become the Shadow Lord",
