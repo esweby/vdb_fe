@@ -103,9 +103,10 @@ export function ScoreEditor(props: {
     (v) => v.id !== chosen?.id && hasOwnScores(v.id),
   );
 
+  // One slider per rating: all pitches, or (ticked) the pitch being looked at, which falls
+  // back to the all-pitches score when blank.
   const variants: (string | null)[] = [
-    null,
-    ...(chosen && pitchSeparate ? [chosen.id] : []),
+    chosen && pitchSeparate ? chosen.id : null,
   ];
   const pitchOf = (id: string | null) =>
     props.variants.find((v) => v.id === id)?.pitch;
@@ -187,11 +188,8 @@ export function ScoreEditor(props: {
                     <Slider
                       label={label}
                       visibleLabel={
-                        suffix
-                          ? suffix[0]!.toUpperCase() + suffix.slice(1)
-                          : pitchSeparate
-                            ? "All pitches"
-                            : null
+                        // The tick box says which pitch; only the side needs a label.
+                        side ? SIDE_LABEL[side] : null
                       }
                       value={own}
                       quietScale
