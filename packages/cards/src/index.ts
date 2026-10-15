@@ -10,9 +10,11 @@ export { relevantDimensions } from "./relevance.ts";
 export { hasConditions } from "./conditions.ts";
 export {
   ROLES,
+  ROLE_IDS,
   rolesOf,
   fits,
   type Engine,
+  type RoleId,
   type RoleKind,
   type RoleCard,
   type RoleDef,

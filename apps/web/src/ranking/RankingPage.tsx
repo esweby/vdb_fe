@@ -1,31 +1,40 @@
+import { rolesOf, type RoleId } from "@vdb/cards";
 import { getRouteApi, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { CardModal } from "../cards/CardModal.tsx";
 import type { CardSummary } from "../cards/cardRepository.ts";
-import type { Deck, DeckSummary } from "../decks/deckRepository.ts";
-import type { FormatRules } from "../decks/deckRules.ts";
-import { cardFacets, pitchShown } from "../cards/facets.ts";
 import { pitchName } from "../cards/pitch.ts";
 import { useCards } from "../cards/useCards.ts";
-import { applyFilters } from "../filters/applyFilters.ts";
-import { FilteredLayout } from "../filters/FilteredLayout.tsx";
-import { FilterBar } from "../filters/FilterBar.tsx";
-import { FilterSidebar } from "../filters/FilterSidebar.tsx";
-import { fromSearch, toSearch } from "../filters/urlState.ts";
+import type {
+  Deck,
+  DeckSummary,
+  PitchTargets,
+} from "../decks/deckRepository.ts";
+import type { FormatRules } from "../decks/deckRules.ts";
 import { useAppSelector } from "../hooks.ts";
 import type { Dimension, ScoreRow } from "../scoring/scoreRepository.ts";
 import { useServices } from "../servicesContext.ts";
-import { Button, Slider, Tag } from "../ui/index.ts";
-import { rankVariants, type CommunityRow, type RankedVariant } from "./rank.ts";
+import { CoreTray, type TrayCard } from "./CoreTray.tsx";
+import { EngineBoard, type BoardCard, type GearSlot } from "./EngineBoard.tsx";
 import {
-  RISK_PRESETS,
+  engineOrder,
+  EXAMPLE_TARGETS,
+  inLane,
+  partners,
+  type HeroSide,
+} from "./engines.ts";
+import { rankVariants, type CommunityRow } from "./rank.ts";
+import {
   readRankingSearch,
   writeRankingSearch,
   type RankingSettings,
 } from "./rankingSearch.ts";
+import { preferenceBoost } from "./preferences.ts";
+import { suggestCore } from "./suggestCore.ts";
 import styles from "./RankingPage.module.css";
 
 const route = getRouteApi("/ranking");
-const facets = cardFacets();
+const GEAR = ["weapon", "equipment"];
 const SLOTS = ["Head", "Chest", "Arms", "Legs", "Off-Hand"];
 
 interface Data {
@@ -38,9 +47,21 @@ interface Data {
   };
 }
 
-const label = (r: RankedVariant, multiPitch: boolean) =>
-  multiPitch ? `${r.name} (${pitchName(r.pitch).toLowerCase()})` : r.name;
+const sideOf = (sideFocus: number): HeroSide =>
+  sideFocus <= 25 ? "forsaken" : sideFocus >= 75 ? "usurper" : "both";
 
+const roleCard = (c: CardSummary) => ({
+  type: c.type,
+  subtypes: c.subtypes,
+  attributes: c.attributes,
+  variantAttributes: c.variants.map((v) => v.attributes),
+});
+
+/**
+ * The engine board: ranked cards laid out by the engine they feed (makers beside what uses
+ * them), with a core built beside it. Fits are mechanical links from card roles
+ * (docs/roles.md, unverified), shown beside the scores and never blended into them.
+ */
 export function RankingPage() {
   const { status, items } = useCards();
   const { scores, decks } = useServices();
@@ -52,7 +73,19 @@ export function RankingPage() {
   const [deckList, setDeckList] = useState<DeckSummary[]>([]);
   const [deck, setDeck] = useState<Deck | null>(null);
   const [rules, setRules] = useState<FormatRules | null>(null);
-  const [deckError, setDeckError] = useState<string | null>(null);
+  const [targets, setTargets] = useState<PitchTargets>(EXAMPLE_TARGETS);
+  const [query, setQuery] = useState("");
+
+  useEffect(() => {
+    let live = true;
+    decks.getFormatRules().then(
+      (r) => live && setRules(r),
+      () => {},
+    );
+    return () => {
+      live = false;
+    };
+  }, [decks]);
 
   useEffect(() => {
     if (!user) return;
@@ -72,13 +105,15 @@ export function RankingPage() {
       return;
     }
     let live = true;
-    Promise.all([decks.getDeck(deckId), decks.getFormatRules()]).then(
-      ([d, r]) => {
+    decks.getDeck(deckId).then(
+      (d) => {
         if (!live) return;
         setDeck(d);
-        setRules(r);
+        if (d && Object.keys(d.pitchTargets).length > 0) {
+          setTargets(d.pitchTargets);
+        }
       },
-      (e) => live && setDeckError(String(e.message ?? e)),
+      () => {},
     );
     return () => {
       live = false;
@@ -111,45 +146,37 @@ export function RankingPage() {
   }, [scores, user]);
 
   const settings = readRankingSearch(search);
-  const filterState = fromSearch(search);
-  const update = (
-    patch: Partial<RankingSettings>,
-    filters = filterState,
-    deckChoice = deckId,
-  ) =>
+  const update = (patch: Partial<RankingSettings>, deckChoice = deckId) =>
     void navigate({
       to: ".",
       replace: true,
-      // An in-page change (filters, Load more, settings): keep the scroll position.
       resetScroll: false,
       search: {
         ...writeRankingSearch({ ...settings, ...patch }),
-        ...toSearch(filters),
         ...(deckChoice ? { deck: deckChoice } : {}),
       },
     });
 
-  const candidates = useMemo(
-    () => applyFilters(items, facets, filterState),
-    [items, JSON.stringify(filterState)],
-  );
   const cardsById = useMemo(
     () => new Map(items.map((c) => [c.id, c])),
     [items],
   );
+  const rolesById = useMemo(
+    () =>
+      new Map<string, RoleId[]>(items.map((c) => [c.id, rolesOf(roleCard(c))])),
+    [items],
+  );
 
-  const ranked = useMemo(() => {
+  const ranked = useMemo((): BoardCard[] => {
     if (!data) return [];
     return rankVariants({
-      variants: candidates.flatMap((c) =>
-        c.variants
-          .filter((v) => pitchShown(filterState, v.pitch))
-          .map((v) => ({
-            cardId: c.id,
-            variantId: v.id,
-            name: c.name,
-            pitch: v.pitch,
-          })),
+      variants: items.flatMap((c) =>
+        c.variants.map((v) => ({
+          cardId: c.id,
+          variantId: v.id,
+          name: c.name,
+          pitch: v.pitch,
+        })),
       ),
       dimensions: data.dimensions,
       community: data.community,
@@ -158,343 +185,285 @@ export function RankingPage() {
       sourceBlend: data.mine ? settings.sourceBlend : 100,
       sideFocus: settings.sideFocus,
       minRatingCount: data.minRatingCount,
+    }).map((r) => {
+      const card = cardsById.get(r.cardId)!;
+      return {
+        ...r,
+        label:
+          card.variants.length > 1
+            ? `${r.name} (${pitchName(r.pitch).toLowerCase()})`
+            : r.name,
+        roles: rolesById.get(r.cardId) ?? [],
+        type: card.type,
+        imageUrl: card.variants.find((v) => v.id === r.variantId)?.imageUrl,
+      };
     });
-  }, [data, candidates, JSON.stringify(settings)]);
+  }, [data, items, cardsById, rolesById, JSON.stringify(settings)]);
 
   if (status !== "loaded" || !data) return <p>Loading…</p>;
 
-  const typeOf = (r: RankedVariant) => cardsById.get(r.cardId) as CardSummary;
-  const isGear = (r: RankedVariant) =>
-    ["weapon", "equipment"].includes(typeOf(r).type);
-  const multiPitch = (r: RankedVariant) => typeOf(r).variants.length > 1;
-  const excluded = new Set(settings.excluded);
-  const pinned = settings.pinned;
-  const inDeck = new Map(
-    (deck?.cards ?? []).map((c) => [c.variantId, c.quantity]),
-  );
-  // README "Suggested core": cards in the deck being built count as pinned.
-  const pinnedOrInDeck = [
-    ...pinned,
-    ...[...inDeck.keys()].filter((id) => !pinned.includes(id)),
-  ];
-
-  const copyLimit = rules?.copyLimit ?? Infinity;
-  const atLimit = (variantId: string) =>
-    (inDeck.get(variantId) ?? 0) >= copyLimit;
-
-  async function addToDeck(variantId: string) {
-    if (!deck || atLimit(variantId)) return;
-    const existing = deck.cards.find((c) => c.variantId === variantId);
-    const card = {
-      variantId,
-      quantity: (existing?.quantity ?? 0) + 1,
-      sideboard: existing?.sideboard ?? false,
-    };
-    const previous = deck;
-    setDeck({
-      ...deck,
-      cards: [...deck.cards.filter((c) => c.variantId !== variantId), card],
-    });
-    try {
-      await decks.setCard(deck.id, card);
-    } catch (e) {
-      setDeck(previous);
-      setDeckError(
-        `Couldn't add to the deck: ${e instanceof Error ? e.message : String(e)}`,
-      );
-    }
-  }
-  const addButton = (variantId: string, name: string) =>
-    deck && (
-      <Button
-        variant="ghost"
-        onClick={() => void addToDeck(variantId)}
-        aria-label={`Add ${name} to ${deck.name}`}
-        disabled={atLimit(variantId)}
-        title={atLimit(variantId) ? `At most ${copyLimit} copies` : undefined}
-      >
-        Add
-      </Button>
-    );
-  const inDeckTag = (variantId: string) =>
-    inDeck.has(variantId) && (
-      <Tag tone="accent">{inDeck.get(variantId)} in deck</Tag>
-    );
-
-  const deckRows = ranked.filter(
-    (r) => !isGear(r) && !excluded.has(r.variantId),
-  );
-  const ordered = [
-    ...pinnedOrInDeck
-      .map((id) => deckRows.find((r) => r.variantId === id))
-      .filter((r): r is RankedVariant => !!r),
-    ...deckRows.filter((r) => !pinnedOrInDeck.includes(r.variantId)),
-  ];
-  const excludedRows = ranked.filter((r) => excluded.has(r.variantId));
-  const gear = ranked.filter((r) => isGear(r) && !excluded.has(r.variantId));
-  const gearGroups = [
-    { title: "Weapons", rows: gear.filter((r) => typeOf(r).type === "weapon") },
+  const copyLimit = rules?.copyLimit ?? 1;
+  const byVariant = new Map(ranked.map((r) => [r.variantId, r]));
+  const deckCards = ranked.filter((r) => !GEAR.includes(r.type));
+  const q = query.trim().toLowerCase();
+  const shown = q
+    ? deckCards.filter((r) => r.name.toLowerCase().includes(q))
+    : deckCards;
+  const gearCards = ranked.filter((r) => GEAR.includes(r.type));
+  const gear: GearSlot[] = [
+    {
+      title: "Weapons",
+      cards: gearCards.filter((r) => r.type === "weapon"),
+    },
     ...SLOTS.map((slot) => ({
       title: slot,
-      rows: gear.filter((r) => typeOf(r).subtypes.includes(slot)),
+      cards: gearCards.filter((r) =>
+        cardsById.get(r.cardId)?.subtypes.includes(slot),
+      ),
     })),
-  ].filter((g) => g.rows.length > 0);
+  ].filter((g) => g.cards.length > 0);
 
-  const togglePin = (id: string) =>
-    update({
-      pinned: pinned.includes(id)
-        ? pinned.filter((p) => p !== id)
-        : [...pinned, id],
+  const core: TrayCard[] = Object.entries(settings.core)
+    .map(([variantId, quantity]) => {
+      const r = byVariant.get(variantId);
+      return r
+        ? {
+            variantId,
+            name: r.name,
+            label: r.label,
+            pitch: r.pitch,
+            value: r.value,
+            roles: r.roles,
+            quantity: Math.min(quantity, rules?.copyLimit ?? quantity),
+          }
+        : null;
+    })
+    .filter((c): c is TrayCard => !!c);
+  const setCore = (next: Record<string, number>) => update({ core: next });
+  const setQuantity = (variantId: string, quantity: number) => {
+    const next = { ...settings.core };
+    if (quantity <= 0) delete next[variantId];
+    else next[variantId] = Math.min(quantity, copyLimit);
+    setCore(next);
+  };
+  const toggleCore = (c: BoardCard) =>
+    setQuantity(c.variantId, settings.core[c.variantId] ? 0 : copyLimit);
+
+  // Fill each pitch to its target: cards already in the core stay, the rest come best fits first.
+  function fill() {
+    // In the board's order: preferences always, fits first when the board is ordered by them.
+    const candidates = [...deckCards]
+      .map((r) => ({
+        r,
+        key: r.value + preferenceBoost(r.roles, settings.prefs),
+        fits: partners(r.name, r.roles, core).length,
+      }))
+      .sort((a, b) =>
+        settings.order === "fits"
+          ? b.fits - a.fits || b.key - a.key
+          : b.key - a.key,
+      )
+      .map(({ r }) => r);
+    const s = suggestCore(candidates, {
+      targets,
+      copiesEach: copyLimit,
+      copyLimit,
+      locked: new Map(core.map((c) => [c.variantId, c.quantity])),
+      removed: new Set(),
     });
-  const exclude = (id: string) =>
-    update({
-      excluded: [...settings.excluded, id],
-      pinned: pinned.filter((p) => p !== id),
+    setCore(Object.fromEntries(s.picks.map((p) => [p.variantId, p.quantity])));
+  }
+
+  async function addCore(id: string, start: Deck["cards"]) {
+    let cards = start;
+    for (const c of core) {
+      const existing = cards.find((d) => d.variantId === c.variantId);
+      if ((existing?.quantity ?? 0) >= c.quantity) continue;
+      const card = {
+        variantId: c.variantId,
+        quantity: c.quantity,
+        sideboard: existing?.sideboard ?? false,
+      };
+      await decks.setCard(id, card);
+      cards = [...cards.filter((d) => d.variantId !== c.variantId), card];
+    }
+    return cards;
+  }
+
+  // The board in reading order: each engine's makers then users, then the rest. The pop-over
+  // steps through it.
+  const engines = engineOrder(sideOf(settings.sideFocus));
+  const stops = [
+    ...new Set(
+      [
+        ...engines.flatMap((e) =>
+          (["generator", "payoff"] as const).flatMap((kind) =>
+            shown.filter((r) => inLane(r.roles, e.id, kind)),
+          ),
+        ),
+        ...shown,
+      ].map((r) => r.variantId),
+    ),
+  ];
+  const openCard =
+    typeof search.card === "string" ? cardsById.get(search.card) : undefined;
+  const openVariant =
+    typeof search.variant === "string" ? search.variant : undefined;
+  const at = openVariant ? stops.indexOf(openVariant) : -1;
+  const goTo = (variantId: string | undefined) => {
+    const r = variantId && byVariant.get(variantId);
+    if (!r) return;
+    void navigate({
+      to: ".",
+      replace: true,
+      resetScroll: false,
+      search: (prev: Record<string, unknown>) => ({
+        ...prev,
+        card: r.cardId,
+        variant: r.variantId,
+      }),
     });
-  const restore = (id: string) =>
-    update({ excluded: settings.excluded.filter((e) => e !== id) });
+  };
+  const closeCard = () =>
+    void navigate({
+      to: ".",
+      replace: true,
+      resetScroll: false,
+      search: (prev: Record<string, unknown>) => ({
+        ...prev,
+        card: undefined,
+        variant: undefined,
+      }),
+    });
 
   return (
     <>
-      <h1>Ranking</h1>
-      <FilteredLayout
-        state={filterState}
-        facets={facets}
-        onClear={() => update({}, {})}
-        bar={
-          <FilterBar
-            items={items}
-            facets={facets}
-            state={filterState}
-            onChange={(next) => update({}, next)}
-          />
-        }
-        sidebar={
-          <FilterSidebar
-            items={items}
-            facets={facets}
-            state={filterState}
-            onChange={(next) => update({}, next)}
-          />
-        }
-      >
-        <section className={styles.controls} aria-label="Priorities">
-          <h2>Your priorities</h2>
-          <div className={styles.risk}>
-            <div
-              className={styles.presets}
-              role="group"
-              aria-label="Risk presets"
-            >
-              {RISK_PRESETS.map((p) => (
-                <button
-                  key={p.label}
-                  type="button"
-                  aria-pressed={settings.risk === p.risk}
-                  onClick={() => update({ risk: p.risk })}
-                >
-                  {p.label}
-                </button>
-              ))}
-            </div>
-            <Slider
-              label="Risk (floor ← → ceiling)"
-              min={-100}
-              max={100}
-              step={10}
-              value={settings.risk}
-              onChange={(v) => update({ risk: v })}
+      {openCard && (
+        <CardModal
+          cardId={openCard.id}
+          name={openCard.name}
+          verified={openCard.attributesVerified}
+          position={
+            at >= 0 ? { index: at + 1, total: stops.length } : undefined
+          }
+          variantId={openVariant}
+          onPrevious={at > 0 ? () => goTo(stops[at - 1]) : undefined}
+          onNext={
+            at >= 0 && stops[at + 1] ? () => goTo(stops[at + 1]) : undefined
+          }
+          onNextCard={
+            at >= 0
+              ? () =>
+                  goTo(
+                    stops
+                      .slice(at + 1)
+                      .find((id) => byVariant.get(id)?.cardId !== openCard.id),
+                  )
+              : undefined
+          }
+          onChooseVariant={(variantId) => goTo(variantId)}
+          onClose={closeCard}
+        />
+      )}
+      <h1 className={styles.visuallyHidden}>Ranking</h1>
+      <div className={styles.page}>
+        <div className={styles.main}>
+          <div className={styles.boardBar}>
+            <input
+              type="search"
+              className={styles.search}
+              aria-label="Find a card"
+              placeholder="Find a card"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
             />
-            <p className={styles.note}>
-              Consistent ranks towards each card's floor (its conditions aren't
-              met), High-roll towards its ceiling (they are). Balanced uses
-              overall.
-            </p>
-          </div>
-          <div className={styles.sliders}>
-            {data.mine && (
-              <Slider
-                label="Whose scores (mine ← → community)"
-                value={settings.sourceBlend}
-                onChange={(v) => update({ sourceBlend: v })}
-              />
-            )}
-            <Slider
-              label="Side focus (Forsaken ← → Usurper)"
-              value={settings.sideFocus}
-              onChange={(v) => update({ sideFocus: v })}
-            />
-            <label className={styles.core}>
-              Core size
-              <input
-                type="number"
-                min={1}
-                max={80}
-                value={settings.coreSize}
-                onChange={(e) =>
-                  update({ coreSize: Number(e.target.value) || 1 })
-                }
-              />
-            </label>
-          </div>
-        </section>
-
-        {user && (
-          <div className={styles.deckChoice}>
-            <label>
-              Add to deck{" "}
-              <select
-                value={deckId ?? ""}
-                onChange={(e) =>
-                  update({}, filterState, e.target.value || undefined)
-                }
-              >
-                <option value="">None</option>
-                {deckList.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            {deck && (
-              <Link to="/decks/$deckId" params={{ deckId: deck.id }}>
-                Open {deck.name}
-              </Link>
-            )}
-            {deckList.length === 0 && <Link to="/decks">Create a deck</Link>}
-            {deckError && <p role="alert">{deckError}</p>}
-          </div>
-        )}
-
-        <p className={styles.note}>
-          Cards need at least {data.minRatingCount} community ratings (or your
-          own review) to be ranked. Synergy joins the ranking in phase two.
-        </p>
-
-        <div className={styles.tableWrap}>
-          <table className={styles.table}>
-            <caption>Ranked by your priorities</caption>
-            <thead>
-              <tr>
-                <th scope="col">#</th>
-                <th scope="col">Card</th>
-                <th scope="col">Value</th>
-                <th scope="col">Ratings</th>
-                <th scope="col">
-                  <span className={styles.visuallyHidden}>Actions</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {ordered.length === 0 && (
-                <tr>
-                  <td colSpan={5} className={styles.empty}>
-                    No ranked cards match. Cards appear once they're reviewed.
-                  </td>
-                </tr>
-              )}
-              {ordered.map((r, i) => {
-                const name = label(r, multiPitch(r));
-                const inCore = i < settings.coreSize;
-                const isPinned = pinned.includes(r.variantId);
-                return (
-                  <tr
-                    key={r.variantId}
-                    className={inCore ? styles.coreRow : undefined}
+            <div className={styles.orderControl}>
+              <span className={styles.label}>Order</span>
+              <div className={styles.presets} role="group" aria-label="Order">
+                {(
+                  [
+                    ["score", "Score"],
+                    ["fits", "Best fits first"],
+                  ] as const
+                ).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    aria-pressed={settings.order === value}
+                    onClick={() => update({ order: value })}
                   >
-                    <td>{i + 1}</td>
-                    <td>
-                      <Link to="/cards/$cardId" params={{ cardId: r.cardId }}>
-                        {name}
-                      </Link>{" "}
-                      {inCore && <Tag tone="accent">Core</Tag>}{" "}
-                      {isPinned && <Tag>Pinned</Tag>} {inDeckTag(r.variantId)}
-                    </td>
-                    <td>{r.value}</td>
-                    <td>{r.ratingCount || "mine"}</td>
-                    <td className={styles.actions}>
-                      {addButton(r.variantId, name)}
-                      <Button
-                        variant="ghost"
-                        onClick={() => togglePin(r.variantId)}
-                        aria-label={`${isPinned ? "Unpin" : "Pin"} ${name}`}
-                      >
-                        {isPinned ? "Unpin" : "Pin"}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        onClick={() => exclude(r.variantId)}
-                        aria-label={`Exclude ${name}`}
-                      >
-                        Exclude
-                      </Button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <span className={styles.boardCount}>
+              {deckCards.length.toLocaleString("en-GB")} ranked
+            </span>
+          </div>
+
+          {deckCards.length === 0 ? (
+            <div className={styles.empty}>
+              <strong>Nothing ranked yet</strong>
+              <span>
+                Cards appear here once {data.minRatingCount} scorers have
+                reviewed them, or once you have.
+              </span>
+              <Link to="/needs-review">Review cards</Link>
+            </div>
+          ) : (
+            <EngineBoard
+              engines={engines}
+              cards={shown}
+              gear={gear}
+              core={core}
+              inDeck={
+                new Map(
+                  (deck?.cards ?? []).map((c) => [c.variantId, c.quantity]),
+                )
+              }
+              order={settings.order}
+              prefs={settings.prefs}
+              onToggleCore={toggleCore}
+              onOpen={(c) => goTo(c.variantId)}
+            />
+          )}
+          <p className={styles.footnote}>
+            “Fits” links come from card roles (docs/roles.md), a first pass that
+            hasn't been checked by an experienced player. They never change a
+            card's score.
+          </p>
         </div>
 
-        {excludedRows.length > 0 && (
-          <section>
-            <h2>Excluded</h2>
-            <ul>
-              {excludedRows.map((r) => {
-                const name = label(r, multiPitch(r));
-                return (
-                  <li key={r.variantId}>
-                    {name}{" "}
-                    <Button
-                      variant="ghost"
-                      onClick={() => restore(r.variantId)}
-                      aria-label={`Restore ${name}`}
-                    >
-                      Restore
-                    </Button>
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
-        )}
-
-        {gearGroups.length > 0 && (
-          <section>
-            <h2>Weapons and equipment</h2>
-            <p className={styles.note}>
-              They don't take deck space, so they're ranked by slot.
-            </p>
-            <div className={styles.gear}>
-              {gearGroups.map((g) => (
-                <table key={g.title} className={styles.table}>
-                  <caption>{g.title}</caption>
-                  <tbody>
-                    {g.rows.slice(0, 3).map((r) => (
-                      <tr key={r.variantId}>
-                        <td>
-                          <Link
-                            to="/cards/$cardId"
-                            params={{ cardId: r.cardId }}
-                          >
-                            {r.name}
-                          </Link>{" "}
-                          {inDeckTag(r.variantId)}
-                        </td>
-                        <td>{r.value}</td>
-                        <td className={styles.actions}>
-                          {addButton(r.variantId, r.name)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ))}
-            </div>
-          </section>
-        )}
-      </FilteredLayout>
+        <CoreTray
+          settings={settings}
+          onSettings={(patch) => update(patch)}
+          showBlend={!!data.mine}
+          cards={core}
+          copyLimit={copyLimit}
+          deckMin={rules?.deckMin}
+          targets={targets}
+          onTargets={setTargets}
+          onQuantity={setQuantity}
+          onFill={fill}
+          signedIn={!!user}
+          deck={deck}
+          deckId={deckId}
+          deckList={deckList}
+          onChooseDeck={(id) => update({}, id)}
+          onAddToDeck={async () => {
+            if (!deck) return;
+            const cards = await addCore(deck.id, deck.cards);
+            setDeck({ ...deck, cards });
+          }}
+          onSaveAsDeck={async (name) => {
+            const created = await decks.createDeck(name);
+            await addCore(created.id, []);
+            setDeckList([created, ...deckList]);
+            update({}, created.id);
+          }}
+        />
+      </div>
     </>
   );
 }

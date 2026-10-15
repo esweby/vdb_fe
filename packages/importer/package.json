@@ -5,10 +5,12 @@
   "scripts": {
     "import": "node src/cli.ts",
     "test:integration": "vitest run --config vitest.integration.config.ts",
-    "review-sheet": "node src/review-cli.ts"
+    "review-sheet": "node src/review-cli.ts",
+    "mock-scores": "node src/mock-cli.ts"
   },
   "dependencies": {
     "postgres": "^3.4.9",
-    "@vdb/cards": "*"
+    "@vdb/cards": "*",
+    "@vdb/scoring": "*"
   }
 }

@@ -25,6 +25,8 @@ export function FilteredLayout<T>(props: {
   sidebar: ReactNode;
   /** e.g. "412 of 627 cards" */
   count?: ReactNode;
+  /** The narrow-screen button that shows the sidebar (default "Filters"). */
+  toggleLabel?: string;
   onClear: () => void;
   children: ReactNode;
 }) {
@@ -44,7 +46,8 @@ export function FilteredLayout<T>(props: {
       <div className={styles.layout}>
         <div className={styles.toggle}>
           <Button aria-expanded={open} onClick={() => setOpen(!open)}>
-            Filters{n > 0 ? ` (${n})` : ""}
+            {props.toggleLabel ?? "Filters"}
+            {n > 0 ? ` (${n})` : ""}
           </Button>
         </div>
         <div className={`${styles.sidebar} ${open ? styles.open : ""}`}>
