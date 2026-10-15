@@ -275,7 +275,7 @@ describe("deck page", () => {
     expect(names()).toEqual(["Become the Shadow Lord"]);
   });
 
-  it("adds a card without a pitch by clicking its picture, which shows a +", async () => {
+  it("adds a card without a pitch to the deck or the sideboard from symbols over its picture", async () => {
     const fake = withDeck();
     await renderApp({
       path: "/decks/deck-1",
@@ -285,14 +285,34 @@ describe("deck page", () => {
     const blade = within(
       await screen.findByRole("listitem", { name: "Nebula Blade" }),
     );
-    // One button: the picture itself, with a + over it.
-    const [add] = blade.getAllByRole("button");
-    expect(add).toHaveAccessibleName("Add Nebula Blade");
-    expect(add).toHaveTextContent("+");
-    // The picture is inside the button (here the stand-in, which shows the name).
-    expect(add).toHaveTextContent("Nebula Blade");
-    await userEvent.setup().click(add!);
-    expect(fake.saved).toEqual(["set deck-1 nb 1 main"]);
+    const actions = within(blade.getByRole("group", { name: "Nebula Blade" }));
+    expect(
+      actions.getAllByRole("button").map((b) => b.getAttribute("aria-label")),
+    ).toEqual(["Add Nebula Blade", "Add Nebula Blade to the sideboard"]);
+    await userEvent.setup().click(
+      actions.getByRole("button", {
+        name: "Add Nebula Blade to the sideboard",
+      }),
+    );
+    expect(fake.saved).toEqual(["set deck-1 nb 1 side"]);
+  });
+
+  it("won't add to the sideboard a card that's already in the deck", async () => {
+    await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      decks: withDeck([{ variantId: "nb", quantity: 1, sideboard: false }])
+        .repository,
+    });
+    const blade = within(
+      await screen.findByRole("listitem", { name: "Nebula Blade" }),
+    );
+    expect(
+      blade.getByRole("button", { name: "Add Nebula Blade to the sideboard" }),
+    ).toBeDisabled();
+    expect(
+      blade.getByRole("button", { name: "Add Nebula Blade" }),
+    ).toBeEnabled();
   });
 
   it("adds a pitch with the R, Y and B buttons under each card", async () => {
