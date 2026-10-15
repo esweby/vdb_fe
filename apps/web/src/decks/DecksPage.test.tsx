@@ -156,6 +156,16 @@ describe("deck page", () => {
     ).toBeInTheDocument();
     expect(within(tile).getByText("Blood Debt")).toBeInTheDocument();
     expect(within(tile).getByText("3×")).toBeInTheDocument();
+    // The art box shows an icon for the card type
+    expect(within(tile).getByTestId("type-icon")).toHaveAttribute(
+      "data-type",
+      "attack_action",
+    );
+    // Keywords are chips
+    expect(within(tile).getByText("Blood Debt")).toHaveAttribute(
+      "data-chip",
+      "keyword",
+    );
     const blade = region("Weapons and equipment").getByRole("article", {
       name: "Nebula Blade",
     });
