@@ -143,7 +143,7 @@ Scorers are volunteers. If the app feels like a prototype they won't engage, and
 
 **Minimum polish bar,** for every screen in those journeys:
 
-- [ ] **No dead ends or placeholders.** A real home page explains the app and points to the next step. Every page has a way forward.
+- [ ] **No dead ends or placeholders.** A real home page explains the app and points to the next step. Every page has a way forward. _Home page done (first visit, a scorer's reviews left, build a core); Needs review no longer dead-ends after a review (#59)._
 - [ ] **Every state is designed:** loading, empty (with the next action), error (in plain words, with a retry) and saved (visible confirmation).
 - [ ] **Consistent look:** one type scale, spacing scale and colour tokens. Pitch colours everywhere a pitch appears. Dark mode checked.
 - [x] **Card images** on the card page and in the deck builder, moved forward from the backlog. Recognising cards by their art is what makes it feel like a FaB tool. Done: `variants.image_url` from the latest standard, normal-art printing; the stand-in shows when there is no image or it fails to load.
