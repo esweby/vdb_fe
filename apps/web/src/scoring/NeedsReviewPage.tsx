@@ -1,16 +1,18 @@
-import { getRouteApi, Link } from "@tanstack/react-router";
+import { getRouteApi, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { CardModal } from "../cards/CardModal.tsx";
 import { cardFacets } from "../cards/facets.ts";
 import { searchAndSort } from "../cards/filterCards.ts";
 import { applyFilters } from "../filters/applyFilters.ts";
 import { FilteredLayout } from "../filters/FilteredLayout.tsx";
 import { FilterBar } from "../filters/FilterBar.tsx";
 import { FilterSidebar } from "../filters/FilterSidebar.tsx";
-import { useUrlFilters } from "../filters/useUrlFilters.ts";
+import { useUrlFilters, type ListSearch } from "../filters/useUrlFilters.ts";
 import type { CardSummary } from "../cards/cardRepository.ts";
 import { useCards } from "../cards/useCards.ts";
 import { useAppSelector } from "../hooks.ts";
 import { useServices } from "../servicesContext.ts";
+import { Button } from "../ui/index.ts";
 import styles from "./NeedsReviewPage.module.css";
 
 const route = getRouteApi("/needs-review");
@@ -32,7 +34,16 @@ function Section(props: { title: string; cards: CardSummary[] }) {
         <ul className={styles.list}>
           {props.cards.map((c) => (
             <li key={c.id}>
-              <Link to="/cards/$cardId" params={{ cardId: c.id }}>
+              {/* Opens the pop-over here, so the scorer stays in the list. */}
+              <Link
+                to="/needs-review"
+                search={(prev: ListSearch) => ({
+                  ...prev,
+                  card: c.id,
+                  variant: undefined,
+                })}
+                resetScroll={false}
+              >
                 {c.name}
               </Link>
             </li>
@@ -43,13 +54,18 @@ function Section(props: { title: string; cards: CardSummary[] }) {
   );
 }
 
-/** Cards the signed-in scorer hasn't marked reviewed, Runeblade and Shadow first. */
+/**
+ * Cards the signed-in scorer hasn't marked reviewed, Runeblade and Shadow first. Cards open in
+ * the pop-over and step through this list in order; a reviewed card drops off it.
+ */
 export function NeedsReviewPage() {
   const { status, items } = useCards();
   const { scores } = useServices();
   const user = useAppSelector((s) => s.auth.user);
   const [reviewed, setReviewed] = useState<Set<string> | null>(null);
-  const filters = useUrlFilters(route.useSearch());
+  const search = route.useSearch();
+  const filters = useUrlFilters(search);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!user) return;
@@ -80,12 +96,64 @@ export function NeedsReviewPage() {
   const classCards = todo.filter(isClassCard);
   const generics = todo.filter((c) => !isClassCard(c));
 
+  // The pop-over steps through the list in the order shown.
+  const stops = [...classCards, ...generics];
+  const open = search.card
+    ? items.find((c) => c.id === search.card)
+    : undefined;
+  const at = open ? stops.findIndex((c) => c.id === open.id) : -1;
+  const goTo = (cardId: string | undefined) =>
+    void navigate({
+      to: ".",
+      replace: true,
+      resetScroll: false,
+      search: (prev: ListSearch) => ({
+        ...prev,
+        card: cardId,
+        variant: undefined,
+      }),
+    });
+  // After a review the card is done: drop it from the list and move on (or close at the end).
+  const reviewedAndNext = () => {
+    if (!open) return;
+    const next = stops.slice(at + 1)[0] ?? stops.slice(0, at)[0];
+    setReviewed(new Set(reviewed).add(open.id));
+    goTo(next?.id);
+  };
+
   return (
     <>
+      {open && (
+        <CardModal
+          cardId={open.id}
+          name={open.name}
+          verified={open.attributesVerified}
+          position={
+            at >= 0 ? { index: at + 1, total: stops.length } : undefined
+          }
+          onPrevious={at > 0 ? () => goTo(stops[at - 1]!.id) : undefined}
+          onNext={
+            at >= 0 && stops[at + 1] ? () => goTo(stops[at + 1]!.id) : undefined
+          }
+          onNextCard={reviewedAndNext}
+          onClose={() => goTo(undefined)}
+        />
+      )}
       <h1>Needs review</h1>
-      <p>
-        {todo.length} {todo.length === 1 ? "card" : "cards"} left to review
-      </p>
+      {unreviewed.length === 0 ? (
+        <p className={styles.allDone}>You've reviewed every card. Thank you.</p>
+      ) : (
+        <div className={styles.intro}>
+          <p>
+            {todo.length} {todo.length === 1 ? "card" : "cards"} left to review
+          </p>
+          {stops.length > 0 && (
+            <Button variant="primary" onClick={() => goTo(stops[0]!.id)}>
+              Start reviewing
+            </Button>
+          )}
+        </div>
+      )}
       <FilteredLayout
         state={filters.state}
         facets={facets}
