@@ -65,6 +65,23 @@ export function toggled<T>(
     : withChoice(state, facet.id, valueId, "include");
 }
 
+/** "Only" on an exclusive value: unticks the rest of its group. */
+export function onlyState<T>(
+  facet: Facet<T>,
+  state: FilterState,
+  valueId: string,
+): FilterState {
+  return {
+    ...state,
+    ...facet.onlyAlso,
+    [facet.id]: Object.fromEntries(
+      facet.values
+        .filter((o) => o.id !== valueId)
+        .map((o) => [o.id, "exclude" as const]),
+    ),
+  };
+}
+
 /**
  * Card-database style sidebar: every value starts ticked; untick to hide those cards.
  * "Only" on a card type (an exclusive group) unticks the rest; "Only" on a mechanic shows just
@@ -88,17 +105,6 @@ export function FilterSidebar<T>(props: {
   );
   const loose = side.filter((f) => !f.section);
   const sections = [...new Set(side.flatMap((f) => f.section ?? []))];
-
-  const only = (facet: Facet<T>, valueId: string): FilterState => {
-    return {
-      ...state,
-      [facet.id]: Object.fromEntries(
-        facet.values
-          .filter((o) => o.id !== valueId)
-          .map((o) => [o.id, "exclude" as const]),
-      ),
-    };
-  };
 
   const group = (facet: Facet<T>) => {
     const shown = facet.values.filter(
@@ -188,7 +194,7 @@ export function FilterSidebar<T>(props: {
                     type="button"
                     className={styles.only}
                     aria-label={`Only ${v.label}`}
-                    onClick={() => onChange(only(facet, v.id))}
+                    onClick={() => onChange(onlyState(facet, state, v.id))}
                   >
                     Only
                   </button>

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { sampleCards } from "../test/fakeCardRepository.ts";
 import { applyFilters } from "../filters/applyFilters.ts";
+import { onlyState } from "../filters/FilterSidebar.tsx";
 import { cardFacets } from "./facets.ts";
 
 const facets = cardFacets({ reviewedCardIds: new Set(["card-hocus-pocus"]) });
@@ -77,5 +78,29 @@ describe("card facets", () => {
       "Hocus Pocus",
     ]);
     expect(names({ defense: { ge3: "exclude" } })).toEqual(["Nebula Blade"]);
+  });
+
+  it("'Only' on an equipment slot shows just equipment in that slot, not weapons or actions", () => {
+    const weapon = sampleCards.find((c) => c.type === "weapon")!;
+    const gauntlets = {
+      ...weapon,
+      id: "arms",
+      name: "Arms gear",
+      type: "equipment",
+      subtypes: ["Arms"],
+    } as typeof weapon;
+    const helm = {
+      ...gauntlets,
+      id: "head",
+      name: "Head gear",
+      subtypes: ["Head"],
+    };
+    const slot = facets.find((f) => f.id === "slot")!;
+    const state = onlyState(slot, {}, "Arms");
+    expect(
+      applyFilters([...sampleCards, gauntlets, helm], facets, state).map(
+        (c) => c.name,
+      ),
+    ).toEqual(["Arms gear"]);
   });
 });
