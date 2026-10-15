@@ -384,3 +384,20 @@ describe("authoredAttributesSchema", () => {
     expect(authoredAttributesSchema.safeParse(value).success).toBe(false);
   });
 });
+
+describe("roles corrections", () => {
+  it("accepts roles to add and remove by hand", () => {
+    expect(
+      authoredAttributesSchema.safeParse({
+        roles: { add: ["banish_trigger"], remove: ["gate_target"] },
+      }).success,
+    ).toBe(true);
+  });
+
+  it("rejects a role that doesn't exist", () => {
+    expect(
+      authoredAttributesSchema.safeParse({ roles: { add: ["gate_maker"] } })
+        .success,
+    ).toBe(false);
+  });
+});

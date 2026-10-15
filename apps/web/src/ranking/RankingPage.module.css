@@ -1,3 +1,16 @@
+/* Engine board: the board on the left, the core tray on the right at 90% of the screen
+   height with its own scroll. On narrow screens the tray sits above the board. */
+.page {
+  --pitch-0: #8a8a8a;
+  --pitch-1: #d63c35;
+  --pitch-2: #e6b422;
+  --pitch-3: #3b7dd8;
+  --pitch-4: #8a5cc7;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 22rem;
+  gap: 2rem;
+  align-items: start;
+}
 .visuallyHidden {
   position: absolute;
   width: 1px;
@@ -6,276 +19,317 @@
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
-.muted {
-  color: var(--muted);
-}
-
-/* Pitch colours, as on the card tiles and filter pills. */
-.pitch0 {
-  --pitch: #8a8a8a;
-}
-.pitch1 {
-  --pitch: #d63c35;
-}
-.pitch2 {
-  --pitch: #e6b422;
-}
-.pitch3 {
-  --pitch: #3b7dd8;
-}
-.pitch4 {
-  --pitch: #8a5cc7;
-}
-
-/* Priorities, above the filters in the sidebar. */
-.priorities {
-  display: grid;
-  gap: 1rem;
-  padding-bottom: 1.25rem;
-  margin-bottom: 1rem;
-  border-bottom: 1px solid var(--border);
-}
-.priorities h2 {
-  font-size: 1.05rem;
+.label {
   margin: 0;
-}
-.setting {
-  display: grid;
-  gap: 0.35rem;
-}
-.setting > div {
-  margin-bottom: 0;
-}
-.settingLabel {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 600;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--muted);
 }
-.ends {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.75rem;
+.none {
+  margin: 0;
   color: var(--muted);
-  margin-top: -0.35rem;
-  padding-right: 2.5rem;
+  font-size: 0.88rem;
 }
-.presets {
-  display: flex;
-  border: 1px solid var(--border);
-  border-radius: 0.4rem;
-  overflow: hidden;
+.main {
+  min-width: 0;
 }
-.presets button {
-  flex: 1;
-  font: inherit;
+.footnote {
+  margin-top: 2rem;
   font-size: 0.82rem;
-  padding: 0.3rem 0.25rem;
-  border: none;
-  background: none;
   color: var(--muted);
-  cursor: pointer;
+  max-width: 70ch;
 }
-.presets button + button {
-  border-left: 1px solid var(--border);
-}
-.presets button[aria-pressed="true"] {
-  background: var(--accent);
-  color: var(--accent-fg);
-}
-.presets button:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
-}
-.stepper {
-  display: inline-flex;
+
+/* Above the board: find a card, and the lane order */
+.boardBar {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.75rem 1.5rem;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
 }
-.stepper button {
-  width: 2rem;
-  padding: 0.15rem 0;
+.search {
+  flex: 1 1 16rem;
+  min-width: 0;
+  font: inherit;
+  height: 2.3rem;
+  padding: 0 0.75rem 0 2.1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  color: var(--fg);
+  background: var(--surface)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%237a7a86' stroke-width='2' stroke-linecap='round' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E")
+    no-repeat 0.7rem center;
 }
-.stepper output {
-  min-width: 1.6rem;
-  text-align: center;
-  font-weight: 600;
+.search:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.orderControl {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.boardCount {
+  color: var(--muted);
+  font-size: 0.88rem;
   font-variant-numeric: tabular-nums;
 }
 
-/* The core summary above the results. */
-.band {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 1rem 2.5rem;
-  padding: 0.9rem 1.1rem;
-  margin-bottom: 1rem;
-  border: 1px solid var(--border);
+/* Segmented presets, used on the board and in the tray */
+.presets {
+  display: inline-flex;
+  background: color-mix(in srgb, var(--fg) 6%, var(--bg));
   border-radius: 0.5rem;
-  background: var(--surface);
-}
-.bandItem {
-  display: grid;
-  gap: 0.3rem;
-}
-.big {
-  font-size: 1.25rem;
-}
-.mixItem {
-  flex: 1;
-  min-width: 10rem;
-  max-width: 22rem;
-  padding-bottom: 0.55rem;
-}
-.mix {
-  display: flex;
-  height: 0.5rem;
-  border-radius: 999px;
-  overflow: hidden;
+  padding: 3px;
   gap: 2px;
 }
-.mix > span {
-  flex-basis: 0;
-  background: var(--pitch);
-}
-.deckLine {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-.deckLine select {
+.presets button {
   font: inherit;
-  padding: 0.3rem 0.5rem;
-  border: 1px solid var(--border);
-  border-radius: 0.4rem;
-  background: var(--bg);
-  color: var(--fg);
-}
-
-/* Tabs */
-.tabs {
-  display: flex;
-  gap: 1.5rem;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 0.25rem;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-.tabs button {
-  font: inherit;
-  padding: 0.5rem 0;
+  font-size: 0.84rem;
   border: none;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
   background: none;
   color: var(--muted);
+  padding: 0.28rem 0.65rem;
+  border-radius: 0.35rem;
   cursor: pointer;
   white-space: nowrap;
 }
-.tabs button[aria-selected="true"] {
+.presets button[aria-pressed="true"] {
+  background: var(--surface);
   color: var(--fg);
-  border-bottom-color: var(--accent);
   font-weight: 600;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
 }
-.tabs button:focus-visible {
+.presets button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* Engines: makers on the left, what uses them on the right */
+.engine {
+  margin-bottom: 2.5rem;
+}
+.engineHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  margin-bottom: 0.9rem;
+}
+.engineHead h2 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+.engineHead p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  max-width: 60ch;
+}
+.pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 1.75rem minmax(0, 1fr);
+  gap: 0 0.5rem;
+}
+.arrow {
+  display: grid;
+  place-items: start center;
+  padding-top: 0.15rem;
+  color: var(--muted);
+  font-size: 1.2rem;
+}
+.lane {
+  min-width: 0;
+}
+.laneHead {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.55rem;
+}
+.laneHead h3 {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.count {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+.more {
+  margin-left: auto;
+  font: inherit;
+  font-size: 0.8rem;
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--accent);
+  cursor: pointer;
+}
+.tiles {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+  gap: 0.65rem;
+}
+.engine > .lane .tiles {
+  grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+}
+
+/* A card tile: the card image, badges over it, value and range beneath */
+.tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  transition: opacity 0.15s;
+}
+.art {
+  display: block;
+  width: 100%;
+  aspect-ratio: 5 / 7;
+  padding: 0;
+  border: none;
+  border-radius: 0.45rem;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--fg) 7%, var(--bg));
+  cursor: pointer;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
+}
+.art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.art:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgb(20 10 60 / 0.18);
+}
+.art:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
-.count {
-  font-weight: normal;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
-}
-
-/* Ranked rows */
-.table {
-  width: 100%;
-  border-collapse: collapse;
-}
-.table th {
-  text-align: left;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--muted);
-  padding: 0.6rem 0.5rem 0.4rem;
-}
-.table td {
-  padding: 0.45rem 0.5rem;
-  border-bottom: 1px solid var(--border);
-  vertical-align: middle;
-}
-.table tbody tr:not(.cutOff):hover {
-  background: color-mix(in srgb, var(--fg) 3%, transparent);
-}
-.rank {
-  width: 2rem;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
-}
-.inCore .rank {
-  color: var(--accent);
-  font-weight: 600;
-}
-.thumbCell {
-  width: 2.6rem;
-}
-.thumb {
-  display: block;
-  width: 2.5rem;
-  height: 3.5rem;
-  border-radius: 0.2rem;
-  object-fit: cover;
-  background: color-mix(in srgb, var(--fg) 6%, var(--bg));
-  border-top: 0.25rem solid var(--pitch, transparent);
-  box-sizing: border-box;
-}
-img.thumb {
-  border: none;
-}
-.cardCell {
-  min-width: 0;
-}
-/* Inline, so a long name wraps with its pitch dot and tags rather than leaving the dot alone. */
-.nameLine {
-  display: block;
-}
-.nameLine > * + * {
-  margin-left: 0.4rem;
-}
-.name {
+.standIn {
+  display: flex;
+  align-items: flex-end;
+  height: 100%;
+  padding: 0.5rem;
+  border-top: 0.4rem solid var(--pitch);
   font-family: var(--font-display);
   font-weight: 600;
+  font-size: 0.82rem;
+  line-height: 1.2;
+  color: var(--fg);
+  text-align: left;
+}
+.tile[data-core] .art {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+.board[data-focus] .tile:not([data-partner]) {
+  opacity: 0.45;
+}
+.board[data-focus] .tile:hover {
+  opacity: 1;
+}
+.tile[data-partner] .art {
+  box-shadow:
+    0 0 0 2px var(--accent),
+    0 6px 18px rgb(20 10 60 / 0.18);
+}
+.badges {
+  position: absolute;
+  top: 0.35rem;
+  left: 0.35rem;
+  right: 0.35rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  pointer-events: none;
+}
+.badges > span {
+  pointer-events: auto;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+}
+.inCore {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+.fits {
+  background: var(--brand);
+  color: var(--brand-fg);
+}
+.preferred {
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface));
   color: var(--fg);
 }
-.pitchDot {
-  display: inline-block;
-  vertical-align: 0.05em;
-  width: 0.6rem;
-  height: 0.6rem;
-  border-radius: 50%;
-  background: var(--pitch);
+.inDeck {
+  background: var(--surface);
+  color: var(--fg);
+  margin-left: auto;
+}
+.foot {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.value {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.add {
   flex: none;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--fg);
+  font: inherit;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
 }
-.meta {
-  display: block;
-  font-size: 0.82rem;
-  color: var(--muted);
+.add[data-on] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-fg);
 }
-.rangeCell {
-  width: 30%;
-  min-width: 8rem;
+.add:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 .range {
   position: relative;
-  display: block;
-  height: 1rem;
-  background: linear-gradient(var(--border), var(--border)) 0 50% / 100% 1px
-    no-repeat;
+  flex: 1;
+  height: 0.8rem;
+  min-width: 2rem;
+}
+.range::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(50% - 0.5px);
+  height: 1px;
+  background: var(--border);
 }
 .track {
   position: absolute;
@@ -286,194 +340,338 @@ img.thumb {
 }
 .overall {
   position: absolute;
-  top: 0.1rem;
-  bottom: 0.1rem;
+  top: 0.05rem;
+  bottom: 0.05rem;
   width: 2px;
   margin-left: -1px;
   background: var(--muted);
 }
 .dot {
   position: absolute;
-  top: calc(50% - 0.35rem);
-  width: 0.7rem;
-  height: 0.7rem;
-  margin-left: -0.35rem;
+  top: calc(50% - 0.3rem);
+  width: 0.6rem;
+  height: 0.6rem;
+  margin-left: -0.3rem;
   border-radius: 50%;
   background: var(--accent);
   border: 2px solid var(--bg);
   box-sizing: border-box;
   transition: left 0.2s ease;
 }
-.value {
-  width: 3rem;
-  text-align: right;
-  font-size: 1.15rem;
+
+/* Gear: a column per slot */
+.gear {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: 0.75rem;
+}
+.slot {
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--surface);
+}
+.slot h3 {
+  margin: 0 0 0.35rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.slotRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.15rem 0;
+  font-size: 0.88rem;
+}
+.slotRow button {
+  font: inherit;
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--fg);
+  text-align: left;
+  cursor: pointer;
+}
+.slotRow button:hover {
+  color: var(--accent);
+}
+
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  padding: 4rem 1rem;
+  text-align: center;
+  border: 1px dashed var(--border);
+  border-radius: 0.75rem;
+}
+.empty span {
+  color: var(--muted);
+  max-width: 45ch;
+}
+
+/* The core tray */
+.tray {
+  position: sticky;
+  top: 1rem;
+  height: 90vh;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface);
+  overflow: hidden;
+}
+.trayHead {
+  padding: 1rem 1.1rem 0.8rem;
+  border-bottom: 1px solid var(--border);
+}
+.trayHead h2 {
+  margin: 0 0 0.15rem;
+  font-size: 1.2rem;
+}
+.total {
+  font-size: 1.05rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
-.actions {
-  width: 1%;
-  white-space: nowrap;
-  text-align: right;
-}
-.iconButton {
-  display: inline-grid;
-  place-items: center;
-  width: 2rem;
-  height: 2rem;
-  padding: 0;
-  color: var(--muted);
-}
-.iconButton:hover {
-  color: var(--fg);
-}
-.iconButton[data-on] {
-  color: var(--accent);
-}
-.cutOff td {
-  padding: 0.3rem 0;
-  border-bottom: none;
-}
-.cutOff span {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--accent);
-}
-.cutOff span::before,
-.cutOff span::after {
-  content: "";
+.trayBody {
   flex: 1;
-  border-top: 1px dashed var(--accent);
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0.25rem 1.1rem 1rem;
 }
-.empty {
-  padding: 2.5rem 1rem !important;
-  text-align: center;
-}
-.empty strong,
-.empty span {
-  display: block;
-  margin-bottom: 0.5rem;
-}
-.empty span {
-  color: var(--muted);
-}
-.footnote {
-  font-size: 0.85rem;
-  color: var(--muted);
-}
-
-/* Weapons and equipment, a column per slot. */
-.gear {
+.traySection {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
-  gap: 1rem;
-}
-.slot {
-  border-collapse: collapse;
-  width: 100%;
-}
-.slot caption {
-  text-align: left;
-  font-family: var(--font-display);
-  font-weight: 600;
-  padding: 0.5rem 0;
-}
-.slot td {
-  padding: 0.35rem 0.4rem;
-  border-top: 1px solid var(--border);
-  vertical-align: middle;
-}
-.slot .value {
-  font-size: 1rem;
-}
-
-.excluded {
-  list-style: none;
-  padding: 0;
-  margin: 0.5rem 0;
-}
-.excluded li {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.4rem 0;
+  gap: 0.45rem;
+  padding: 0.85rem 0;
   border-bottom: 1px solid var(--border);
 }
-.excluded li > span {
+.traySection:last-child {
+  border-bottom: none;
+}
+.traySection > div:not(.presets):not(.meter):not(.balance) {
+  margin-bottom: 0;
+}
+.traySection .presets {
+  display: flex;
+}
+.traySection .presets button {
   flex: 1;
 }
-.excluded .thumb {
-  width: 1.8rem;
-  height: 2.5rem;
+.ends {
+  display: flex;
+  justify-content: space-between;
+  margin-top: -0.4rem;
+  padding-right: 2.5rem;
+  font-size: 0.75rem;
+  color: var(--muted);
 }
-
-/* Narrow screens: the range bar drops under the name. */
-@media (max-width: 48rem) {
-  .table thead {
-    display: none;
-  }
-  .table tbody tr:not(.cutOff) {
-    display: grid;
-    grid-template-columns: 1.6rem 2.8rem minmax(0, 1fr) auto;
-    grid-template-areas:
-      "rank thumb card value"
-      "rank thumb range actions";
-    align-items: center;
-    column-gap: 0.5rem;
-    border-bottom: 1px solid var(--border);
-    padding: 0.4rem 0;
-  }
-  .table tbody tr td {
-    border-bottom: none;
-    padding: 0;
-    width: auto;
-  }
-  .rank {
-    grid-area: rank;
-  }
-  .thumbCell {
-    grid-area: thumb;
-  }
-  .cardCell {
-    grid-area: card;
-  }
-  .rangeCell {
-    grid-area: range;
-    min-width: 0;
-  }
-  .table .value {
-    grid-area: value;
-  }
-  .table .actions {
-    grid-area: actions;
-  }
-  .band {
-    gap: 0.75rem 1.5rem;
-  }
-}
-
-/* The core builder sits beside the ranking, so both stay in view. */
-.buildButton {
-  margin-left: auto;
-}
-.withBuilder {
+.preference {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(20rem, 24rem);
-  gap: 1.5rem;
-  align-items: start;
+  gap: 0.2rem;
 }
-@media (max-width: 64rem) {
-  .withBuilder {
+.preference > div {
+  margin-bottom: 0;
+}
+.prefNote {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.meter {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr) 3.4rem;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.86rem;
+  font-variant-numeric: tabular-nums;
+}
+.bar {
+  height: 0.45rem;
+  border-radius: 999px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--fg) 8%, var(--bg));
+}
+.bar i {
+  display: block;
+  height: 100%;
+  background: var(--pitch);
+  border-radius: 999px;
+}
+.meter input {
+  font: inherit;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.15rem 0.3rem;
+  border: 1px solid var(--border);
+  border-radius: 0.35rem;
+  background: var(--bg);
+  color: var(--fg);
+}
+.balance {
+  display: grid;
+  gap: 0.15rem;
+  font-size: 0.84rem;
+}
+.balanceName {
+  font-weight: 600;
+}
+.balanceRow {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr) 4.5rem;
+  align-items: center;
+  gap: 0.4rem;
+  font-variant-numeric: tabular-nums;
+}
+.balanceRow > span:last-child {
+  text-align: right;
+}
+.pips {
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+}
+.pips i {
+  width: 0.4rem;
+  height: 0.7rem;
+  border-radius: 2px;
+  background: var(--accent);
+}
+.pips i[data-payoff] {
+  background: color-mix(in srgb, var(--accent) 35%, var(--bg));
+}
+.pipGap {
+  width: 0.4rem;
+}
+.gap {
+  font-size: 0.8rem;
+  color: var(--danger);
+}
+.coreList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.coreList li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.88rem;
+}
+.pitchDot {
+  flex: none;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--pitch);
+}
+.coreName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 0.35rem;
+  font-variant-numeric: tabular-nums;
+}
+.stepper span {
+  min-width: 1.1rem;
+  text-align: center;
+  font-weight: 600;
+}
+.stepper button,
+.remove {
+  font: inherit;
+  border: none;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+.stepper button {
+  width: 1.4rem;
+}
+.stepper button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.remove:hover,
+.stepper button:hover:not(:disabled) {
+  color: var(--fg);
+}
+.trayFoot {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.85rem 1.1rem 1rem;
+  border-top: 1px solid var(--border);
+}
+.trayFoot p {
+  margin: 0;
+  font-size: 0.86rem;
+}
+.deckPick {
+  display: grid;
+  gap: 0.25rem;
+}
+.deckPick select,
+.newDeck input {
+  font: inherit;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  background: var(--bg);
+  color: var(--fg);
+}
+.newDeck {
+  display: flex;
+  gap: 0.5rem;
+}
+.newDeck input {
+  flex: 1;
+  min-width: 0;
+}
+.error {
+  color: var(--danger);
+}
+
+@media (max-width: 70rem) {
+  .page {
     grid-template-columns: minmax(0, 1fr);
   }
-  .withBuilder > :last-child {
-    order: -1;
+  .tray {
     position: static;
-    max-height: none;
+    height: 85vh;
+    order: -1;
+  }
+}
+@media (max-width: 40rem) {
+  .pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .arrow {
+    display: none;
+  }
+  .lane + .lane {
+    margin-top: 1rem;
+  }
+  .tiles {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.45rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .art,
+  .tile,
+  .dot {
+    transition: none;
   }
 }

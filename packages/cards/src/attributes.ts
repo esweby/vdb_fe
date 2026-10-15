@@ -3,6 +3,7 @@
 // when a card can't be described (see docs/attribute-vocabulary.md).
 import { z } from "zod";
 import { CARD_GROUPS, type CardGroup } from "./groups.ts";
+import { ROLE_IDS } from "./roles.ts";
 
 export const TOKENS = ["runechant", "gate", "eloquence"] as const;
 
@@ -278,6 +279,13 @@ export const authoredAttributesSchema = z.strictObject({
         conditions: z.array(z.enum(CONDITIONS)).min(1),
       }),
     ])
+    .optional(),
+  /** Corrects the card's roles by hand where the rules in roles.ts get it wrong. */
+  roles: z
+    .strictObject({
+      add: z.array(z.enum(ROLE_IDS)).optional(),
+      remove: z.array(z.enum(ROLE_IDS)).optional(),
+    })
     .optional(),
   /** Doubts or context for the reviewer. Shown on the review sheet. */
   notes: z.string().optional(),
