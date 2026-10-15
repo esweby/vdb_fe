@@ -315,6 +315,38 @@ describe("deck page", () => {
     ).toBeEnabled();
   });
 
+  it("allows only one copy of a piece of equipment", async () => {
+    const purgatory = {
+      ...sampleCards.find((c) => c.name === "Nebula Blade")!,
+      id: "card-face-purgatory",
+      name: "Face Purgatory",
+      type: "equipment",
+      subtypes: ["Head"],
+      variants: [
+        {
+          ...sampleCards.find((c) => c.name === "Nebula Blade")!.variants[0]!,
+          id: "fp",
+        },
+      ],
+    };
+    const fake = withDeck();
+    await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      cards: fakeCardRepository([...sampleCards, purgatory]),
+      decks: fake.repository,
+    });
+    const item = within(
+      await screen.findByRole("listitem", { name: "Face Purgatory" }),
+    );
+    const user = userEvent.setup();
+    await user.click(item.getByRole("button", { name: "Add Face Purgatory" }));
+    expect(fake.saved).toEqual(["set deck-1 fp 1 main"]);
+    expect(
+      item.getByRole("button", { name: "Add Face Purgatory" }),
+    ).toBeDisabled();
+  });
+
   it("adds a pitch with the R, Y and B buttons under each card", async () => {
     const fake = withDeck();
     await renderApp({

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { CardSummary } from "../cards/cardRepository.ts";
 import {
+  copyLimitFor,
   deckCounts,
   deckProblems,
   sectionOf,
@@ -105,6 +106,24 @@ describe("deckProblems", () => {
     expect(
       deckProblems([...filler(20), entry(card("Extra"), 4)], rules),
     ).toEqual(["Extra (red) has 4 copies; at most 3 are allowed."]);
+  });
+
+  it("allows one copy of each piece of equipment (maintainer, 15 Oct 2026)", () => {
+    expect(
+      copyLimitFor(card("Face Purgatory", "equipment", ["Head"]), rules),
+    ).toBe(1);
+    expect(copyLimitFor(card("Nebula Blade", "weapon", ["Sword"]), rules)).toBe(
+      3,
+    );
+    expect(copyLimitFor(card("Hocus Pocus"), rules)).toBe(3);
+    const purgatory = card("Face Purgatory", "equipment", ["Head"]);
+    const noPitch = {
+      ...purgatory,
+      variants: [{ ...purgatory.variants[0]!, pitch: null }],
+    };
+    expect(
+      deckProblems([...filler(20), entry(noPitch, 2, true)], rules),
+    ).toEqual(["Face Purgatory has 2 copies; at most 1 is allowed."]);
   });
 
   it("allows one piece of equipment per slot in the loadout, but more in the sideboard", () => {
