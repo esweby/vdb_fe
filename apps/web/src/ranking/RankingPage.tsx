@@ -210,6 +210,8 @@ export function RankingPage() {
     setMyAnswers({ ...myAnswers, [key]: n });
     try {
       await strategy.setAnswer(user.id, key, n);
+      // A scorer's answer counts towards the group's average straight away.
+      setCommunity(await strategy.listCommunityAnswers());
     } catch {
       setMyAnswers(previous);
     }
