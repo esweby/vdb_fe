@@ -83,7 +83,8 @@ describe("mockScores (local development data only)", () => {
   it("only scores cards the scorer reviewed", () => {
     const { reviews, scores } = run();
     const reviewed = new Set(reviews.map((r) => `${r.userId}|${r.cardId}`));
-    for (const s of scores) expect(reviewed).toContain(`${s.userId}|${s.cardId}`);
+    for (const s of scores)
+      expect(reviewed).toContain(`${s.userId}|${s.cardId}`);
   });
 
   it("gives every review an all-pitches overall, so no pitch counts as 0 by accident", () => {
@@ -154,9 +155,7 @@ describe("mockScores (local development data only)", () => {
         .map((s) => s.score);
       return xs.reduce((a, b) => a + b, 0) / xs.length;
     };
-    expect(mean(isRbOrShadow)).toBeGreaterThan(
-      mean((id) => !isRbOrShadow(id)),
-    );
+    expect(mean(isRbOrShadow)).toBeGreaterThan(mean((id) => !isRbOrShadow(id)));
   });
 });
 

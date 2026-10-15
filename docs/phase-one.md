@@ -62,6 +62,7 @@ These three tasks go first because any of them could change the plan.
 ### M2: Card data (≈1 week, separate budget)
 
 - [x] Importer (`packages/importer`, `npm run import -w @vdb/importer`): downloads the pinned dataset commit, upserts `cards` (keyed by name) and `variants` (keyed by the dataset's `unique_id`). Safe to re-run; keeps `fringe` and `hidden`. Refuses a non-local database without `--yes-remote`.
+- [x] Mock scores for local development (`npm run mock-scores -w @vdb/importer`, after the import): five mock scorers review most Runeblade and Shadow cards and about a quarter of the generics, then community scores are recalculated, so the ranking and deck builder have rows to show. A rough guide, not a judgement of any card. Re-running replaces the previous mock data; `-- --seed 2` gives a different set. Local stack only, with no override.
 - [ ] Legality filter (`src/classify.ts`), **to be checked by a player**. First run: 633 cards, 1,047 variants (173 action, 224 attack action, 34 instant, 19 defense reaction, 7 attack reaction, 7 block, 9 resource, 9 weapons, 151 equipment).
 - [x] Map dataset fields to ours: types → `type`, `subtypes`, `classes`, `talents`; keywords → `hasGoAgain`, `hasBloodDebt`. Text and attributes are stored per variant as well, because pitch variants can differ (e.g. "create 3/2/1 Runechants").
 - [x] Attribute vocabulary (`packages/cards`, [docs/attribute-vocabulary.md](attribute-vocabulary.md)), validated by the importer, with plain-English descriptions and a review sheet generator.
