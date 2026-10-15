@@ -16,6 +16,9 @@ import type { Dimension, ScoreRow } from "../scoring/scoreRepository.ts";
 import { useServices } from "../servicesContext.ts";
 import { CoreRail, type TrayCard } from "./CoreRail.tsx";
 import { ReadingsTab } from "./ReadingsTab.tsx";
+import { runScenarios } from "./runScenarios.ts";
+import { RUNS, type ScenarioOutput } from "./scenarioRuns.ts";
+import { toEngineCard } from "./scenarios.ts";
 import { SetupTab } from "./SetupTab.tsx";
 import type {
   CommunityAnswer,
@@ -90,6 +93,11 @@ export function RankingPage() {
   const [query, setQuery] = useState("");
   const [questions, setQuestions] = useState<StrategyQuestion[]>([]);
   const [myAnswers, setMyAnswers] = useState<Record<string, number>>({});
+  const [scenarioRun, setScenarioRun] = useState<{
+    output: ScenarioOutput;
+    signature: string;
+  } | null>(null);
+  const [running, setRunning] = useState(false);
   const [community, setCommunity] = useState<Record<string, CommunityAnswer>>(
     {},
   );
@@ -310,6 +318,34 @@ export function RankingPage() {
     setQuantity(c.variantId, settings.core[c.variantId] ? 0 : copyLimit);
 
   const coreTotal = core.reduce((n, c) => n + c.quantity, 0);
+  // What a scenario run used, so a later change to the core can be spotted.
+  const coreSignature = JSON.stringify(
+    core.map((c) => [c.variantId, c.quantity]).sort(),
+  );
+  function runAllScenarios(seed: number) {
+    const engineCore = core.flatMap((c) => {
+      const r = byVariant.get(c.variantId);
+      const card = r && cardsById.get(r.cardId);
+      const variant = card?.variants.find((v) => v.id === c.variantId);
+      return card && variant
+        ? [{ card: toEngineCard(card, variant, c.roles), copies: c.quantity }]
+        : [];
+    });
+    setRunning(true);
+    const signature = coreSignature;
+    runScenarios({
+      core: engineCore,
+      deckSize: rules?.deckMin ?? 60,
+      runs: RUNS,
+      seed,
+    }).then(
+      (output) => {
+        setScenarioRun({ output, signature });
+        setRunning(false);
+      },
+      () => setRunning(false),
+    );
+  }
   const pitchCounts: Record<number, number> = {};
   for (const c of core) {
     if (c.pitch !== null) {
@@ -505,7 +541,15 @@ export function RankingPage() {
             onDone={() => setTab("board")}
           />
         )}
-        {tab === "readings" && <ReadingsTab cards={core} />}
+        {tab === "readings" && (
+          <ReadingsTab
+            cards={core}
+            output={scenarioRun?.output ?? null}
+            stale={!!scenarioRun && scenarioRun.signature !== coreSignature}
+            running={running}
+            onRun={runAllScenarios}
+          />
+        )}
         {tab === "board" && (
           <div className={styles.page}>
             <div className={styles.main}>

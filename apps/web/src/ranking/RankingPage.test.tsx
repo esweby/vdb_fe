@@ -507,6 +507,19 @@ describe("scenarios", () => {
     ).toBeInTheDocument();
   });
 
+  it("says plainly what a run fails without when there's only one reason", async () => {
+    const { user } = await open(
+      `/ranking?tab=readings&${core({ bsl3: 3, hp1: 3 })}`,
+    );
+    await user.click(screen.getByRole("button", { name: "Run scenarios" }));
+    const row = within(
+      await screen.findByRole("listitem", {
+        name: "Opening hand has a blue card to pitch",
+      }),
+    );
+    expect(row.getByText("Fails without a blue card")).toBeInTheDocument();
+  });
+
   it("says which scenarios need a card that isn't in the core", async () => {
     const { user } = await open(`/ranking?tab=readings&${core({ hp1: 3 })}`);
     await user.click(screen.getByRole("button", { name: "Run scenarios" }));

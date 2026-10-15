@@ -12,6 +12,12 @@ describe("built-in scenarios", () => {
     }
   });
 
+  it("only check one hand: a 'by turn N' scenario would be the same as any turn's hand", () => {
+    for (const s of BUILT_IN_SCENARIOS) {
+      expect(s.definition.name).not.toMatch(/^By turn/);
+    }
+  });
+
   it("have distinct names", () => {
     const names = BUILT_IN_SCENARIOS.map((s) => s.definition.name);
     expect(new Set(names).size).toBe(names.length);

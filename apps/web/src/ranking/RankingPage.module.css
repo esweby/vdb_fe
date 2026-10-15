@@ -900,3 +900,161 @@
     transition: none;
   }
 }
+
+/* Readings: scenarios and the traverse timeline */
+.wide {
+  grid-column: 1 / -1;
+}
+.cardHeadRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem 1.5rem;
+}
+.cardHeadRow h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+.cardHeadRow p {
+  margin: 0.2rem 0 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  max-width: 60ch;
+}
+.runButtons {
+  display: flex;
+  gap: 0.5rem;
+}
+.runInfo {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.stale {
+  margin: 0;
+  padding: 0.45rem 0.7rem;
+  border-radius: 0.4rem;
+  font-size: 0.84rem;
+  color: var(--fg);
+  background: color-mix(in srgb, #e6b422 22%, var(--surface));
+}
+.scenarioList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.scenarioList li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 4rem 4.5rem;
+  grid-template-areas:
+    "name rate turns"
+    "why why why";
+  align-items: center;
+  gap: 0.15rem 0.75rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.scenarioName {
+  grid-area: name;
+  font-weight: 500;
+}
+.rate {
+  grid-area: rate;
+  text-align: right;
+  font-size: 1.25rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.notRun {
+  grid-column: 2 / -1;
+  text-align: right;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+.byTurn {
+  grid-area: turns;
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 1.6rem;
+}
+.byTurn i {
+  flex: 1;
+  border-radius: 2px 2px 0 0;
+  background: var(--accent);
+}
+.why {
+  grid-area: why;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 2rem;
+}
+.fact {
+  display: grid;
+}
+.fact b {
+  font-size: 1.45rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.fact span {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+.chartWrap {
+  overflow-x: auto;
+}
+.chart {
+  width: 100%;
+  min-width: 28rem;
+  height: auto;
+}
+.chart text {
+  font-size: 11px;
+  fill: var(--muted);
+}
+.gridLine {
+  stroke: var(--border);
+}
+.chartBand {
+  fill: color-mix(in srgb, var(--accent) 22%, transparent);
+  stroke: none;
+}
+.chartLine {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.5;
+}
+.chartBack {
+  fill: none;
+  stroke: #1f9d61;
+  stroke-width: 2.5;
+  stroke-dasharray: 5 4;
+}
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.legend span::before {
+  content: "";
+  display: inline-block;
+  width: 14px;
+  height: 3px;
+  margin-right: 0.4rem;
+  vertical-align: middle;
+  border-radius: 2px;
+  background: var(--accent);
+}
+.legend span[data-key="back"]::before {
+  background: #1f9d61;
+}
