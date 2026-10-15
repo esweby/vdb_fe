@@ -174,4 +174,27 @@ describe("ScoreEditor", () => {
       screen.getByRole("slider", { name: "Gate creation, Forsaken" }),
     ).toBeInTheDocument();
   });
+
+  it("greys out locked dimensions with a reason, keeping their place", () => {
+    render(
+      <ScoreEditor
+        dimensions={dimensions}
+        variants={variants}
+        rows={[]}
+        onSet={() => {}}
+        locked={{ ids: [2], reason: "Same as overall: no conditions." }}
+      />,
+    );
+    const gate = screen.getByRole("group", { name: "Gate creation" });
+    expect(within(gate).getByRole("slider")).toBeDisabled();
+    expect(
+      within(gate).getByRole("button", { name: "Not relevant" }),
+    ).toBeDisabled();
+    expect(
+      within(gate).getByText("Same as overall: no conditions."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("slider", { name: "Runechant creation" }),
+    ).toBeEnabled();
+  });
 });

@@ -98,7 +98,7 @@ describe("card page", () => {
     ).toBeInTheDocument();
   });
 
-  it("asks only overall for a card without conditions, with a way to rate floor and ceiling too", async () => {
+  it("shows floor and ceiling on every card, greyed out when the card has no conditions", async () => {
     await renderApp({
       path: "/cards/card-nebula-blade",
       auth: fakeAuthService({
@@ -107,19 +107,29 @@ describe("card page", () => {
       }).service,
       scores: fakeScoreRepository().repository,
     });
+    const floor = await screen.findByRole("group", { name: "Floor" });
+    expect(within(floor).getByRole("slider")).toBeDisabled();
     expect(
-      await screen.findByRole("group", { name: "Overall" }),
+      within(floor).getByText("Same as overall: this card has no conditions."),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole("group", { name: "Floor" }),
+      within(screen.getByRole("group", { name: "Ceiling" })).getByRole(
+        "slider",
+      ),
+    ).toBeDisabled();
+    expect(
+      within(screen.getByRole("group", { name: "Overall" })).getByRole(
+        "slider",
+      ),
+    ).toBeEnabled();
+    expect(
+      screen.queryByRole("checkbox", { name: "Rate floor and ceiling too" }),
     ).not.toBeInTheDocument();
-    await userEvent
-      .setup()
-      .click(
-        screen.getByRole("checkbox", { name: "Rate floor and ceiling too" }),
-      );
-    expect(screen.getByRole("group", { name: "Floor" })).toBeInTheDocument();
-    expect(screen.getByRole("group", { name: "Ceiling" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", {
+        name: "Floor and ceiling same as overall",
+      }),
+    ).not.toBeInTheDocument();
   });
 
   it("asks floor, ceiling and overall for a card with conditions, and can make floor and ceiling the same as overall", async () => {
