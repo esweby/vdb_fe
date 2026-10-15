@@ -8,3 +8,12 @@ export * from "./groups.ts";
 export * from "./routes.ts";
 export { relevantDimensions } from "./relevance.ts";
 export { hasConditions } from "./conditions.ts";
+export {
+  ROLES,
+  rolesOf,
+  fits,
+  type Engine,
+  type RoleKind,
+  type RoleCard,
+  type RoleDef,
+} from "./roles.ts";
