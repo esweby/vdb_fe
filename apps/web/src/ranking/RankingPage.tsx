@@ -2,6 +2,8 @@ import { getRouteApi, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { CardSummary, VariantSummary } from "../cards/cardRepository.ts";
 import { CardModal } from "../cards/CardModal.tsx";
+import { CoreBuilder } from "./CoreBuilder.tsx";
+import type { CorePick } from "./suggestCore.ts";
 import type { Deck, DeckSummary } from "../decks/deckRepository.ts";
 import type { FormatRules } from "../decks/deckRules.ts";
 import { typeLine } from "../decks/CardTile.tsx";
@@ -156,6 +158,20 @@ export function RankingPage() {
   const [rules, setRules] = useState<FormatRules | null>(null);
   const [deckError, setDeckError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("deck");
+  const [building, setBuilding] = useState(false);
+
+  // The builder needs the copy limit even without a deck.
+  useEffect(() => {
+    if (!building || rules) return;
+    let live = true;
+    decks.getFormatRules().then(
+      (r) => live && setRules(r),
+      () => {},
+    );
+    return () => {
+      live = false;
+    };
+  }, [decks, building, rules]);
 
   useEffect(() => {
     if (!user) return;
@@ -318,6 +334,38 @@ export function RankingPage() {
         `Couldn't add to the deck: ${e instanceof Error ? e.message : String(e)}`,
       );
     }
+  }
+
+  /** Adds the builder's picks, never lowering copies already in the deck. */
+  async function addCore(
+    deckId: string,
+    picks: CorePick[],
+    start: Deck["cards"],
+  ) {
+    let cards = start;
+    for (const p of picks) {
+      const existing = cards.find((c) => c.variantId === p.variantId);
+      if ((existing?.quantity ?? 0) >= p.quantity) continue;
+      const card = {
+        variantId: p.variantId,
+        quantity: p.quantity,
+        sideboard: existing?.sideboard ?? false,
+      };
+      await decks.setCard(deckId, card);
+      cards = [...cards.filter((c) => c.variantId !== p.variantId), card];
+    }
+    return cards;
+  }
+  async function addCoreToDeck(picks: CorePick[]) {
+    if (!deck) return;
+    const cards = await addCore(deck.id, picks, deck.cards);
+    setDeck({ ...deck, cards });
+  }
+  async function saveCoreAsDeck(name: string, picks: CorePick[]) {
+    const created = await decks.createDeck(name);
+    await addCore(created.id, picks, []);
+    setDeckList([created, ...deckList]);
+    update({}, filterState, created.id);
   }
 
   const deckRows = ranked.filter(
@@ -708,160 +756,202 @@ export function RankingPage() {
               {deckError && <p role="alert">{deckError}</p>}
             </div>
           )}
+          <Button
+            className={styles.buildButton}
+            aria-expanded={building}
+            onClick={() => setBuilding(!building)}
+          >
+            Build a core
+          </Button>
         </section>
 
-        <div className={styles.tabs} role="tablist" aria-label="Ranked cards">
-          {tabs.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              role="tab"
-              id={`ranking-tab-${t.id}`}
-              aria-selected={tab === t.id}
-              aria-controls={`ranking-panel-${t.id}`}
-              onClick={() => setTab(t.id)}
+        <div className={building ? styles.withBuilder : undefined}>
+          <div>
+            <div
+              className={styles.tabs}
+              role="tablist"
+              aria-label="Ranked cards"
             >
-              {t.label} <span className={styles.count}>{t.count}</span>
-            </button>
-          ))}
-        </div>
+              {tabs.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  role="tab"
+                  id={`ranking-tab-${t.id}`}
+                  aria-selected={tab === t.id}
+                  aria-controls={`ranking-panel-${t.id}`}
+                  onClick={() => setTab(t.id)}
+                >
+                  {t.label} <span className={styles.count}>{t.count}</span>
+                </button>
+              ))}
+            </div>
 
-        <div
-          role="tabpanel"
-          id={`ranking-panel-${tab}`}
-          aria-labelledby={`ranking-tab-${tab}`}
-        >
-          {tab === "deck" && (
-            <>
-              <table className={styles.table}>
-                <caption className={styles.visuallyHidden}>
-                  Ranked by your priorities
-                </caption>
-                <thead>
-                  <tr>
-                    <th scope="col">#</th>
-                    <th scope="col">
-                      <span className={styles.visuallyHidden}>Picture</span>
-                    </th>
-                    <th scope="col">Card</th>
-                    <th scope="col">Floor · overall · ceiling</th>
-                    <th scope="col" className={styles.value}>
-                      Value
-                    </th>
-                    <th scope="col">
-                      <span className={styles.visuallyHidden}>Actions</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {ordered.length === 0 && (
-                    <tr>
-                      <td colSpan={6} className={styles.empty}>
-                        <strong>Nothing ranked yet</strong>
-                        <span>
-                          Cards appear here once {data.minRatingCount} scorers
-                          have reviewed them, or once you have. Filters can hide
-                          them too.
-                        </span>
-                        <Link to="/needs-review">Review cards</Link>
-                      </td>
-                    </tr>
-                  )}
-                  {ordered.flatMap((r, i) => [
-                    ...(i === settings.coreSize
-                      ? [
-                          <tr key="cut-off" className={styles.cutOff}>
-                            <td colSpan={6}>
-                              <span>Core cut-off</span>
-                            </td>
-                          </tr>,
-                        ]
-                      : []),
-                    deckRow(r, i),
-                  ])}
-                </tbody>
-              </table>
-              <p className={styles.footnote}>
-                Value is where each card sits between its floor and ceiling for
-                your play style. Cards need at least {data.minRatingCount}{" "}
-                community ratings, or your own review, to be ranked. Synergy
-                joins the ranking in phase two.
-              </p>
-            </>
+            <div
+              role="tabpanel"
+              id={`ranking-panel-${tab}`}
+              aria-labelledby={`ranking-tab-${tab}`}
+            >
+              {tab === "deck" && (
+                <>
+                  <table className={styles.table}>
+                    <caption className={styles.visuallyHidden}>
+                      Ranked by your priorities
+                    </caption>
+                    <thead>
+                      <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">
+                          <span className={styles.visuallyHidden}>Picture</span>
+                        </th>
+                        <th scope="col">Card</th>
+                        <th scope="col">Floor · overall · ceiling</th>
+                        <th scope="col" className={styles.value}>
+                          Value
+                        </th>
+                        <th scope="col">
+                          <span className={styles.visuallyHidden}>Actions</span>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {ordered.length === 0 && (
+                        <tr>
+                          <td colSpan={6} className={styles.empty}>
+                            <strong>Nothing ranked yet</strong>
+                            <span>
+                              Cards appear here once {data.minRatingCount}{" "}
+                              scorers have reviewed them, or once you have.
+                              Filters can hide them too.
+                            </span>
+                            <Link to="/needs-review">Review cards</Link>
+                          </td>
+                        </tr>
+                      )}
+                      {ordered.flatMap((r, i) => [
+                        ...(i === settings.coreSize
+                          ? [
+                              <tr key="cut-off" className={styles.cutOff}>
+                                <td colSpan={6}>
+                                  <span>Core cut-off</span>
+                                </td>
+                              </tr>,
+                            ]
+                          : []),
+                        deckRow(r, i),
+                      ])}
+                    </tbody>
+                  </table>
+                  <p className={styles.footnote}>
+                    Value is where each card sits between its floor and ceiling
+                    for your play style. Cards need at least{" "}
+                    {data.minRatingCount} community ratings, or your own review,
+                    to be ranked. Synergy joins the ranking in phase two.
+                  </p>
+                </>
+              )}
+
+              {tab === "gear" &&
+                (gearGroups.length === 0 ? (
+                  <p className={styles.muted}>
+                    No weapons or equipment ranked yet.
+                  </p>
+                ) : (
+                  <>
+                    <p className={styles.muted}>
+                      They don't take deck space, so they're ranked by slot.
+                    </p>
+                    <div className={styles.gear}>
+                      {gearGroups.map((g) => (
+                        <table key={g.title} className={styles.slot}>
+                          <caption>{g.title}</caption>
+                          <tbody>
+                            {g.rows.slice(0, 3).map((r, i) => (
+                              <tr key={r.variantId}>
+                                <td className={styles.thumbCell}>
+                                  <Thumb
+                                    variant={
+                                      variantsById.get(r.variantId)?.variant
+                                    }
+                                  />
+                                </td>
+                                <td className={styles.cardCell}>
+                                  <span className={styles.nameLine}>
+                                    {cardLink(r, r.name)}
+                                  </span>
+                                  <span className={styles.meta}>
+                                    {i === 0 && (
+                                      <Tag tone="accent">Top pick</Tag>
+                                    )}{" "}
+                                    {inDeckTag(r.variantId)}
+                                  </span>
+                                </td>
+                                <td className={styles.value}>
+                                  {Math.round(r.value)}
+                                </td>
+                                <td className={styles.actions}>
+                                  {addButton(r.variantId, r.name)}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      ))}
+                    </div>
+                  </>
+                ))}
+
+              {tab === "excluded" &&
+                (excludedRows.length === 0 ? (
+                  <p className={styles.muted}>
+                    Nothing excluded. Use × on a card to leave it out of the
+                    ranking.
+                  </p>
+                ) : (
+                  <ul className={styles.excluded}>
+                    {excludedRows.map((r) => {
+                      const name = nameOf(r);
+                      return (
+                        <li key={r.variantId}>
+                          <Thumb
+                            variant={variantsById.get(r.variantId)?.variant}
+                          />
+                          <span>{name}</span>
+                          <Button
+                            variant="ghost"
+                            onClick={() => restore(r.variantId)}
+                            aria-label={`Restore ${name}`}
+                          >
+                            Restore
+                          </Button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ))}
+            </div>
+          </div>
+          {building && rules && (
+            <CoreBuilder
+              key={deck?.id ?? "none"}
+              ranked={deckRows.map((r) => ({ ...r, name: nameOf(r) }))}
+              copyLimit={rules.copyLimit}
+              initialLocked={
+                new Map([
+                  ...pinned.map((id): [string, number] => [
+                    id,
+                    rules.copyLimit,
+                  ]),
+                  ...[...inDeck].filter(([id]) => !excluded.has(id)),
+                ])
+              }
+              deck={deck}
+              signedIn={!!user}
+              onAddToDeck={addCoreToDeck}
+              onSaveAsDeck={saveCoreAsDeck}
+              onClose={() => setBuilding(false)}
+            />
           )}
-
-          {tab === "gear" &&
-            (gearGroups.length === 0 ? (
-              <p className={styles.muted}>
-                No weapons or equipment ranked yet.
-              </p>
-            ) : (
-              <>
-                <p className={styles.muted}>
-                  They don't take deck space, so they're ranked by slot.
-                </p>
-                <div className={styles.gear}>
-                  {gearGroups.map((g) => (
-                    <table key={g.title} className={styles.slot}>
-                      <caption>{g.title}</caption>
-                      <tbody>
-                        {g.rows.slice(0, 3).map((r, i) => (
-                          <tr key={r.variantId}>
-                            <td className={styles.thumbCell}>
-                              <Thumb
-                                variant={variantsById.get(r.variantId)?.variant}
-                              />
-                            </td>
-                            <td className={styles.cardCell}>
-                              <span className={styles.nameLine}>
-                                {cardLink(r, r.name)}
-                              </span>
-                              <span className={styles.meta}>
-                                {i === 0 && <Tag tone="accent">Top pick</Tag>}{" "}
-                                {inDeckTag(r.variantId)}
-                              </span>
-                            </td>
-                            <td className={styles.value}>
-                              {Math.round(r.value)}
-                            </td>
-                            <td className={styles.actions}>
-                              {addButton(r.variantId, r.name)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  ))}
-                </div>
-              </>
-            ))}
-
-          {tab === "excluded" &&
-            (excludedRows.length === 0 ? (
-              <p className={styles.muted}>
-                Nothing excluded. Use × on a card to leave it out of the
-                ranking.
-              </p>
-            ) : (
-              <ul className={styles.excluded}>
-                {excludedRows.map((r) => {
-                  const name = nameOf(r);
-                  return (
-                    <li key={r.variantId}>
-                      <Thumb variant={variantsById.get(r.variantId)?.variant} />
-                      <span>{name}</span>
-                      <Button
-                        variant="ghost"
-                        onClick={() => restore(r.variantId)}
-                        aria-label={`Restore ${name}`}
-                      >
-                        Restore
-                      </Button>
-                    </li>
-                  );
-                })}
-              </ul>
-            ))}
         </div>
       </FilteredLayout>
     </>

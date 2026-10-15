@@ -78,13 +78,13 @@ export function suggestCore(
 }
 
 /** The next best cards of the same pitch that aren't already picked or removed. */
-export function alternatives(
-  ranked: CoreCandidate[],
+export function alternatives<T extends CoreCandidate>(
+  ranked: T[],
   s: CoreSuggestion,
   c: CoreConstraints,
   variantId: string,
   n = 3,
-): CoreCandidate[] {
+): T[] {
   const pitch = ranked.find((r) => r.variantId === variantId)?.pitch;
   const picked = new Set(s.picks.map((p) => p.variantId));
   return ranked

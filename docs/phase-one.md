@@ -113,6 +113,7 @@ These three tasks go first because any of them could change the plan.
 - [x] "Ranked by your priorities": variants ranked by the weighted average of their dimension scores; core size (top N marked Core), pin and exclude (with restore), minimum rating count, unreviewed cards left out; my reviewed scores count when community data is thin. The filter sidebar narrows the candidates.
 - [x] Weapons and equipment ranked separately by slot (top 3 each).
 - [x] Ranking redesign: priorities above the filters (play style, side and whose scores as presets with a fine-tune slider, core size stepper); a core summary (size, pinned, pitch mix, deck count); rows with the card image, a floor–overall–ceiling range bar and icon actions; a core cut-off line; tabs for deck cards, weapons and equipment, and excluded; cards open in the pop-over, stepping in ranked order; an empty state pointing to Needs review. The Mine / Blend / Community presets are 0, 50 and 100, for the scoring group to confirm.
+- [x] Core builder ("Build a core" on the ranking): pitch targets (from the deck, or the example 18 red / 5 yellow / 22 blue, **unverified**), copies of each card, then the core filled from the ranking (`suggestCore`); edit by copies, lock, swap for the next best of the same pitch, or remove; add to the chosen deck or save as a new deck. Pinned cards and cards in the deck start locked. Mechanic minimums (e.g. at least 8 Runechant creators) are next.
 
 **Done when:** changing a priority re-ranks instantly, and the ranking matches hand-calculated results for a test fixture.
 

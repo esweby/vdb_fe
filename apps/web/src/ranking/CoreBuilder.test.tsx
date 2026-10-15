@@ -59,7 +59,7 @@ const setTargets = async (
 const picks = (panel: ReturnType<typeof within>) =>
   panel
     .getAllByRole("listitem")
-    .map((li) => li.getAttribute("aria-label"))
+    .map((li: HTMLElement) => li.getAttribute("aria-label"))
     .filter(Boolean);
 
 describe("core builder", () => {
