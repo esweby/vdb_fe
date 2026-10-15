@@ -7,6 +7,7 @@ import type {
 } from "../decks/deckRepository.ts";
 import { Button, Slider } from "../ui/index.ts";
 import { balance, ENGINES, type CoreCard } from "./engines.ts";
+import { PREFERENCES } from "./preferences.ts";
 import { RISK_PRESETS, type RankingSettings } from "./rankingSearch.ts";
 import styles from "./RankingPage.module.css";
 
@@ -164,6 +165,29 @@ export function CoreTray(props: {
             />
           </div>
         )}
+
+        <div className={styles.traySection}>
+          <h3 className={styles.label}>Preferences</h3>
+          {PREFERENCES.map((p) => (
+            <div key={p.id} className={styles.preference}>
+              <Slider
+                label={p.label}
+                noScale
+                value={settings.prefs[p.id] ?? 50}
+                onChange={(n) => {
+                  const prefs = { ...settings.prefs, [p.id]: n };
+                  if (n === 50) delete prefs[p.id];
+                  props.onSettings({ prefs });
+                }}
+              />
+              <span className={styles.ends} aria-hidden="true">
+                <span>Avoid</span>
+                <span>Prefer</span>
+              </span>
+              <span className={styles.prefNote}>{p.note}</span>
+            </div>
+          ))}
+        </div>
 
         <div className={styles.traySection}>
           <h3 className={styles.label}>Pitch against targets</h3>

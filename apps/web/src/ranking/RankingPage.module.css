@@ -276,6 +276,10 @@
   background: var(--brand);
   color: var(--brand-fg);
 }
+.preferred {
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface));
+  color: var(--fg);
+}
 .inDeck {
   background: var(--surface);
   color: var(--fg);
@@ -463,6 +467,17 @@
   justify-content: space-between;
   margin-top: -0.4rem;
   padding-right: 2.5rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.preference {
+  display: grid;
+  gap: 0.2rem;
+}
+.preference > div {
+  margin-bottom: 0;
+}
+.prefNote {
   font-size: 0.75rem;
   color: var(--muted);
 }

@@ -29,6 +29,7 @@ import {
   writeRankingSearch,
   type RankingSettings,
 } from "./rankingSearch.ts";
+import { preferenceBoost } from "./preferences.ts";
 import { suggestCore } from "./suggestCore.ts";
 import styles from "./RankingPage.module.css";
 
@@ -250,9 +251,18 @@ export function RankingPage() {
 
   // Fill each pitch to its target: cards already in the core stay, the rest come best fits first.
   function fill() {
+    // In the board's order: preferences always, fits first when the board is ordered by them.
     const candidates = [...deckCards]
-      .map((r) => ({ r, fits: partners(r.name, r.roles, core).length }))
-      .sort((a, b) => b.fits - a.fits || b.r.value - a.r.value)
+      .map((r) => ({
+        r,
+        key: r.value + preferenceBoost(r.roles, settings.prefs),
+        fits: partners(r.name, r.roles, core).length,
+      }))
+      .sort((a, b) =>
+        settings.order === "fits"
+          ? b.fits - a.fits || b.key - a.key
+          : b.key - a.key,
+      )
       .map(({ r }) => r);
     const s = suggestCore(candidates, {
       targets,
@@ -413,6 +423,7 @@ export function RankingPage() {
                 )
               }
               order={settings.order}
+              prefs={settings.prefs}
               onToggleCore={toggleCore}
               onOpen={(c) => goTo(c.variantId)}
             />

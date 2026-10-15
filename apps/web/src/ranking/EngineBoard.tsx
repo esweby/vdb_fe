@@ -1,6 +1,7 @@
 import { fits, type RoleId } from "@vdb/cards";
 import { useState } from "react";
 import type { RankedVariant } from "./rank.ts";
+import { preferenceBoost } from "./preferences.ts";
 import {
   inLane,
   partners,
@@ -68,6 +69,7 @@ export function EngineBoard(props: {
   core: (CoreCard & { variantId: string })[];
   inDeck: Map<string, number>;
   order: "score" | "fits";
+  prefs: Record<string, number>;
   onToggleCore: (card: BoardCard) => void;
   onOpen: (card: BoardCard) => void;
 }) {
@@ -80,11 +82,15 @@ export function EngineBoard(props: {
       cards
         .map((c) => ({
           card: c,
-          value: c.value,
+          boost: preferenceBoost(c.roles, props.prefs),
           partners: partners(c.name, c.roles, props.core),
-          fits: 0,
         }))
-        .map((x) => ({ ...x, fits: x.partners.length })),
+        // Preferences move a card in the order; the value shown stays its score.
+        .map((x) => ({
+          ...x,
+          value: x.card.value + x.boost,
+          fits: x.partners.length,
+        })),
       props.order,
     );
 
@@ -121,6 +127,7 @@ export function EngineBoard(props: {
               fits {x.fits}
             </span>
           )}
+          {x.boost > 0 && <span className={styles.preferred}>preferred</span>}
           {deckCopies ? (
             <span className={styles.inDeck}>{deckCopies} in deck</span>
           ) : null}

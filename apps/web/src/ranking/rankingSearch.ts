@@ -11,6 +11,8 @@ export interface RankingSettings {
   order: BoardOrder;
   /** The core: variant id → copies. */
   core: Record<string, number>;
+  /** Preferences (preferences.ts): id → 0 (avoid) to 100 (prefer); missing = 50. */
+  prefs: Record<string, number>;
 }
 
 export interface RankingSearch {
@@ -19,6 +21,7 @@ export interface RankingSearch {
   side?: number;
   order?: BoardOrder;
   core?: Record<string, number>;
+  pref?: Record<string, number>;
 }
 
 /** README "Ranking" presets. UNVERIFIED values, for the scoring group to confirm. */
@@ -44,6 +47,17 @@ function readCore(v: unknown): Record<string, number> {
   );
 }
 
+/** 0–100, leaving out neutral (50) and anything that isn't a number. */
+function readPrefs(v: unknown): Record<string, number> {
+  if (!v || typeof v !== "object" || Array.isArray(v)) return {};
+  return Object.fromEntries(
+    Object.entries(v)
+      .filter((e): e is [string, number] => typeof e[1] === "number")
+      .map(([k, n]) => [k, clamp(Math.round(n), 0, 100)] as const)
+      .filter(([, n]) => n !== 50),
+  );
+}
+
 export function readRankingSearch(
   search: Partial<Record<keyof RankingSearch, unknown>>,
 ): RankingSettings {
@@ -55,6 +69,7 @@ export function readRankingSearch(
     sideFocus: or(search.side, 50, 0, 100),
     order: search.order === "fits" ? "fits" : "score",
     core: readCore(search.core),
+    prefs: readPrefs(search.pref),
   };
 }
 
@@ -66,5 +81,6 @@ export function writeRankingSearch(s: RankingSettings): RankingSearch {
     ...(s.sideFocus !== 50 ? { side: s.sideFocus } : {}),
     ...(s.order !== "score" ? { order: s.order } : {}),
     ...(Object.keys(s.core).length ? { core: s.core } : {}),
+    ...(Object.keys(s.prefs).length ? { pref: s.prefs } : {}),
   };
 }

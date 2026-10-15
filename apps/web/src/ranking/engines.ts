@@ -90,6 +90,18 @@ export const ENGINES: EngineDef[] = [
     noGenerators: "Nothing gives go again yet.",
     noPayoffs: "Nothing needs an action played first yet.",
   },
+  {
+    id: "usurp",
+    name: "Usurp engine",
+    side: "both",
+    note: "Usurp attacks feed the cards that reward being usurped, like Runechant of Lust.",
+    generators: "Usurp",
+    payoffs: "Reward usurping",
+    makeWord: "usurp",
+    useWord: "reward",
+    noGenerators: "Nothing usurps yet.",
+    noPayoffs: "Nothing rewards usurping yet.",
+  },
 ];
 
 /** Starting pitch targets when a deck has none: the example in docs/phase-one.md. UNVERIFIED. */
