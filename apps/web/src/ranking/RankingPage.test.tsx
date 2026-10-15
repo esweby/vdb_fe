@@ -38,6 +38,8 @@ async function open(
     onlyScorer?: boolean;
     decks?: Deck[];
     scores?: ReturnType<typeof scores>;
+    /** Open exactly this path; otherwise a path without a tab opens the Board. */
+    asIs?: boolean;
   } = {},
 ) {
   const fake = fakeDeckRepository(opts.decks ?? [gateTempo()]);
@@ -47,7 +49,10 @@ async function open(
       : { community: { traverse_to_usurper: { average: 7.5, answers: 2 } } },
   );
   const app = await renderApp({
-    path,
+    path:
+      opts.asIs || path.includes("tab=")
+        ? path
+        : `${path}${path.includes("?") ? "&" : "?"}tab=board`,
     auth: opts.signedIn ? signedIn() : fakeAuthService().service,
     scores: opts.scores ?? scores(),
     decks: fake.repository,
@@ -245,22 +250,24 @@ describe("engine board", () => {
 });
 
 describe("tabs", () => {
-  it("splits building into Set up, Board and Readings, kept in the URL", async () => {
-    const { router } = await open();
-    expect(screen.getByRole("tab", { name: /Board/ })).toHaveAttribute(
+  it("opens on Set up, step 1, and keeps the other tabs in the URL", async () => {
+    const { router } = await open("/ranking", { asIs: true });
+    expect(screen.getByRole("tab", { name: /Set up/ })).toHaveAttribute(
       "aria-selected",
       "true",
     );
-    await goTab("Set up");
-    expect(router.state.location.search).toMatchObject({ tab: "setup" });
-    expect(screen.queryByRole("list", { name: "Make Gates" })).toBeNull();
+    expect(router.state.location.search).not.toHaveProperty("tab");
+    await goTab("Board");
+    expect(router.state.location.search).toMatchObject({ tab: "board" });
     await goTab("Readings");
     expect(router.state.location.search).toMatchObject({ tab: "readings" });
+    await goTab("Set up");
+    expect(router.state.location.search).not.toHaveProperty("tab");
   });
 
   it("opens on the tab in the URL", async () => {
-    await open("/ranking?tab=setup");
-    expect(screen.getByRole("tab", { name: /Set up/ })).toHaveAttribute(
+    await open("/ranking?tab=board");
+    expect(screen.getByRole("tab", { name: /Board/ })).toHaveAttribute(
       "aria-selected",
       "true",
     );
