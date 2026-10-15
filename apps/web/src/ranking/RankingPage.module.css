@@ -33,6 +33,7 @@
   align-items: center;
   gap: 0.4rem 1rem;
   margin-left: auto;
+  min-width: 0;
   font-size: 0.86rem;
 }
 .summaryCount {
@@ -829,9 +830,18 @@
   margin: 0;
   font-size: 0.86rem;
 }
+/* The rail is slim: everything in its footer shrinks to fit and stacks. */
+.trayFoot > * {
+  min-width: 0;
+}
 .deckPick {
   display: grid;
   gap: 0.25rem;
+  min-width: 0;
+}
+.deckPick select {
+  width: 100%;
+  min-width: 0;
 }
 .deckPick select,
 .newDeck input {
@@ -843,12 +853,14 @@
   color: var(--fg);
 }
 .newDeck {
-  display: flex;
-  gap: 0.5rem;
+  display: grid;
+  gap: 0.4rem;
+  min-width: 0;
 }
 .newDeck input {
-  flex: 1;
+  width: 100%;
   min-width: 0;
+  box-sizing: border-box;
 }
 .error {
   color: var(--danger);
