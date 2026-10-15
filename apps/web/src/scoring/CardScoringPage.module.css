@@ -207,8 +207,14 @@
   border-radius: 0.4rem;
   background: color-mix(in srgb, #f3e9d2 75%, var(--bg));
   color: #2a2418;
-  white-space: pre-line;
   line-height: 1.55;
+}
+/* A gap between each line of card text, like the printed text box. */
+.textBox p {
+  margin: 0 0 0.6rem;
+}
+.textBox p:last-child {
+  margin-bottom: 0;
 }
 @media (prefers-color-scheme: dark) {
   .textBox {
@@ -227,4 +233,20 @@
 .faceBottom {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+}
+
+.section h3 {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0.9rem 0 0.3rem;
+}
+.section ul {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+.section li {
+  margin-bottom: 0.35rem;
 }

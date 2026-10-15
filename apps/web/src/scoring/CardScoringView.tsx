@@ -1,5 +1,5 @@
 import {
-  describeAttributes,
+  describeAttributeSections,
   hasConditions,
   relevantDimensions,
 } from "@vdb/cards";
@@ -24,17 +24,6 @@ import { ScoreEditor } from "./ScoreEditor.tsx";
 import { spreadWarnings } from "./spread.ts";
 import styles from "./CardScoringPage.module.css";
 
-/** Describes only a variant's own overrides (generated keywords are card-level). */
-const NO_GENERATED = {
-  hasGoAgain: false,
-  hasBloodDebt: false,
-  hasUsurp: false,
-  hasRuneGate: false,
-  isGateTarget: false,
-  canAttack: false,
-  groups: [],
-  specialization: null,
-};
 const PITCH_LABELS: Record<number, string> = Object.fromEntries(
   Object.entries(PITCH_NAMES).map(([p, name]) => [
     p,
@@ -215,12 +204,11 @@ export function CardScoringView(props: {
     for (const r of toClear) await onSet(r, null);
   }
 
-  const lines = [
-    ...describeAttributes(card.attributes),
-    ...(chosen
-      ? describeAttributes({ ...NO_GENERATED, ...chosen.attributes })
-      : []),
-  ];
+  // The chosen pitch's attributes: the card's, with that pitch's overrides replacing them.
+  const sections = describeAttributeSections({
+    ...card.attributes,
+    ...(chosen?.attributes ?? {}),
+  });
   return (
     <>
       {showTitle && <h1>{card.name}</h1>}
@@ -286,10 +274,12 @@ export function CardScoringView(props: {
               )}
             </div>
             <div className={styles.textBox}>
-              {withKeywords(
-                card.text ?? chosen?.text ?? "",
-                summary?.keywords ?? [],
-              )}
+              {(card.text ?? chosen?.text ?? "")
+                .split(/\n+/)
+                .filter((line) => line.trim())
+                .map((line, i) => (
+                  <p key={i}>{withKeywords(line, summary?.keywords ?? [])}</p>
+                ))}
             </div>
             <div className={styles.typeLine}>{typeLineOf(card, summary)}</div>
             <div className={styles.faceBottom}>
@@ -310,14 +300,19 @@ export function CardScoringView(props: {
             </div>
           </div>
 
-          {lines.length > 0 && (
+          {sections.length > 0 && (
             <>
               <h2>What it does</h2>
-              <ul>
-                {lines.map((line) => (
-                  <li key={line}>{line}</li>
-                ))}
-              </ul>
+              {sections.map((section) => (
+                <div key={section.heading} className={styles.section}>
+                  <h3>{section.heading}</h3>
+                  <ul>
+                    {section.lines.map((line) => (
+                      <li key={line}>{line}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
             </>
           )}
         </section>
