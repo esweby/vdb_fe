@@ -194,13 +194,46 @@
     flex-basis: 100%;
     font-size: 1.25rem;
   }
-  .dialogWide {
-    height: 100vh;
+  /* On a phone a wide dialog is the whole screen, with a one-row header. */
+  /* The backdrop covers the window, so the dialog fills it exactly. */
+  .backdrop:has(> .dialogWide) {
+    padding: 0;
+    place-items: stretch;
   }
-  .dialogWide > .dialogHeader,
+  .dialogWide {
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    border-radius: 0;
+  }
+  .dialogWide > .dialogHeader {
+    flex-wrap: nowrap;
+    gap: 0.25rem;
+    padding: 0.5rem 0.5rem 0.5rem 1rem;
+  }
+  .dialogWide > .dialogHeader h2 {
+    flex-basis: auto;
+    font-size: 1.05rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .dialogWide .dialogTitle {
+    flex: 1;
+  }
+  .dialogWide .dialogTitle > :not(h2) {
+    display: none;
+  }
+  .dialogWide .dialogHeaderActions {
+    gap: 0;
+  }
   .dialogWide > .dialogBody {
     padding-left: 1rem;
     padding-right: 1rem;
+  }
+  /* Eleven numbers don't fit a phone-width slider: label every other one, keep every tick. */
+  .scale span:nth-child(even) {
+    color: transparent;
   }
 }
 
