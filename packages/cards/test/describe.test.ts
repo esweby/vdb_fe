@@ -199,17 +199,16 @@ describe("describeAttributes", () => {
     ).toEqual(["Gets go again, if the banished card is Shadow."]);
   });
 
-  it("describes Gate targets and cards that reward being played from banish", () => {
+  // Maintainer (15 Oct 2026): every blood debt action card is a Gate target, so saying so
+  // repeats "Blood debt."; the Gate route stays in the data for filters and banish routes.
+  it("doesn't describe Gate targets, but describes cards that reward being played from banish", () => {
     expect(
       describeAttributes({
         ...generated,
         isGateTarget: true,
         rewardsPlayFromBanish: true,
       }),
-    ).toEqual([
-      "Can be played from your banished zone with a Gate.",
-      "Is better when played from your banished zone.",
-    ]);
+    ).toEqual(["Is better when played from your banished zone."]);
   });
 
   it("describes the new go again conditions", () => {
