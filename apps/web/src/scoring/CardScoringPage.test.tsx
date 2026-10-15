@@ -295,4 +295,27 @@ describe("card page", () => {
       details.getByText("Cost 0 · Power 2 · Defense 3"),
     ).toBeInTheDocument();
   });
+
+  it("lays the details out like the card: cost, text with keywords in bold, type line, then defense", async () => {
+    await renderApp({
+      path,
+      auth: fakeAuthService().service,
+      scores: fakeScoreRepository().repository,
+    });
+    const details = within(
+      await screen.findByRole("region", { name: "Details" }),
+    );
+    const cost = await details.findByLabelText("Cost 0");
+    const keyword = details.getByText("Go again", { selector: "strong" });
+    const typeLine = details.getByText("Shadow Runeblade Action");
+    const defense = details.getByLabelText("Defense 3");
+    const whatItDoes = details.getByRole("heading", { name: "What it does" });
+    const inOrder = [cost, keyword, typeLine, defense, whatItDoes];
+    for (let i = 1; i < inOrder.length; i++) {
+      expect(
+        inOrder[i - 1]!.compareDocumentPosition(inOrder[i]!) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    }
+  });
 });
