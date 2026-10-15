@@ -192,9 +192,10 @@ export function RankingPage() {
   }, [scores, user]);
 
   const settings = readRankingSearch(search);
+  // Set up is step 1, so it's where the page opens; the other tabs are kept in the URL.
   const tab: Tab = TABS.some((t) => t.id === search.tab)
     ? (search.tab as Tab)
-    : "board";
+    : "setup";
   const update = (
     patch: Partial<RankingSettings>,
     deckChoice = deckId,
@@ -207,7 +208,7 @@ export function RankingPage() {
       search: {
         ...writeRankingSearch({ ...settings, ...patch }),
         ...(deckChoice ? { deck: deckChoice } : {}),
-        ...(tabChoice !== "board" ? { tab: tabChoice } : {}),
+        ...(tabChoice !== "setup" ? { tab: tabChoice } : {}),
       },
     });
   const setTab = (t: Tab) => update({}, deckId, t);
