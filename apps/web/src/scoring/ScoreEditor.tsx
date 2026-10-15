@@ -13,6 +13,8 @@ export function ScoreEditor(props: {
   /** score null = clear back to blank */
   onSet: (key: ScoreKey, score: number | null) => void;
   sidesTogetherByDefault?: boolean;
+  /** Dimensions shown greyed out and disabled, keeping their place, with why. */
+  locked?: { ids: number[]; reason: string };
 }) {
   const [sidesTogether, setSidesTogether] = useState(
     props.sidesTogetherByDefault ?? true,
@@ -53,63 +55,78 @@ export function ScoreEditor(props: {
         )}
       </div>
 
-      {props.dimensions.map((dimension) => (
-        <fieldset key={dimension.id} className={styles.dimension}>
-          <legend>{dimension.label}</legend>
-          {variants.flatMap((variantId) =>
-            sides.map((side) => {
-              const key: ScoreKey = {
-                variantId,
-                side,
-                dimensionId: dimension.id,
-              };
-              const { own, inherited } = cellValue(props.rows, key);
-              const suffix = [
-                variantId !== null
-                  ? `pitch ${pitchOf(variantId) ?? "–"}`
-                  : null,
-                side ? SIDE_LABEL[side] : null,
-              ]
-                .filter(Boolean)
-                .join(", ");
-              const label = suffix
-                ? `${dimension.label}, ${suffix}`
-                : dimension.label;
-              const named = (action: string) =>
-                suffix ? `${action}: ${suffix}` : action;
-              return (
-                <div key={`${variantId}-${side}`} className={styles.cell}>
-                  <Slider
-                    label={label}
-                    visibleLabel={
-                      suffix ? suffix[0]!.toUpperCase() + suffix.slice(1) : null
-                    }
-                    value={own}
-                    onChange={(score) => props.onSet(key, score)}
-                  />
-                  <div className={styles.cellFooter}>
-                    {own === null && inherited !== null && (
-                      <span className={styles.inherited}>
-                        Inherits {inherited}
-                      </span>
-                    )}
-                    <Button variant="ghost" onClick={() => props.onSet(key, 0)}>
-                      {named("Not relevant")}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      disabled={own === null}
-                      onClick={() => props.onSet(key, null)}
-                    >
-                      {named("Clear")}
-                    </Button>
+      {props.dimensions.map((dimension) => {
+        const locked = props.locked?.ids.includes(dimension.id) ?? false;
+        return (
+          <fieldset
+            key={dimension.id}
+            className={`${styles.dimension} ${locked ? styles.locked : ""}`}
+            disabled={locked}
+          >
+            <legend>{dimension.label}</legend>
+            {locked && (
+              <p className={styles.lockedReason}>{props.locked!.reason}</p>
+            )}
+            {variants.flatMap((variantId) =>
+              sides.map((side) => {
+                const key: ScoreKey = {
+                  variantId,
+                  side,
+                  dimensionId: dimension.id,
+                };
+                const { own, inherited } = cellValue(props.rows, key);
+                const suffix = [
+                  variantId !== null
+                    ? `pitch ${pitchOf(variantId) ?? "–"}`
+                    : null,
+                  side ? SIDE_LABEL[side] : null,
+                ]
+                  .filter(Boolean)
+                  .join(", ");
+                const label = suffix
+                  ? `${dimension.label}, ${suffix}`
+                  : dimension.label;
+                const named = (action: string) =>
+                  suffix ? `${action}: ${suffix}` : action;
+                return (
+                  <div key={`${variantId}-${side}`} className={styles.cell}>
+                    <Slider
+                      label={label}
+                      visibleLabel={
+                        suffix
+                          ? suffix[0]!.toUpperCase() + suffix.slice(1)
+                          : null
+                      }
+                      value={own}
+                      onChange={(score) => props.onSet(key, score)}
+                    />
+                    <div className={styles.cellFooter}>
+                      {own === null && inherited !== null && (
+                        <span className={styles.inherited}>
+                          Inherits {inherited}
+                        </span>
+                      )}
+                      <Button
+                        variant="ghost"
+                        onClick={() => props.onSet(key, 0)}
+                      >
+                        {named("Not relevant")}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        disabled={own === null}
+                        onClick={() => props.onSet(key, null)}
+                      >
+                        {named("Clear")}
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              );
-            }),
-          )}
-        </fieldset>
-      ))}
+                );
+              }),
+            )}
+          </fieldset>
+        );
+      })}
     </div>
   );
 }

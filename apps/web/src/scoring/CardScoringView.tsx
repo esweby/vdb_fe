@@ -83,7 +83,6 @@ export function CardScoringView(props: {
   const [reviewing, setReviewing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [sidesTogether, setSidesTogether] = useState(true);
-  const [showAllDimensions, setShowAllDimensions] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -171,12 +170,14 @@ export function CardScoringView(props: {
       card.variants.map((v) => v.attributes),
     ),
   );
-  const shownDimensions = showAllDimensions
-    ? dimensions
-    : dimensions.filter((d) => relevant.has(d.key));
-  const hidden = dimensions.length - shownDimensions.length;
+  // Every card shows floor, ceiling and overall; ones that don't apply are greyed out.
+  const lockedIds = dimensions
+    .filter((d) => !relevant.has(d.key))
+    .map((d) => d.id);
   const spreadKeys = new Set(["floor", "ceiling"]);
-  const askingSpread = shownDimensions.some((d) => spreadKeys.has(d.key));
+  const askingSpread = dimensions.some(
+    (d) => spreadKeys.has(d.key) && relevant.has(d.key),
+  );
   const warnings = spreadWarnings(rows, dimensions, card.variants);
 
   /** Clears floor and ceiling everywhere, so they resolve as overall. */
@@ -297,7 +298,7 @@ export function CardScoringView(props: {
                   )
                 }
                 rows={rows}
-                dimensions={shownDimensions}
+                dimensions={dimensions}
                 variants={card.variants}
                 hasConditions={hasConditions(
                   card.attributes,
@@ -305,27 +306,18 @@ export function CardScoringView(props: {
                 )}
                 busy={busy}
               />
-              {(hidden > 0 || showAllDimensions) && (
-                <label className={styles.showAll}>
-                  <input
-                    type="checkbox"
-                    checked={showAllDimensions}
-                    onChange={(e) => setShowAllDimensions(e.target.checked)}
-                  />
-                  Rate floor and ceiling too
-                </label>
-              )}
-              {askingSpread && (
-                <p className={styles.meta}>
-                  Floor: none of its conditions are met, and it's blocked if it
-                  has an on-hit. Ceiling: all of them are met and it hits.
-                  Overall: a typical game on this side. Leave floor and ceiling
-                  blank if they're the same as overall.{" "}
+              {/* Shown on every card, so the column keeps its shape. */}
+              <p className={styles.meta}>
+                Floor: none of its conditions are met, and it's blocked if it
+                has an on-hit. Ceiling: all of them are met and it hits.
+                Overall: a typical game on this side. Leave floor and ceiling
+                blank if they're the same as overall.{" "}
+                {askingSpread && (
                   <Button variant="ghost" onClick={() => void sameAsOverall()}>
                     Floor and ceiling same as overall
                   </Button>
-                </p>
-              )}
+                )}
+              </p>
               {warnings.length > 0 && (
                 <ul role="status" className={styles.warnings}>
                   {warnings.map((w) => (
@@ -335,7 +327,11 @@ export function CardScoringView(props: {
               )}
               <ScoreEditor
                 sidesTogetherByDefault={sidesTogether}
-                dimensions={shownDimensions}
+                dimensions={dimensions}
+                locked={{
+                  ids: lockedIds,
+                  reason: "Same as overall: this card has no conditions.",
+                }}
                 variants={card.variants}
                 rows={rows}
                 onSet={(key, score) => void onSet(key, score)}
