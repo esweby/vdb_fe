@@ -25,6 +25,7 @@
     "react-dom": "^19.3.0",
     "react-redux": "^9.3.0",
     "@vdb/cards": "*",
-    "@vdb/scoring": "*"
+    "@vdb/scoring": "*",
+    "@vdb/engine": "*"
   }
 }
