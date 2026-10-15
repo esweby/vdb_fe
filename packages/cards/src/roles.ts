@@ -1,6 +1,6 @@
 // Roles and engines, first pass (docs/roles.md). UNVERIFIED unless a rule says it was checked.
-// An engine is a plan Viserai can run. Its generators make the resource, its payoffs use it
-// or get better because of it, and its supports feed the generators. Roles are read from the
+// An engine is a plan Viserai can run. Its generators make the resource, and its payoffs use
+// it or get better because of it. Roles are read from the
 // card attributes, so new cards get them automatically; `roles` in a card's authored
 // attributes corrects them by hand.
 import type { AuthoredCardAttributes, CardAttributes } from "./attributes.ts";
@@ -37,7 +37,7 @@ export const ROLE_IDS = [
   "tutor",
 ] as const;
 export type RoleId = (typeof ROLE_IDS)[number];
-export type RoleKind = "generator" | "payoff" | "support";
+export type RoleKind = "generator" | "payoff";
 
 export interface RoleCard {
   type: string;
@@ -50,8 +50,9 @@ export interface RoleCard {
 export interface RoleDef {
   id: RoleId;
   name: string;
-  /** null: a role outside the engines, recorded but not linked. */
+  /** null: a role outside the engines. */
   engine: Engine | null;
+  /** null: recorded (and countable) but not linked to anything. */
   kind: RoleKind | null;
   matches: (card: RoleCard) => boolean;
 }
@@ -140,8 +141,9 @@ export const ROLES: RoleDef[] = [
     id: "runechant_trigger",
     name: "Runechant trigger",
     engine: "runechant",
-    kind: "support",
-    // Attack action cards and weapon attacks fire Runechants (maintainer, 15 Oct 2026).
+    // Attack action cards and weapon attacks fire Runechants, but that's most of the deck, so
+    // it isn't linked: "slightly irrelevant" (maintainer, 15 Oct 2026).
+    kind: null,
     matches: (c) =>
       c.type === "attack_action" ||
       (c.type === "weapon" && c.attributes.canAttack),
@@ -316,13 +318,7 @@ export function rolesOf(card: RoleCard): RoleId[] {
   return ROLE_IDS.filter((id) => roles.has(id));
 }
 
-/** Within one engine: generators fit payoffs, and supports fit generators. */
-const LINKS: [RoleKind, RoleKind][] = [
-  ["generator", "payoff"],
-  ["support", "generator"],
-];
-
-/** Two cards fit when a role of one feeds a role of the other in the same engine. */
+/** Two cards fit when one has a generator role and the other a payoff role in the same engine. */
 export function fits(a: string[], b: string[]): boolean {
   const roles = (ids: string[]) =>
     ids.map((id) => byId.get(id)).filter((r): r is RoleDef => !!r?.engine);
@@ -332,11 +328,8 @@ export function fits(a: string[], b: string[]): boolean {
     rb.some(
       (y) =>
         x.engine === y.engine &&
-        LINKS.some(
-          ([from, to]) =>
-            (x.kind === from && y.kind === to) ||
-            (y.kind === from && x.kind === to),
-        ),
+        ((x.kind === "generator" && y.kind === "payoff") ||
+          (x.kind === "payoff" && y.kind === "generator")),
     ),
   );
 }

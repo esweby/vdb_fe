@@ -8,8 +8,8 @@ A first pass at the jobs cards do for Viserai, drafted from the card attributes 
 - A **role** is a job a card does in an engine, read from its attributes, so new cards get roles automatically. Each role has a kind:
   - **Generators** make the engine's resource.
   - **Payoffs** use the resource or get better because of it.
-  - **Supports** feed the generators.
-- **Two cards fit** when a role of one feeds a role of the other in the same engine: generators fit payoffs, and supports fit generators. Fits are mechanical links, not judgements, and they don't change scores (README "Mechanics and judgement are kept apart").
+  - Some roles have **no kind**: they're recorded and can be counted, but they don't link to anything.
+- **Two cards fit** when one has a generator role and the other a payoff role in the same engine. Fits are mechanical links, not judgements, and they don't change scores (README "Mechanics and judgement are kept apart").
 - A card can have several roles. Become the Shadow Lord, for example, is a Gate generator, an aura generator, a hand banisher and a banish-type payoff.
 - **Corrections by hand:** where a rule gets a card wrong, its authored attributes can add or remove roles, e.g. `roles: { add: ["banish_trigger"], remove: ["gate_target"] }`. Role names are checked against the list.
 - Some roles sit **outside the engines**. They're recorded, but they don't link to anything.
@@ -20,15 +20,15 @@ Counts are cards in the current pool of 627, including weapons and equipment. 29
 
 Forsaken: create Runechants to banish your top card; create 3 in a turn to traverse.
 
-| Role                | Kind      | Rule                                                             | Cards | For example                                    |
-| ------------------- | --------- | ---------------------------------------------------------------- | ----: | ---------------------------------------------- |
-| Runechant generator | generator | Creates Runechants itself                                        |    57 | Arcane Cussing, Arknight Ascendancy            |
-| Runechant burst     | generator | Creates X, or 3 or more, at once (one card can trigger traverse) |    17 | Arcane Cussing, Blessing of Occult             |
-| Runechant granter   | generator | Gives Runechant creation to a later card                         |     3 | Mauvrion Skies, Runic Reaping, Sonata Dystopia |
-| Rune Gate           | payoff    | The Rune Gate keyword                                            |    10 | Widespread Ruin, Deathly Delight               |
-| Runechant discount  | payoff    | Costs less for each Runechant                                    |    10 | Amplify the Arknight, Bequest the Vast Beyond  |
-| Arcane payoff       | payoff    | Needs arcane damage dealt, or 3 or more Runechants created       |     9 | Arcanic Spike, Consuming Volition              |
-| Runechant trigger   | support   | An attack action card, or a weapon that attacks. **Checked.**    |   228 | Widespread Ruin, Nebula Blade                  |
+| Role                | Kind      | Rule                                                                                        | Cards | For example                                    |
+| ------------------- | --------- | ------------------------------------------------------------------------------------------- | ----: | ---------------------------------------------- |
+| Runechant generator | generator | Creates Runechants itself                                                                   |    57 | Arcane Cussing, Arknight Ascendancy            |
+| Runechant burst     | generator | Creates X, or 3 or more, at once (one card can trigger traverse)                            |    17 | Arcane Cussing, Blessing of Occult             |
+| Runechant granter   | generator | Gives Runechant creation to a later card                                                    |     3 | Mauvrion Skies, Runic Reaping, Sonata Dystopia |
+| Rune Gate           | payoff    | The Rune Gate keyword                                                                       |    10 | Widespread Ruin, Deathly Delight               |
+| Runechant discount  | payoff    | Costs less for each Runechant                                                               |    10 | Amplify the Arknight, Bequest the Vast Beyond  |
+| Arcane payoff       | payoff    | Needs arcane damage dealt, or 3 or more Runechants created                                  |     9 | Arcanic Spike, Consuming Volition              |
+| Runechant trigger   | none      | An attack action card, or a weapon that attacks. Not linked: most of the deck. **Checked.** |   228 | Widespread Ruin, Nebula Blade                  |
 
 ## Gate engine
 
@@ -83,7 +83,6 @@ More action cards in a turn.
 
 ## Open questions
 
-1. **Runechant trigger is now 228 cards.** Every attack action fits every Runechant generator, so that link will be everywhere. Should the board show it, or treat it as background?
-2. **Is "Banish-play payoff" a Gate payoff or a banish payoff?**
-3. **Do the Aura and Tempo engines hold up,** and what else belongs in them?
-4. **Which roles become deck targets?** For example, a deck could aim for "at least 8 Gate generators", like its pitch targets, and the core builder would fill toward it and show how far off you are.
+1. **Is "Banish-play payoff" a Gate payoff or a banish payoff?**
+2. **Do the Aura and Tempo engines hold up,** and what else belongs in them?
+3. **Which roles become deck targets?** For example, a deck could aim for "at least 8 Gate generators", like its pitch targets, and the core builder would fill toward it and show how far off you are.
