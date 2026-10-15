@@ -11,6 +11,7 @@ import { SignInPage } from "./auth/SignInPage.tsx";
 import { CardScoringPage } from "./scoring/CardScoringPage.tsx";
 import { NeedsReviewPage } from "./scoring/NeedsReviewPage.tsx";
 import { AccountPage } from "./account/AccountPage.tsx";
+import { HomePage } from "./home/HomePage.tsx";
 import { RankingPage } from "./ranking/RankingPage.tsx";
 import { CardsPage } from "./cards/CardsPage.tsx";
 import { DeckPage } from "./decks/DeckPage.tsx";
@@ -57,7 +58,11 @@ const page = (
   });
 
 const routeTree = rootRoute.addChildren([
-  page("/", "Viserai Deck Builder"),
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/",
+    component: HomePage,
+  }),
   createRoute({
     getParentRoute: () => rootRoute,
     path: "/cards",
