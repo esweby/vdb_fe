@@ -19,7 +19,7 @@ export function Enlarge(props: {
         title="Enlarge"
         onClick={() => setOpen(true)}
       >
-        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
           <circle
             cx="11"
             cy="11"

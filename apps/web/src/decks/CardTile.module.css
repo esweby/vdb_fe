@@ -225,20 +225,24 @@
   right: 0.5em;
 }
 
-/* The magnifying glass: top left of a pictured card, on hover or focus. */
+/* The magnifying glass, centred and a little see-through until you point at it. */
 .enlarge {
   position: absolute;
-  top: 0.5em;
-  left: 0.5em;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
   opacity: 0;
   transition: opacity 0.12s;
 }
-.tile:hover .enlarge,
+.tile:hover .enlarge {
+  opacity: 0.75;
+}
+.enlarge:hover,
 .enlarge:focus-visible {
   opacity: 1;
 }
 @media (hover: none) {
   .enlarge {
-    opacity: 1;
+    opacity: 0.75;
   }
 }

@@ -249,53 +249,65 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 0.35rem;
-  padding: 0 0.35rem;
+  gap: 0.3rem;
+  padding: 0 0.3rem;
   background: linear-gradient(to left, rgb(20 15 40 / 0.55), transparent);
   opacity: 0;
   transition: opacity 0.12s;
 }
+/* The magnifying glass, centred and a little see-through until you point at it. */
 .enlarge {
   position: absolute;
-  top: 0.35rem;
-  left: 0.35rem;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
   opacity: 0;
   transition: opacity 0.12s;
 }
 .tile:hover .actions,
 .actions:focus-within,
-.tile:hover .enlarge,
+.enlarge:hover,
 .enlarge:focus-visible {
   opacity: 1;
 }
+.tile:hover .enlarge:not(:hover) {
+  opacity: 0.75;
+}
 @media (pointer: coarse) {
-  .actions,
-  .enlarge {
+  .actions {
     opacity: 1;
+  }
+  .enlarge {
+    opacity: 0.75;
   }
   .actions {
     background: none;
   }
 }
 .action {
-  width: 1.9rem;
-  height: 1.9rem;
+  width: 2.1rem;
+  height: 2.1rem;
   padding: 0;
-  border: none;
-  border-radius: 50%;
+  border: 1px solid rgb(255 255 255 / 0.35);
+  border-radius: 0.35rem;
   background: var(--accent);
   color: var(--accent-fg);
   font: inherit;
-  font-size: 1.1rem;
+  font-size: 1.25rem;
   font-weight: 700;
   line-height: 1;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgb(0 0 0 / 0.3);
+  box-shadow: 0 3px 8px rgb(0 0 0 / 0.45);
+}
+.action:hover:not(:disabled) {
+  filter: brightness(1.12);
 }
 .action[data-sideboard] {
   background: var(--surface);
   color: var(--fg);
-  font-size: 0.66rem;
+  border-color: var(--border);
+  font-size: 0.72rem;
+  font-weight: 800;
   letter-spacing: 0.04em;
 }
 .action:disabled {
