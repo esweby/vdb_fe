@@ -124,6 +124,17 @@ export function DeckPage() {
     });
   }
 
+  /** A card is in the deck or the sideboard, not both: one already in the deck stays there. */
+  function addToSideboard(variantId: string) {
+    const existing = inPool(variantId);
+    if (atLimit(variantId) || (existing && !existing.sideboard)) return;
+    void setCard({
+      variantId,
+      quantity: (existing?.quantity ?? 0) + 1,
+      sideboard: true,
+    });
+  }
+
   const pitch = useMemo(
     () => analyseDeck({ entries, dimensions: [], scores: new Map() }).pitch,
     [entries],
@@ -222,9 +233,15 @@ export function DeckPage() {
               <CardFinder
                 cards={cards}
                 quantityOf={(id) => inPool(id)?.quantity}
+                placeOf={(id) => {
+                  const e = inPool(id);
+                  return e ? (e.sideboard ? "sideboard" : "deck") : undefined;
+                }}
                 atLimit={atLimit}
                 copyLimit={copyLimit}
-                onAdd={add}
+                onAdd={(id, toSideboard) =>
+                  toSideboard ? addToSideboard(id) : add(id)
+                }
               />
             </section>
             <div>

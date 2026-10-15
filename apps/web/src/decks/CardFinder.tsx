@@ -36,9 +36,11 @@ const matches = (card: CardSummary, q: string) =>
 export function CardFinder(props: {
   cards: CardSummary[];
   quantityOf: (variantId: string) => number | undefined;
+  /** Whether a card is already in the deck or the sideboard (a card is in one or the other). */
+  placeOf: (variantId: string) => "deck" | "sideboard" | undefined;
   atLimit: (variantId: string) => boolean;
   copyLimit: number;
-  onAdd: (variantId: string) => void;
+  onAdd: (variantId: string, toSideboard?: boolean) => void;
 }) {
   const [query, setQuery] = useState("");
   const [state, setState] = useState<FilterState>({});
@@ -178,14 +180,73 @@ export function CardFinder(props: {
             pitchShown(state, v.pitch),
           );
           const image = variants.find((v) => v.imageUrl)?.imageUrl;
+          const art = image ? (
+            <img src={image} alt="" loading="lazy" />
+          ) : (
+            <span className={styles.standIn}>{card.name}</span>
+          );
+          // Cards without a pitch (weapons, equipment): add to the deck or the sideboard from
+          // symbols over the picture, shown on hover (always on touch screens).
+          const single = variants.length === 1 && variants[0]!.pitch === null;
+          if (single) {
+            const v = variants[0]!;
+            const q = props.quantityOf(v.id);
+            const place = props.placeOf(v.id);
+            const full = props.atLimit(v.id);
+            return (
+              <li key={card.id} aria-label={card.name} className={styles.tile}>
+                <span className={styles.art} title={card.name}>
+                  {art}
+                  <span
+                    className={styles.overlay}
+                    role="group"
+                    aria-label={card.name}
+                  >
+                    <button
+                      type="button"
+                      className={styles.overlayButton}
+                      aria-label={`Add ${card.name}`}
+                      title={
+                        full
+                          ? `At most ${props.copyLimit} copies`
+                          : "Add to the deck"
+                      }
+                      disabled={full}
+                      onClick={() => props.onAdd(v.id)}
+                    >
+                      +
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.overlayButton}
+                      data-sideboard=""
+                      aria-label={`Add ${card.name} to the sideboard`}
+                      title={
+                        place === "deck"
+                          ? "Already in the deck: move it from the deck list"
+                          : full
+                            ? `At most ${props.copyLimit} copies`
+                            : "Add to the sideboard"
+                      }
+                      disabled={place === "deck" || full}
+                      onClick={() => props.onAdd(v.id, true)}
+                    >
+                      SB
+                    </button>
+                  </span>
+                  {q ? (
+                    <span className={styles.haveOnArt} aria-hidden="true">
+                      {place === "sideboard" ? `${q} SB` : q}
+                    </span>
+                  ) : null}
+                </span>
+              </li>
+            );
+          }
           return (
             <li key={card.id} aria-label={card.name} className={styles.tile}>
               <span className={styles.art} title={card.name}>
-                {image ? (
-                  <img src={image} alt="" loading="lazy" />
-                ) : (
-                  <span className={styles.standIn}>{card.name}</span>
-                )}
+                {art}
               </span>
               <span className={styles.adds}>
                 {variants.map((v) => {
