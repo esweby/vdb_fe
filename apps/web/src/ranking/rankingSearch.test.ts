@@ -7,9 +7,9 @@ describe("ranking URL state", () => {
       risk: 0,
       sourceBlend: 100,
       sideFocus: 50,
-      coreSize: 20,
-      pinned: [],
-      excluded: [],
+      order: "score",
+      core: {},
+      prefs: {},
     });
     expect(writeRankingSearch(readRankingSearch({}))).toEqual({});
   });
@@ -19,19 +19,35 @@ describe("ranking URL state", () => {
       risk: -50,
       sourceBlend: 30,
       sideFocus: 0,
-      coreSize: 15,
-      pinned: ["a1"],
-      excluded: ["b1"],
+      order: "fits" as const,
+      core: { a1: 3, b2: 1 },
+      prefs: { usurp: 100, runeGate: 0 },
     };
     expect(readRankingSearch(writeRankingSearch(state))).toEqual(state);
   });
 
   it("clamps and ignores junk", () => {
-    expect(readRankingSearch({ risk: 500, blend: -5, core: 0 })).toMatchObject({
+    expect(readRankingSearch({ risk: 500, blend: -5 })).toMatchObject({
       risk: 100,
       sourceBlend: 0,
-      coreSize: 1,
     });
     expect(readRankingSearch({ risk: "x" })).toMatchObject({ risk: 0 });
+    expect(readRankingSearch({ order: "random" })).toMatchObject({
+      order: "score",
+    });
+  });
+
+  it("keeps preferences between 0 and 100 and drops neutral ones", () => {
+    expect(
+      readRankingSearch({ pref: { usurp: 150, runeGate: 50, x: "y" } }).prefs,
+    ).toEqual({ usurp: 100 });
+  });
+
+  it("keeps only whole, positive copies in the core", () => {
+    expect(
+      readRankingSearch({ core: { a: 2, b: 0, c: -1, d: "x", e: 9, f: 1.5 } })
+        .core,
+    ).toEqual({ a: 2, e: 9 });
+    expect(readRankingSearch({ core: "nonsense" }).core).toEqual({});
   });
 });

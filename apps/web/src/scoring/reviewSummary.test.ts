@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { reviewSummary, suggestedFixes } from "./reviewSummary.ts";
+import { reviewSummary, suggestedFixes, summaryRows } from "./reviewSummary.ts";
 
 const dims = [{ id: 1, key: "rc", label: "Runechant creation" }];
 const variants = [
@@ -112,5 +112,59 @@ describe("suggestedFixes", () => {
       [70, "same_as_overall"],
     ]);
     expect(suggestedFixes([], ratings, [{ id: "v1", pitch: 1 }])).toEqual([]);
+  });
+
+  describe("summaryRows (what the review dialog shows, said once)", () => {
+    const three = [
+      { id: "r", pitch: 1 },
+      { id: "y", pitch: 2 },
+      { id: "b", pitch: 3 },
+    ];
+    const rowsFor = (
+      rows: Parameters<typeof reviewSummary>[0],
+      variants = three,
+    ) => summaryRows(reviewSummary(rows, dims, variants), variants);
+
+    it("says it once when every pitch and side is the same", () => {
+      expect(
+        rowsFor([{ variantId: null, side: null, dimensionId: 1, score: 80 }]),
+      ).toEqual([
+        { where: "Every pitch and side", value: "80", attention: false },
+      ]);
+      expect(
+        rowsFor(
+          [{ variantId: null, side: null, dimensionId: 1, score: 80 }],
+          [{ id: "b", pitch: 3 }],
+        ),
+      ).toEqual([{ where: "Both sides", value: "80", attention: false }]);
+    });
+
+    it("groups pitches that match, in plain words", () => {
+      expect(
+        rowsFor([{ variantId: "r", side: null, dimensionId: 1, score: 80 }]),
+      ).toEqual([
+        { where: "Red", value: "80", attention: false },
+        {
+          where: "Yellow, Blue",
+          value: "0 · no score, counts as 0",
+          attention: true,
+        },
+      ]);
+    });
+
+    it("splits sides only when they differ", () => {
+      expect(
+        rowsFor(
+          [
+            { variantId: null, side: "forsaken", dimensionId: 1, score: 80 },
+            { variantId: null, side: "usurper", dimensionId: 1, score: 60 },
+          ],
+          [{ id: "b", pitch: 3 }],
+        ),
+      ).toEqual([
+        { where: "Forsaken", value: "80", attention: false },
+        { where: "Usurper", value: "60", attention: false },
+      ]);
+    });
   });
 });

@@ -1,23 +1,27 @@
-// Ranking settings <-> URL search params, so a ranking can be shared or bookmarked.
+// Ranking settings <-> URL search params, so a board and its core can be shared or bookmarked.
+
+export type BoardOrder = "score" | "fits";
 
 export interface RankingSettings {
   /** −100 (consistent: floor) to 100 (high-roll: ceiling); 0 = overall */
   risk: number;
   sourceBlend: number;
   sideFocus: number;
-  coreSize: number;
-  /** variant ids */
-  pinned: string[];
-  excluded: string[];
+  /** Lanes by value, or by how many core cards a card fits with first. */
+  order: BoardOrder;
+  /** The core: variant id → copies. */
+  core: Record<string, number>;
+  /** Preferences (preferences.ts): id → 0 (avoid) to 100 (prefer); missing = 50. */
+  prefs: Record<string, number>;
 }
 
 export interface RankingSearch {
   risk?: number;
   blend?: number;
   side?: number;
-  core?: number;
-  pin?: string[];
-  ex?: string[];
+  order?: BoardOrder;
+  core?: Record<string, number>;
+  pref?: Record<string, number>;
 }
 
 /** README "Ranking" presets. UNVERIFIED values, for the scoring group to confirm. */
@@ -31,8 +35,28 @@ const clamp = (n: number, min: number, max: number) =>
   Math.min(max, Math.max(min, n));
 const num = (v: unknown) =>
   typeof v === "number" ? v : typeof v === "string" && v ? Number(v) : NaN;
-const strings = (v: unknown) =>
-  Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
+
+/** Whole, positive copies only; the copy limit is applied where cards are added. */
+function readCore(v: unknown): Record<string, number> {
+  if (!v || typeof v !== "object" || Array.isArray(v)) return {};
+  return Object.fromEntries(
+    Object.entries(v).filter(
+      (e): e is [string, number] =>
+        typeof e[1] === "number" && Number.isInteger(e[1]) && e[1] > 0,
+    ),
+  );
+}
+
+/** 0–100, leaving out neutral (50) and anything that isn't a number. */
+function readPrefs(v: unknown): Record<string, number> {
+  if (!v || typeof v !== "object" || Array.isArray(v)) return {};
+  return Object.fromEntries(
+    Object.entries(v)
+      .filter((e): e is [string, number] => typeof e[1] === "number")
+      .map(([k, n]) => [k, clamp(Math.round(n), 0, 100)] as const)
+      .filter(([, n]) => n !== 50),
+  );
+}
 
 export function readRankingSearch(
   search: Partial<Record<keyof RankingSearch, unknown>>,
@@ -43,9 +67,9 @@ export function readRankingSearch(
     risk: or(search.risk, 0, -100, 100),
     sourceBlend: or(search.blend, 100, 0, 100),
     sideFocus: or(search.side, 50, 0, 100),
-    coreSize: or(search.core, 20, 1, 80),
-    pinned: strings(search.pin),
-    excluded: strings(search.ex),
+    order: search.order === "fits" ? "fits" : "score",
+    core: readCore(search.core),
+    prefs: readPrefs(search.pref),
   };
 }
 
@@ -55,8 +79,8 @@ export function writeRankingSearch(s: RankingSettings): RankingSearch {
     ...(s.risk !== 0 ? { risk: s.risk } : {}),
     ...(s.sourceBlend !== 100 ? { blend: s.sourceBlend } : {}),
     ...(s.sideFocus !== 50 ? { side: s.sideFocus } : {}),
-    ...(s.coreSize !== 20 ? { core: s.coreSize } : {}),
-    ...(s.pinned.length ? { pin: s.pinned } : {}),
-    ...(s.excluded.length ? { ex: s.excluded } : {}),
+    ...(s.order !== "score" ? { order: s.order } : {}),
+    ...(Object.keys(s.core).length ? { core: s.core } : {}),
+    ...(Object.keys(s.prefs).length ? { pref: s.prefs } : {}),
   };
 }

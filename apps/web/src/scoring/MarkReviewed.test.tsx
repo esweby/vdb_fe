@@ -26,12 +26,12 @@ describe("Mark reviewed", () => {
       .setup()
       .click(await screen.findByRole("button", { name: "Mark reviewed" }));
     const dialog = screen.getByRole("dialog", { name: "Mark reviewed" });
+    expect(within(dialog).getAllByText("80").length).toBeGreaterThan(0);
     expect(
-      within(dialog).getAllByText("80 (inherited)").length,
+      within(dialog).getAllByText("0 · no score, counts as 0").length,
     ).toBeGreaterThan(0);
-    expect(within(dialog).getAllByText("0 (blank)").length).toBeGreaterThan(0);
     // Pitches are named by colour
-    expect(within(dialog).getAllByText("Red, Forsaken").length).toBeGreaterThan(
+    expect(within(dialog).getAllByText("Yellow, Blue").length).toBeGreaterThan(
       0,
     );
   });
@@ -92,7 +92,9 @@ describe("Mark reviewed", () => {
     );
     await waitFor(() => expect(fake.saved).toContain("save 3:card:both=80"));
     expect(
-      within(screen.getByRole("dialog")).queryAllByText("0 (blank)"),
+      within(screen.getByRole("dialog")).queryAllByText(
+        "0 · no score, counts as 0",
+      ),
     ).toHaveLength(
       // Hocus Pocus has no conditions, so only overall is asked and nothing is left blank.
       0,
@@ -117,10 +119,10 @@ describe("Mark reviewed", () => {
     );
     const flagged = () =>
       dialog
-        .getAllByText("70 (same as overall)")
+        .getAllByText("70 · same as overall")
         .filter((cell) => cell.getAttribute("data-attention") === "true");
-    // Floor and ceiling, both sides
-    expect(flagged()).toHaveLength(4);
+    // Floor and ceiling, one line each ("Both sides")
+    expect(flagged()).toHaveLength(2);
     expect(
       dialog.getByText(
         "Floor and ceiling are blank, so they'll count as the same as overall. This card has conditions: check that's right.",
