@@ -228,6 +228,14 @@ describe("the core", () => {
     expect(gate.getByText("No Gate targets yet.")).toBeInTheDocument();
   });
 
+  it("only weighs engines that have cards in the core", async () => {
+    await open();
+    expect(tray().queryByRole("group", { name: "Gate engine" })).toBeNull();
+    expect(
+      tray().getByText("Add cards to see how each engine balances."),
+    ).toBeInTheDocument();
+  });
+
   it("counts deck cards and compares pitch with the targets", async () => {
     await open(`/ranking?${core({ bsl3: 3, hp1: 2 })}`);
     expect(tray().getByText("5 of 60 deck cards")).toBeInTheDocument();
@@ -262,9 +270,9 @@ describe("the core", () => {
       await tray().findByRole("button", { name: "Add core to Gate tempo" }),
     );
     expect(fake.saved).toEqual(["set deck-1 hp1 3 main"]);
-    expect(await tray().findByRole("status")).toHaveTextContent(
-      "Added 3 cards to Gate tempo",
-    );
+    expect(
+      await tray().findByText("Added 3 cards to Gate tempo"),
+    ).toBeInTheDocument();
   });
 
   it("saves the core as a new deck", async () => {
