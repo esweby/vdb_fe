@@ -250,3 +250,46 @@
 .section li {
   margin-bottom: 0.35rem;
 }
+
+/* On a phone: a compact row with a small card and its pitch switch, the card text full
+   width, then the ratings (the reason for being here), and What it does last. */
+@media (max-width: 640px) {
+  .columns {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.9rem;
+    margin-top: 0.25rem;
+  }
+  .cardColumn {
+    position: static;
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    max-width: none;
+  }
+  .tile {
+    flex: none;
+    width: 4.75rem;
+    font-size: 1em;
+  }
+  .pitches {
+    justify-content: flex-start;
+    margin-top: 0;
+  }
+  .details {
+    display: contents;
+  }
+  .face {
+    order: 1;
+    font-size: 0.92rem;
+  }
+  .scores {
+    order: 2;
+  }
+  .details > h2,
+  .section {
+    order: 3;
+  }
+  .footer {
+    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  }
+}

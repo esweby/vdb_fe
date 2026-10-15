@@ -239,6 +239,7 @@ export function ScoreEditor(props: {
                       }
                       value={own}
                       quietScale
+                      tapTargets
                       onChange={(score) => onSet(key, score)}
                     />
                     <div className={styles.cellActions}>

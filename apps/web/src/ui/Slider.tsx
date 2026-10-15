@@ -22,6 +22,11 @@ export function Slider(props: {
   quietScale?: boolean;
   /** No scale numbers at all, for narrow places where they'd crowd together. */
   noScale?: boolean;
+  /**
+   * A button for every step, shown instead of the slider on touch screens, where a slider's
+   * small thumb is hard to drag and a tap on the track doesn't set it on every phone.
+   */
+  tapTargets?: boolean;
 }) {
   const { label, value, onChange, min = 0, max = 100, step = 10 } = props;
   const id = useId();
@@ -51,7 +56,13 @@ export function Slider(props: {
 
   return (
     <div
-      className={`${styles.field} ${props.quietScale ? styles.quietScale : ""}`}
+      className={[
+        styles.field,
+        props.quietScale && styles.quietScale,
+        props.tapTargets && styles.hasTapTargets,
+      ]
+        .filter(Boolean)
+        .join(" ")}
     >
       {props.visibleLabel === undefined ? (
         <label htmlFor={id} className={styles.label}>
@@ -104,6 +115,24 @@ export function Slider(props: {
           {text}
         </output>
       </div>
+      {props.tapTargets && (
+        <div
+          className={styles.tapTargets}
+          role="group"
+          aria-label={`${label}, tap a score`}
+        >
+          {ticks.map((t) => (
+            <button
+              key={t}
+              type="button"
+              aria-pressed={value === t}
+              onClick={() => onChange(t)}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
