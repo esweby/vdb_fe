@@ -4,9 +4,9 @@ import {
   relevantDimensions,
 } from "@vdb/cards";
 import { Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { selectCanScore } from "../auth/authSlice.ts";
-import { classOf, TYPE_LABELS } from "../cards/filterCards.ts";
+import { TYPE_LABELS } from "../cards/filterCards.ts";
 import { useCards } from "../cards/useCards.ts";
 import { CardTile } from "../decks/CardTile.tsx";
 import { PITCH_NAMES } from "../decks/deckRules.ts";
@@ -221,24 +221,16 @@ export function CardScoringView(props: {
       ? describeAttributes({ ...NO_GENERATED, ...chosen.attributes })
       : []),
   ];
-  const stats = chosen
-    ? [
-        chosen.cost !== null ? `Cost ${chosen.cost}` : null,
-        chosen.power !== null ? `Power ${chosen.power}` : null,
-        chosen.defense !== null ? `Defense ${chosen.defense}` : null,
-      ].filter(Boolean)
-    : [];
   return (
     <>
       {showTitle && <h1>{card.name}</h1>}
-      <p className={styles.meta}>
-        {TYPE_LABELS[card.type] ?? card.type} · {classOf(card)}{" "}
-        {!inPopover && (
+      {!inPopover && (
+        <p className={styles.meta}>
           <Tag tone={card.attributesVerified ? "accent" : "neutral"}>
             {card.attributesVerified ? "Verified" : "Unverified"}
           </Tag>
-        )}
-      </p>
+        </p>
+      )}
       {error && <p role="alert">{error}</p>}
 
       <div className={styles.columns}>
@@ -274,12 +266,49 @@ export function CardScoringView(props: {
         </section>
 
         <section aria-label="Details" className={styles.details}>
-          <div className={styles.text}>
-            <p>{card.text ?? chosen?.text}</p>
+          {/* Loosely follows the printed card: pitch and cost, text box, type line, then
+              power and defense in the bottom corners. */}
+          <div className={styles.face}>
+            <div className={styles.faceTop}>
+              <span className={styles.facePitch}>
+                {chosen?.pitch != null
+                  ? `${PITCH_LABELS[chosen.pitch] ?? `Pitch ${chosen.pitch}`} · pitch ${chosen.pitch}`
+                  : "No pitch"}
+              </span>
+              {chosen?.cost != null && (
+                <span
+                  className={styles.coin}
+                  role="img"
+                  aria-label={`Cost ${chosen.cost}`}
+                >
+                  {chosen.cost}
+                </span>
+              )}
+            </div>
+            <div className={styles.textBox}>
+              {withKeywords(
+                card.text ?? chosen?.text ?? "",
+                summary?.keywords ?? [],
+              )}
+            </div>
+            <div className={styles.typeLine}>{typeLineOf(card, summary)}</div>
+            <div className={styles.faceBottom}>
+              {chosen?.power != null ? (
+                <span role="img" aria-label={`Power ${chosen.power}`}>
+                  <span aria-hidden="true">⚔ </span>
+                  {chosen.power}
+                </span>
+              ) : (
+                <span />
+              )}
+              {chosen?.defense != null && (
+                <span role="img" aria-label={`Defense ${chosen.defense}`}>
+                  {chosen.defense}
+                  <span aria-hidden="true"> ⛨</span>
+                </span>
+              )}
+            </div>
           </div>
-          {stats.length > 0 && (
-            <p className={styles.stats}>{stats.join(" · ")}</p>
-          )}
 
           {lines.length > 0 && (
             <>
@@ -393,7 +422,6 @@ export function CardScoringView(props: {
 
       {inPopover && (
         <div className={styles.footer}>
-          <span className={styles.hint}>← → to move between cards</span>
           <span className={styles.footerActions}>
             {reviewedAt ? (
               <>
@@ -419,4 +447,30 @@ export function CardScoringView(props: {
       )}
     </>
   );
+}
+
+/** "Shadow Runeblade Action – Attack", like the printed type line. */
+function typeLineOf(
+  card: CardDetail,
+  summary: { subtypes: string[] } | undefined,
+): string {
+  const base = [
+    ...card.talents,
+    ...card.classes,
+    TYPE_LABELS[card.type] ?? card.type,
+  ].join(" ");
+  const subtypes = summary?.subtypes ?? [];
+  return subtypes.length > 0 ? `${base} – ${subtypes.join(" ")}` : base;
+}
+
+/** The card text with its keywords in bold, as they're printed. */
+function withKeywords(text: string, keywords: string[]): ReactNode {
+  if (keywords.length === 0 || !text) return text;
+  const escaped = [...keywords]
+    .sort((a, b) => b.length - a.length)
+    .map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  const pattern = new RegExp(`\\b(${escaped.join("|")})\\b`, "gi");
+  return text
+    .split(pattern)
+    .map((part, i) => (i % 2 === 1 ? <strong key={i}>{part}</strong> : part));
 }

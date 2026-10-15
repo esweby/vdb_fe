@@ -94,16 +94,12 @@
   bottom: 0;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 1rem;
   margin: auto -1.5rem 0;
   padding: 0.75rem 1.5rem;
   border-top: 1px solid var(--border);
   background: var(--bg);
-}
-.hint {
-  font-size: 0.85rem;
-  color: var(--muted);
 }
 .footerActions {
   display: flex;
@@ -115,9 +111,6 @@
     margin-left: -1rem;
     margin-right: -1rem;
     padding: 0.75rem 1rem;
-  }
-  .hint {
-    display: none;
   }
 }
 
@@ -175,5 +168,63 @@
 }
 .stats {
   margin: 0.5rem 0 0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The details panel, loosely shaped like the printed card. */
+.face {
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background: var(--surface, var(--bg));
+}
+.faceTop,
+.faceBottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.85rem;
+}
+.facePitch {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.coin {
+  width: 1.9rem;
+  height: 1.9rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-weight: 700;
+  color: #4a3200;
+  background: radial-gradient(circle at 35% 30%, #fff4c2, #e7b93e 60%, #b8861b);
+  border: 1px solid #a8780f;
+}
+/* The text box: parchment, like the card's. */
+.textBox {
+  margin: 0 0.6rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.4rem;
+  background: color-mix(in srgb, #f3e9d2 75%, var(--bg));
+  color: #2a2418;
+  white-space: pre-line;
+  line-height: 1.55;
+}
+@media (prefers-color-scheme: dark) {
+  .textBox {
+    background: #2b2619;
+    color: #efe6cf;
+  }
+}
+.typeLine {
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  letter-spacing: 0.03em;
+  padding: 0.5rem 0.75rem 0;
+  color: var(--muted);
+}
+.faceBottom {
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }

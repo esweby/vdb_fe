@@ -274,9 +274,7 @@ describe("card page", () => {
     expect(
       await details.findByText("Creates 1 Runechant when it attacks."),
     ).toBeInTheDocument();
-    expect(
-      details.getByText("Cost 0 · Power 4 · Defense 3"),
-    ).toBeInTheDocument();
+    expect(details.getByLabelText("Power 4")).toBeInTheDocument();
     expect(details.queryByText(/Pitch 3/)).not.toBeInTheDocument();
     expect(
       details.queryByText("Creates 3 Runechants when it attacks."),
@@ -291,9 +289,7 @@ describe("card page", () => {
     expect(
       details.getByText("Creates 3 Runechants when it attacks."),
     ).toBeInTheDocument();
-    expect(
-      details.getByText("Cost 0 · Power 2 · Defense 3"),
-    ).toBeInTheDocument();
+    expect(details.getByLabelText("Power 2")).toBeInTheDocument();
   });
 
   it("lays the details out like the card: cost, text with keywords in bold, type line, then defense", async () => {
