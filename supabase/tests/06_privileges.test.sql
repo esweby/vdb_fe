@@ -2,7 +2,7 @@
 -- authenticated by default (local stacks do), so every grant must be explicit.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(34);
+select plan(36);
 
 -- Public reference data: readable by everyone
 select table_privs_are('public', t, 'anon', array['SELECT'], 'anon can only read ' || t)
@@ -17,7 +17,10 @@ select table_privs_are('public', 'strategy_answers', 'authenticated', array['SEL
 
 -- Private tables: nothing for anon
 select table_privs_are('public', t, 'anon', array[]::text[], 'anon has no access to ' || t)
-  from unnest(array['profiles', 'rater_weights', 'card_scores', 'card_reviews', 'decks', 'deck_cards', 'deck_loadouts', 'loadout_cards', 'job_nonces']) t;
+  from unnest(array['profiles', 'rater_weights', 'card_scores', 'card_reviews', 'deck_loadouts', 'loadout_cards', 'job_nonces']) t;
+-- Public decks: anon can read them (row level security limits it to public ones)
+select table_privs_are('public', t, 'anon', array['SELECT'], 'anon can only read ' || t || ' (public ones, by row level security)')
+  from unnest(array['decks', 'deck_cards']) t;
 
 -- Signed-in users: row level security decides which rows
 select table_privs_are('public', t, 'authenticated', array['SELECT', 'INSERT', 'UPDATE', 'DELETE'], 'signed-in users manage their own ' || t)
