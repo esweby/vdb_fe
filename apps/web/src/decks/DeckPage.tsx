@@ -5,6 +5,7 @@ import { useCards } from "../cards/useCards.ts";
 import { useServices } from "../servicesContext.ts";
 import { Tag, TextField } from "../ui/index.ts";
 import { analyseDeck } from "./deckAnalysis.ts";
+import { CardFinder } from "./CardFinder.tsx";
 import { CardTile } from "./CardTile.tsx";
 import { DeckAnalysisPanel } from "./DeckAnalysisPanel.tsx";
 import type { Deck, DeckCard, PitchTargets } from "./deckRepository.ts";
@@ -22,7 +23,6 @@ import {
 import styles from "./Decks.module.css";
 
 const route = getRouteApi("/decks/$deckId");
-const MAX_RESULTS = 12;
 
 type Tab = "cards" | "stats";
 type View = "tiles" | "list";
@@ -39,7 +39,6 @@ export function DeckPage() {
   const { items: cards } = useCards();
   const [deck, setDeck] = useState<Deck | null | undefined>(undefined);
   const [rules, setRules] = useState<FormatRules | null>(null);
-  const [query, setQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -79,14 +78,6 @@ export function DeckPage() {
       }),
     [deck, byVariant],
   );
-
-  const results = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (q.length < 2) return [];
-    return cards
-      .filter((c) => c.name.toLowerCase().includes(q))
-      .slice(0, MAX_RESULTS);
-  }, [cards, query]);
 
   async function setCard(card: DeckCard) {
     if (!deck) return;
@@ -226,6 +217,16 @@ export function DeckPage() {
           />
         ) : (
           <div className={styles.editor}>
+            <section className={styles.finder} aria-label="Add cards">
+              <h2 className={styles.finderTitle}>Add cards</h2>
+              <CardFinder
+                cards={cards}
+                quantityOf={(id) => inPool(id)?.quantity}
+                atLimit={atLimit}
+                copyLimit={copyLimit}
+                onAdd={add}
+              />
+            </section>
             <div>
               <div className={styles.viewToggle}>
                 {(["tiles", "list"] as const).map((v) => (
@@ -269,43 +270,6 @@ export function DeckPage() {
                 />
               </div>
             </div>
-
-            <section className={styles.finder} aria-label="Add cards">
-              <TextField
-                label="Find cards"
-                type="search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                hint="Type at least two letters"
-              />
-              <ul className={styles.results}>
-                {results.map((card) => (
-                  <li key={card.id}>
-                    <span>{card.name}</span>
-                    <span className={styles.adds}>
-                      {card.variants.map((v) => (
-                        <button
-                          key={v.id}
-                          type="button"
-                          className={`${styles.add} ${styles[`pitch${v.pitch ?? 0}`] ?? ""}`}
-                          aria-label={`Add ${variantName(card, v)}`}
-                          disabled={atLimit(v.id)}
-                          title={
-                            atLimit(v.id)
-                              ? `At most ${copyLimit} copies`
-                              : undefined
-                          }
-                          onClick={() => add(v.id)}
-                        >
-                          + {v.pitch === null ? "Add" : PITCH_NAMES[v.pitch]}
-                          {inPool(v.id) ? ` (${inPool(v.id)!.quantity})` : ""}
-                        </button>
-                      ))}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </section>
           </div>
         )}
       </div>

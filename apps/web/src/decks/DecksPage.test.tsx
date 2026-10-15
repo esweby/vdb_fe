@@ -231,6 +231,140 @@ describe("deck page", () => {
     ]);
   });
 
+  it("shows cards to add straight away, without typing", async () => {
+    await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      decks: withDeck().repository,
+    });
+    const finder = within(
+      await screen.findByRole("region", { name: "Add cards" }),
+    );
+    expect(
+      within(finder.getByRole("list", { name: "Cards to add" }))
+        .getAllByRole("listitem")
+        .map((li) => li.getAttribute("aria-label")),
+    ).toEqual([
+      // Weapons and equipment first, then deck cards, each by name.
+      "Nebula Blade",
+      "Become the Shadow Lord",
+      "Fate Foreseen",
+      "Hocus Pocus",
+    ]);
+    expect(finder.getByText("4 cards")).toBeInTheDocument();
+  });
+
+  it("finds cards to add by keyword as well as name", async () => {
+    await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      decks: withDeck().repository,
+    });
+    const finder = within(
+      await screen.findByRole("region", { name: "Add cards" }),
+    );
+    const names = () =>
+      within(finder.getByRole("list", { name: "Cards to add" }))
+        .queryAllByRole("listitem")
+        .map((li) => li.getAttribute("aria-label"));
+    const user = userEvent.setup();
+    await user.type(finder.getByLabelText("Find cards"), "blood debt");
+    expect(names()).toEqual(["Hocus Pocus"]);
+    await user.clear(finder.getByLabelText("Find cards"));
+    await user.type(finder.getByLabelText("Find cards"), "go again");
+    expect(names()).toEqual(["Become the Shadow Lord"]);
+  });
+
+  it("adds a pitch with the R, Y and B buttons under each card", async () => {
+    const fake = withDeck();
+    await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      decks: fake.repository,
+    });
+    const hocus = within(
+      await screen.findByRole("listitem", { name: "Hocus Pocus" }),
+    );
+    expect(hocus.getAllByRole("button").map((b) => b.textContent)).toEqual([
+      "R",
+      "Y",
+      "B",
+    ]);
+    await userEvent
+      .setup()
+      .click(hocus.getByRole("button", { name: "Add Hocus Pocus (yellow)" }));
+    expect(fake.saved).toEqual(["set deck-1 hp2 1 main"]);
+  });
+
+  it("narrows the cards to add by pitch, offering only that pitch", async () => {
+    await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      decks: withDeck().repository,
+    });
+    const finder = within(
+      await screen.findByRole("region", { name: "Add cards" }),
+    );
+    await userEvent
+      .setup()
+      .click(
+        within(finder.getByRole("group", { name: "Pitch" })).getByRole(
+          "button",
+          { name: "Blue" },
+        ),
+      );
+    expect(
+      finder.getByRole("button", { name: "Add Hocus Pocus (blue)" }),
+    ).toBeInTheDocument();
+    expect(
+      finder.queryByRole("button", { name: "Add Hocus Pocus (red)" }),
+    ).toBeNull();
+    expect(finder.queryByRole("listitem", { name: "Nebula Blade" })).toBeNull();
+  });
+
+  it("narrows the cards to add by class", async () => {
+    await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      decks: withDeck().repository,
+    });
+    const finder = within(
+      await screen.findByRole("region", { name: "Add cards" }),
+    );
+    const user = userEvent.setup();
+    await user.click(
+      within(finder.getByRole("group", { name: "Class" })).getByRole("button", {
+        name: "Shadow",
+      }),
+    );
+    expect(
+      within(finder.getByRole("list", { name: "Cards to add" }))
+        .getAllByRole("listitem")
+        .map((li) => li.getAttribute("aria-label")),
+    ).toEqual(["Become the Shadow Lord"]);
+    await user.click(finder.getByRole("button", { name: "Clear filters" }));
+    expect(finder.getByText("4 cards")).toBeInTheDocument();
+  });
+
+  it("keeps the rest of the filters folded away under More filters", async () => {
+    await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      decks: withDeck().repository,
+    });
+    const finder = within(
+      await screen.findByRole("region", { name: "Add cards" }),
+    );
+    const more = finder.getByRole("button", { name: "More filters" });
+    expect(more).toHaveAttribute("aria-expanded", "false");
+    expect(finder.queryByRole("complementary", { name: "Filters" })).toBeNull();
+    await userEvent.setup().click(more);
+    expect(more).toHaveAttribute("aria-expanded", "true");
+    expect(
+      finder.getByRole("complementary", { name: "Filters" }),
+    ).toBeInTheDocument();
+  });
+
   it("moves cards to the sideboard and back", async () => {
     const fake = withDeck([
       { variantId: "hp1", quantity: 2, sideboard: false },
