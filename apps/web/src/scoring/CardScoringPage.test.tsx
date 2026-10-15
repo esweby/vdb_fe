@@ -85,19 +85,6 @@ describe("card page", () => {
     ).toHaveAttribute("aria-valuetext", "80");
   });
 
-  it("describes each pitch's own attributes", async () => {
-    await renderApp({
-      path: "/cards/card-hocus-pocus",
-      auth: fakeAuthService().service,
-    });
-    expect(
-      await screen.findByText("Pitch 1: Creates 1 Runechant when it attacks."),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Pitch 3: Creates 3 Runechants when it attacks."),
-    ).toBeInTheDocument();
-  });
-
   it("shows floor and ceiling on every card, greyed out when the card has no conditions", async () => {
     await renderApp({
       path: "/cards/card-nebula-blade",
@@ -176,19 +163,6 @@ describe("card page", () => {
       await screen.findByText(
         "Overall (80) is above the ceiling (60). That's allowed, but check it.",
       ),
-    ).toBeInTheDocument();
-  });
-
-  it("shows each pitch's cost, power and defense", async () => {
-    await renderApp({
-      path: "/cards/card-hocus-pocus",
-      auth: fakeAuthService().service,
-    });
-    expect(
-      await screen.findByText("Pitch 1: cost 0 · power 4 · defense 3"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Pitch 3: cost 0 · power 2 · defense 3"),
     ).toBeInTheDocument();
   });
 
@@ -287,5 +261,38 @@ describe("card page", () => {
     await userEvent.setup().click(screen.getByText("About these ratings"));
     expect(help).toBeVisible();
     expect(await screen.findByText("1 of 3 rated")).toBeInTheDocument();
+  });
+
+  it("shows only the chosen pitch's details, switching with the pitch buttons", async () => {
+    await renderApp({
+      path: "/cards/card-hocus-pocus",
+      auth: fakeAuthService().service,
+    });
+    const details = within(
+      await screen.findByRole("region", { name: "Details" }),
+    );
+    expect(
+      await details.findByText("Creates 1 Runechant when it attacks."),
+    ).toBeInTheDocument();
+    expect(
+      details.getByText("Cost 0 · Power 4 · Defense 3"),
+    ).toBeInTheDocument();
+    expect(details.queryByText(/Pitch 3/)).not.toBeInTheDocument();
+    expect(
+      details.queryByText("Creates 3 Runechants when it attacks."),
+    ).not.toBeInTheDocument();
+
+    const pitch = within(screen.getByRole("group", { name: "Pitch" }));
+    expect(pitch.getByRole("button", { name: "Red" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await userEvent.setup().click(pitch.getByRole("button", { name: "Blue" }));
+    expect(
+      details.getByText("Creates 3 Runechants when it attacks."),
+    ).toBeInTheDocument();
+    expect(
+      details.getByText("Cost 0 · Power 2 · Defense 3"),
+    ).toBeInTheDocument();
   });
 });
