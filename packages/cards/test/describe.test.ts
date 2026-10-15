@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { describeAttributes } from "../src/describe.ts";
+import {
+  describeAttributes,
+  describeAttributeSections,
+} from "../src/describe.ts";
 
 const generated = {
   hasGoAgain: false,
@@ -669,5 +672,64 @@ describe("describeAttributes", () => {
 
   it("describes nothing for a plain card", () => {
     expect(describeAttributes(generated)).toEqual([]);
+  });
+});
+
+// UNVERIFIED reading order (a proposal for the maintainer): how you play it, what it does in
+// the order it happens during a turn, its keywords, then what it works with.
+describe("describeAttributeSections", () => {
+  const line = (attrs: object) =>
+    describeAttributes({ ...generated, ...attrs } as never)[0]!;
+
+  it("groups lines into sections, effects in the order they happen", () => {
+    const parts = {
+      instantSpeed: { conditions: ["usurped_this_turn"] as const },
+      costReductions: [
+        { amount: 6, conditions: ["usurped_this_turn"] as const },
+      ],
+      tokens: [
+        { token: "runechant" as const, amount: 1, trigger: "on_hit" as const },
+      ],
+      arcaneDamage: [{ amount: 1, trigger: "on_play" as const }],
+      banishesOwn: [
+        { from: "hand" as const, trigger: "your_end_phase" as const },
+      ],
+      supports: [{ target: { card: "Rune Gate" } }],
+      notes: "Check the timing.",
+    };
+    const all = {
+      ...generated,
+      ...parts,
+      hasGoAgain: true,
+      hasBloodDebt: true,
+    };
+    expect(describeAttributeSections(all as never)).toEqual([
+      {
+        heading: "Playing it",
+        lines: [
+          line({ instantSpeed: parts.instantSpeed }),
+          line({ costReductions: parts.costReductions }),
+        ],
+      },
+      {
+        heading: "When it resolves",
+        lines: [
+          line({ arcaneDamage: parts.arcaneDamage }),
+          line({ tokens: parts.tokens }),
+          line({ banishesOwn: parts.banishesOwn }),
+        ],
+      },
+      { heading: "Keywords", lines: ["Go again.", "Blood debt."] },
+      {
+        heading: "Works with",
+        lines: [line({ supports: parts.supports }), "Note: Check the timing."],
+      },
+    ]);
+  });
+
+  it("leaves out empty sections", () => {
+    expect(
+      describeAttributeSections({ ...generated, hasGoAgain: true } as never),
+    ).toEqual([{ heading: "Keywords", lines: ["Go again."] }]);
   });
 });
