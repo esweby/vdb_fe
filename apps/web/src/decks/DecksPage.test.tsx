@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { fakeAuthService } from "../test/fakeAuthService.ts";
@@ -253,6 +253,34 @@ describe("deck page", () => {
     expect(
       row.compareDocumentPosition(deck) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+  });
+
+  it("shows the card image when there is one, and the stand-in if it fails to load", async () => {
+    const withImage = sampleCards.map((c) =>
+      c.id === "card-hocus-pocus"
+        ? {
+            ...c,
+            variants: c.variants.map((v) => ({
+              ...v,
+              imageUrl: `https://img/${v.id}.webp`,
+            })),
+          }
+        : c,
+    );
+    await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      cards: fakeCardRepository(withImage),
+      decks: withDeck([{ variantId: "hp1", quantity: 2, sideboard: false }])
+        .repository,
+    });
+    const tile = await region("Deck").findByRole("article", {
+      name: "Hocus Pocus (red)",
+    });
+    const image = within(tile).getByRole("img", { name: "Hocus Pocus (red)" });
+    expect(image).toHaveAttribute("src", "https://img/hp1.webp");
+    fireEvent.error(image);
+    expect(within(tile).getByLabelText("Power 4")).toBeInTheDocument();
   });
 
   it("orders cards by pitch, then name", async () => {
