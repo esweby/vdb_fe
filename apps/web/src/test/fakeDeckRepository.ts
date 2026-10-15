@@ -8,24 +8,45 @@ export const sampleRules: FormatRules = {
   weaponHands: 2,
 };
 
-/** An in-memory DeckRepository; `saved` records every write. */
-export function fakeDeckRepository(initial: Deck[] = []) {
-  let decks = initial.map((d) => ({ ...d, cards: [...d.cards] }));
+/** A deck for tests: private and owned by u1 unless it says otherwise. */
+export type DeckFixture = Omit<Deck, "isPublic" | "ownerId"> &
+  Partial<Pick<Deck, "isPublic" | "ownerId">>;
+
+/** An in-memory DeckRepository; `saved` records every write. New decks belong to `userId`. */
+export function fakeDeckRepository(
+  initial: DeckFixture[] = [],
+  options: { userId?: string } = {},
+) {
+  let decks: Deck[] = initial.map((d) => ({
+    isPublic: false,
+    ownerId: "u1",
+    ...d,
+    cards: [...d.cards],
+  }));
+  const summary = ({ pitchTargets: _, ...d }: Deck) => d;
   const saved: string[] = [];
   const repository: DeckRepository = {
-    listDecks: async () =>
-      decks.map(({ id, name, updatedAt }) => ({ id, name, updatedAt })),
-    async createDeck(name) {
-      saved.push(`create ${name}`);
-      const deck = {
+    listMyDecks: async (userId) =>
+      decks.filter((d) => d.ownerId === userId).map(summary),
+    listPublicDecks: async () => decks.filter((d) => d.isPublic).map(summary),
+    async createDeck(name, createOptions) {
+      const isPublic = createOptions?.isPublic ?? false;
+      saved.push(`create ${name}${isPublic ? " public" : ""}`);
+      const deck: Deck = {
         id: `deck-${decks.length + 1}`,
         name,
         updatedAt: "2026-10-14T12:00:00Z",
+        isPublic,
+        ownerId: options.userId ?? "u1",
         cards: [],
         pitchTargets: {},
       };
       decks = [...decks, deck];
-      return { id: deck.id, name, updatedAt: deck.updatedAt };
+      return summary(deck);
+    },
+    async setVisibility(deckId, isPublic) {
+      saved.push(`${isPublic ? "public" : "private"} ${deckId}`);
+      decks = decks.map((d) => (d.id === deckId ? { ...d, isPublic } : d));
     },
     getDeck: async (id) => decks.find((d) => d.id === id) ?? null,
     async setCard(deckId, card) {

@@ -16,14 +16,13 @@ describe("navigation", () => {
     expect(nav().getByRole("link", { name: "Cards" })).toBeInTheDocument();
     expect(nav().getByRole("link", { name: "Ranking" })).toBeInTheDocument();
     expect(nav().getByRole("link", { name: "Sign in" })).toBeInTheDocument();
-    expect(
-      nav().queryByRole("link", { name: "Decks" }),
-    ).not.toBeInTheDocument();
+    // Public decks can be browsed signed out.
+    expect(nav().getByRole("link", { name: "Decks" })).toBeInTheDocument();
   });
 
   it("sends signed-out visitors from private pages to sign-in", async () => {
     const { router } = await renderApp({
-      path: "/decks",
+      path: "/account",
       auth: fakeAuthService().service,
     });
     await waitFor(() =>

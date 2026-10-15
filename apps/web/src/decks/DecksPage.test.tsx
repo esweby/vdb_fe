@@ -2,7 +2,10 @@ import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { fakeAuthService } from "../test/fakeAuthService.ts";
-import { fakeDeckRepository } from "../test/fakeDeckRepository.ts";
+import {
+  fakeDeckRepository,
+  type DeckFixture,
+} from "../test/fakeDeckRepository.ts";
 import { renderApp } from "../test/renderApp.tsx";
 import { fakeCardRepository, sampleCards } from "../test/fakeCardRepository.ts";
 import { fakeScoreRepository } from "../test/fakeScoreRepository.ts";
@@ -29,23 +32,155 @@ const withDeck = (cards: DeckCard[] = [], pitchTargets: PitchTargets = {}) =>
 const region = (name: string) => within(screen.getByRole("region", { name }));
 
 describe("decks list", () => {
-  it("lists my decks and creates a new one", async () => {
-    const fake = withDeck();
+  const signedOut = () => fakeAuthService().service;
+  const decksOf = (fixtures: DeckFixture[]) =>
+    fakeDeckRepository(fixtures, { userId: "u1" });
+  const mine: DeckFixture = {
+    id: "deck-1",
+    name: "Gate tempo",
+    updatedAt: "2026-10-14T10:00:00Z",
+    cards: [
+      { variantId: "hp1", quantity: 3, sideboard: false },
+      { variantId: "bsl3", quantity: 2, sideboard: false },
+      { variantId: "hp2", quantity: 1, sideboard: true },
+    ],
+    pitchTargets: {},
+  };
+  const theirs: DeckFixture = {
+    id: "deck-9",
+    name: "Usurp aggro",
+    updatedAt: "2026-10-13T10:00:00Z",
+    ownerId: "u2",
+    isPublic: true,
+    cards: [],
+    pitchTargets: {},
+  };
+  const theirSecret: DeckFixture = {
+    ...theirs,
+    id: "deck-8",
+    name: "Secret tech",
+    isPublic: false,
+  };
+  const tile = (name: string) => within(screen.getByRole("listitem", { name }));
+
+  it("opens on my decks, each with its card count, pitch mix and visibility", async () => {
+    await renderApp({
+      path: "/decks",
+      auth: auth(),
+      decks: decksOf([mine, theirs]).repository,
+    });
+    expect(
+      await screen.findByRole("tab", { name: "My decks" }),
+    ).toHaveAttribute("aria-selected", "true");
+    const gate = tile("Gate tempo");
+    // The sideboard card isn't counted
+    expect(gate.getByText("5 of 60 cards")).toBeInTheDocument();
+    expect(
+      gate.getByRole("img", { name: "Pitch mix: 3 red, 0 yellow, 2 blue" }),
+    ).toBeInTheDocument();
+    expect(gate.getByText("Private")).toBeInTheDocument();
+    expect(gate.getByRole("link", { name: "Gate tempo" })).toHaveAttribute(
+      "href",
+      "/decks/deck-1",
+    );
+    // Someone else's public deck isn't one of mine
+    expect(screen.queryByRole("listitem", { name: "Usurp aggro" })).toBeNull();
+  });
+
+  it("creates a deck from the header, public or private, and opens it", async () => {
+    const fake = decksOf([mine]);
     const { router } = await renderApp({
       path: "/decks",
       auth: auth(),
       decks: fake.repository,
     });
-    expect(
-      await screen.findByRole("link", { name: "Gate tempo" }),
-    ).toBeInTheDocument();
     const user = userEvent.setup();
-    await user.type(screen.getByLabelText("New deck name"), "Runechant aggro");
-    await user.click(screen.getByRole("button", { name: "Create deck" }));
+    await user.click(await screen.findByRole("button", { name: "New deck" }));
+    const dialog = within(screen.getByRole("dialog", { name: "New deck" }));
+    await user.type(dialog.getByLabelText("Deck name"), "Runechant aggro");
+    await user.click(dialog.getByRole("checkbox", { name: /Make it public/ }));
+    await user.click(dialog.getByRole("button", { name: "Create deck" }));
     await waitFor(() =>
       expect(router.state.location.pathname).toBe("/decks/deck-2"),
     );
-    expect(fake.saved).toEqual(["create Runechant aggro"]);
+    expect(fake.saved).toEqual(["create Runechant aggro public"]);
+  });
+
+  it("asks for a name before creating a deck", async () => {
+    const fake = decksOf([]);
+    await renderApp({ path: "/decks", auth: auth(), decks: fake.repository });
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("button", { name: "New deck" }));
+    const dialog = within(screen.getByRole("dialog", { name: "New deck" }));
+    await user.click(dialog.getByRole("button", { name: "Create deck" }));
+    expect(dialog.getByText("Name the deck first.")).toBeInTheDocument();
+    expect(fake.saved).toEqual([]);
+  });
+
+  it("makes a deck public or private from the list", async () => {
+    const fake = decksOf([mine]);
+    await renderApp({ path: "/decks", auth: auth(), decks: fake.repository });
+    const user = userEvent.setup();
+    await user.click(
+      await screen.findByRole("button", { name: "Make Gate tempo public" }),
+    );
+    expect(fake.saved).toEqual(["public deck-1"]);
+    expect(tile("Gate tempo").getByText("Public")).toBeInTheDocument();
+    await user.click(
+      screen.getByRole("button", { name: "Make Gate tempo private" }),
+    );
+    expect(fake.saved).toEqual(["public deck-1", "private deck-1"]);
+  });
+
+  it("lists everyone's public decks in their own tab, kept in the URL", async () => {
+    const { router } = await renderApp({
+      path: "/decks",
+      auth: auth(),
+      decks: decksOf([{ ...mine, isPublic: true }, theirs, theirSecret])
+        .repository,
+    });
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("tab", { name: "Public decks" }));
+    expect(router.state.location.search).toMatchObject({ tab: "public" });
+    expect(
+      await screen.findByRole("listitem", { name: "Usurp aggro" }),
+    ).toBeInTheDocument();
+    expect(tile("Gate tempo").getByText("Yours")).toBeInTheDocument();
+    expect(screen.queryByRole("listitem", { name: "Secret tech" })).toBeNull();
+    // Only the owner changes visibility
+    expect(
+      screen.queryByRole("button", { name: "Make Usurp aggro private" }),
+    ).toBeNull();
+  });
+
+  it("invites me to build my first deck when I have none", async () => {
+    await renderApp({
+      path: "/decks",
+      auth: auth(),
+      decks: decksOf([]).repository,
+    });
+    expect(
+      await screen.findByText("You haven't built a deck yet."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Start from Build a core" }),
+    ).toHaveAttribute("href", "/ranking");
+  });
+
+  it("shows signed-out visitors the public decks and how to start their own", async () => {
+    await renderApp({
+      path: "/decks",
+      auth: signedOut(),
+      decks: decksOf([theirs, mine]).repository,
+    });
+    expect(
+      await screen.findByRole("listitem", { name: "Usurp aggro" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "My decks" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "New deck" })).toBeNull();
+    expect(
+      screen.getByRole("link", { name: "Sign in to build decks" }),
+    ).toHaveAttribute("href", "/sign-in");
   });
 });
 
