@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { pitchName } from "../cards/pitch.ts";
 import { Button, Dialog } from "../ui/index.ts";
 import { reviewSummary, suggestedFixes, type Source } from "./reviewSummary.ts";
 import type { Dimension, ScoreRow } from "./scoreRepository.ts";
@@ -92,7 +93,7 @@ export function ReviewDialog(props: {
               .map((c) => (
                 <tr key={`${c.variantId}-${c.side}`}>
                   <th scope="row">
-                    {multiPitch ? `Pitch ${c.pitch ?? "–"}, ` : ""}
+                    {multiPitch ? `${pitchName(c.pitch)}, ` : ""}
                     {c.side === "forsaken" ? "Forsaken" : "Usurper"}
                   </th>
                   <td

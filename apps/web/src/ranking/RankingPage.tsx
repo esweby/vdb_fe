@@ -4,6 +4,7 @@ import type { CardSummary } from "../cards/cardRepository.ts";
 import type { Deck, DeckSummary } from "../decks/deckRepository.ts";
 import type { FormatRules } from "../decks/deckRules.ts";
 import { cardFacets, pitchShown } from "../cards/facets.ts";
+import { pitchName } from "../cards/pitch.ts";
 import { useCards } from "../cards/useCards.ts";
 import { applyFilters } from "../filters/applyFilters.ts";
 import { FilteredLayout } from "../filters/FilteredLayout.tsx";
@@ -38,7 +39,7 @@ interface Data {
 }
 
 const label = (r: RankedVariant, multiPitch: boolean) =>
-  multiPitch ? `${r.name} (pitch ${r.pitch ?? "–"})` : r.name;
+  multiPitch ? `${r.name} (${pitchName(r.pitch).toLowerCase()})` : r.name;
 
 export function RankingPage() {
   const { status, items } = useCards();

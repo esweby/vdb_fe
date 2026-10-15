@@ -7,6 +7,7 @@ import { Link } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import { selectCanScore } from "../auth/authSlice.ts";
 import { TYPE_LABELS } from "../cards/filterCards.ts";
+import { pitchName } from "../cards/pitch.ts";
 import { useCards } from "../cards/useCards.ts";
 import { CardTile } from "../decks/CardTile.tsx";
 import { PITCH_NAMES } from "../decks/deckRules.ts";
@@ -267,9 +268,7 @@ export function CardScoringView(props: {
           <div className={styles.face}>
             <div className={styles.faceTop}>
               <span className={styles.facePitch}>
-                {chosen?.pitch != null
-                  ? `${PITCH_LABELS[chosen.pitch] ?? `Pitch ${chosen.pitch}`} · pitch ${chosen.pitch}`
-                  : "No pitch"}
+                {pitchName(chosen?.pitch ?? null)}
               </span>
               {chosen?.cost != null && (
                 <span
@@ -399,6 +398,7 @@ export function CardScoringView(props: {
                 </p>
               )}
               <ScoreEditor
+                chosenVariantId={chosen?.id}
                 sidesTogetherByDefault={sidesTogether}
                 dimensions={dimensions}
                 locked={{
