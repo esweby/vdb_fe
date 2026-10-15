@@ -347,6 +347,41 @@ describe("deck page", () => {
     ).toBeDisabled();
   });
 
+  it("offers Remove rather than − and + for equipment in the deck, as only one is allowed", async () => {
+    const blade = sampleCards.find((c) => c.name === "Nebula Blade")!;
+    const purgatory = {
+      ...blade,
+      id: "card-face-purgatory",
+      name: "Face Purgatory",
+      type: "equipment",
+      subtypes: ["Head"],
+      variants: [{ ...blade.variants[0]!, id: "fp" }],
+    };
+    const fake = withDeck([{ variantId: "fp", quantity: 1, sideboard: false }]);
+    await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      cards: fakeCardRepository([...sampleCards, purgatory]),
+      decks: fake.repository,
+    });
+    const gear = within(
+      await screen.findByRole("region", { name: "Weapons and equipment" }),
+    );
+    expect(
+      gear.queryByRole("button", { name: "One more Face Purgatory" }),
+    ).toBeNull();
+    expect(
+      gear.queryByRole("button", { name: "One fewer Face Purgatory" }),
+    ).toBeNull();
+    expect(
+      gear.getByLabelText("Sideboard: Face Purgatory"),
+    ).toBeInTheDocument();
+    await userEvent
+      .setup()
+      .click(gear.getByRole("button", { name: "Remove Face Purgatory" }));
+    expect(fake.saved).toEqual(["set deck-1 fp 0 main"]);
+  });
+
   it("adds a pitch with the R, Y and B buttons under each card", async () => {
     const fake = withDeck();
     await renderApp({
