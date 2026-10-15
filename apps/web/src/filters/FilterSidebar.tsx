@@ -100,6 +100,7 @@ export function FilterSidebar<T>(props: {
       <Collapsible
         key={facet.id}
         title={facet.label}
+        badge={Object.keys(state[facet.id] ?? {}).length}
         changed={changed}
         className={styles.facet}
         summaryClassName={styles.heading}
@@ -186,6 +187,8 @@ export { activeCount };
 /** A group that starts collapsed, and opens itself when it has active filters. */
 function Collapsible(props: {
   title: string;
+  /** How many filters the group has; shown on the heading so collapsed groups still say. */
+  badge?: number;
   changed: boolean;
   className?: string;
   summaryClassName?: string;
@@ -204,6 +207,14 @@ function Collapsible(props: {
     >
       <summary className={props.summaryClassName}>
         <span>{props.title}</span>
+        {!!props.badge && (
+          <span
+            className={styles.badge}
+            aria-label={`${props.badge} ${props.badge === 1 ? "filter" : "filters"}`}
+          >
+            {props.badge}
+          </span>
+        )}
         {props.action}
       </summary>
       {props.children}

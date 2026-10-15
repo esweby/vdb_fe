@@ -178,7 +178,7 @@ export function CardsPage() {
           onClose={closeCard}
         />
       )}
-      <h1>Cards</h1>
+      <h1 className={styles.visuallyHidden}>Cards</h1>
       {status === "failed" && <p role="alert">Couldn't load cards: {error}</p>}
       {status === "loading" && <p>Loading cards…</p>}
       {status === "loaded" && (
@@ -191,13 +191,15 @@ export function CardsPage() {
             <div className={styles.toolbar}>
               <TextField
                 label="Search"
+                hideLabel
                 type="search"
-                placeholder="Card name"
+                className={styles.search}
+                placeholder="Search card names"
                 value={filters.q}
                 onChange={(e) => filters.setQ(e.target.value)}
               />
               <label className={styles.select}>
-                Sort
+                <span className={styles.visuallyHidden}>Sort</span>
                 <select
                   value={filters.sort}
                   onChange={(e) => filters.setSort(e.target.value as CardSort)}
