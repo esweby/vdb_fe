@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -220,5 +220,50 @@ describe("Slider without a scale", () => {
     );
     expect(screen.queryByTestId("slider-scale")).not.toBeInTheDocument();
     expect(screen.getByRole("slider", { name: "Risk" })).toBeInTheDocument();
+  });
+});
+
+describe("Slider tap targets (touch screens)", () => {
+  function Harness() {
+    const [value, setValue] = useState<number | null>(null);
+    return (
+      <Slider label="Overall" value={value} onChange={setValue} tapTargets />
+    );
+  }
+
+  it("offers a button for every step, setting the value in one tap", async () => {
+    render(<Harness />);
+    const taps = within(
+      screen.getByRole("group", { name: "Overall, tap a score" }),
+    );
+    expect(taps.getAllByRole("button").map((b) => b.textContent)).toEqual([
+      "0",
+      "10",
+      "20",
+      "30",
+      "40",
+      "50",
+      "60",
+      "70",
+      "80",
+      "90",
+      "100",
+    ]);
+    await userEvent.setup().click(taps.getByRole("button", { name: "60" }));
+    expect(taps.getByRole("button", { name: "60" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(screen.getByRole("slider", { name: "Overall" })).toHaveAttribute(
+      "aria-valuetext",
+      "60",
+    );
+  });
+
+  it("has none unless asked for", () => {
+    render(<Slider label="Risk" value={0} onChange={() => {}} />);
+    expect(
+      screen.queryByRole("group", { name: "Risk, tap a score" }),
+    ).toBeNull();
   });
 });

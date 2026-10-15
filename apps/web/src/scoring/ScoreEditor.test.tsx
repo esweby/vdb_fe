@@ -372,4 +372,17 @@ describe("ScoreEditor", () => {
       screen.getByRole("slider", { name: "Runechant creation" }),
     ).toHaveAttribute("aria-valuetext", "80");
   });
+
+  it("can be rated with one tap on a touch screen", async () => {
+    const onSet = vi.fn();
+    render(<Harness onSet={onSet} />);
+    const taps = within(
+      screen.getByRole("group", { name: "Runechant creation, tap a score" }),
+    );
+    await userEvent.setup().click(taps.getByRole("button", { name: "70" }));
+    expect(onSet).toHaveBeenCalledWith(
+      expect.objectContaining({ dimensionId: 1, variantId: null, side: null }),
+      70,
+    );
+  });
 });
