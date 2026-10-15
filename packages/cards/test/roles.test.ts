@@ -20,8 +20,10 @@ const card = (
   attributes: Partial<CardAttributes> = {},
   type = "action",
   variants: Partial<AuthoredCardAttributes>[] = [],
+  subtypes: string[] = [],
 ): RoleCard => ({
   type,
+  subtypes,
   attributes: { ...generated, ...attributes },
   variantAttributes: variants,
 });
@@ -38,30 +40,29 @@ const runechants = (amount: number | "X", extra = {}) => ({
 
 describe("rolesOf: Runechant engine", () => {
   it("a card that creates Runechants is a Runechant generator", () => {
-    expect(rolesOf(card(runechants(1)))).toEqual(["runechant_generator"]);
+    expect(rolesOf(card(runechants(1)))).toContain("runechant_generator");
   });
 
   it("creating X or 3 or more at once is also a burst", () => {
-    expect(rolesOf(card(runechants("X")))).toEqual([
-      "runechant_generator",
-      "runechant_burst",
-    ]);
+    expect(rolesOf(card(runechants("X")))).toEqual(
+      expect.arrayContaining(["runechant_generator", "runechant_burst"]),
+    );
     expect(rolesOf(card(runechants(3)))).toContain("runechant_burst");
     expect(rolesOf(card(runechants(2)))).not.toContain("runechant_burst");
   });
 
   it("giving Runechant creation to a later attack is a granter, not a generator", () => {
-    expect(
-      rolesOf(
-        card(runechants(3, { grantedTo: "next_runeblade_attack_action" })),
-      ),
-    ).toEqual(["runechant_granter"]);
+    const roles = rolesOf(
+      card(runechants(3, { grantedTo: "next_runeblade_attack_action" })),
+    );
+    expect(roles).toContain("runechant_granter");
+    expect(roles).not.toContain("runechant_generator");
   });
 
   it("finds a Runechant generator from a pitch's own attributes", () => {
-    expect(rolesOf(card({}, "action", [runechants(1)]))).toEqual([
+    expect(rolesOf(card({}, "action", [runechants(1)]))).toContain(
       "runechant_generator",
-    ]);
+    );
   });
 
   it("Rune Gate, Runechant discounts and arcane conditions are payoffs", () => {
@@ -98,6 +99,11 @@ describe("rolesOf: Runechant engine", () => {
       "runechant_trigger",
     ]);
   });
+
+  it("attack action cards fire Runechants too (maintainer, 15 Oct 2026)", () => {
+    expect(rolesOf(card({}, "attack_action"))).toEqual(["runechant_trigger"]);
+    expect(rolesOf(card({}, "weapon"))).toEqual([]);
+  });
 });
 
 describe("rolesOf: Gate engine", () => {
@@ -106,18 +112,18 @@ describe("rolesOf: Gate engine", () => {
       rolesOf(
         card({ tokens: [{ token: "gate", amount: 1, trigger: "on_play" }] }),
       ),
-    ).toEqual(["gate_generator"]);
+    ).toContain("gate_generator");
   });
 
-  it("a Gate target counts as a generator too (maintainer, 15 Oct 2026)", () => {
+  it("a Gate target is the Gate engine's payoff: a Gate plays it out of banish (maintainer, 15 Oct 2026)", () => {
     expect(rolesOf(card({ isGateTarget: true }))).toEqual(["gate_target"]);
     expect(ROLES.find((r) => r.id === "gate_target")).toMatchObject({
       engine: "gate",
-      kind: "generator",
+      kind: "payoff",
     });
   });
 
-  it("getting better from banish is a Gate payoff, still to be decided", () => {
+  it("getting better from banish is a Gate payoff too", () => {
     expect(rolesOf(card({ rewardsPlayFromBanish: true }))).toEqual([
       "banish_play_payoff",
     ]);
@@ -150,8 +156,62 @@ describe("rolesOf: Banish engine", () => {
   });
 });
 
-describe("rolesOf: outside the engines", () => {
-  it("records go again, Eloquence, sinchants, usurp, disruption and tutors", () => {
+describe("rolesOf: Aura engine", () => {
+  it("creating any token makes an aura: Runechants, Gates and Eloquence are all aura tokens", () => {
+    expect(rolesOf(card(runechants(1)))).toContain("aura_generator");
+    expect(
+      rolesOf(
+        card({ tokens: [{ token: "gate", amount: 1, trigger: "on_play" }] }),
+      ),
+    ).toContain("aura_generator");
+  });
+
+  it("playing an Aura card makes an aura", () => {
+    expect(rolesOf(card({}, "action", [], ["Aura"]))).toEqual([
+      "aura_generator",
+    ]);
+  });
+
+  it("sinchants are aura generators of their own", () => {
+    expect(rolesOf(card({ groups: ["runechant_aura"] }))).toEqual(["sinchant"]);
+    expect(ROLES.find((r) => r.id === "sinchant")).toMatchObject({
+      engine: "aura",
+      kind: "generator",
+    });
+  });
+
+  it("cards that care about auras played, created or destroyed are payoffs", () => {
+    expect(
+      rolesOf(
+        card({
+          conditionalBonuses: [
+            {
+              effect: "plus_power",
+              amount: 1,
+              conditions: ["played_or_created_aura_this_turn"],
+            },
+          ],
+        }),
+      ),
+    ).toEqual(["aura_payoff"]);
+    expect(
+      rolesOf(
+        card({
+          arcaneDamage: [
+            {
+              amount: 1,
+              trigger: "on_play",
+              conditions: ["destroyed_own_aura"],
+            },
+          ],
+        }),
+      ),
+    ).toEqual(["aura_payoff"]);
+  });
+});
+
+describe("rolesOf: Tempo engine", () => {
+  it("go again and Eloquence are generators", () => {
     expect(rolesOf(card({ grantsGoAgain: "next_attack_action" }))).toEqual([
       "go_again_granter",
     ]);
@@ -161,8 +221,22 @@ describe("rolesOf: outside the engines", () => {
           tokens: [{ token: "eloquence", amount: 1, trigger: "on_play" }],
         }),
       ),
-    ).toEqual(["eloquence"]);
-    expect(rolesOf(card({ groups: ["runechant_aura"] }))).toEqual(["sinchant"]);
+    ).toEqual(["aura_generator", "eloquence"]);
+  });
+
+  it("cards that need an action card played earlier in the turn are payoffs", () => {
+    expect(
+      rolesOf(
+        card({
+          goAgain: { conditions: ["played_non_attack_action_this_turn"] },
+        }),
+      ),
+    ).toEqual(["tempo_payoff"]);
+  });
+});
+
+describe("rolesOf: outside the engines", () => {
+  it("records usurp, disruption and tutors without linking them", () => {
     expect(rolesOf(card({ hasUsurp: true }))).toEqual(["usurp"]);
     expect(
       rolesOf(
@@ -192,7 +266,7 @@ describe("rolesOf: outside the engines", () => {
         }),
       ),
     ).toEqual(["tutor"]);
-    for (const id of ["go_again_granter", "sinchant", "usurp"]) {
+    for (const id of ["usurp", "disruption", "tutor"]) {
       expect(ROLES.find((r) => r.id === id)?.engine).toBeNull();
     }
   });
@@ -202,15 +276,36 @@ describe("rolesOf: outside the engines", () => {
   });
 });
 
+describe("rolesOf: corrections by hand", () => {
+  it("adds and removes roles the rules get wrong", () => {
+    expect(
+      rolesOf(
+        card({
+          isGateTarget: true,
+          roles: { add: ["banish_trigger"], remove: ["gate_target"] },
+        }),
+      ),
+    ).toEqual(["banish_trigger"]);
+  });
+
+  it("takes corrections from a pitch's own attributes", () => {
+    expect(
+      rolesOf(card({}, "action", [{ roles: { add: ["tutor"] } }])),
+    ).toEqual(["tutor"]);
+  });
+});
+
 describe("fits", () => {
   it("a generator fits a payoff of the same engine, either way round", () => {
     expect(fits(["runechant_generator"], ["rune_gate"])).toBe(true);
     expect(fits(["rune_gate"], ["runechant_burst"])).toBe(true);
     expect(fits(["gate_generator"], ["banish_play_payoff"])).toBe(true);
     expect(fits(["hand_banisher"], ["plays_from_banish"])).toBe(true);
+    expect(fits(["sinchant"], ["aura_payoff"])).toBe(true);
+    expect(fits(["eloquence"], ["tempo_payoff"])).toBe(true);
   });
 
-  it("Gate generators and Gate targets fit each other", () => {
+  it("Gate generators feed Gate targets", () => {
     expect(fits(["gate_generator"], ["gate_target"])).toBe(true);
   });
 
@@ -224,5 +319,6 @@ describe("fits", () => {
     expect(fits(["rune_gate"], ["arcane_payoff"])).toBe(false);
     expect(fits(["runechant_generator"], ["runechant_burst"])).toBe(false);
     expect(fits(["usurp"], ["gate_target"])).toBe(false);
+    expect(fits(["gate_target"], ["banish_play_payoff"])).toBe(false);
   });
 });
