@@ -337,6 +337,13 @@ describe("cards page", () => {
       name: "Become the Shadow Lord",
     });
     expect(within(dialog).getByText("1 of 4")).toBeInTheDocument();
+    // The keyboard tip lives on the ‹ › buttons' tooltips, not far away in the footer
+    expect(
+      within(dialog).queryByText(/to move between cards/),
+    ).not.toBeInTheDocument();
+    expect(
+      within(dialog).getByRole("button", { name: "Next card" }),
+    ).toHaveAttribute("title", "Next card (→)");
     await userEvent
       .setup()
       .click(within(dialog).getByRole("button", { name: "Skip" }));
