@@ -199,18 +199,20 @@ function ifConditions(conditions: Condition[] | undefined): string {
     : "";
 }
 
-export function describeAttributes(attributes: CardAttributes): string[] {
-  const lines: string[] = [];
+function describedItems(attributes: CardAttributes): Item[] {
+  const items: Item[] = [];
+  const add = (section: Section, trigger: Trigger | undefined, text: string) =>
+    items.push({ section, trigger, text });
 
   if (attributes.specialization) {
-    lines.push(`${attributes.specialization} specialization.`);
+    add("keywords", undefined, `${attributes.specialization} specialization.`);
   }
   if (attributes.groups?.includes("runechant_aura")) {
-    lines.push("Is a Runechant aura (sinchant).");
+    add("keywords", undefined, "Is a Runechant aura (sinchant).");
   }
 
   if (attributes.canAttack) {
-    lines.push("Weapon attack: triggers your Runechants.");
+    add("keywords", undefined, "Weapon attack: triggers your Runechants.");
   }
 
   for (const b of attributes.banishesOwn ?? []) {
@@ -218,14 +220,18 @@ export function describeAttributes(attributes: CardAttributes): string[] {
     const temporary = b.temporary
       ? " (temporarily: they don't stay in your banished zone)"
       : "";
-    lines.push(
+    add(
+      "resolves",
+      b.trigger,
       `${verb} ${ownBanishText(b)} ${TRIGGER_TEXT[b.trigger]}${ifConditions(b.conditions)}${temporary}.`,
     );
   }
 
   for (const b of attributes.banishesSelf ?? []) {
     const verb = b.optional ? "May banish" : "Banishes";
-    lines.push(
+    add(
+      "resolves",
+      b.trigger,
       `${verb} itself${b.from === "hand" ? " from your hand" : ""} ${TRIGGER_TEXT[b.trigger]}${ifConditions(b.conditions)}.`,
     );
   }
@@ -233,7 +239,9 @@ export function describeAttributes(attributes: CardAttributes): string[] {
   for (const t of attributes.tokens ?? []) {
     const [one, many] = TOKEN_TEXT[t.token];
     const name = t.amount === 1 ? one : many;
-    lines.push(
+    add(
+      "resolves",
+      t.trigger,
       effect(
         `Creates ${t.amount} ${name} ${TRIGGER_TEXT[t.trigger]}${ifConditions(t.conditions)}.`,
         t.grantedTo,
@@ -242,7 +250,9 @@ export function describeAttributes(attributes: CardAttributes): string[] {
   }
 
   for (const d of attributes.arcaneDamage ?? []) {
-    lines.push(
+    add(
+      "resolves",
+      d.trigger,
       effect(
         `Deals ${d.amount} arcane damage ${TRIGGER_TEXT[d.trigger]}${ifConditions(d.conditions)}.`,
         d.grantedTo,
@@ -256,7 +266,9 @@ export function describeAttributes(attributes: CardAttributes): string[] {
     const sentence = d.optional
       ? `May make ${subject[0]!.toLowerCase()}${subject.slice(1)} ${base}`
       : `${subject} ${third}`;
-    lines.push(
+    add(
+      "resolves",
+      d.trigger,
       effect(
         `${sentence} ${TRIGGER_TEXT[d.trigger]}${ifConditions(d.conditions)}.`,
         d.grantedTo,
@@ -275,7 +287,9 @@ export function describeAttributes(attributes: CardAttributes): string[] {
           ? `1 ${kind}card`
           : `${f.amount} ${kind}cards`;
     const verb = f.optional ? "May turn" : "Turns";
-    lines.push(
+    add(
+      "resolves",
+      f.trigger,
       `${verb} ${what} in your banished zone face-down ${TRIGGER_TEXT[f.trigger]}${ifConditions(f.conditions)}.`,
     );
   }
@@ -285,13 +299,17 @@ export function describeAttributes(attributes: CardAttributes): string[] {
     const sentence = t.optional
       ? `May search your deck for ${refText(t.target)} and ${base}`
       : `Searches your deck for ${refText(t.target)} and ${third}`;
-    lines.push(
+    add(
+      "resolves",
+      t.trigger,
       `${sentence} ${TRIGGER_TEXT[t.trigger]}${ifConditions(t.conditions)}.`,
     );
   }
 
   for (const e of attributes.enablesPlayFromBanish ?? []) {
-    lines.push(
+    add(
+      "resolves",
+      undefined,
       `Lets you play ${refText(e.target)} from your banished zone this turn${ifConditions(e.conditions)}.`,
     );
   }
@@ -307,7 +325,11 @@ export function describeAttributes(attributes: CardAttributes): string[] {
         draw: `"draw ${b.amount}"`,
         arcane_cant_be_prevented: `"when this hits a hero, they can't prevent your arcane damage this turn"`,
       }[b.effect];
-      lines.push(`${GRANTED_TEXT[b.grantedTo]} ${what}${conds}.`);
+      add(
+        "resolves",
+        undefined,
+        `${GRANTED_TEXT[b.grantedTo]} ${what}${conds}.`,
+      );
       continue;
     }
     const what = {
@@ -319,27 +341,32 @@ export function describeAttributes(attributes: CardAttributes): string[] {
       arcane_cant_be_prevented:
         "When it hits a hero, they can't prevent your arcane damage this turn",
     }[b.effect];
-    lines.push(`${what}${conds}.`);
+    add("resolves", undefined, `${what}${conds}.`);
   }
 
   if (attributes.playableFromBanish) {
-    lines.push(
+    add(
+      "playing",
+      undefined,
       `Can be played from your banished zone${ifConditions(attributes.playableFromBanish.conditions)}.`,
     );
   }
-  if (attributes.isGateTarget) {
-    lines.push("Can be played from your banished zone with a Gate.");
-  }
+  // A Gate target isn't described: every blood debt action card is one, so it would only
+  // repeat "Blood debt." (maintainer, 15 Oct 2026). The route stays in the data.
   if (attributes.rewardsPlayFromBanish) {
-    lines.push("Is better when played from your banished zone.");
+    add("works", undefined, "Is better when played from your banished zone.");
   }
   if (attributes.instantSpeed) {
-    lines.push(
+    add(
+      "playing",
+      undefined,
       `Can be played as an instant${ifConditions(attributes.instantSpeed.conditions)}.`,
     );
   }
   for (const c of attributes.costReductions ?? []) {
-    lines.push(
+    add(
+      "playing",
+      undefined,
       effect(
         `Costs ${c.amount === "per_runechant" ? "{r} less for each Runechant you control" : `${c.amount}{r} less`}${ifConditions(c.conditions)}.`,
         c.grantedTo,
@@ -347,33 +374,111 @@ export function describeAttributes(attributes: CardAttributes): string[] {
     );
   }
   if (attributes.costReducedPerRunechant)
-    lines.push("Costs {r} less for each Runechant you control.");
-  if (attributes.hasUsurp) lines.push("Usurp.");
+    add("playing", undefined, "Costs {r} less for each Runechant you control.");
+  if (attributes.hasUsurp) add("keywords", undefined, "Usurp.");
   if (attributes.hasRuneGate) {
-    lines.push(
+    add(
+      "playing",
+      undefined,
       "Rune Gate: if you control at least as many Runechants as its cost, you may play it from your banished zone without paying its cost.",
     );
   }
   if (attributes.goAgain) {
-    lines.push(`Gets go again${ifConditions(attributes.goAgain.conditions)}.`);
+    add(
+      "keywords",
+      undefined,
+      `Gets go again${ifConditions(attributes.goAgain.conditions)}.`,
+    );
   } else if (attributes.hasGoAgain) {
-    lines.push("Go again.");
+    add("keywords", undefined, "Go again.");
   }
   if (attributes.grantsGoAgain) {
     const g = attributes.grantsGoAgain;
     const [to, conditions] =
       typeof g === "string" ? [g, undefined] : [g.to, g.conditions];
-    lines.push(`${GRANTED_TEXT[to]} go again${ifConditions(conditions)}.`);
+    add(
+      "keywords",
+      undefined,
+      `${GRANTED_TEXT[to]} go again${ifConditions(conditions)}.`,
+    );
   }
-  if (attributes.hasBloodDebt) lines.push("Blood debt.");
+  if (attributes.hasBloodDebt) add("keywords", undefined, "Blood debt.");
   if (attributes.oneUse)
-    lines.push("One use: destroyed or banished when used.");
+    add("keywords", undefined, "One use: destroyed or banished when used.");
   for (const sup of attributes.supports ?? []) {
     const what =
       "group" in sup.target ? GROUP_PLURAL[sup.target.group] : sup.target.card;
-    lines.push(`Works with ${what}${sup.note ? ` (${sup.note})` : ""}.`);
+    add(
+      "works",
+      undefined,
+      `Works with ${what}${sup.note ? ` (${sup.note})` : ""}.`,
+    );
   }
-  if (attributes.notes) lines.push(`Note: ${attributes.notes}`);
+  if (attributes.notes) add("works", undefined, `Note: ${attributes.notes}`);
 
-  return lines;
+  return items;
+}
+
+type Section = "playing" | "resolves" | "keywords" | "works";
+interface Item {
+  section: Section;
+  trigger: Trigger | undefined;
+  text: string;
+}
+
+const SECTION_HEADINGS: [Section, string][] = [
+  ["playing", "Playing it"],
+  ["resolves", "When it resolves"],
+  ["keywords", "Keywords"],
+  ["works", "Works with"],
+];
+
+// UNVERIFIED reading order: roughly when each trigger happens during a turn.
+const TRIGGER_ORDER: Record<Trigger, number> = {
+  on_pitch: 0,
+  activated: 1,
+  on_play: 1,
+  your_attack_action_played: 2,
+  on_attack: 3,
+  on_defend: 3,
+  on_hit: 4,
+  your_attack_action_hits: 4,
+  would_be_dealt_damage: 5,
+  on_banished: 6,
+  on_leave_arena: 6,
+  on_destroyed: 6,
+  would_go_to_graveyard: 6,
+  on_usurped: 6,
+  combat_chain_closes: 7,
+  your_end_phase: 8,
+  start_of_turn: 9,
+  start_of_action_phase: 9,
+};
+
+/** Every line, in the order the attributes are checked (used by the review sheet). */
+export function describeAttributes(attributes: CardAttributes): string[] {
+  return describedItems(attributes).map((i) => i.text);
+}
+
+/**
+ * The same lines grouped for reading: how you play it, what it does in the order it happens
+ * during a turn, its keywords, then what it works with. Empty sections are left out.
+ */
+export function describeAttributeSections(
+  attributes: CardAttributes,
+): { heading: string; lines: string[] }[] {
+  const items = describedItems(attributes);
+  return SECTION_HEADINGS.flatMap(([section, heading]) => {
+    const inSection = items.filter((i) => i.section === section);
+    if (section === "resolves") {
+      inSection.sort(
+        (a, b) =>
+          (a.trigger === undefined ? 1 : TRIGGER_ORDER[a.trigger]) -
+          (b.trigger === undefined ? 1 : TRIGGER_ORDER[b.trigger]),
+      );
+    }
+    return inSection.length > 0
+      ? [{ heading, lines: inSection.map((i) => i.text) }]
+      : [];
+  });
 }
