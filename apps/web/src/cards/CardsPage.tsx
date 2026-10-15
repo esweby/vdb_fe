@@ -167,6 +167,10 @@ export function CardsPage() {
         <CardModal
           cardId={open.id}
           name={open.name}
+          verified={open.attributesVerified}
+          position={
+            at >= 0 ? { index: at + 1, total: shown.length } : undefined
+          }
           variantId={search.variant}
           previousId={at > 0 ? shown[at - 1]?.id : undefined}
           nextId={at >= 0 ? shown[at + 1]?.id : undefined}

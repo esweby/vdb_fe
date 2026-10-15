@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Button, Slider } from "../ui/index.ts";
+import { Slider } from "../ui/index.ts";
 import { cellValue } from "./inherited.ts";
 import type { Dimension, ScoreKey, ScoreRow } from "./scoreRepository.ts";
 import styles from "./ScoreEditor.module.css";
@@ -120,18 +120,21 @@ export function ScoreEditor(props: {
             disabled={locked}
           >
             <legend>{dimension.label}</legend>
-            {locked && (
-              <p className={styles.lockedReason}>{props.locked!.reason}</p>
-            )}
-            <label className={styles.sideToggle}>
+            <label
+              className={styles.sideToggle}
+              title="One score for both hero sides; untick to score Forsaken and Usurper apart"
+            >
               <input
                 type="checkbox"
                 aria-label={`Same score for both sides: ${dimension.label}`}
                 checked={together}
                 onChange={(e) => setTogether(dimension.id, e.target.checked)}
               />
-              Same score for both sides
+              Both sides
             </label>
+            {locked && (
+              <p className={styles.lockedReason}>{props.locked!.reason}</p>
+            )}
             {variants.flatMap((variantId) =>
               sides.map((side) => {
                 const key: ScoreKey = {
@@ -163,24 +166,34 @@ export function ScoreEditor(props: {
                           : null
                       }
                       value={own}
+                      quietScale
                       onChange={(score) => onSet(key, score)}
                     />
-                    <div className={styles.cellFooter}>
+                    <div className={styles.cellActions}>
                       {own === null && inherited !== null && (
                         <span className={styles.inherited}>
                           Inherits {inherited}
                         </span>
                       )}
-                      <Button variant="ghost" onClick={() => onSet(key, 0)}>
-                        {named("Not relevant")}
-                      </Button>
-                      <Button
-                        variant="ghost"
+                      <button
+                        type="button"
+                        className={styles.iconButton}
+                        aria-label={named("Not relevant")}
+                        title="Not relevant (0)"
+                        onClick={() => onSet(key, 0)}
+                      >
+                        ⊘
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.iconButton}
+                        aria-label={named("Clear")}
+                        title="Clear (back to blank)"
                         disabled={own === null}
                         onClick={() => onSet(key, null)}
                       >
-                        {named("Clear")}
-                      </Button>
+                        ↺
+                      </button>
                     </div>
                   </div>
                 );

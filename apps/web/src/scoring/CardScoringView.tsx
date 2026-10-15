@@ -65,8 +65,12 @@ export function CardScoringView(props: {
   initialVariantId?: string;
   /** The card page shows the name as its heading; the pop-over has it in its title bar. */
   showTitle?: boolean;
+  /** In the card database's pop-over: a sticky footer with Skip and "Mark reviewed and next". */
+  inPopover?: boolean;
+  /** The next card in the results, if there is one. */
+  onNext?: () => void;
 }) {
-  const { cardId, showTitle } = props;
+  const { cardId, showTitle, inPopover, onNext } = props;
   const { items } = useCards();
   const summary = items.find((c) => c.id === cardId);
   const [variantId, setVariantId] = useState(props.initialVariantId);
@@ -147,6 +151,8 @@ export function CardScoringView(props: {
       // Scorers' reviews count toward community scores: recalculate now.
       // The daily job catches anything this misses.
       if (canScore) await scores.runCommunityJob().catch(() => {});
+      // In the pop-over, reviewing moves on to the next card.
+      if (inPopover) onNext?.();
     } catch (e) {
       setError(
         `Couldn't mark reviewed: ${e instanceof Error ? e.message : String(e)}`,
@@ -184,6 +190,10 @@ export function CardScoringView(props: {
   const unlocked =
     rateAnyway || rows.some((r) => notRelevantIds.includes(r.dimensionId));
   const lockedIds = unlocked ? [] : notRelevantIds;
+  const rateable = dimensions.filter((d) => !lockedIds.includes(d.id));
+  const ratedCount = rateable.filter((d) =>
+    rows.some((r) => r.dimensionId === d.id),
+  ).length;
   const spreadKeys = new Set(["floor", "ceiling"]);
   const askingSpread = dimensions.some(
     (d) => spreadKeys.has(d.key) && !lockedIds.includes(d.id),
@@ -214,9 +224,11 @@ export function CardScoringView(props: {
       {showTitle && <h1>{card.name}</h1>}
       <p className={styles.meta}>
         {TYPE_LABELS[card.type] ?? card.type} · {classOf(card)}{" "}
-        <Tag tone={card.attributesVerified ? "accent" : "neutral"}>
-          {card.attributesVerified ? "Verified" : "Unverified"}
-        </Tag>
+        {!inPopover && (
+          <Tag tone={card.attributesVerified ? "accent" : "neutral"}>
+            {card.attributesVerified ? "Verified" : "Unverified"}
+          </Tag>
+        )}
       </p>
       {error && <p role="alert">{error}</p>}
 
@@ -284,19 +296,31 @@ export function CardScoringView(props: {
         </section>
 
         <section aria-label="Scores" className={styles.scores}>
-          <h2>Your scores</h2>
+          <div className={styles.scoresHeading}>
+            <h2>Your ratings</h2>
+            {user && dimensions.length > 0 && (
+              <span className={styles.progress}>
+                {ratedCount} of {rateable.length} rated
+              </span>
+            )}
+          </div>
           {!user && <Link to="/sign-in">Sign in to score this card</Link>}
           {user && dimensions.length > 0 && (
             <>
-              <div className={styles.review}>
-                {reviewedAt ? (
-                  <Tag tone="accent">Reviewed {formatDate(reviewedAt)}</Tag>
-                ) : (
-                  <Button variant="primary" onClick={() => setReviewing(true)}>
-                    Mark reviewed
-                  </Button>
-                )}
-              </div>
+              {!inPopover && (
+                <div className={styles.review}>
+                  {reviewedAt ? (
+                    <Tag tone="accent">Reviewed {formatDate(reviewedAt)}</Tag>
+                  ) : (
+                    <Button
+                      variant="primary"
+                      onClick={() => setReviewing(true)}
+                    >
+                      Mark reviewed
+                    </Button>
+                  )}
+                </div>
+              )}
               <ReviewDialog
                 open={reviewing}
                 onClose={() => setReviewing(false)}
@@ -316,18 +340,18 @@ export function CardScoringView(props: {
                 )}
                 busy={busy}
               />
-              {/* Shown on every card, so the column keeps its shape. */}
-              <p className={styles.meta}>
-                Floor: none of its conditions are met, and it's blocked if it
-                has an on-hit. Ceiling: all of them are met and it hits.
-                Overall: a typical game on this side. Leave floor and ceiling
-                blank if they're the same as overall.{" "}
-                {askingSpread && (
-                  <Button variant="ghost" onClick={() => void sameAsOverall()}>
-                    Floor and ceiling same as overall
-                  </Button>
-                )}
-              </p>
+              <details className={styles.help}>
+                <summary>
+                  <span aria-hidden="true">ⓘ</span>
+                  <span>About these ratings</span>
+                </summary>
+                <p>
+                  Floor: none of its conditions are met, and it's blocked if it
+                  has an on-hit. Ceiling: all of them are met and it hits.
+                  Overall: a typical game on this side. Leave floor and ceiling
+                  blank if they're the same as overall.
+                </p>
+              </details>
               {warnings.length > 0 && (
                 <ul role="status" className={styles.warnings}>
                   {warnings.map((w) => (
@@ -355,10 +379,46 @@ export function CardScoringView(props: {
                 rows={rows}
                 onSet={(key, score) => void onSet(key, score)}
               />
+              {askingSpread && (
+                <Button
+                  variant="ghost"
+                  className={styles.sameAsOverall}
+                  onClick={() => void sameAsOverall()}
+                >
+                  Floor and ceiling same as overall
+                </Button>
+              )}
             </>
           )}
         </section>
       </div>
+
+      {inPopover && (
+        <div className={styles.footer}>
+          <span className={styles.hint}>← → to move between cards</span>
+          <span className={styles.footerActions}>
+            {reviewedAt ? (
+              <>
+                <Tag tone="accent">Reviewed {formatDate(reviewedAt)}</Tag>
+                <Button disabled={!onNext} onClick={() => onNext?.()}>
+                  Next card
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button disabled={!onNext} onClick={() => onNext?.()}>
+                  Skip
+                </Button>
+                {user && dimensions.length > 0 && (
+                  <Button variant="primary" onClick={() => setReviewing(true)}>
+                    {onNext ? "Mark reviewed and next" : "Mark reviewed"}
+                  </Button>
+                )}
+              </>
+            )}
+          </span>
+        </div>
+      )}
     </>
   );
 }

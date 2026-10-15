@@ -78,3 +78,70 @@
   margin: 0.5rem 0;
   padding-left: 1.2rem;
 }
+
+.scoresHeading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.25rem;
+}
+.scoresHeading h2 {
+  margin: 0;
+}
+.progress {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.help {
+  margin: 0 0 0.75rem;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+.help summary {
+  cursor: pointer;
+  display: inline-flex;
+  gap: 0.35rem;
+  list-style: none;
+}
+.help summary::-webkit-details-marker {
+  display: none;
+}
+.help p {
+  margin: 0.4rem 0 0;
+}
+.sameAsOverall {
+  margin-top: 0.25rem;
+}
+/* Sticky at the bottom of the pop-over: the scorer's loop is rate, confirm, next. */
+.footer {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: auto -1.5rem 0;
+  padding: 0.75rem 1.5rem;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+}
+.hint {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.footerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+@media (max-width: 640px) {
+  .footer {
+    margin-left: -1rem;
+    margin-right: -1rem;
+    padding: 0.75rem 1rem;
+  }
+  .hint {
+    display: none;
+  }
+}
