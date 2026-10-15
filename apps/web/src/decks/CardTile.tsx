@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { CardSummary, VariantSummary } from "../cards/cardRepository.ts";
 import { TYPE_LABELS } from "../cards/filterCards.ts";
 import { variantName } from "./deckRules.ts";
@@ -77,6 +77,44 @@ export function CardTile(props: {
   const { card, variant, quantity, children } = props;
   const name = variantName(card, variant);
   const pitchClass = styles[`pitch${variant.pitch ?? 0}`] ?? "";
+  // The real image when there is one; the stand-in below if there isn't, or it fails to load.
+  const [imageFailed, setImageFailed] = useState(false);
+  useEffect(() => setImageFailed(false), [variant.imageUrl]);
+  if (variant.imageUrl && !imageFailed) {
+    const image = (
+      <img
+        src={variant.imageUrl}
+        alt={name}
+        loading="lazy"
+        className={styles.image}
+        onError={() => setImageFailed(true)}
+      />
+    );
+    return (
+      <article
+        aria-label={name}
+        className={`${styles.tile} ${styles.imageTile}`}
+      >
+        {props.nameLink ? (
+          props.nameLink({ className: styles.imageLink ?? "", children: image })
+        ) : (
+          <Link
+            to="/cards/$cardId"
+            params={{ cardId: card.id }}
+            className={styles.imageLink}
+          >
+            {image}
+          </Link>
+        )}
+        {quantity !== undefined && (
+          <output aria-label={`Copies of ${name}`} className={styles.copies}>
+            {quantity}×
+          </output>
+        )}
+        {children && <div className={styles.controls}>{children}</div>}
+      </article>
+    );
+  }
   return (
     <article aria-label={name} className={`${styles.tile} ${pitchClass}`}>
       <div className={styles.top}>

@@ -101,16 +101,41 @@ describe("FilterSidebar", () => {
     expect(box("Equipment")).not.toBeChecked();
   });
 
-  it("'Only' on a mechanic shows just the cards that have it, and toggles off", async () => {
+  it("starts mechanics unticked; ticking one shows only cards that have it", async () => {
     render(<Harness />);
     const user = userEvent.setup();
-    const only = sidebar().getByRole("button", { name: "Only Go again" });
-    expect(only).toHaveAttribute("aria-pressed", "false");
-    await user.click(only);
-    expect(only).toHaveAttribute("aria-pressed", "true");
+    expect(box("Go again")).not.toBeChecked();
+    expect(box("Blood debt")).not.toBeChecked();
+    await user.click(box("Go again"));
+    expect(box("Go again")).toBeChecked();
     expect(latest).toEqual({ keywords: { go: "include" } });
-    await user.click(only);
+    await user.click(box("Go again"));
     expect(latest).toEqual({});
+  });
+
+  it("hides cards with a mechanic from its Hide option", async () => {
+    render(<Harness />);
+    const user = userEvent.setup();
+    const hide = sidebar().getByRole("button", { name: "Hide Blood debt" });
+    expect(hide).toHaveAttribute("aria-pressed", "false");
+    await user.click(hide);
+    expect(hide).toHaveAttribute("aria-pressed", "true");
+    expect(box("Blood debt")).not.toBeChecked();
+    expect(latest).toEqual({ keywords: { debt: "exclude" } });
+    // Ticking it instead switches to "must have"
+    await user.click(box("Blood debt"));
+    expect(latest).toEqual({ keywords: { debt: "include" } });
+    expect(hide).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("offers Only on card types but not on mechanics", () => {
+    render(<Harness />);
+    expect(
+      sidebar().getByRole("button", { name: "Only Action" }),
+    ).toBeInTheDocument();
+    expect(
+      sidebar().queryByRole("button", { name: "Only Go again" }),
+    ).not.toBeInTheDocument();
   });
 
   it("'All' ticks a whole group again", async () => {
