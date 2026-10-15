@@ -4,6 +4,8 @@ import { BUILT_IN_SCENARIOS } from "./scenarios.ts";
 import styles from "./RankingPage.module.css";
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
+/** Success rates to a tenth of a percent, so a new seed's small differences show. */
+const rate = (x: number) => `${(x * 100).toFixed(1)}%`;
 const n = (x: number) => x.toLocaleString("en-GB");
 
 /** The built-in scenarios, run together with one button (README "Running a scenario"). */
@@ -14,6 +16,8 @@ export function ScenariosPanel(props: {
   onRun: (seed: number) => void;
 }) {
   const { output } = props;
+  // Scenarios that need something no card in the core has: listed apart, not as 0%.
+  const cantRun = output?.scenarios.filter((s) => s.missing) ?? [];
   return (
     <section
       className={`${styles.formCard} ${styles.wide}`}
@@ -55,23 +59,20 @@ export function ScenariosPanel(props: {
           Your core has changed since this run. Run again to update.
         </p>
       )}
-      <ul className={styles.scenarioList}>
+      <ul className={styles.scenarioList} aria-label="Results">
         {BUILT_IN_SCENARIOS.map(({ definition }) => {
           const r = output?.scenarios.find((s) => s.name === definition.name);
+          if (r?.missing) return null;
           const top = r?.result?.failures[0];
           return (
             <li key={definition.name} aria-label={definition.name}>
               <span className={styles.scenarioName}>{definition.name}</span>
               {!r ? (
                 <span className={styles.notRun}>Not run yet</span>
-              ) : r.missing ? (
-                <span className={styles.notRun}>
-                  Needs {r.missing} in your core
-                </span>
               ) : (
                 <>
                   <span className={styles.rate}>
-                    {pct(r.result!.successRate)}
+                    {rate(r.result!.successRate)}
                   </span>
                   {r.result!.byTurn.length > 0 && (
                     <span
@@ -104,6 +105,18 @@ export function ScenariosPanel(props: {
           );
         })}
       </ul>
+      {cantRun.length > 0 && (
+        <div className={styles.cantRun}>
+          <h3 id="cant-run">Can't run with this core</h3>
+          <ul aria-labelledby="cant-run">
+            {cantRun.map((s) => (
+              <li key={s.name} aria-label={s.name}>
+                {s.name}: needs {s.missing}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <p className={styles.hint}>
         A hand of 4 (Viserai's intellect), drawn from the core plus blanks up to
         the deck size. Built-in scenarios are a first pass for the scoring group

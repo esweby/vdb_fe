@@ -6,8 +6,6 @@ import type { CardSummary, VariantSummary } from "../cards/cardRepository.ts";
 
 export interface BuiltInScenario {
   definition: ScenarioDefinition;
-  /** Cards that must be in the core for the scenario to mean anything. */
-  needs?: string[];
 }
 
 const opening = (
@@ -133,7 +131,6 @@ export const BUILT_IN_SCENARIOS: BuiltInScenario[] = [
         ],
       },
     ),
-    needs: ["Become the Shadow Lord"],
   },
   {
     definition: opening("Opening hand has a blue card to pitch", {
