@@ -46,9 +46,11 @@
   display: grid;
   place-items: center;
   border-radius: 50%;
-  border: 1px solid var(--border);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  color: #4a3200;
+  background: radial-gradient(circle at 35% 30%, #fff4c2, #e7b93e 60%, #b8861b);
+  border: 1px solid #a8780f;
 }
 
 .name {
@@ -71,21 +73,39 @@
 
 .art {
   flex: 1;
-  min-height: 3.017em;
-  display: grid;
-  place-items: center;
-  border-radius: 0.452em;
-  background: repeating-linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--pitch) 10%, transparent) 0 0.754em,
-    color-mix(in srgb, var(--pitch) 18%, transparent) 0.754em 1.508em
+  min-height: 2.564em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25em;
+  border-radius: 0.385em;
+  background: radial-gradient(
+    circle at 50% 40%,
+    color-mix(in srgb, var(--pitch) 22%, transparent),
+    color-mix(in srgb, var(--pitch) 8%, transparent) 70%
   );
-  color: var(--muted);
+  color: color-mix(in srgb, var(--pitch) 70%, var(--fg));
+}
+.typeIcon {
+  width: 2.6em;
+  height: 2.6em;
+  opacity: 0.85;
+}
+.artLabel {
   font-size: 0.85em;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
+  color: var(--muted);
 }
 
+.chip {
+  font-size: 0.85em;
+  padding: 0.05em 0.5em;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
 .text {
   display: flex;
   flex-wrap: wrap;
@@ -114,6 +134,11 @@
   justify-content: space-between;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+}
+.statIcon {
+  width: 1.1em;
+  height: 1.1em;
+  opacity: 0.7;
 }
 .stat {
   display: inline-flex;
@@ -163,4 +188,15 @@
     opacity: 1;
     transform: none;
   }
+}
+
+/* A slight lift on hover. */
+.tile {
+  transition:
+    transform 0.12s,
+    box-shadow 0.12s;
+}
+.tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgb(0 0 0 / 0.12);
 }
