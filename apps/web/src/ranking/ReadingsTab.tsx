@@ -1,8 +1,16 @@
 import { balance, ENGINES, type CoreCard } from "./engines.ts";
+import type { ScenarioOutput } from "./scenarioRuns.ts";
+import { ScenariosPanel, TraverseTimeline } from "./ScenariosPanel.tsx";
 import styles from "./RankingPage.module.css";
 
-/** Readings: what the core does. For now, how each engine balances; more readings to come. */
-export function ReadingsTab(props: { cards: CoreCard[] }) {
+/** Readings: what the core does. Scenarios, the traverse timeline and each engine's balance. */
+export function ReadingsTab(props: {
+  cards: CoreCard[];
+  output: ScenarioOutput | null;
+  stale: boolean;
+  running: boolean;
+  onRun: (seed: number) => void;
+}) {
   // Only engines with cards in the core, so an empty core isn't a wall of zeros.
   const weighed = ENGINES.map((e) => ({
     e,
@@ -10,6 +18,13 @@ export function ReadingsTab(props: { cards: CoreCard[] }) {
   })).filter(({ b }) => b.generators + b.payoffs > 0);
   return (
     <div className={styles.readings}>
+      <ScenariosPanel
+        output={props.output}
+        stale={props.stale}
+        running={props.running}
+        onRun={props.onRun}
+      />
+      {props.output && <TraverseTimeline output={props.output} />}
       <section className={styles.formCard} aria-labelledby="read-engines">
         <header>
           <h2 id="read-engines">Engines</h2>

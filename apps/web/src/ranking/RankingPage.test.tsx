@@ -474,3 +474,96 @@ describe("the core", () => {
     ).toBeInTheDocument();
   });
 });
+
+describe("scenarios", () => {
+  it("lists the built-in scenarios before they've run", async () => {
+    await open(`/ranking?tab=readings&${core({ bsl3: 3, hp1: 3 })}`);
+    const scenarios = within(screen.getByRole("region", { name: "Scenarios" }));
+    expect(
+      scenarios.getByText("Opening hand creates 3 or more Runechants"),
+    ).toBeInTheDocument();
+    expect(scenarios.getAllByText("Not run yet").length).toBeGreaterThan(3);
+  });
+
+  it("runs them all with one button and reports success rates and why runs failed", async () => {
+    const { user } = await open(
+      `/ranking?tab=readings&${core({ bsl3: 3, hp1: 3 })}`,
+    );
+    await user.click(screen.getByRole("button", { name: "Run scenarios" }));
+    const scenarios = within(
+      await screen.findByRole("region", { name: "Scenarios" }),
+    );
+    const row = within(
+      await scenarios.findByRole("listitem", {
+        name: "Opening hand has a Gate maker and a Gate target",
+      }),
+    );
+    expect(row.getByText(/^\d+%$/)).toBeInTheDocument();
+    expect(row.getByText(/^Most often missing/)).toBeInTheDocument();
+    expect(
+      scenarios.getByText(
+        "10,000 runs each · seed 1 · 6 core cards + 54 blanks (60)",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("says plainly what a run fails without when there's only one reason", async () => {
+    const { user } = await open(
+      `/ranking?tab=readings&${core({ bsl3: 3, hp1: 3 })}`,
+    );
+    await user.click(screen.getByRole("button", { name: "Run scenarios" }));
+    const row = within(
+      await screen.findByRole("listitem", {
+        name: "Opening hand has a blue card to pitch",
+      }),
+    );
+    expect(row.getByText("Fails without a blue card")).toBeInTheDocument();
+  });
+
+  it("says which scenarios need a card that isn't in the core", async () => {
+    const { user } = await open(`/ranking?tab=readings&${core({ hp1: 3 })}`);
+    await user.click(screen.getByRole("button", { name: "Run scenarios" }));
+    const row = within(
+      await screen.findByRole("listitem", {
+        name: "Opening hand has Become the Shadow Lord and another Shadow card",
+      }),
+    );
+    expect(
+      row.getByText("Needs Become the Shadow Lord in your core"),
+    ).toBeInTheDocument();
+  });
+
+  it("draws the traverse timeline when run", async () => {
+    const { user } = await open(
+      `/ranking?tab=readings&${core({ bsl3: 3, hp1: 3 })}`,
+    );
+    await user.click(screen.getByRole("button", { name: "Run scenarios" }));
+    const timeline = within(
+      await screen.findByRole("region", { name: "Traverse timeline" }),
+    );
+    expect(
+      timeline.getByRole("img", { name: /On Usurper by turn 1: \d+%/ }),
+    ).toBeInTheDocument();
+    expect(
+      timeline.getByText("never reach Usurper in 6 turns"),
+    ).toBeInTheDocument();
+  });
+
+  it("says when the core has changed since the last run", async () => {
+    const { user } = await open(
+      `/ranking?tab=readings&${core({ bsl3: 3, hp1: 3 })}`,
+    );
+    await user.click(screen.getByRole("button", { name: "Run scenarios" }));
+    await screen.findByRole("region", { name: "Traverse timeline" });
+    await goTab("Board");
+    await user.click(
+      tray().getByRole("button", { name: "Remove Become the Shadow Lord" }),
+    );
+    await goTab("Readings");
+    expect(
+      screen.getByText(
+        "Your core has changed since this run. Run again to update.",
+      ),
+    ).toBeInTheDocument();
+  });
+});
