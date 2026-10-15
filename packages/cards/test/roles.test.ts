@@ -296,9 +296,17 @@ describe("rolesOf: corrections by hand", () => {
 });
 
 describe("fits", () => {
+  it("nothing uses Runechants as a linked payoff: attacks spend them anyway (maintainer, 15 Oct 2026)", () => {
+    for (const id of ["rune_gate", "runechant_discount", "arcane_payoff"]) {
+      expect(ROLES.find((r) => r.id === id)).toMatchObject({
+        engine: "runechant",
+        kind: null,
+      });
+      expect(fits(["runechant_generator"], [id])).toBe(false);
+    }
+  });
+
   it("a generator fits a payoff of the same engine, either way round", () => {
-    expect(fits(["runechant_generator"], ["rune_gate"])).toBe(true);
-    expect(fits(["rune_gate"], ["runechant_burst"])).toBe(true);
     expect(fits(["gate_generator"], ["banish_play_payoff"])).toBe(true);
     expect(fits(["hand_banisher"], ["plays_from_banish"])).toBe(true);
     expect(fits(["sinchant"], ["aura_payoff"])).toBe(true);
