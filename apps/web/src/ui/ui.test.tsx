@@ -205,3 +205,20 @@ describe("Slider scale on a wide range", () => {
     ]);
   });
 });
+
+describe("Slider without a scale", () => {
+  it("leaves out the numbers for narrow places where they'd crowd together", () => {
+    render(
+      <Slider
+        label="Risk"
+        min={-100}
+        max={100}
+        value={0}
+        onChange={() => {}}
+        noScale
+      />,
+    );
+    expect(screen.queryByTestId("slider-scale")).not.toBeInTheDocument();
+    expect(screen.getByRole("slider", { name: "Risk" })).toBeInTheDocument();
+  });
+});

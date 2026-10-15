@@ -409,3 +409,16 @@ describe("adding ranked cards to a deck", () => {
     expect(screen.queryByLabelText("Add to deck")).not.toBeInTheDocument();
   });
 });
+
+describe("priorities rail", () => {
+  it("has no slider scales: the rail is too narrow for the numbers", async () => {
+    await renderApp({
+      path: "/ranking",
+      auth: fakeAuthService().service,
+      scores: scores(),
+    });
+    await screen.findByRole("table", { name: "Ranked by your priorities" });
+    const priorities = screen.getByRole("region", { name: "Priorities" });
+    expect(within(priorities).queryAllByTestId("slider-scale")).toHaveLength(0);
+  });
+});
