@@ -270,4 +270,22 @@ describe("card page", () => {
       "40",
     );
   });
+
+  it("keeps the rating help behind an info toggle, and counts the ratings set", async () => {
+    await renderApp({
+      path,
+      auth: fakeAuthService({
+        users,
+        signedIn: { id: "s1", email: "s@test.local" },
+      }).service,
+      scores: fakeScoreRepository([
+        { variantId: null, side: null, dimensionId: 3, score: 70 },
+      ]).repository,
+    });
+    const help = await screen.findByText(/^Floor: none of its conditions/);
+    expect(help).not.toBeVisible();
+    await userEvent.setup().click(screen.getByText("About these ratings"));
+    expect(help).toBeVisible();
+    expect(await screen.findByText("1 of 3 rated")).toBeInTheDocument();
+  });
 });

@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { fakeAuthService } from "../test/fakeAuthService.ts";
 import { renderApp } from "../test/renderApp.tsx";
+import { fakeScoreRepository } from "../test/fakeScoreRepository.ts";
 import { fakeCardRepository, sampleCards } from "../test/fakeCardRepository.ts";
 
 const table = () => screen.getByRole("table", { name: /cards/i });
@@ -310,5 +311,93 @@ describe("cards page", () => {
       expect(router.state.location.search.page).toBeUndefined(),
     );
     expect(screen.getAllByRole("article")).toHaveLength(10);
+  });
+
+  it("closes the pop-over when clicking outside it, and stops the page scrolling while open", async () => {
+    await renderApp({
+      path: "/cards?card=card-nebula-blade",
+      auth: fakeAuthService().service,
+    });
+    const dialog = await screen.findByRole("dialog", { name: "Nebula Blade" });
+    expect(document.body.style.overflow).toBe("hidden");
+    // A click inside doesn't close it
+    await userEvent.setup().click(dialog);
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    await userEvent.setup().click(screen.getByTestId("dialog-backdrop"));
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+    );
+    expect(document.body.style.overflow).toBe("");
+  });
+
+  it("shows where the card is in the results, and moves on with Skip", async () => {
+    await renderApp({
+      path: "/cards?view=list&card=card-become-the-shadow-lord",
+      auth: fakeAuthService().service,
+    });
+    const dialog = await screen.findByRole("dialog", {
+      name: "Become the Shadow Lord",
+    });
+    expect(within(dialog).getByText("1 of 4")).toBeInTheDocument();
+    await userEvent
+      .setup()
+      .click(within(dialog).getByRole("button", { name: "Skip" }));
+    expect(
+      await screen.findByRole("dialog", { name: "Fate Foreseen" }),
+    ).toBeInTheDocument();
+  });
+
+  it("marks a card reviewed and moves to the next one", async () => {
+    const scores = fakeScoreRepository();
+    await renderApp({
+      path: "/cards?view=list&card=card-become-the-shadow-lord",
+      auth: fakeAuthService({
+        users: { "s@test.local": { id: "s1", password: "pw", role: "scorer" } },
+        signedIn: { id: "s1", email: "s@test.local" },
+      }).service,
+      scores: scores.repository,
+    });
+    const user = userEvent.setup();
+    const dialog = await screen.findByRole("dialog", {
+      name: "Become the Shadow Lord",
+    });
+    await user.click(
+      await within(dialog).findByRole("button", {
+        name: "Mark reviewed and next",
+      }),
+    );
+    // The review summary opens on top; Escape would close only it
+    const summary = await screen.findByRole("dialog", {
+      name: "Mark reviewed",
+    });
+    await user.click(
+      within(summary).getByRole("button", { name: "Confirm review" }),
+    );
+    expect(
+      await screen.findByRole("dialog", { name: "Fate Foreseen" }),
+    ).toBeInTheDocument();
+    expect(scores.saved).toContain("review card-become-the-shadow-lord");
+  });
+
+  it("closes only the review summary on Escape, not the card", async () => {
+    await renderApp({
+      path: "/cards?view=list&card=card-become-the-shadow-lord",
+      auth: fakeAuthService({
+        users: { "s@test.local": { id: "s1", password: "pw", role: "scorer" } },
+        signedIn: { id: "s1", email: "s@test.local" },
+      }).service,
+    });
+    const user = userEvent.setup();
+    await user.click(
+      await screen.findByRole("button", { name: "Mark reviewed and next" }),
+    );
+    await screen.findByRole("dialog", { name: "Mark reviewed" });
+    await user.keyboard("{Escape}");
+    expect(
+      screen.queryByRole("dialog", { name: "Mark reviewed" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("dialog", { name: "Become the Shadow Lord" }),
+    ).toBeInTheDocument();
   });
 });
