@@ -222,4 +222,52 @@ describe("card page", () => {
         .filter(Boolean),
     ).toEqual(["Overall", "Floor", "Ceiling"]);
   });
+
+  it("lets a scorer rate floor and ceiling anyway on a card without conditions", async () => {
+    await renderApp({
+      path: "/cards/card-nebula-blade",
+      auth: fakeAuthService({
+        users,
+        signedIn: { id: "s1", email: "s@test.local" },
+      }).service,
+      scores: fakeScoreRepository().repository,
+    });
+    const floor = await screen.findByRole("group", { name: "Floor" });
+    expect(within(floor).getByRole("slider")).toBeDisabled();
+    await userEvent
+      .setup()
+      .click(
+        screen.getByRole("button", { name: "Rate floor and ceiling anyway" }),
+      );
+    expect(within(floor).getByRole("slider")).toBeEnabled();
+    expect(
+      within(screen.getByRole("group", { name: "Ceiling" })).getByRole(
+        "slider",
+      ),
+    ).toBeEnabled();
+    expect(
+      screen.queryByRole("button", { name: "Rate floor and ceiling anyway" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("starts with floor and ceiling enabled when they already have scores", async () => {
+    await renderApp({
+      path: "/cards/card-nebula-blade",
+      auth: fakeAuthService({
+        users,
+        signedIn: { id: "s1", email: "s@test.local" },
+      }).service,
+      scores: fakeScoreRepository([
+        { variantId: null, side: null, dimensionId: 1, score: 40 },
+      ]).repository,
+    });
+    const floor = await screen.findByRole("group", { name: "Floor" });
+    await waitFor(() =>
+      expect(within(floor).getByRole("slider")).toBeEnabled(),
+    );
+    expect(within(floor).getByRole("slider")).toHaveAttribute(
+      "aria-valuetext",
+      "40",
+    );
+  });
 });
