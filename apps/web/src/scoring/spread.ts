@@ -1,6 +1,7 @@
 // Flags an overall outside [floor, ceiling] (README "Floor, ceiling and overall").
 // It's a prompt to check, not a rule: the form never rejects it.
 import { resolveScore, type Side } from "@vdb/scoring";
+import { pitchName } from "../cards/pitch.ts";
 import type { Dimension, ScoreRow } from "./scoreRepository.ts";
 
 const SIDES: Side[] = ["forsaken", "usurper"];
@@ -33,7 +34,7 @@ export function spreadWarnings(
       if (o === null) continue;
       const f = at(floor.id, overall.id);
       const c = at(ceiling.id, overall.id);
-      const where = `${variants.length > 1 ? `Pitch ${v.pitch ?? "–"}, ` : ""}${SIDE_NAME[side]}`;
+      const where = `${variants.length > 1 ? `${pitchName(v.pitch)}, ` : ""}${SIDE_NAME[side]}`;
       if (c !== null && o > c) {
         found.push({
           where,

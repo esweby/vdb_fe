@@ -274,9 +274,7 @@ describe("card page", () => {
     expect(
       await details.findByText("Creates 1 Runechant when it attacks."),
     ).toBeInTheDocument();
-    expect(
-      details.getByText("Cost 0 · Power 4 · Defense 3"),
-    ).toBeInTheDocument();
+    expect(details.getByLabelText("Power 4")).toBeInTheDocument();
     expect(details.queryByText(/Pitch 3/)).not.toBeInTheDocument();
     expect(
       details.queryByText("Creates 3 Runechants when it attacks."),
@@ -291,8 +289,51 @@ describe("card page", () => {
     expect(
       details.getByText("Creates 3 Runechants when it attacks."),
     ).toBeInTheDocument();
+    expect(details.getByLabelText("Power 2")).toBeInTheDocument();
+  });
+
+  it("lays the details out like the card: cost, text with keywords in bold, type line, then defense", async () => {
+    await renderApp({
+      path,
+      auth: fakeAuthService().service,
+      scores: fakeScoreRepository().repository,
+    });
+    const details = within(
+      await screen.findByRole("region", { name: "Details" }),
+    );
+    const cost = await details.findByLabelText("Cost 0");
+    const keyword = details.getByText("Go again", { selector: "strong" });
+    const typeLine = details.getByText("Shadow Runeblade Action");
+    const defense = details.getByLabelText("Defense 3");
+    const whatItDoes = details.getByRole("heading", { name: "What it does" });
+    const inOrder = [cost, keyword, typeLine, defense, whatItDoes];
+    for (let i = 1; i < inOrder.length; i++) {
+      expect(
+        inOrder[i - 1]!.compareDocumentPosition(inOrder[i]!) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    }
+  });
+
+  it("groups What it does into sections, keywords after the effects", async () => {
+    await renderApp({
+      path,
+      auth: fakeAuthService().service,
+      scores: fakeScoreRepository().repository,
+    });
+    const details = within(
+      await screen.findByRole("region", { name: "Details" }),
+    );
+    const resolves = await details.findByRole("heading", {
+      name: "When it resolves",
+    });
+    const keywords = details.getByRole("heading", { name: "Keywords" });
     expect(
-      details.getByText("Cost 0 · Power 2 · Defense 3"),
+      resolves.compareDocumentPosition(keywords) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      within(keywords.nextElementSibling as HTMLElement).getByText("Go again."),
     ).toBeInTheDocument();
   });
 });
