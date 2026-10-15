@@ -1,0 +1,257 @@
+/* Decks: a header with New deck, My decks | Public decks tabs, and a grid of deck cards. */
+.page {
+  --pitch-1: #d63c35;
+  --pitch-2: #e6b422;
+  --pitch-3: #3b7dd8;
+  display: grid;
+  gap: 1.25rem;
+}
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.head h1 {
+  margin: 0;
+}
+.lead {
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+}
+.head > a {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.tabs {
+  display: flex;
+  gap: 1.75rem;
+  border-bottom: 1px solid var(--border);
+}
+.tabs button {
+  padding: 0.5rem 0 0.65rem;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  background: none;
+  font: inherit;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+}
+.tabs button[aria-selected="true"] {
+  color: var(--fg);
+  border-bottom-color: var(--accent);
+}
+.tabs button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* A set number of columns for each width, so every row spans the full width and cards are
+   the same size whether there are two decks or twenty. */
+.grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+@media (min-width: 96rem) {
+  .grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (max-width: 62rem) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 38rem) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* A deck card: art across the top, then name, numbers, pitch mix and visibility. */
+.tile {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface);
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
+}
+.tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgb(20 10 60 / 0.14);
+}
+.cover {
+  display: block;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--brand);
+}
+.cover img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* The art sits in the top part of a card. */
+  object-position: 50% 22%;
+  transform: scale(1.35);
+  transform-origin: 50% 22%;
+}
+.coverEmpty {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  font-family: var(--font-display);
+  font-size: 3rem;
+  color: var(--brand-highlight);
+}
+.body {
+  display: grid;
+  gap: 0.65rem;
+  padding: 1rem 1.15rem 1.15rem;
+}
+.name {
+  margin: 0;
+  font-size: 1.3rem;
+  line-height: 1.25;
+}
+.name a {
+  color: var(--fg);
+}
+.name a:hover {
+  color: var(--accent);
+  text-decoration: none;
+}
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.mix {
+  display: flex;
+  height: 0.45rem;
+  gap: 2px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--fg) 8%, var(--bg));
+}
+.mix i {
+  display: block;
+  flex-basis: 0;
+}
+.mixEmpty {
+  flex-grow: 1;
+}
+.foot {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.15rem;
+}
+.badge {
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+.badge[data-public] {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  color: var(--accent);
+}
+.badge[data-yours] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-fg);
+}
+.visibility {
+  margin-left: auto;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 0.82rem;
+  color: var(--accent);
+  cursor: pointer;
+}
+.visibility:hover {
+  text-decoration: underline;
+}
+
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  padding: 3rem 1rem;
+  text-align: center;
+  border: 1px dashed var(--border);
+  border-radius: 0.75rem;
+}
+.empty span {
+  color: var(--muted);
+  max-width: 46ch;
+}
+.emptyActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+.emptyActions a {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+.loading {
+  color: var(--muted);
+}
+
+/* New deck dialog */
+.newDeck {
+  display: grid;
+  gap: 0.75rem;
+}
+.check {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  cursor: pointer;
+}
+.check input {
+  margin-top: 0.25rem;
+}
+.check small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+.dialogActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile {
+    transition: none;
+  }
+}

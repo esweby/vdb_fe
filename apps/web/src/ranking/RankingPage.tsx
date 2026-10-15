@@ -136,7 +136,7 @@ export function RankingPage() {
   useEffect(() => {
     if (!user) return;
     let live = true;
-    decks.listDecks().then(
+    decks.listMyDecks(user.id).then(
       (d) => live && setDeckList(d),
       () => {},
     );

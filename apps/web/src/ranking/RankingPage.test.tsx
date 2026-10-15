@@ -1,9 +1,11 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
-import type { Deck } from "../decks/deckRepository.ts";
 import { fakeAuthService } from "../test/fakeAuthService.ts";
-import { fakeDeckRepository } from "../test/fakeDeckRepository.ts";
+import {
+  fakeDeckRepository,
+  type DeckFixture,
+} from "../test/fakeDeckRepository.ts";
 import { fakeScoreRepository } from "../test/fakeScoreRepository.ts";
 import { fakeStrategyRepository } from "../test/fakeStrategyRepository.ts";
 import { renderApp } from "../test/renderApp.tsx";
@@ -20,7 +22,7 @@ const signedIn = () =>
     users: { "u@test.local": { id: "u1", password: "pw", role: "user" } },
     signedIn: { id: "u1", email: "u@test.local" },
   }).service;
-const gateTempo = (over: Partial<Deck> = {}): Deck => ({
+const gateTempo = (over: Partial<DeckFixture> = {}): DeckFixture => ({
   id: "deck-1",
   name: "Gate tempo",
   updatedAt: "2026-10-14T10:00:00Z",
@@ -36,7 +38,7 @@ async function open(
   opts: {
     signedIn?: boolean;
     onlyScorer?: boolean;
-    decks?: Deck[];
+    decks?: DeckFixture[];
     scores?: ReturnType<typeof scores>;
   } = {},
 ) {

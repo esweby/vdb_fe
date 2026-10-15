@@ -12,6 +12,9 @@ select ok(
   'the first two questions are seeded'
 );
 
+-- Start from no answers, whatever the local database holds (rolled back at the end).
+delete from public.strategy_answers;
+
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-0000000005a1', 'scorer-a@test.local'),
   ('00000000-0000-0000-0000-0000000005a2', 'scorer-b@test.local'),
