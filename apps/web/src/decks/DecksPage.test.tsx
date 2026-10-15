@@ -245,12 +245,55 @@ describe("deck page", () => {
         .getAllByRole("listitem")
         .map((li) => li.getAttribute("aria-label")),
     ).toEqual([
+      // Weapons and equipment first, then deck cards, each by name.
+      "Nebula Blade",
       "Become the Shadow Lord",
       "Fate Foreseen",
       "Hocus Pocus",
-      "Nebula Blade",
     ]);
     expect(finder.getByText("4 cards")).toBeInTheDocument();
+  });
+
+  it("finds cards to add by keyword as well as name", async () => {
+    await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      decks: withDeck().repository,
+    });
+    const finder = within(
+      await screen.findByRole("region", { name: "Add cards" }),
+    );
+    const names = () =>
+      within(finder.getByRole("list", { name: "Cards to add" }))
+        .queryAllByRole("listitem")
+        .map((li) => li.getAttribute("aria-label"));
+    const user = userEvent.setup();
+    await user.type(finder.getByLabelText("Find cards"), "blood debt");
+    expect(names()).toEqual(["Hocus Pocus"]);
+    await user.clear(finder.getByLabelText("Find cards"));
+    await user.type(finder.getByLabelText("Find cards"), "go again");
+    expect(names()).toEqual(["Become the Shadow Lord"]);
+  });
+
+  it("adds a pitch with the R, Y and B buttons under each card", async () => {
+    const fake = withDeck();
+    await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      decks: fake.repository,
+    });
+    const hocus = within(
+      await screen.findByRole("listitem", { name: "Hocus Pocus" }),
+    );
+    expect(hocus.getAllByRole("button").map((b) => b.textContent)).toEqual([
+      "R",
+      "Y",
+      "B",
+    ]);
+    await userEvent
+      .setup()
+      .click(hocus.getByRole("button", { name: "Add Hocus Pocus (yellow)" }));
+    expect(fake.saved).toEqual(["set deck-1 hp2 1 main"]);
   });
 
   it("narrows the cards to add by pitch, offering only that pitch", async () => {
