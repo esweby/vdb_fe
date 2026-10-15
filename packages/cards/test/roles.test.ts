@@ -235,9 +235,40 @@ describe("rolesOf: Tempo engine", () => {
   });
 });
 
-describe("rolesOf: outside the engines", () => {
-  it("records usurp, disruption and tutors without linking them", () => {
+describe("rolesOf: Usurp engine", () => {
+  it("cards with Usurp are generators", () => {
     expect(rolesOf(card({ hasUsurp: true }))).toEqual(["usurp"]);
+    expect(ROLES.find((r) => r.id === "usurp")).toMatchObject({
+      engine: "usurp",
+      kind: "generator",
+    });
+  });
+
+  it("cards that reward being usurped, or usurping this turn, are payoffs", () => {
+    expect(
+      rolesOf(
+        card({
+          groups: ["runechant_aura"],
+          tokens: [{ token: "runechant", amount: 1, trigger: "on_usurped" }],
+        }),
+      ),
+    ).toContain("usurp_payoff");
+    expect(
+      rolesOf(
+        card({
+          costReductions: [{ amount: 6, conditions: ["usurped_this_turn"] }],
+        }),
+      ),
+    ).toEqual(["usurp_payoff"]);
+  });
+
+  it("Usurp cards fit what rewards usurping", () => {
+    expect(fits(["usurp"], ["usurp_payoff"])).toBe(true);
+  });
+});
+
+describe("rolesOf: outside the engines", () => {
+  it("records disruption and tutors without linking them", () => {
     expect(
       rolesOf(
         card({
@@ -266,7 +297,7 @@ describe("rolesOf: outside the engines", () => {
         }),
       ),
     ).toEqual(["tutor"]);
-    for (const id of ["usurp", "disruption", "tutor"]) {
+    for (const id of ["disruption", "tutor"]) {
       expect(ROLES.find((r) => r.id === id)?.engine).toBeNull();
     }
   });
