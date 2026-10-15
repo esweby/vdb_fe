@@ -11,6 +11,8 @@ export interface DatasetCard {
   types: string[];
   card_keywords: string[];
   functional_text_plain: string;
+  /** Print runs; each has the official image. Missing in trimmed test fixtures. */
+  printings?: DatasetPrinting[];
   type_text: string;
   cc_legal: boolean;
   cc_banned: boolean;
@@ -120,4 +122,12 @@ export function isViseraiLegal(card: DatasetCard): boolean {
     classes.every((c) => VISERAI_CLASSES.has(c)) &&
     talents.every((t) => VISERAI_TALENTS.has(t))
   );
+}
+
+export interface DatasetPrinting {
+  /** S standard, R rainbow foil, C cold foil, G gold foil */
+  foiling?: string;
+  /** e.g. "EA" extended art, "FA" full art; empty for normal art */
+  art_variations?: string[];
+  image_url?: string;
 }

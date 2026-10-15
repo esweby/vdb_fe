@@ -12,6 +12,7 @@ import {
   isViseraiLegal,
   specializationOf,
   type DatasetCard,
+  type DatasetPrinting,
 } from "./classify.ts";
 
 export interface AuthoredEntry {
@@ -32,6 +33,8 @@ export interface ImportVariant {
   power: number | null;
   defense: number | null;
   text: string | null;
+  /** Official image of the chosen printing, or null. */
+  imageUrl: string | null;
   /** Overrides merged over the card's attributes. */
   attributes: AuthoredCardAttributes;
 }
@@ -137,6 +140,7 @@ export function toImportCards(
         power: parseStat(e.power),
         defense: parseStat(e.defense),
         text: e.functional_text_plain || null,
+        imageUrl: pickImageUrl(e.printings),
         attributes: {},
       }))
       .sort((a, b) => (a.pitch ?? 0) - (b.pitch ?? 0));
@@ -219,4 +223,18 @@ function addAttributeGroups(card: ImportCard): void {
   card.attributes.groups = [
     ...new Set([...card.attributes.groups, ...derived]),
   ];
+}
+
+/**
+ * The image a variant shows: the latest printing with standard foiling and normal art, or
+ * failing that any printing with an image (docs/phase-one.md backlog).
+ */
+export function pickImageUrl(
+  printings: DatasetPrinting[] | undefined,
+): string | null {
+  const withImage = (printings ?? []).filter((p) => !!p.image_url);
+  const standard = withImage.filter(
+    (p) => (p.foiling ?? "S") === "S" && (p.art_variations ?? []).length === 0,
+  );
+  return (standard.at(-1) ?? withImage.at(-1))?.image_url ?? null;
 }

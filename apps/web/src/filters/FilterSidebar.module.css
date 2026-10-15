@@ -87,6 +87,11 @@ details[open] > .sectionHeading::before {
 .off .label {
   color: var(--muted);
 }
+/* A mechanic the user chose to hide. */
+.hidden .label {
+  color: var(--muted);
+  text-decoration: line-through;
+}
 .count {
   color: var(--muted);
   font-size: 0.8em;
@@ -136,4 +141,19 @@ details[open] > .sectionHeading::before {
 }
 .facet[open] > ul {
   margin: 0.15rem 0 0.6rem;
+}
+
+.badge {
+  flex: none !important;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  display: inline-grid;
+  place-items: center;
 }

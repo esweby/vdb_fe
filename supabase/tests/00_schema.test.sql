@@ -1,7 +1,7 @@
 -- Schema shape for phase one (README "Tables", docs/phase-one.md M1).
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(22);
+select plan(23);
 
 select has_type('public', 'side', 'side enum exists');
 select has_type('public', 'app_role', 'app_role enum exists');
@@ -44,6 +44,8 @@ select results_eq(
   array['format_classic_constructed', 'fringe_default', 'fringe_k', 'min_rating_count'],
   'scoring and format settings are seeded'
 );
+
+select has_column('public', 'variants', 'image_url', 'variants have an image url');
 
 select * from finish();
 rollback;

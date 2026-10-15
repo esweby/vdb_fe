@@ -16,23 +16,27 @@ export function CardModal(props: {
   variantId?: string;
   /** 1-based place in the results, and how many there are. */
   position?: { index: number; total: number };
-  previousId?: string;
-  nextId?: string;
-  onOpen: (cardId: string) => void;
+  /** Undefined at either end of the results. */
+  onPrevious?: () => void;
+  onNext?: () => void;
+  /** The next different card (after a review, its other pitches are done too). */
+  onNextCard?: () => void;
+  /** Choosing a pitch in the pop-over moves your place in the results. */
+  onChooseVariant?: (variantId: string) => void;
   onClose: () => void;
 }) {
-  const { previousId, nextId, onOpen } = props;
+  const { onPrevious, onNext } = props;
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
       if (target?.closest("input, textarea, select, [role=slider]")) return;
-      if (e.key === "ArrowLeft" && previousId) onOpen(previousId);
-      if (e.key === "ArrowRight" && nextId) onOpen(nextId);
+      if (e.key === "ArrowLeft") onPrevious?.();
+      if (e.key === "ArrowRight") onNext?.();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [previousId, nextId, onOpen]);
+  }, [onPrevious, onNext]);
 
   return (
     <Dialog
@@ -51,22 +55,23 @@ export function CardModal(props: {
             variant="ghost"
             aria-label="Previous card"
             title="Previous card (←)"
-            disabled={!previousId}
-            onClick={() => previousId && onOpen(previousId)}
+            disabled={!onPrevious}
+            onClick={() => onPrevious?.()}
           >
             ‹
           </Button>
           {props.position && (
             <span>
-              {props.position.index} of {props.position.total}
+              {props.position.index.toLocaleString("en-GB")} of{" "}
+              {props.position.total.toLocaleString("en-GB")}
             </span>
           )}
           <Button
             variant="ghost"
             aria-label="Next card"
             title="Next card (→)"
-            disabled={!nextId}
-            onClick={() => nextId && onOpen(nextId)}
+            disabled={!onNext}
+            onClick={() => onNext?.()}
           >
             ›
           </Button>
@@ -76,7 +81,9 @@ export function CardModal(props: {
       <CardScoringView
         cardId={props.cardId}
         initialVariantId={props.variantId}
-        onNext={nextId ? () => onOpen(nextId) : undefined}
+        onNext={onNext}
+        onNextCard={props.onNextCard}
+        onChooseVariant={props.onChooseVariant}
         inPopover
       />
     </Dialog>
