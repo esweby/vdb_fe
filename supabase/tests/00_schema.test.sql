@@ -36,7 +36,7 @@ select columns_are('public', 'community_scores', array[
 
 select results_eq(
   'select key from public.score_dimensions order by sort_order',
-  array['floor', 'ceiling', 'overall'],
+  array['overall', 'floor', 'ceiling'],
   'the three ratings (floor, ceiling, overall) are the score dimensions, in order'
 );
 select results_eq(

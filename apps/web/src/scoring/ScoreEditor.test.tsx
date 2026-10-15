@@ -92,11 +92,11 @@ describe("ScoreEditor", () => {
         initial={[{ variantId: null, side: null, dimensionId: 2, score: 70 }]}
       />,
     );
-    await userEvent
-      .setup()
-      .click(
-        screen.getByRole("checkbox", { name: "Same score for both sides" }),
-      );
+    await userEvent.setup().click(
+      screen.getByRole("checkbox", {
+        name: "Same score for both sides: Gate creation",
+      }),
+    );
     const usurper = screen.getByRole("slider", {
       name: "Gate creation, Usurper",
     });
@@ -148,11 +148,11 @@ describe("ScoreEditor", () => {
 
   it("labels split sliders with just the side or pitch", async () => {
     render(<Harness />);
-    await userEvent
-      .setup()
-      .click(
-        screen.getByRole("checkbox", { name: "Same score for both sides" }),
-      );
+    await userEvent.setup().click(
+      screen.getByRole("checkbox", {
+        name: "Same score for both sides: Gate creation",
+      }),
+    );
     const gate = screen.getByRole("group", { name: "Gate creation" });
     expect(within(gate).getByText("Forsaken")).toBeInTheDocument();
     expect(
@@ -196,5 +196,91 @@ describe("ScoreEditor", () => {
     expect(
       screen.getByRole("slider", { name: "Runechant creation" }),
     ).toBeEnabled();
+  });
+
+  it("gives each rating its own both-sides toggle", async () => {
+    render(<Harness />);
+    await userEvent.setup().click(
+      screen.getByRole("checkbox", {
+        name: "Same score for both sides: Gate creation",
+      }),
+    );
+    expect(
+      screen.getByRole("slider", { name: "Gate creation, Forsaken" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("slider", { name: "Runechant creation" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("slider", { name: "Runechant creation, Forsaken" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("opens a rating split by side when it already has per-side scores, so nothing is hidden", () => {
+    render(
+      <Harness
+        initial={[
+          { variantId: null, side: "forsaken", dimensionId: 2, score: 60 },
+        ]}
+      />,
+    );
+    expect(
+      screen.getByRole("slider", { name: "Gate creation, Forsaken" }),
+    ).toHaveAttribute("aria-valuetext", "60");
+    expect(
+      screen.getByRole("checkbox", {
+        name: "Same score for both sides: Gate creation",
+      }),
+    ).not.toBeChecked();
+    expect(
+      screen.getByRole("slider", { name: "Runechant creation" }),
+    ).toBeInTheDocument();
+  });
+
+  it("going back to one score for both sides removes that rating's per-side scores", async () => {
+    const onSet = vi.fn();
+    render(
+      <Harness
+        onSet={onSet}
+        initial={[
+          { variantId: null, side: null, dimensionId: 2, score: 70 },
+          { variantId: null, side: "forsaken", dimensionId: 2, score: 60 },
+          { variantId: null, side: "usurper", dimensionId: 2, score: 40 },
+        ]}
+      />,
+    );
+    await userEvent.setup().click(
+      screen.getByRole("checkbox", {
+        name: "Same score for both sides: Gate creation",
+      }),
+    );
+    expect(onSet.mock.calls).toEqual([
+      [{ variantId: null, side: "forsaken", dimensionId: 2 }, null],
+      [{ variantId: null, side: "usurper", dimensionId: 2 }, null],
+    ]);
+    expect(
+      screen.getByRole("slider", { name: "Gate creation" }),
+    ).toHaveAttribute("aria-valuetext", "70");
+  });
+
+  it("opens per pitch when pitch scores exist, and turning it off removes them", async () => {
+    const onSet = vi.fn();
+    render(
+      <Harness
+        onSet={onSet}
+        initial={[{ variantId: "red", side: null, dimensionId: 1, score: 80 }]}
+      />,
+    );
+    expect(
+      screen.getByRole("slider", { name: "Runechant creation, pitch 1" }),
+    ).toHaveAttribute("aria-valuetext", "80");
+    await userEvent
+      .setup()
+      .click(
+        screen.getByRole("checkbox", { name: "Score each pitch separately" }),
+      );
+    expect(onSet.mock.calls).toEqual([
+      [{ variantId: "red", side: null, dimensionId: 1 }, null],
+    ]);
   });
 });

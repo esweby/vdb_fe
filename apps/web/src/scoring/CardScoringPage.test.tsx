@@ -203,4 +203,23 @@ describe("card page", () => {
       expect(screen.getByRole("region", { name })).toBeInTheDocument();
     }
   });
+
+  it("puts overall at the top", async () => {
+    await renderApp({
+      path,
+      auth: fakeAuthService({
+        users,
+        signedIn: { id: "s1", email: "s@test.local" },
+      }).service,
+      scores: fakeScoreRepository().repository,
+    });
+    const scoresRegion = await screen.findByRole("region", { name: "Scores" });
+    await within(scoresRegion).findByRole("group", { name: "Overall" });
+    expect(
+      within(scoresRegion)
+        .getAllByRole("group")
+        .map((g) => g.querySelector("legend")?.textContent)
+        .filter(Boolean),
+    ).toEqual(["Overall", "Floor", "Ceiling"]);
+  });
 });

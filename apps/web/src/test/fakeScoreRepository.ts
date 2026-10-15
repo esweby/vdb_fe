@@ -9,9 +9,10 @@ import type {
 } from "../scoring/scoreRepository.ts";
 
 export const sampleDimensions: Dimension[] = [
+  // In display order (sort_order): overall first.
+  { id: 3, key: "overall", label: "Overall" },
   { id: 1, key: "floor", label: "Floor" },
   { id: 2, key: "ceiling", label: "Ceiling" },
-  { id: 3, key: "overall", label: "Overall" },
 ];
 
 export const sampleDetail: CardDetail = {
