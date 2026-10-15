@@ -39,7 +39,7 @@ export function Layout() {
             <Tab to="/cards">Cards</Tab>
             <Tab to="/ranking">Ranking</Tab>
             {canScore && <Tab to="/needs-review">Needs review</Tab>}
-            {signedIn && <Tab to="/decks">Decks</Tab>}
+            <Tab to="/decks">Decks</Tab>
             <span className={styles.spacer} />
             {signedIn && <Tab to="/account">Account</Tab>}
             {signedIn ? (

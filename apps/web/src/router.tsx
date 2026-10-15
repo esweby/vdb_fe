@@ -90,7 +90,9 @@ const routeTree = rootRoute.addChildren([
   createRoute({
     getParentRoute: () => rootRoute,
     path: "/decks",
-    beforeLoad: requireSignedIn,
+    // Public decks can be browsed signed out; "My decks" needs signing in.
+    validateSearch: (search: Record<string, unknown>): { tab?: "public" } =>
+      search.tab === "public" ? { tab: "public" } : {},
     component: DecksPage,
   }),
   createRoute({

@@ -110,7 +110,10 @@ describe("decks list", () => {
     const fake = decksOf([]);
     await renderApp({ path: "/decks", auth: auth(), decks: fake.repository });
     const user = userEvent.setup();
-    await user.click(await screen.findByRole("button", { name: "New deck" }));
+    // With no decks yet, the empty state offers New deck too; use the header's.
+    await user.click(
+      (await screen.findAllByRole("button", { name: "New deck" }))[0]!,
+    );
     const dialog = within(screen.getByRole("dialog", { name: "New deck" }));
     await user.click(dialog.getByRole("button", { name: "Create deck" }));
     expect(dialog.getByText("Name the deck first.")).toBeInTheDocument();
