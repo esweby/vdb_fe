@@ -30,6 +30,10 @@ describe("Mark reviewed", () => {
       within(dialog).getAllByText("80 (inherited)").length,
     ).toBeGreaterThan(0);
     expect(within(dialog).getAllByText("0 (blank)").length).toBeGreaterThan(0);
+    // Pitches are named by colour
+    expect(within(dialog).getAllByText("Red, Forsaken").length).toBeGreaterThan(
+      0,
+    );
   });
 
   it("records the review and runs the community score job for scorers", async () => {

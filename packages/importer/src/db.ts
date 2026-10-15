@@ -30,9 +30,9 @@ export async function upsertCards(
 
       for (const v of card.variants) {
         await tx`
-          insert into public.variants (card_id, external_id, pitch, cost, power, defense, text, attributes)
+          insert into public.variants (card_id, external_id, pitch, cost, power, defense, text, image_url, attributes)
           values (${row!.id}, ${v.externalId}, ${v.pitch}, ${v.cost}, ${v.power}, ${v.defense}, ${v.text},
-                  ${tx.json(v.attributes as never)})
+                  ${v.imageUrl ?? null}, ${tx.json(v.attributes as never)})
           on conflict (external_id) do update set
             card_id = excluded.card_id,
             pitch = excluded.pitch,
@@ -40,6 +40,7 @@ export async function upsertCards(
             power = excluded.power,
             defense = excluded.defense,
             text = excluded.text,
+            image_url = excluded.image_url,
             attributes = excluded.attributes`;
       }
     }

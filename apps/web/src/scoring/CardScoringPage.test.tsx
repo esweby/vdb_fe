@@ -85,20 +85,7 @@ describe("card page", () => {
     ).toHaveAttribute("aria-valuetext", "80");
   });
 
-  it("describes each pitch's own attributes", async () => {
-    await renderApp({
-      path: "/cards/card-hocus-pocus",
-      auth: fakeAuthService().service,
-    });
-    expect(
-      await screen.findByText("Pitch 1: Creates 1 Runechant when it attacks."),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Pitch 3: Creates 3 Runechants when it attacks."),
-    ).toBeInTheDocument();
-  });
-
-  it("asks only overall for a card without conditions, with a way to rate floor and ceiling too", async () => {
+  it("shows floor and ceiling on every card, greyed out when the card has no conditions", async () => {
     await renderApp({
       path: "/cards/card-nebula-blade",
       auth: fakeAuthService({
@@ -107,19 +94,29 @@ describe("card page", () => {
       }).service,
       scores: fakeScoreRepository().repository,
     });
+    const floor = await screen.findByRole("group", { name: "Floor" });
+    expect(within(floor).getByRole("slider")).toBeDisabled();
     expect(
-      await screen.findByRole("group", { name: "Overall" }),
+      within(floor).getByText("Same as overall: this card has no conditions."),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole("group", { name: "Floor" }),
+      within(screen.getByRole("group", { name: "Ceiling" })).getByRole(
+        "slider",
+      ),
+    ).toBeDisabled();
+    expect(
+      within(screen.getByRole("group", { name: "Overall" })).getByRole(
+        "slider",
+      ),
+    ).toBeEnabled();
+    expect(
+      screen.queryByRole("checkbox", { name: "Rate floor and ceiling too" }),
     ).not.toBeInTheDocument();
-    await userEvent
-      .setup()
-      .click(
-        screen.getByRole("checkbox", { name: "Rate floor and ceiling too" }),
-      );
-    expect(screen.getByRole("group", { name: "Floor" })).toBeInTheDocument();
-    expect(screen.getByRole("group", { name: "Ceiling" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", {
+        name: "Floor and ceiling same as overall",
+      }),
+    ).not.toBeInTheDocument();
   });
 
   it("asks floor, ceiling and overall for a card with conditions, and can make floor and ceiling the same as overall", async () => {
@@ -169,16 +166,174 @@ describe("card page", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows each pitch's cost, power and defense", async () => {
+  it("lays the card, its details and scoring side by side", async () => {
+    await renderApp({
+      path,
+      auth: fakeAuthService().service,
+      scores: fakeScoreRepository().repository,
+    });
+    await screen.findByRole("heading", { name: "Become the Shadow Lord" });
+    for (const name of ["Card", "Details", "Scores"]) {
+      expect(screen.getByRole("region", { name })).toBeInTheDocument();
+    }
+  });
+
+  it("puts overall at the top", async () => {
+    await renderApp({
+      path,
+      auth: fakeAuthService({
+        users,
+        signedIn: { id: "s1", email: "s@test.local" },
+      }).service,
+      scores: fakeScoreRepository().repository,
+    });
+    const scoresRegion = await screen.findByRole("region", { name: "Scores" });
+    await within(scoresRegion).findByRole("group", { name: "Overall" });
+    expect(
+      within(scoresRegion)
+        .getAllByRole("group")
+        .map((g) => g.querySelector("legend")?.textContent)
+        .filter(Boolean),
+    ).toEqual(["Overall", "Floor", "Ceiling"]);
+  });
+
+  it("lets a scorer rate floor and ceiling anyway on a card without conditions", async () => {
+    await renderApp({
+      path: "/cards/card-nebula-blade",
+      auth: fakeAuthService({
+        users,
+        signedIn: { id: "s1", email: "s@test.local" },
+      }).service,
+      scores: fakeScoreRepository().repository,
+    });
+    const floor = await screen.findByRole("group", { name: "Floor" });
+    expect(within(floor).getByRole("slider")).toBeDisabled();
+    await userEvent
+      .setup()
+      .click(
+        screen.getByRole("button", { name: "Rate floor and ceiling anyway" }),
+      );
+    expect(within(floor).getByRole("slider")).toBeEnabled();
+    expect(
+      within(screen.getByRole("group", { name: "Ceiling" })).getByRole(
+        "slider",
+      ),
+    ).toBeEnabled();
+    expect(
+      screen.queryByRole("button", { name: "Rate floor and ceiling anyway" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("starts with floor and ceiling enabled when they already have scores", async () => {
+    await renderApp({
+      path: "/cards/card-nebula-blade",
+      auth: fakeAuthService({
+        users,
+        signedIn: { id: "s1", email: "s@test.local" },
+      }).service,
+      scores: fakeScoreRepository([
+        { variantId: null, side: null, dimensionId: 1, score: 40 },
+      ]).repository,
+    });
+    const floor = await screen.findByRole("group", { name: "Floor" });
+    await waitFor(() =>
+      expect(within(floor).getByRole("slider")).toBeEnabled(),
+    );
+    expect(within(floor).getByRole("slider")).toHaveAttribute(
+      "aria-valuetext",
+      "40",
+    );
+  });
+
+  it("keeps the rating help behind an info toggle, and counts the ratings set", async () => {
+    await renderApp({
+      path,
+      auth: fakeAuthService({
+        users,
+        signedIn: { id: "s1", email: "s@test.local" },
+      }).service,
+      scores: fakeScoreRepository([
+        { variantId: null, side: null, dimensionId: 3, score: 70 },
+      ]).repository,
+    });
+    const help = await screen.findByText(/^Floor: none of its conditions/);
+    expect(help).not.toBeVisible();
+    await userEvent.setup().click(screen.getByText("About these ratings"));
+    expect(help).toBeVisible();
+    expect(await screen.findByText("1 of 3 rated")).toBeInTheDocument();
+  });
+
+  it("shows only the chosen pitch's details, switching with the pitch buttons", async () => {
     await renderApp({
       path: "/cards/card-hocus-pocus",
       auth: fakeAuthService().service,
     });
+    const details = within(
+      await screen.findByRole("region", { name: "Details" }),
+    );
     expect(
-      await screen.findByText("Pitch 1: cost 0 · power 4 · defense 3"),
+      await details.findByText("Creates 1 Runechant when it attacks."),
     ).toBeInTheDocument();
+    expect(details.getByLabelText("Power 4")).toBeInTheDocument();
+    expect(details.queryByText(/Pitch 3/)).not.toBeInTheDocument();
     expect(
-      screen.getByText("Pitch 3: cost 0 · power 2 · defense 3"),
+      details.queryByText("Creates 3 Runechants when it attacks."),
+    ).not.toBeInTheDocument();
+
+    const pitch = within(screen.getByRole("group", { name: "Pitch" }));
+    expect(pitch.getByRole("button", { name: "Red" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await userEvent.setup().click(pitch.getByRole("button", { name: "Blue" }));
+    expect(
+      details.getByText("Creates 3 Runechants when it attacks."),
+    ).toBeInTheDocument();
+    expect(details.getByLabelText("Power 2")).toBeInTheDocument();
+  });
+
+  it("lays the details out like the card: cost, text with keywords in bold, type line, then defense", async () => {
+    await renderApp({
+      path,
+      auth: fakeAuthService().service,
+      scores: fakeScoreRepository().repository,
+    });
+    const details = within(
+      await screen.findByRole("region", { name: "Details" }),
+    );
+    const cost = await details.findByLabelText("Cost 0");
+    const keyword = details.getByText("Go again", { selector: "strong" });
+    const typeLine = details.getByText("Shadow Runeblade Action");
+    const defense = details.getByLabelText("Defense 3");
+    const whatItDoes = details.getByRole("heading", { name: "What it does" });
+    const inOrder = [cost, keyword, typeLine, defense, whatItDoes];
+    for (let i = 1; i < inOrder.length; i++) {
+      expect(
+        inOrder[i - 1]!.compareDocumentPosition(inOrder[i]!) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    }
+  });
+
+  it("groups What it does into sections, keywords after the effects", async () => {
+    await renderApp({
+      path,
+      auth: fakeAuthService().service,
+      scores: fakeScoreRepository().repository,
+    });
+    const details = within(
+      await screen.findByRole("region", { name: "Details" }),
+    );
+    const resolves = await details.findByRole("heading", {
+      name: "When it resolves",
+    });
+    const keywords = details.getByRole("heading", { name: "Keywords" });
+    expect(
+      resolves.compareDocumentPosition(keywords) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      within(keywords.nextElementSibling as HTMLElement).getByText("Go again."),
     ).toBeInTheDocument();
   });
 });

@@ -139,7 +139,7 @@ Scorers are volunteers. If the app feels like a prototype they won't engage, and
 - [ ] **No dead ends or placeholders.** A real home page explains the app and points to the next step. Every page has a way forward.
 - [ ] **Every state is designed:** loading, empty (with the next action), error (in plain words, with a retry) and saved (visible confirmation).
 - [ ] **Consistent look:** one type scale, spacing scale and colour tokens. Pitch colours everywhere a pitch appears. Dark mode checked.
-- [ ] **Card images** on the card page and in the deck builder, moved forward from the backlog. Recognising cards by their art is what makes it feel like a FaB tool.
+- [x] **Card images** on the card page and in the deck builder, moved forward from the backlog. Recognising cards by their art is what makes it feel like a FaB tool. Done: `variants.image_url` from the latest standard, normal-art printing; the stand-in shows when there is no image or it fails to load.
 - [ ] **Works on a phone** for scoring and browsing. Deck building can be desktop-first.
 - [ ] **Fast scoring:** "Next card" after Mark reviewed, and sensible keyboard focus, so a scorer can work through a list without reaching for the mouse each time.
 - [ ] **Accessible:** keyboard reachable, visible focus, labelled controls (mostly true already, because the tests query by role and name).

@@ -1,4 +1,4 @@
-import { getRouteApi, Link } from "@tanstack/react-router";
+import { getRouteApi, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { applyFilters } from "../filters/applyFilters.ts";
 import { FilteredLayout } from "../filters/FilteredLayout.tsx";
@@ -9,8 +9,13 @@ import { useUrlFilters } from "../filters/useUrlFilters.ts";
 import { useAppSelector } from "../hooks.ts";
 import { useServices } from "../servicesContext.ts";
 import { Table, TextField, type Column } from "../ui/index.ts";
-import { CARD_VIEWS, type CardView } from "../filters/useUrlFilters.ts";
+import {
+  CARD_VIEWS,
+  type CardView,
+  type ListSearch,
+} from "../filters/useUrlFilters.ts";
 import type { CardSummary } from "./cardRepository.ts";
+import { CardModal } from "./CardModal.tsx";
 import { cardFacets, pitchShown } from "./facets.ts";
 import {
   classOf,
@@ -48,7 +53,15 @@ const columns: Column<CardSummary>[] = [
     key: "name",
     header: "Name",
     render: (c) => (
-      <Link to="/cards/$cardId" params={{ cardId: c.id }}>
+      <Link
+        to="/cards"
+        search={(prev: ListSearch) => ({
+          ...prev,
+          card: c.id,
+          variant: undefined,
+        })}
+        resetScroll={false}
+      >
         {c.name}
       </Link>
     ),
@@ -118,9 +131,76 @@ export function CardsPage() {
       ? `Showing ${n(loaded)} of ${n(total)} cards${total < everything ? ` (of ${n(everything)})` : ""}`
       : `${n(total)} of ${n(everything)} cards`;
 
+  // The pop-over steps through the results in their current order: each pitch is its own stop
+  // in card views (as the tiles are), each card in the list.
+  const search = route.useSearch();
+  const navigate = useNavigate();
+  const open = search.card
+    ? items.find((c) => c.id === search.card)
+    : undefined;
+  type Stop = { cardId: string; variantId?: string };
+  const stops: Stop[] =
+    filters.view === "list"
+      ? shown.map((c) => ({ cardId: c.id }))
+      : tiles.map((t) => ({ cardId: t.card.id, variantId: t.variant.id }));
+  const at = open
+    ? stops.findIndex(
+        (st) =>
+          st.cardId === open.id &&
+          (!st.variantId || !search.variant || st.variantId === search.variant),
+      )
+    : -1;
+  const goTo = (stop: Stop | undefined) => {
+    if (!stop) return;
+    void navigate({
+      to: ".",
+      replace: true,
+      resetScroll: false,
+      search: (prev: ListSearch) => ({
+        ...prev,
+        card: stop.cardId,
+        variant: stop.variantId,
+      }),
+    });
+  };
+  // After a review, the other pitches of the same card are done too: go to the next card.
+  const nextCard =
+    at >= 0
+      ? stops.slice(at + 1).find((st) => st.cardId !== open?.id)
+      : undefined;
+  const closeCard = () =>
+    void navigate({
+      to: ".",
+      replace: true,
+      resetScroll: false,
+      search: (prev: ListSearch) => ({
+        ...prev,
+        card: undefined,
+        variant: undefined,
+      }),
+    });
+
   return (
     <>
-      <h1>Cards</h1>
+      {open && (
+        <CardModal
+          cardId={open.id}
+          name={open.name}
+          verified={open.attributesVerified}
+          position={
+            at >= 0 ? { index: at + 1, total: stops.length } : undefined
+          }
+          variantId={search.variant}
+          onPrevious={at > 0 ? () => goTo(stops[at - 1]) : undefined}
+          onNext={
+            at >= 0 && stops[at + 1] ? () => goTo(stops[at + 1]) : undefined
+          }
+          onNextCard={nextCard ? () => goTo(nextCard) : undefined}
+          onChooseVariant={(variantId) => goTo({ cardId: open.id, variantId })}
+          onClose={closeCard}
+        />
+      )}
+      <h1 className={styles.visuallyHidden}>Cards</h1>
       {status === "failed" && <p role="alert">Couldn't load cards: {error}</p>}
       {status === "loading" && <p>Loading cards…</p>}
       {status === "loaded" && (
@@ -133,13 +213,15 @@ export function CardsPage() {
             <div className={styles.toolbar}>
               <TextField
                 label="Search"
+                hideLabel
                 type="search"
-                placeholder="Card name"
+                className={styles.search}
+                placeholder="Search card names"
                 value={filters.q}
                 onChange={(e) => filters.setQ(e.target.value)}
               />
               <label className={styles.select}>
-                Sort
+                <span className={styles.visuallyHidden}>Sort</span>
                 <select
                   value={filters.sort}
                   onChange={(e) => filters.setSort(e.target.value as CardSort)}
@@ -203,7 +285,24 @@ export function CardsPage() {
             >
               {tiles.slice(0, loaded).map(({ card, variant }) => (
                 <li key={variant.id}>
-                  <CardTile card={card} variant={variant} />
+                  <CardTile
+                    card={card}
+                    variant={variant}
+                    nameLink={({ className, children }) => (
+                      <Link
+                        to="/cards"
+                        search={(prev: ListSearch) => ({
+                          ...prev,
+                          card: card.id,
+                          variant: variant.id,
+                        })}
+                        resetScroll={false}
+                        className={className}
+                      >
+                        {children}
+                      </Link>
+                    )}
+                  />
                 </li>
               ))}
             </ul>

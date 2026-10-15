@@ -15,6 +15,7 @@ const variants = [
 ];
 
 function Harness(props: {
+  chosenVariantId?: string;
   initial?: ScoreRow[];
   onSet?: (r: Omit<ScoreRow, "score">, s: number | null) => void;
 }) {
@@ -23,6 +24,7 @@ function Harness(props: {
     <ScoreEditor
       dimensions={dimensions}
       variants={variants}
+      chosenVariantId={props.chosenVariantId}
       rows={rows}
       onSet={(key, score) => {
         props.onSet?.(key, score);
@@ -92,11 +94,11 @@ describe("ScoreEditor", () => {
         initial={[{ variantId: null, side: null, dimensionId: 2, score: 70 }]}
       />,
     );
-    await userEvent
-      .setup()
-      .click(
-        screen.getByRole("checkbox", { name: "Same score for both sides" }),
-      );
+    await userEvent.setup().click(
+      screen.getByRole("checkbox", {
+        name: "Same score for both sides: Gate creation",
+      }),
+    );
     const usurper = screen.getByRole("slider", {
       name: "Gate creation, Usurper",
     });
@@ -106,21 +108,6 @@ describe("ScoreEditor", () => {
         "Inherits 70",
       ),
     ).toHaveLength(2);
-  });
-
-  it("scores each pitch separately when asked", async () => {
-    render(<Harness />);
-    await userEvent
-      .setup()
-      .click(
-        screen.getByRole("checkbox", { name: "Score each pitch separately" }),
-      );
-    expect(
-      screen.getByRole("slider", { name: "Gate creation, pitch 1" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("slider", { name: "Gate creation, pitch 3" }),
-    ).toBeInTheDocument();
   });
 
   it("only offers per-pitch scoring when the card has several pitches", () => {
@@ -133,7 +120,7 @@ describe("ScoreEditor", () => {
       />,
     );
     expect(
-      screen.queryByRole("checkbox", { name: "Score each pitch separately" }),
+      screen.queryByRole("checkbox", { name: /^Different score for/ }),
     ).not.toBeInTheDocument();
   });
 
@@ -148,11 +135,11 @@ describe("ScoreEditor", () => {
 
   it("labels split sliders with just the side or pitch", async () => {
     render(<Harness />);
-    await userEvent
-      .setup()
-      .click(
-        screen.getByRole("checkbox", { name: "Same score for both sides" }),
-      );
+    await userEvent.setup().click(
+      screen.getByRole("checkbox", {
+        name: "Same score for both sides: Gate creation",
+      }),
+    );
     const gate = screen.getByRole("group", { name: "Gate creation" });
     expect(within(gate).getByText("Forsaken")).toBeInTheDocument();
     expect(
@@ -173,5 +160,156 @@ describe("ScoreEditor", () => {
     expect(
       screen.getByRole("slider", { name: "Gate creation, Forsaken" }),
     ).toBeInTheDocument();
+  });
+
+  it("greys out locked dimensions with a reason, keeping their place", () => {
+    render(
+      <ScoreEditor
+        dimensions={dimensions}
+        variants={variants}
+        rows={[]}
+        onSet={() => {}}
+        locked={{ ids: [2], reason: "Same as overall: no conditions." }}
+      />,
+    );
+    const gate = screen.getByRole("group", { name: "Gate creation" });
+    expect(within(gate).getByRole("slider")).toBeDisabled();
+    expect(
+      within(gate).getByRole("button", { name: "Not relevant" }),
+    ).toBeDisabled();
+    expect(
+      within(gate).getByText("Same as overall: no conditions."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("slider", { name: "Runechant creation" }),
+    ).toBeEnabled();
+  });
+
+  it("gives each rating its own both-sides toggle", async () => {
+    render(<Harness />);
+    await userEvent.setup().click(
+      screen.getByRole("checkbox", {
+        name: "Same score for both sides: Gate creation",
+      }),
+    );
+    expect(
+      screen.getByRole("slider", { name: "Gate creation, Forsaken" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("slider", { name: "Runechant creation" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("slider", { name: "Runechant creation, Forsaken" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("opens a rating split by side when it already has per-side scores, so nothing is hidden", () => {
+    render(
+      <Harness
+        initial={[
+          { variantId: null, side: "forsaken", dimensionId: 2, score: 60 },
+        ]}
+      />,
+    );
+    expect(
+      screen.getByRole("slider", { name: "Gate creation, Forsaken" }),
+    ).toHaveAttribute("aria-valuetext", "60");
+    expect(
+      screen.getByRole("checkbox", {
+        name: "Same score for both sides: Gate creation",
+      }),
+    ).not.toBeChecked();
+    expect(
+      screen.getByRole("slider", { name: "Runechant creation" }),
+    ).toBeInTheDocument();
+  });
+
+  it("going back to one score for both sides removes that rating's per-side scores", async () => {
+    const onSet = vi.fn();
+    render(
+      <Harness
+        onSet={onSet}
+        initial={[
+          { variantId: null, side: null, dimensionId: 2, score: 70 },
+          { variantId: null, side: "forsaken", dimensionId: 2, score: 60 },
+          { variantId: null, side: "usurper", dimensionId: 2, score: 40 },
+        ]}
+      />,
+    );
+    await userEvent.setup().click(
+      screen.getByRole("checkbox", {
+        name: "Same score for both sides: Gate creation",
+      }),
+    );
+    expect(onSet.mock.calls).toEqual([
+      [{ variantId: null, side: "forsaken", dimensionId: 2 }, null],
+      [{ variantId: null, side: "usurper", dimensionId: 2 }, null],
+    ]);
+    expect(
+      screen.getByRole("slider", { name: "Gate creation" }),
+    ).toHaveAttribute("aria-valuetext", "70");
+  });
+
+  it("scores the pitch being looked at separately with the same single slider", async () => {
+    render(
+      <Harness
+        chosenVariantId="blue"
+        initial={[{ variantId: null, side: null, dimensionId: 2, score: 70 }]}
+      />,
+    );
+    await userEvent
+      .setup()
+      .click(
+        screen.getByRole("checkbox", { name: "Different score for Blue" }),
+      );
+    const gate = within(screen.getByRole("group", { name: "Gate creation" }));
+    // One slider per rating: now Blue's, falling back to the all-pitches score
+    expect(gate.getAllByRole("slider")).toHaveLength(1);
+    expect(
+      gate.getByRole("slider", { name: "Gate creation, Blue" }),
+    ).toHaveAttribute("aria-valuetext", "Not set");
+    expect(gate.getByText("Inherits 70")).toBeInTheDocument();
+    expect(gate.queryByText("All pitches")).not.toBeInTheDocument();
+  });
+
+  it("opens the pitch's own scores, and says which other pitches have their own", () => {
+    const initial = [
+      { variantId: "red", side: null, dimensionId: 1, score: 80 },
+    ] as ScoreRow[];
+    const { unmount } = render(
+      <Harness chosenVariantId="red" initial={initial} />,
+    );
+    expect(
+      screen.getByRole("checkbox", { name: "Different score for Red" }),
+    ).toBeChecked();
+    expect(
+      screen.getByRole("slider", { name: "Runechant creation, Red" }),
+    ).toHaveAttribute("aria-valuetext", "80");
+    unmount();
+    render(<Harness chosenVariantId="blue" initial={initial} />);
+    expect(
+      screen.getByRole("checkbox", { name: "Different score for Blue" }),
+    ).not.toBeChecked();
+    expect(screen.getByText("Red has its own scores.")).toBeInTheDocument();
+  });
+
+  it("turning it off clears only that pitch's scores", async () => {
+    const onSet = vi.fn();
+    render(
+      <Harness
+        chosenVariantId="red"
+        onSet={onSet}
+        initial={[
+          { variantId: "red", side: null, dimensionId: 1, score: 80 },
+          { variantId: "blue", side: null, dimensionId: 1, score: 30 },
+        ]}
+      />,
+    );
+    await userEvent
+      .setup()
+      .click(screen.getByRole("checkbox", { name: "Different score for Red" }));
+    expect(onSet.mock.calls).toEqual([
+      [{ variantId: "red", side: null, dimensionId: 1 }, null],
+    ]);
   });
 });

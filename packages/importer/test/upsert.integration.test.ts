@@ -50,6 +50,25 @@ describe("upsertCards", () => {
     });
   });
 
+  it("stores each variant's image", async () => {
+    const withImage = cards.map((c, i) =>
+      i === 0
+        ? {
+            ...c,
+            variants: c.variants.map((v) => ({
+              ...v,
+              imageUrl: "https://img/test.webp",
+            })),
+          }
+        : c,
+    );
+    await upsertCards(sql, withImage);
+    const [row] = await sql`
+      select v.image_url from public.variants v join public.cards c on c.id = v.card_id
+       where c.external_id = ${withImage[0]!.externalId} limit 1`;
+    expect(row?.image_url).toBe("https://img/test.webp");
+  });
+
   it("is safe to re-run: no duplicates", async () => {
     await upsertCards(sql, cards);
     expect(await counts()).toEqual({

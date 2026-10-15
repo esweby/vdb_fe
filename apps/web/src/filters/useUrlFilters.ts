@@ -10,6 +10,9 @@ export interface ListSearch extends FilterSearch {
   view?: CardView;
   /** 1-based; page 1 is left out of the URL. */
   page?: number;
+  /** The card open in the pop-over, and the pitch that was clicked. */
+  card?: string;
+  variant?: string;
 }
 
 export type CardView = "small" | "large" | "list";
@@ -34,6 +37,12 @@ export function validateListSearch(
     page:
       Number.isInteger(Number(search.page)) && Number(search.page) > 1
         ? Number(search.page)
+        : undefined,
+    card:
+      typeof search.card === "string" && search.card ? search.card : undefined,
+    variant:
+      typeof search.variant === "string" && search.variant
+        ? search.variant
         : undefined,
   };
 }

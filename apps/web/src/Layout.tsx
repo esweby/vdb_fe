@@ -1,10 +1,21 @@
 import { Link, Outlet } from "@tanstack/react-router";
+import type { ComponentProps } from "react";
 import { useSelector } from "react-redux";
 import { selectCanScore, selectIsSignedIn } from "./auth/authSlice.ts";
 import type { RootState } from "./store.ts";
 import { useServices } from "./servicesContext.ts";
 import styles from "./Layout.module.css";
-import { Button } from "./ui/index.ts";
+
+/** A tab in the header; the current page's tab is marked for screen readers and styled. */
+function Tab(props: ComponentProps<typeof Link>) {
+  return (
+    <Link
+      {...props}
+      className={styles.tab}
+      activeProps={{ "aria-current": "page", className: styles.tabActive }}
+    />
+  );
+}
 
 export function Layout() {
   const signedIn = useSelector((s: RootState) => selectIsSignedIn(s));
@@ -14,23 +25,36 @@ export function Layout() {
   return (
     <div className={styles.app}>
       <header className={styles.header}>
-        <Link to="/" className={styles.brand}>
-          Viserai Deck Builder
-        </Link>
-        <nav aria-label="Main" className={styles.nav}>
-          <Link to="/cards">Cards</Link>
-          <Link to="/ranking">Ranking</Link>
-          {canScore && <Link to="/needs-review">Needs review</Link>}
-          {signedIn && <Link to="/decks">Decks</Link>}
-          {signedIn && <Link to="/account">Account</Link>}
-          {signedIn ? (
-            <Button variant="ghost" onClick={() => void auth.signOut()}>
-              Sign out
-            </Button>
-          ) : (
-            <Link to="/sign-in">Sign in</Link>
-          )}
-        </nav>
+        <div className={styles.bar}>
+          <Link
+            to="/"
+            className={styles.brand}
+            aria-label="Viserai Deck Builder, home"
+            activeOptions={{ exact: true }}
+          >
+            <span className={styles.wordmark}>Viserai</span>
+            <span className={styles.subtitle}>Deck Builder</span>
+          </Link>
+          <nav aria-label="Main" className={styles.nav}>
+            <Tab to="/cards">Cards</Tab>
+            <Tab to="/ranking">Ranking</Tab>
+            {canScore && <Tab to="/needs-review">Needs review</Tab>}
+            {signedIn && <Tab to="/decks">Decks</Tab>}
+            <span className={styles.spacer} />
+            {signedIn && <Tab to="/account">Account</Tab>}
+            {signedIn ? (
+              <button
+                type="button"
+                className={styles.signOut}
+                onClick={() => void auth.signOut()}
+              >
+                Sign out
+              </button>
+            ) : (
+              <Tab to="/sign-in">Sign in</Tab>
+            )}
+          </nav>
+        </div>
       </header>
       <main className={styles.main}>
         <Outlet />

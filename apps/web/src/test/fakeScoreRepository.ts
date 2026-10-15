@@ -9,9 +9,10 @@ import type {
 } from "../scoring/scoreRepository.ts";
 
 export const sampleDimensions: Dimension[] = [
+  // In display order (sort_order): overall first.
+  { id: 3, key: "overall", label: "Overall" },
   { id: 1, key: "floor", label: "Floor" },
   { id: 2, key: "ceiling", label: "Ceiling" },
-  { id: 3, key: "overall", label: "Overall" },
 ];
 
 export const sampleDetail: CardDetail = {
@@ -20,7 +21,7 @@ export const sampleDetail: CardDetail = {
   type: "action",
   classes: ["Runeblade"],
   talents: ["Shadow"],
-  text: "Banish a card from your hand. If it's Runeblade, create a Runechant token.",
+  text: "Banish a card from your hand. If it's Runeblade, create a Runechant token. Go again",
   attributes: {
     hasGoAgain: true,
     hasBloodDebt: false,
