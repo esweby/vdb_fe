@@ -16,7 +16,10 @@ const rankedNames = () =>
   ranked()
     .getAllByRole("row")
     .slice(1)
+    .filter((r) => within(r).queryByRole("link"))
     .map((r) => within(r).getByRole("link").textContent);
+const openTab = (name: RegExp) =>
+  userEvent.setup().click(screen.getByRole("tab", { name }));
 
 describe("ranking page", () => {
   it("ranks deck cards by overall when balanced, leaving out unrated cards and weapons", async () => {
@@ -76,7 +79,7 @@ describe("ranking page", () => {
     );
   });
 
-  it("marks the top N as the core", async () => {
+  it("marks the top N as the core with a cut-off line, not a tag on every row", async () => {
     await renderApp({
       path: "/ranking?core=2",
       auth: fakeAuthService().service,
@@ -84,8 +87,109 @@ describe("ranking page", () => {
     });
     await screen.findByRole("table", { name: "Ranked by your priorities" });
     const rows = ranked().getAllByRole("row").slice(1);
-    expect(within(rows[1]!).getByText("Core")).toBeInTheDocument();
-    expect(within(rows[2]!).queryByText("Core")).not.toBeInTheDocument();
+    expect(rows[2]).toHaveTextContent("Core cut-off");
+    expect(ranked().queryByText("Core")).not.toBeInTheDocument();
+  });
+
+  it("sums up the core: how many cards, how many pinned, and its pitch mix", async () => {
+    await renderApp({
+      path: `/ranking?core=2&pin=${encodeURIComponent(JSON.stringify(["hp3"]))}`,
+      auth: fakeAuthService().service,
+      scores: scores(),
+    });
+    const core = await screen.findByRole("region", { name: "Suggested core" });
+    expect(core).toHaveTextContent("2 cards");
+    expect(core).toHaveTextContent("1 pinned");
+    // Hocus Pocus (blue) pinned first, then Become the Shadow Lord (blue)
+    expect(
+      within(core).getByRole("img", { name: "Pitch mix: 2 blue" }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows each card's floor, overall and ceiling as a range", async () => {
+    await renderApp({
+      path: "/ranking",
+      auth: fakeAuthService().service,
+      scores: scores(),
+    });
+    await screen.findByRole("table", { name: "Ranked by your priorities" });
+    const row = ranked().getAllByRole("row")[1]!;
+    expect(
+      within(row).getByRole("img", {
+        name: "Floor 20, overall 70, ceiling 100",
+      }),
+    ).toBeInTheDocument();
+    expect(row).toHaveTextContent("3 ratings");
+  });
+
+  it("opens a card in the pop-over and steps through the ranking in order", async () => {
+    const { router } = await renderApp({
+      path: "/ranking",
+      auth: fakeAuthService().service,
+      scores: scores(),
+    });
+    await screen.findByRole("table", { name: "Ranked by your priorities" });
+    const user = userEvent.setup();
+    await user.click(
+      ranked().getByRole("link", { name: "Become the Shadow Lord" }),
+    );
+    expect(
+      await screen.findByRole("dialog", { name: /Become the Shadow Lord/ }),
+    ).toBeInTheDocument();
+    expect(router.state.location.search).toMatchObject({
+      card: "card-become-the-shadow-lord",
+    });
+    await user.click(screen.getByRole("button", { name: "Next card" }));
+    expect(
+      await screen.findByRole("dialog", { name: /Hocus Pocus/ }),
+    ).toBeInTheDocument();
+    expect(router.state.location.search).toMatchObject({ variant: "hp1" });
+  });
+
+  it("has Forsaken, Both and Usurper side presets", async () => {
+    const { router } = await renderApp({
+      path: "/ranking",
+      auth: fakeAuthService().service,
+      scores: scores(),
+    });
+    await screen.findByRole("table", { name: "Ranked by your priorities" });
+    const side = within(screen.getByRole("group", { name: "Side" }));
+    expect(side.getByRole("button", { name: "Both" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await userEvent
+      .setup()
+      .click(side.getByRole("button", { name: "Usurper" }));
+    expect(router.state.location.search).toMatchObject({ side: 100 });
+  });
+
+  it("changes the core size with a stepper", async () => {
+    const { router } = await renderApp({
+      path: "/ranking",
+      auth: fakeAuthService().service,
+      scores: scores(),
+    });
+    await screen.findByRole("table", { name: "Ranked by your priorities" });
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: "More core cards" }));
+    expect(router.state.location.search).toMatchObject({ core: 21 });
+    expect(screen.getByRole("status", { name: "Core size" })).toHaveTextContent(
+      "21",
+    );
+  });
+
+  it("explains an empty ranking and points to Needs review", async () => {
+    await renderApp({
+      path: "/ranking",
+      auth: fakeAuthService().service,
+      scores: scores({ community: [] }),
+    });
+    expect(await screen.findByText("Nothing ranked yet")).toBeInTheDocument();
+    expect(
+      ranked().getByRole("link", { name: "Review cards" }),
+    ).toHaveAttribute("href", "/needs-review");
   });
 
   it("pins and excludes cards", async () => {
@@ -104,19 +208,24 @@ describe("ranking page", () => {
       screen.getByRole("button", { name: "Exclude Become the Shadow Lord" }),
     );
     expect(rankedNames()).not.toContain("Become the Shadow Lord");
+    await user.click(screen.getByRole("tab", { name: /Excluded/ }));
     await user.click(
       screen.getByRole("button", { name: "Restore Become the Shadow Lord" }),
     );
+    await user.click(screen.getByRole("tab", { name: /Deck cards/ }));
     expect(rankedNames()).toContain("Become the Shadow Lord");
   });
 
-  it("ranks weapons and equipment separately, by slot", async () => {
+  it("ranks weapons and equipment separately, by slot, in their own tab", async () => {
     await renderApp({
       path: "/ranking",
       auth: fakeAuthService().service,
       scores: scores(),
     });
-    const weapons = await screen.findByRole("table", { name: "Weapons" });
+    await screen.findByRole("table", { name: "Ranked by your priorities" });
+    expect(screen.queryByRole("table", { name: "Weapons" })).toBeNull();
+    await openTab(/Weapons and equipment/);
+    const weapons = screen.getByRole("table", { name: "Weapons" });
     expect(
       within(weapons).getByRole("link", { name: "Nebula Blade" }),
     ).toBeInTheDocument();
@@ -241,6 +350,9 @@ describe("adding ranked cards to a deck", () => {
     expect(fake.saved).toEqual(["set deck-1 hp1 1 main"]);
     expect(ranked().getByText("1 in deck")).toBeInTheDocument();
     await user.click(
+      screen.getByRole("tab", { name: /Weapons and equipment/ }),
+    );
+    await user.click(
       screen.getByRole("button", { name: "Add Nebula Blade to Gate tempo" }),
     );
     expect(fake.saved).toEqual([
@@ -262,6 +374,9 @@ describe("adding ranked cards to a deck", () => {
     });
     expect(rankedNames()[0]).toBe("Hocus Pocus (blue)");
     expect(ranked().getByText("2 in deck")).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "Suggested core" }),
+    ).toHaveTextContent("2 of 60 deck cards");
   });
 
   it("can't add more than the copy limit", async () => {
@@ -292,5 +407,18 @@ describe("adding ranked cards to a deck", () => {
     });
     await screen.findByRole("table", { name: "Ranked by your priorities" });
     expect(screen.queryByLabelText("Add to deck")).not.toBeInTheDocument();
+  });
+});
+
+describe("priorities rail", () => {
+  it("has no slider scales: the rail is too narrow for the numbers", async () => {
+    await renderApp({
+      path: "/ranking",
+      auth: fakeAuthService().service,
+      scores: scores(),
+    });
+    await screen.findByRole("table", { name: "Ranked by your priorities" });
+    const priorities = screen.getByRole("region", { name: "Priorities" });
+    expect(within(priorities).queryAllByTestId("slider-scale")).toHaveLength(0);
   });
 });

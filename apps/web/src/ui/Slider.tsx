@@ -20,6 +20,8 @@ export function Slider(props: {
   step?: number;
   /** Show the scale numbers only while hovering or adjusting (dense forms). */
   quietScale?: boolean;
+  /** No scale numbers at all, for narrow places where they'd crowd together. */
+  noScale?: boolean;
 }) {
   const { label, value, onChange, min = 0, max = 100, step = 10 } = props;
   const id = useId();
@@ -62,25 +64,27 @@ export function Slider(props: {
           </span>
         )
       )}
-      <div className={styles.scaleRow}>
-        <div
-          className={styles.scale}
-          data-testid="slider-scale"
-          aria-hidden="true"
-        >
-          {ticks.map((t, i) => (
-            <span
-              key={t}
-              style={{ left: `${((t - min) / (max - min)) * 100}%` }}
-              data-current={value === t || undefined}
-            >
-              {/* More than 11 labels crowd together: label every other step. */}
-              {ticks.length <= 11 || i % 2 === 0 ? t : ""}
-            </span>
-          ))}
+      {!props.noScale && (
+        <div className={styles.scaleRow}>
+          <div
+            className={styles.scale}
+            data-testid="slider-scale"
+            aria-hidden="true"
+          >
+            {ticks.map((t, i) => (
+              <span
+                key={t}
+                style={{ left: `${((t - min) / (max - min)) * 100}%` }}
+                data-current={value === t || undefined}
+              >
+                {/* More than 11 labels crowd together: label every other step. */}
+                {ticks.length <= 11 || i % 2 === 0 ? t : ""}
+              </span>
+            ))}
+          </div>
+          <span className={styles.sliderValueSpacer} />
         </div>
-        <span className={styles.sliderValueSpacer} />
-      </div>
+      )}
       <div className={styles.sliderRow}>
         <input
           id={id}
