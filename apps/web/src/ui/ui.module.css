@@ -288,3 +288,44 @@
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+
+/* Tap targets for touch screens: shown instead of the slider where the pointer is coarse. */
+.tapTargets {
+  display: none;
+}
+@media (pointer: coarse) {
+  .hasTapTargets .scaleRow,
+  .hasTapTargets .sliderRow {
+    display: none;
+  }
+  /* Two rows: 0–50 and 60–100. */
+  .tapTargets {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 4px;
+  }
+  /* A greyed-out rating keeps its heading and reason, not eleven dead buttons. */
+  fieldset:disabled .tapTargets {
+    display: none;
+  }
+  .tapTargets button {
+    min-height: 2.75rem;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 0.4rem;
+    background: var(--surface, var(--bg));
+    color: var(--fg);
+    font: inherit;
+    font-size: 0.9rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .tapTargets button[aria-pressed="true"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-fg);
+    font-weight: 600;
+  }
+  .tapTargets button:disabled {
+    opacity: 0.45;
+  }
+}
