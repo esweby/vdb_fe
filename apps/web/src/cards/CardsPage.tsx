@@ -131,24 +131,43 @@ export function CardsPage() {
       ? `Showing ${n(loaded)} of ${n(total)} cards${total < everything ? ` (of ${n(everything)})` : ""}`
       : `${n(total)} of ${n(everything)} cards`;
 
-  // The pop-over: Previous and Next step through the results in their current order.
+  // The pop-over steps through the results in their current order: each pitch is its own stop
+  // in card views (as the tiles are), each card in the list.
   const search = route.useSearch();
   const navigate = useNavigate();
   const open = search.card
     ? items.find((c) => c.id === search.card)
     : undefined;
-  const at = open ? shown.findIndex((c) => c.id === open.id) : -1;
-  const openCard = (cardId: string) =>
+  type Stop = { cardId: string; variantId?: string };
+  const stops: Stop[] =
+    filters.view === "list"
+      ? shown.map((c) => ({ cardId: c.id }))
+      : tiles.map((t) => ({ cardId: t.card.id, variantId: t.variant.id }));
+  const at = open
+    ? stops.findIndex(
+        (st) =>
+          st.cardId === open.id &&
+          (!st.variantId || !search.variant || st.variantId === search.variant),
+      )
+    : -1;
+  const goTo = (stop: Stop | undefined) => {
+    if (!stop) return;
     void navigate({
       to: ".",
       replace: true,
       resetScroll: false,
       search: (prev: ListSearch) => ({
         ...prev,
-        card: cardId,
-        variant: undefined,
+        card: stop.cardId,
+        variant: stop.variantId,
       }),
     });
+  };
+  // After a review, the other pitches of the same card are done too: go to the next card.
+  const nextCard =
+    at >= 0
+      ? stops.slice(at + 1).find((st) => st.cardId !== open?.id)
+      : undefined;
   const closeCard = () =>
     void navigate({
       to: ".",
@@ -167,14 +186,21 @@ export function CardsPage() {
         <CardModal
           cardId={open.id}
           name={open.name}
+          verified={open.attributesVerified}
+          position={
+            at >= 0 ? { index: at + 1, total: stops.length } : undefined
+          }
           variantId={search.variant}
-          previousId={at > 0 ? shown[at - 1]?.id : undefined}
-          nextId={at >= 0 ? shown[at + 1]?.id : undefined}
-          onOpen={openCard}
+          onPrevious={at > 0 ? () => goTo(stops[at - 1]) : undefined}
+          onNext={
+            at >= 0 && stops[at + 1] ? () => goTo(stops[at + 1]) : undefined
+          }
+          onNextCard={nextCard ? () => goTo(nextCard) : undefined}
+          onChooseVariant={(variantId) => goTo({ cardId: open.id, variantId })}
           onClose={closeCard}
         />
       )}
-      <h1>Cards</h1>
+      <h1 className={styles.visuallyHidden}>Cards</h1>
       {status === "failed" && <p role="alert">Couldn't load cards: {error}</p>}
       {status === "loading" && <p>Loading cards…</p>}
       {status === "loaded" && (
@@ -187,13 +213,15 @@ export function CardsPage() {
             <div className={styles.toolbar}>
               <TextField
                 label="Search"
+                hideLabel
                 type="search"
-                placeholder="Card name"
+                className={styles.search}
+                placeholder="Search card names"
                 value={filters.q}
                 onChange={(e) => filters.setQ(e.target.value)}
               />
               <label className={styles.select}>
-                Sort
+                <span className={styles.visuallyHidden}>Sort</span>
                 <select
                   value={filters.sort}
                   onChange={(e) => filters.setSort(e.target.value as CardSort)}

@@ -18,6 +18,8 @@ export function Slider(props: {
   min?: number;
   max?: number;
   step?: number;
+  /** Show the scale numbers only while hovering or adjusting (dense forms). */
+  quietScale?: boolean;
 }) {
   const { label, value, onChange, min = 0, max = 100, step = 10 } = props;
   const id = useId();
@@ -46,7 +48,9 @@ export function Slider(props: {
   }
 
   return (
-    <div className={styles.field}>
+    <div
+      className={`${styles.field} ${props.quietScale ? styles.quietScale : ""}`}
+    >
       {props.visibleLabel === undefined ? (
         <label htmlFor={id} className={styles.label}>
           {label}

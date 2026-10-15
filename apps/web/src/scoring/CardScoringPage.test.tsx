@@ -85,19 +85,6 @@ describe("card page", () => {
     ).toHaveAttribute("aria-valuetext", "80");
   });
 
-  it("describes each pitch's own attributes", async () => {
-    await renderApp({
-      path: "/cards/card-hocus-pocus",
-      auth: fakeAuthService().service,
-    });
-    expect(
-      await screen.findByText("Pitch 1: Creates 1 Runechant when it attacks."),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Pitch 3: Creates 3 Runechants when it attacks."),
-    ).toBeInTheDocument();
-  });
-
   it("shows floor and ceiling on every card, greyed out when the card has no conditions", async () => {
     await renderApp({
       path: "/cards/card-nebula-blade",
@@ -179,19 +166,6 @@ describe("card page", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows each pitch's cost, power and defense", async () => {
-    await renderApp({
-      path: "/cards/card-hocus-pocus",
-      auth: fakeAuthService().service,
-    });
-    expect(
-      await screen.findByText("Pitch 1: cost 0 · power 4 · defense 3"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Pitch 3: cost 0 · power 2 · defense 3"),
-    ).toBeInTheDocument();
-  });
-
   it("lays the card, its details and scoring side by side", async () => {
     await renderApp({
       path,
@@ -269,5 +243,97 @@ describe("card page", () => {
       "aria-valuetext",
       "40",
     );
+  });
+
+  it("keeps the rating help behind an info toggle, and counts the ratings set", async () => {
+    await renderApp({
+      path,
+      auth: fakeAuthService({
+        users,
+        signedIn: { id: "s1", email: "s@test.local" },
+      }).service,
+      scores: fakeScoreRepository([
+        { variantId: null, side: null, dimensionId: 3, score: 70 },
+      ]).repository,
+    });
+    const help = await screen.findByText(/^Floor: none of its conditions/);
+    expect(help).not.toBeVisible();
+    await userEvent.setup().click(screen.getByText("About these ratings"));
+    expect(help).toBeVisible();
+    expect(await screen.findByText("1 of 3 rated")).toBeInTheDocument();
+  });
+
+  it("shows only the chosen pitch's details, switching with the pitch buttons", async () => {
+    await renderApp({
+      path: "/cards/card-hocus-pocus",
+      auth: fakeAuthService().service,
+    });
+    const details = within(
+      await screen.findByRole("region", { name: "Details" }),
+    );
+    expect(
+      await details.findByText("Creates 1 Runechant when it attacks."),
+    ).toBeInTheDocument();
+    expect(details.getByLabelText("Power 4")).toBeInTheDocument();
+    expect(details.queryByText(/Pitch 3/)).not.toBeInTheDocument();
+    expect(
+      details.queryByText("Creates 3 Runechants when it attacks."),
+    ).not.toBeInTheDocument();
+
+    const pitch = within(screen.getByRole("group", { name: "Pitch" }));
+    expect(pitch.getByRole("button", { name: "Red" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await userEvent.setup().click(pitch.getByRole("button", { name: "Blue" }));
+    expect(
+      details.getByText("Creates 3 Runechants when it attacks."),
+    ).toBeInTheDocument();
+    expect(details.getByLabelText("Power 2")).toBeInTheDocument();
+  });
+
+  it("lays the details out like the card: cost, text with keywords in bold, type line, then defense", async () => {
+    await renderApp({
+      path,
+      auth: fakeAuthService().service,
+      scores: fakeScoreRepository().repository,
+    });
+    const details = within(
+      await screen.findByRole("region", { name: "Details" }),
+    );
+    const cost = await details.findByLabelText("Cost 0");
+    const keyword = details.getByText("Go again", { selector: "strong" });
+    const typeLine = details.getByText("Shadow Runeblade Action");
+    const defense = details.getByLabelText("Defense 3");
+    const whatItDoes = details.getByRole("heading", { name: "What it does" });
+    const inOrder = [cost, keyword, typeLine, defense, whatItDoes];
+    for (let i = 1; i < inOrder.length; i++) {
+      expect(
+        inOrder[i - 1]!.compareDocumentPosition(inOrder[i]!) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    }
+  });
+
+  it("groups What it does into sections, keywords after the effects", async () => {
+    await renderApp({
+      path,
+      auth: fakeAuthService().service,
+      scores: fakeScoreRepository().repository,
+    });
+    const details = within(
+      await screen.findByRole("region", { name: "Details" }),
+    );
+    const resolves = await details.findByRole("heading", {
+      name: "When it resolves",
+    });
+    const keywords = details.getByRole("heading", { name: "Keywords" });
+    expect(
+      resolves.compareDocumentPosition(keywords) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      within(keywords.nextElementSibling as HTMLElement).getByText("Go again."),
+    ).toBeInTheDocument();
   });
 });

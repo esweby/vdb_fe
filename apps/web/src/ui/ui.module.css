@@ -181,11 +181,6 @@
   min-width: 4.5rem;
 }
 
-.dialogWide {
-  width: min(84rem, 100%);
-  max-height: 92vh;
-  padding: 1.25rem 1.75rem 1.5rem;
-}
 .dialogHeaderActions {
   display: flex;
   align-items: center;
@@ -200,7 +195,63 @@
     font-size: 1.25rem;
   }
   .dialogWide {
-    padding: 1rem;
-    max-height: 100vh;
+    height: 100vh;
   }
+  .dialogWide > .dialogHeader,
+  .dialogWide > .dialogBody {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+.dialogTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+/* Wide dialogs: a fixed header, a scrolling body, and room for a sticky footer. */
+.dialogWide {
+  width: min(84rem, 100%);
+  height: min(92vh, 60rem);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.dialogWide > .dialogHeader {
+  padding: 0.9rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+/* A column, so a footer with margin-top: auto sits on the bottom edge. */
+.dialogWide > .dialogBody {
+  flex: 1;
+  overflow: auto;
+  padding: 1rem 1.5rem 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Dense forms: the scale numbers fade in while hovering or adjusting, keeping their space. */
+.quietScale .scaleRow {
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.quietScale:hover .scaleRow,
+.quietScale:focus-within .scaleRow {
+  opacity: 1;
+}
+@media (hover: none) {
+  .quietScale .scaleRow {
+    opacity: 1;
+  }
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }

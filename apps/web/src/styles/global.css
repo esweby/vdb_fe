@@ -4,10 +4,17 @@
   --fg: #1a1a1f;
   --muted: #5c5c66;
   --border: #d9d9e0;
-  --accent: #6b2fb3;
+  --accent: #5b3cc4;
   --accent-fg: #ffffff;
   --danger: #b3261e;
-  font-family: system-ui, sans-serif;
+  /* Identity: a deep Runeblade purple bar, a display serif for names, Inter for the UI. */
+  --brand: #26215c;
+  --brand-fg: #eeedfe;
+  --brand-highlight: #afa9ec;
+  --surface: #ffffff;
+  --font-display: "Cinzel", "Trajan Pro", Georgia, serif;
+  --font-ui: "Inter", system-ui, sans-serif;
+  font-family: var(--font-ui);
   line-height: 1.5;
 }
 
@@ -17,9 +24,11 @@
     --fg: #ececf1;
     --muted: #a0a0ad;
     --border: #33333d;
-    --accent: #b48aea;
+    --accent: #b9a8f5;
     --accent-fg: #141418;
     --danger: #ff8a80;
+    --brand: #17143a;
+    --surface: #1c1c22;
   }
 }
 
@@ -31,4 +40,20 @@ body {
 
 a {
   color: var(--accent);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+/* Headings and card names in the display serif. */
+h1,
+h2 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+h1 {
+  font-size: 1.9rem;
+  margin: 0 0 1rem;
 }

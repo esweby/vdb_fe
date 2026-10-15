@@ -81,4 +81,19 @@ describe("navigation", () => {
     ).toBeInTheDocument();
     expect(fake.calls).toContain("signOut");
   });
+
+  it("marks the current page's tab, and the wordmark links home", async () => {
+    await renderApp({ path: "/cards", auth: fakeAuthService().service });
+    expect(nav().getByRole("link", { name: "Cards" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(nav().getByRole("link", { name: "Ranking" })).not.toHaveAttribute(
+      "aria-current",
+    );
+    const banner = within(screen.getByRole("banner"));
+    expect(
+      banner.getByRole("link", { name: "Viserai Deck Builder, home" }),
+    ).toHaveAttribute("href", "/");
+  });
 });
