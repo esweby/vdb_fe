@@ -520,7 +520,7 @@ export function RankingPage() {
         <Slider
           label="Risk (floor ← → ceiling)"
           visibleLabel={null}
-          quietScale
+          noScale
           min={-100}
           max={100}
           step={10}
@@ -543,7 +543,7 @@ export function RankingPage() {
         <Slider
           label="Side focus (Forsaken ← → Usurper)"
           visibleLabel={null}
-          quietScale
+          noScale
           value={settings.sideFocus}
           onChange={(v) => update({ sideFocus: v })}
         />
@@ -560,7 +560,7 @@ export function RankingPage() {
           <Slider
             label="Whose scores (mine ← → community)"
             visibleLabel={null}
-            quietScale
+            noScale
             value={settings.sourceBlend}
             onChange={(v) => update({ sourceBlend: v })}
           />
