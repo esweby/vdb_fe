@@ -36,23 +36,19 @@ export const BUILT_IN_SCENARIOS: BuiltInScenario[] = [
     }),
   },
   {
-    definition: {
-      version: 1,
-      name: "By turn 3, a hand creates 3 or more Runechants",
-      horizon: 3,
-      turnModel: "fresh",
-      access: ["hand"],
-      condition: {
+    definition: opening(
+      "Opening hand has a Rune Gate card and 2 or more Runechant makers",
+      {
         all: [
+          { label: "a Rune Gate card", filter: { role: "rune_gate" }, min: 1 },
           {
-            label: "3 or more Runechants (conditions met)",
-            filter: {},
-            total: "runechants",
-            min: 3,
+            label: "2 Runechant makers",
+            filter: { role: "runechant_generator" },
+            min: 2,
           },
         ],
       },
-    },
+    ),
   },
   {
     definition: opening("Opening hand has a Gate maker and a Gate target", {

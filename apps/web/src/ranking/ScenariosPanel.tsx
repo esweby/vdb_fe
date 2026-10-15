@@ -92,9 +92,11 @@ export function ScenariosPanel(props: {
                     </span>
                   )}
                   <span className={styles.why}>
-                    {top
-                      ? `Most often missing ${top.label} (${pct(top.share)} of failed runs)`
-                      : "Every run passed."}
+                    {!top
+                      ? "Every run passed."
+                      : top.share === 1
+                        ? `Fails without ${top.label}`
+                        : `Most often missing ${top.label} (${pct(top.share)} of failed runs)`}
                   </span>
                 </>
               )}
