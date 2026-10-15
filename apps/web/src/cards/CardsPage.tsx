@@ -1,4 +1,4 @@
-import { getRouteApi, Link } from "@tanstack/react-router";
+import { getRouteApi, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { applyFilters } from "../filters/applyFilters.ts";
 import { FilteredLayout } from "../filters/FilteredLayout.tsx";
@@ -9,8 +9,13 @@ import { useUrlFilters } from "../filters/useUrlFilters.ts";
 import { useAppSelector } from "../hooks.ts";
 import { useServices } from "../servicesContext.ts";
 import { Table, TextField, type Column } from "../ui/index.ts";
-import { CARD_VIEWS, type CardView } from "../filters/useUrlFilters.ts";
+import {
+  CARD_VIEWS,
+  type CardView,
+  type ListSearch,
+} from "../filters/useUrlFilters.ts";
 import type { CardSummary } from "./cardRepository.ts";
+import { CardModal } from "./CardModal.tsx";
 import { cardFacets, pitchShown } from "./facets.ts";
 import {
   classOf,
@@ -48,7 +53,15 @@ const columns: Column<CardSummary>[] = [
     key: "name",
     header: "Name",
     render: (c) => (
-      <Link to="/cards/$cardId" params={{ cardId: c.id }}>
+      <Link
+        to="/cards"
+        search={(prev: ListSearch) => ({
+          ...prev,
+          card: c.id,
+          variant: undefined,
+        })}
+        resetScroll={false}
+      >
         {c.name}
       </Link>
     ),
@@ -118,8 +131,49 @@ export function CardsPage() {
       ? `Showing ${n(loaded)} of ${n(total)} cards${total < everything ? ` (of ${n(everything)})` : ""}`
       : `${n(total)} of ${n(everything)} cards`;
 
+  // The pop-over: Previous and Next step through the results in their current order.
+  const search = route.useSearch();
+  const navigate = useNavigate();
+  const open = search.card
+    ? items.find((c) => c.id === search.card)
+    : undefined;
+  const at = open ? shown.findIndex((c) => c.id === open.id) : -1;
+  const openCard = (cardId: string) =>
+    void navigate({
+      to: ".",
+      replace: true,
+      resetScroll: false,
+      search: (prev: ListSearch) => ({
+        ...prev,
+        card: cardId,
+        variant: undefined,
+      }),
+    });
+  const closeCard = () =>
+    void navigate({
+      to: ".",
+      replace: true,
+      resetScroll: false,
+      search: (prev: ListSearch) => ({
+        ...prev,
+        card: undefined,
+        variant: undefined,
+      }),
+    });
+
   return (
     <>
+      {open && (
+        <CardModal
+          cardId={open.id}
+          name={open.name}
+          variantId={search.variant}
+          previousId={at > 0 ? shown[at - 1]?.id : undefined}
+          nextId={at >= 0 ? shown[at + 1]?.id : undefined}
+          onOpen={openCard}
+          onClose={closeCard}
+        />
+      )}
       <h1>Cards</h1>
       {status === "failed" && <p role="alert">Couldn't load cards: {error}</p>}
       {status === "loading" && <p>Loading cards…</p>}
@@ -203,7 +257,24 @@ export function CardsPage() {
             >
               {tiles.slice(0, loaded).map(({ card, variant }) => (
                 <li key={variant.id}>
-                  <CardTile card={card} variant={variant} />
+                  <CardTile
+                    card={card}
+                    variant={variant}
+                    nameLink={({ className, children }) => (
+                      <Link
+                        to="/cards"
+                        search={(prev: ListSearch) => ({
+                          ...prev,
+                          card: card.id,
+                          variant: variant.id,
+                        })}
+                        resetScroll={false}
+                        className={className}
+                      >
+                        {children}
+                      </Link>
+                    )}
+                  />
                 </li>
               ))}
             </ul>

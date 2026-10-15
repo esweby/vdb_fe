@@ -29,6 +29,8 @@ export function CardTile(props: {
   variant: VariantSummary;
   /** Copies in a deck; no badge when undefined. */
   quantity?: number;
+  /** Renders the name as a different link (e.g. open the card database's pop-over). */
+  nameLink?: (props: { className: string; children: ReactNode }) => ReactNode;
   children?: ReactNode;
 }) {
   const { card, variant, quantity, children } = props;
@@ -60,13 +62,17 @@ export function CardTile(props: {
           </span>
         )}
       </div>
-      <Link
-        to="/cards/$cardId"
-        params={{ cardId: card.id }}
-        className={styles.name}
-      >
-        {card.name}
-      </Link>
+      {props.nameLink ? (
+        props.nameLink({ className: styles.name ?? "", children: card.name })
+      ) : (
+        <Link
+          to="/cards/$cardId"
+          params={{ cardId: card.id }}
+          className={styles.name}
+        >
+          {card.name}
+        </Link>
+      )}
       <div className={styles.art} aria-hidden="true">
         {GEAR.includes(card.type) && card.subtypes.length > 0
           ? card.subtypes.join(" · ")

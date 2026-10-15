@@ -6,6 +6,65 @@
   padding-left: 0.75rem;
   white-space: pre-line;
 }
+.text p:first-child {
+  margin-top: 0;
+}
+
+/* Card | details | scores, side by side on desktop; stacked on narrow screens. */
+.columns {
+  display: grid;
+  grid-template-columns: minmax(13rem, 16rem) minmax(0, 1fr) minmax(
+      19rem,
+      1.15fr
+    );
+  gap: 2rem;
+  align-items: start;
+  margin-top: 1rem;
+}
+@media (max-width: 960px) {
+  .columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .cardColumn {
+    max-width: 16rem;
+  }
+}
+.cardColumn {
+  position: sticky;
+  top: 0;
+}
+/* The large tile size from the card database. */
+.tile {
+  font-size: 1.35em;
+}
+.pitches {
+  display: flex;
+  gap: 0.3rem;
+  margin-bottom: 0.6rem;
+}
+.pitches button {
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.2rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--fg);
+  cursor: pointer;
+}
+.pitches button[aria-pressed="true"] {
+  background: var(--fg);
+  border-color: var(--fg);
+  color: var(--bg);
+}
+.details h2,
+.scores h2 {
+  font-size: 1.05rem;
+  margin: 1.25rem 0 0.5rem;
+}
+.scores h2 {
+  margin-top: 0;
+}
 .review {
   margin: 0.5rem 0 1rem;
 }
