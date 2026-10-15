@@ -1,5 +1,9 @@
 // Roles and engines, first pass (docs/roles.md). UNVERIFIED: for the maintainer to correct.
+// An engine is a plan Viserai can run. Its generators make the resource, its payoffs use it
+// or get better because of it, and its supports feed the generators. Roles are read from the
+// card attributes, so new cards get them automatically.
 import type { AuthoredCardAttributes, CardAttributes } from "./attributes.ts";
+import type { CardGroup } from "./groups.ts";
 
 export type Engine = "runechant" | "gate" | "banish";
 export type RoleKind = "generator" | "payoff" | "support";
@@ -7,22 +11,261 @@ export type RoleKind = "generator" | "payoff" | "support";
 export interface RoleCard {
   type: string;
   attributes: CardAttributes;
+  /** Each pitch's own attributes (they can differ, e.g. how many Runechants). */
   variantAttributes?: Partial<AuthoredCardAttributes>[];
 }
 
 export interface RoleDef {
   id: string;
   name: string;
+  /** null: a role outside the engines, recorded but not linked. */
   engine: Engine | null;
   kind: RoleKind | null;
+  matches: (card: RoleCard) => boolean;
 }
 
-export const ROLES: RoleDef[] = [];
+type Attrs = Partial<AuthoredCardAttributes>;
+/** The card's attributes and every pitch's, since a role can come from either. */
+const each = (c: RoleCard): Attrs[] => [
+  c.attributes,
+  ...(c.variantAttributes ?? []),
+];
+const any = (c: RoleCard, test: (a: Attrs) => unknown) =>
+  each(c).some((a) => !!test(a));
+const inGroup = (c: RoleCard, group: CardGroup) =>
+  c.attributes.groups.includes(group);
+const mentions = (c: RoleCard, conditions: string[]) =>
+  any(c, (a) => conditions.some((x) => JSON.stringify(a).includes(`"${x}"`)));
 
-export function rolesOf(_card: RoleCard): string[] {
-  return [];
+const runechantsMade = (c: RoleCard) =>
+  each(c).flatMap((a) =>
+    (a.tokens ?? []).filter((t) => t.token === "runechant" && !t.grantedTo),
+  );
+
+export const ROLES: RoleDef[] = [
+  // Runechant engine (Forsaken: create 3 in a turn to traverse)
+  {
+    id: "runechant_generator",
+    name: "Runechant generator",
+    engine: "runechant",
+    kind: "generator",
+    matches: (c) => runechantsMade(c).length > 0,
+  },
+  {
+    id: "runechant_burst",
+    name: "Runechant burst",
+    engine: "runechant",
+    kind: "generator",
+    matches: (c) =>
+      runechantsMade(c).some(
+        (t) =>
+          t.amount === "X" || (typeof t.amount === "number" && t.amount >= 3),
+      ),
+  },
+  {
+    id: "runechant_granter",
+    name: "Runechant granter",
+    engine: "runechant",
+    kind: "generator",
+    matches: (c) =>
+      any(c, (a) =>
+        a.tokens?.some((t) => t.token === "runechant" && !!t.grantedTo),
+      ),
+  },
+  {
+    id: "rune_gate",
+    name: "Rune Gate",
+    engine: "runechant",
+    kind: "payoff",
+    matches: (c) => c.attributes.hasRuneGate,
+  },
+  {
+    id: "runechant_discount",
+    name: "Runechant discount",
+    engine: "runechant",
+    kind: "payoff",
+    matches: (c) =>
+      any(
+        c,
+        (a) =>
+          a.costReducedPerRunechant ||
+          a.costReductions?.some((r) => r.amount === "per_runechant"),
+      ),
+  },
+  {
+    id: "arcane_payoff",
+    name: "Arcane payoff",
+    engine: "runechant",
+    kind: "payoff",
+    matches: (c) =>
+      mentions(c, [
+        "dealt_arcane_damage_this_turn",
+        "dealt_arcane_damage_to_opponent_this_turn",
+        "created_3_or_more_runechants",
+      ]),
+  },
+  {
+    id: "runechant_trigger",
+    name: "Runechant trigger",
+    engine: "runechant",
+    kind: "support",
+    // Weapon attacks fire Runechants (attack action cards do too, but that's most of the deck).
+    matches: (c) => c.type === "weapon" && c.attributes.canAttack,
+  },
+
+  // Gate engine (Usurper: create or use a Gate to traverse)
+  {
+    id: "gate_generator",
+    name: "Gate generator",
+    engine: "gate",
+    kind: "generator",
+    matches: (c) => any(c, (a) => a.tokens?.some((t) => t.token === "gate")),
+  },
+  {
+    id: "gate_target",
+    name: "Gate target",
+    engine: "gate",
+    // Maintainer, 15 Oct 2026: Gate targets count as generators.
+    kind: "generator",
+    matches: (c) => c.attributes.isGateTarget,
+  },
+  {
+    id: "banish_play_payoff",
+    name: "Banish-play payoff",
+    engine: "gate",
+    // Open question: what the Gate engine's payoffs are.
+    kind: "payoff",
+    matches: (c) =>
+      any(c, (a) => a.rewardsPlayFromBanish) ||
+      mentions(c, ["played_from_banish"]),
+  },
+
+  // Banish engine (both sides fill the banished zone)
+  {
+    id: "hand_banisher",
+    name: "Hand banisher",
+    engine: "banish",
+    kind: "generator",
+    matches: (c) => inGroup(c, "banishes_from_hand"),
+  },
+  {
+    id: "deck_banisher",
+    name: "Deck or graveyard banisher",
+    engine: "banish",
+    kind: "generator",
+    matches: (c) =>
+      any(c, (a) => a.banishesOwn?.some((b) => b.from !== "hand")),
+  },
+  {
+    id: "self_banisher",
+    name: "Self-banisher",
+    engine: "banish",
+    kind: "generator",
+    matches: (c) => any(c, (a) => (a.banishesSelf?.length ?? 0) > 0),
+  },
+  {
+    id: "plays_from_banish",
+    name: "Plays from banish",
+    engine: "banish",
+    kind: "payoff",
+    matches: (c) => any(c, (a) => a.playableFromBanish),
+  },
+  {
+    id: "banish_type_payoff",
+    name: "Banish-type payoff",
+    engine: "banish",
+    kind: "payoff",
+    matches: (c) =>
+      inGroup(c, "rewards_shadow_banish") ||
+      inGroup(c, "rewards_runeblade_banish"),
+  },
+  {
+    id: "banish_trigger",
+    name: "Banish trigger",
+    engine: "banish",
+    kind: "payoff",
+    matches: (c) => inGroup(c, "triggers_when_banished"),
+  },
+
+  // Outside the engines: recorded, not linked
+  {
+    id: "go_again_granter",
+    name: "Go again granter",
+    engine: null,
+    kind: null,
+    matches: (c) => any(c, (a) => a.grantsGoAgain),
+  },
+  {
+    id: "eloquence",
+    name: "Eloquence",
+    engine: null,
+    kind: null,
+    matches: (c) =>
+      any(c, (a) => a.tokens?.some((t) => t.token === "eloquence")),
+  },
+  {
+    id: "sinchant",
+    name: "Sinchant",
+    engine: null,
+    kind: null,
+    matches: (c) => inGroup(c, "runechant_aura"),
+  },
+  {
+    id: "usurp",
+    name: "Usurp",
+    engine: null,
+    kind: null,
+    matches: (c) => c.attributes.hasUsurp,
+  },
+  {
+    id: "disruption",
+    name: "Disruption",
+    engine: null,
+    kind: null,
+    matches: (c) => any(c, (a) => (a.disrupts?.length ?? 0) > 0),
+  },
+  {
+    id: "tutor",
+    name: "Tutor",
+    engine: null,
+    kind: null,
+    matches: (c) => any(c, (a) => (a.tutors?.length ?? 0) > 0),
+  },
+];
+
+const byId = new Map(ROLES.map((r) => [r.id, r]));
+
+/** The roles a card has, in the order of ROLES. */
+export function rolesOf(card: RoleCard): string[] {
+  return ROLES.filter((r) => r.matches(card)).map((r) => r.id);
 }
 
-export function fits(_a: string[], _b: string[]): boolean {
-  return false;
+/** Within one engine: generators fit payoffs, and supports fit generators. */
+const LINKS: [RoleKind, RoleKind][] = [
+  ["generator", "payoff"],
+  ["support", "generator"],
+];
+
+/** Two cards fit when a role of one feeds a role of the other in the same engine. */
+export function fits(a: string[], b: string[]): boolean {
+  const roles = (ids: string[]) =>
+    ids.map((id) => byId.get(id)).filter((r): r is RoleDef => !!r?.engine);
+  const ra = roles(a);
+  const rb = roles(b);
+  // Gate generators make Gates for Gate targets, though both are generators.
+  const gatePair = (x: string, y: string) =>
+    x === "gate_generator" && y === "gate_target";
+  return ra.some((x) =>
+    rb.some(
+      (y) =>
+        (x.engine === y.engine &&
+          LINKS.some(
+            ([from, to]) =>
+              (x.kind === from && y.kind === to) ||
+              (y.kind === from && x.kind === to),
+          )) ||
+        gatePair(x.id, y.id) ||
+        gatePair(y.id, x.id),
+    ),
+  );
 }
