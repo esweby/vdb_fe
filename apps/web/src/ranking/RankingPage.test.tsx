@@ -93,7 +93,7 @@ describe("ranking page", () => {
 
   it("sums up the core: how many cards, how many pinned, and its pitch mix", async () => {
     await renderApp({
-      path: "/ranking?core=2&pin=hp3",
+      path: `/ranking?core=2&pin=${encodeURIComponent(JSON.stringify(["hp3"]))}`,
       auth: fakeAuthService().service,
       scores: scores(),
     });
