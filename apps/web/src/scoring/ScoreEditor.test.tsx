@@ -356,13 +356,11 @@ describe("ScoreEditor", () => {
         initial={[{ variantId: "red", side: null, dimensionId: 1, score: 80 }]}
       />,
     );
-    await userEvent
-      .setup()
-      .click(
-        screen.getByRole("button", {
-          name: "Use Red's scores for all pitches",
-        }),
-      );
+    await userEvent.setup().click(
+      screen.getByRole("button", {
+        name: "Use Red's scores for all pitches",
+      }),
+    );
     expect(onSet.mock.calls).toEqual([
       [{ variantId: null, side: null, dimensionId: 1 }, 80],
       [{ variantId: "red", side: null, dimensionId: 1 }, null],

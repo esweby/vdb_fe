@@ -98,6 +98,30 @@ export function ScoreEditor(props: {
     setOwnPitch((o) => ({ ...o, [chosen.id]: separate }));
   }
 
+  // A pitch's own score is a difference from the all-pitches score, so it needs one first.
+  // Without it, the other pitches have nothing to inherit and count as 0 once reviewed.
+  const hasBase = rows.some((r) => r.variantId === null);
+  const unscored = chosen
+    ? props.variants.filter((v) => v.id !== chosen.id && !hasOwnScores(v.id))
+    : [];
+  const leavesZeros = !hasBase && pitchSeparate && unscored.length > 0;
+
+  /** Moves this pitch's scores up to all pitches, so the other pitches inherit them. */
+  function useForAllPitches() {
+    if (!chosen) return;
+    for (const r of rows.filter((r) => r.variantId === chosen.id)) {
+      onSet(
+        { variantId: null, side: r.side, dimensionId: r.dimensionId },
+        r.score,
+      );
+      onSet(
+        { variantId: r.variantId, side: r.side, dimensionId: r.dimensionId },
+        null,
+      );
+    }
+    setOwnPitch((o) => ({ ...o, [chosen.id]: false }));
+  }
+
   // Other pitches with their own scores aren't shown while looking at this one, so say so.
   const othersWithScores = props.variants.filter(
     (v) => v.id !== chosen?.id && hasOwnScores(v.id),
@@ -119,10 +143,32 @@ export function ScoreEditor(props: {
             <input
               type="checkbox"
               checked={pitchSeparate}
+              disabled={!pitchSeparate && !hasBase}
               onChange={(e) => setPitchSeparately(e.target.checked)}
             />
             Different score for {pitchName(chosen.pitch)}
           </label>
+          {!pitchSeparate && !hasBase && (
+            <span className={styles.others}>
+              Score all pitches first, then give {pitchName(chosen.pitch)} its
+              own score.
+            </span>
+          )}
+          {leavesZeros && (
+            <span className={styles.zeroWarning}>
+              {unscored.map((v) => pitchName(v.pitch)).join(" and ")}{" "}
+              {unscored.length === 1
+                ? "has no score yet, so it will count as 0."
+                : "have no score yet, so they will count as 0."}{" "}
+              <button
+                type="button"
+                className={styles.inlineFix}
+                onClick={useForAllPitches}
+              >
+                Use {pitchName(chosen.pitch)}'s scores for all pitches
+              </button>
+            </span>
+          )}
           {othersWithScores.length > 0 && (
             <span className={styles.others}>
               {othersWithScores.map((v) => pitchName(v.pitch)).join(" and ")}{" "}
