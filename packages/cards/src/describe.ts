@@ -351,13 +351,8 @@ function describedItems(attributes: CardAttributes): Item[] {
       `Can be played from your banished zone${ifConditions(attributes.playableFromBanish.conditions)}.`,
     );
   }
-  if (attributes.isGateTarget) {
-    add(
-      "playing",
-      undefined,
-      "Can be played from your banished zone with a Gate.",
-    );
-  }
+  // A Gate target isn't described: every blood debt action card is one, so it would only
+  // repeat "Blood debt." (maintainer, 15 Oct 2026). The route stays in the data.
   if (attributes.rewardsPlayFromBanish) {
     add("works", undefined, "Is better when played from your banished zone.");
   }

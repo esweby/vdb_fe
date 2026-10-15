@@ -7,6 +7,7 @@ import { Link } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import { selectCanScore } from "../auth/authSlice.ts";
 import { TYPE_LABELS } from "../cards/filterCards.ts";
+import { pitchName } from "../cards/pitch.ts";
 import { useCards } from "../cards/useCards.ts";
 import { CardTile } from "../decks/CardTile.tsx";
 import { PITCH_NAMES } from "../decks/deckRules.ts";
@@ -56,10 +57,15 @@ export function CardScoringView(props: {
   showTitle?: boolean;
   /** In the card database's pop-over: a sticky footer with Skip and "Mark reviewed and next". */
   inPopover?: boolean;
-  /** The next card in the results, if there is one. */
+  /** The next stop in the results (Skip), if there is one. */
   onNext?: () => void;
+  /** The next different card, for after a review (defaults to onNext). */
+  onNextCard?: () => void;
+  /** Tells the pop-over which pitch is being looked at. */
+  onChooseVariant?: (variantId: string) => void;
 }) {
   const { cardId, showTitle, inPopover, onNext } = props;
+  const onNextCard = props.onNextCard ?? onNext;
   const { items } = useCards();
   const summary = items.find((c) => c.id === cardId);
   const [variantId, setVariantId] = useState(props.initialVariantId);
@@ -141,7 +147,7 @@ export function CardScoringView(props: {
       // The daily job catches anything this misses.
       if (canScore) await scores.runCommunityJob().catch(() => {});
       // In the pop-over, reviewing moves on to the next card.
-      if (inPopover) onNext?.();
+      if (inPopover) onNextCard?.();
     } catch (e) {
       setError(
         `Couldn't mark reviewed: ${e instanceof Error ? e.message : String(e)}`,
@@ -241,7 +247,10 @@ export function CardScoringView(props: {
                       ? "No pitch"
                       : `Show the ${PITCH_LABELS[v.pitch]?.toLowerCase() ?? `pitch ${v.pitch}`} version`
                   }
-                  onClick={() => setVariantId(v.id)}
+                  onClick={() => {
+                    setVariantId(v.id);
+                    props.onChooseVariant?.(v.id);
+                  }}
                 >
                   <span className={styles.pitchDot} aria-hidden="true" />
                   {v.pitch === null
@@ -259,9 +268,7 @@ export function CardScoringView(props: {
           <div className={styles.face}>
             <div className={styles.faceTop}>
               <span className={styles.facePitch}>
-                {chosen?.pitch != null
-                  ? `${PITCH_LABELS[chosen.pitch] ?? `Pitch ${chosen.pitch}`} · pitch ${chosen.pitch}`
-                  : "No pitch"}
+                {pitchName(chosen?.pitch ?? null)}
               </span>
               {chosen?.cost != null && (
                 <span
@@ -391,6 +398,7 @@ export function CardScoringView(props: {
                 </p>
               )}
               <ScoreEditor
+                chosenVariantId={chosen?.id}
                 sidesTogetherByDefault={sidesTogether}
                 dimensions={dimensions}
                 locked={{
@@ -421,7 +429,7 @@ export function CardScoringView(props: {
             {reviewedAt ? (
               <>
                 <Tag tone="accent">Reviewed {formatDate(reviewedAt)}</Tag>
-                <Button disabled={!onNext} onClick={() => onNext?.()}>
+                <Button disabled={!onNextCard} onClick={() => onNextCard?.()}>
                   Next card
                 </Button>
               </>
@@ -432,7 +440,7 @@ export function CardScoringView(props: {
                 </Button>
                 {user && dimensions.length > 0 && (
                   <Button variant="primary" onClick={() => setReviewing(true)}>
-                    {onNext ? "Mark reviewed and next" : "Mark reviewed"}
+                    {onNextCard ? "Mark reviewed and next" : "Mark reviewed"}
                   </Button>
                 )}
               </>

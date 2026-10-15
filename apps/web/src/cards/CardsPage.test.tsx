@@ -416,4 +416,59 @@ describe("cards page", () => {
       "Search card names",
     );
   });
+
+  it("in card view, steps through each pitch as its own stop", async () => {
+    // Tiles by name: BSL (blue), Fate Foreseen ×3, Hocus Pocus ×3, Nebula Blade = 8
+    await renderApp({
+      path: "/cards?card=card-hocus-pocus&variant=hp1",
+      auth: fakeAuthService().service,
+    });
+    const dialog = await screen.findByRole("dialog", { name: "Hocus Pocus" });
+    expect(within(dialog).getByText("5 of 8")).toBeInTheDocument();
+    const card = () =>
+      within(
+        within(screen.getByRole("dialog")).getByRole("region", {
+          name: "Card",
+        }),
+      );
+    expect(
+      card().getByRole("article", { name: "Hocus Pocus (red)" }),
+    ).toBeInTheDocument();
+    const user = userEvent.setup();
+    await user.click(within(dialog).getByRole("button", { name: "Next card" }));
+    expect(
+      await card().findByRole("article", { name: "Hocus Pocus (yellow)" }),
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByRole("dialog")).getByText("6 of 8"),
+    ).toBeInTheDocument();
+    // Choosing a pitch moves your place too
+    await user.click(card().getByRole("button", { name: "Red" }));
+    expect(
+      await within(screen.getByRole("dialog")).findByText("5 of 8"),
+    ).toBeInTheDocument();
+  });
+
+  it("Mark reviewed and next skips the other pitches of the card just reviewed", async () => {
+    await renderApp({
+      path: "/cards?card=card-hocus-pocus&variant=hp1",
+      auth: fakeAuthService({
+        users: { "s@test.local": { id: "s1", password: "pw", role: "scorer" } },
+        signedIn: { id: "s1", email: "s@test.local" },
+      }).service,
+    });
+    const user = userEvent.setup();
+    await user.click(
+      await screen.findByRole("button", { name: "Mark reviewed and next" }),
+    );
+    const summary = await screen.findByRole("dialog", {
+      name: "Mark reviewed",
+    });
+    await user.click(
+      within(summary).getByRole("button", { name: "Confirm review" }),
+    );
+    expect(
+      await screen.findByRole("dialog", { name: "Nebula Blade" }),
+    ).toBeInTheDocument();
+  });
 });
