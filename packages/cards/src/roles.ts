@@ -1,22 +1,54 @@
-// Roles and engines, first pass (docs/roles.md). UNVERIFIED: for the maintainer to correct.
+// Roles and engines, first pass (docs/roles.md). UNVERIFIED unless a rule says it was checked.
 // An engine is a plan Viserai can run. Its generators make the resource, its payoffs use it
 // or get better because of it, and its supports feed the generators. Roles are read from the
-// card attributes, so new cards get them automatically.
+// card attributes, so new cards get them automatically; `roles` in a card's authored
+// attributes corrects them by hand.
 import type { AuthoredCardAttributes, CardAttributes } from "./attributes.ts";
 import type { CardGroup } from "./groups.ts";
 
-export type Engine = "runechant" | "gate" | "banish";
+export type Engine = "runechant" | "gate" | "banish" | "aura" | "tempo";
+
+/** Every role, in the order a card's roles are listed. */
+export const ROLE_IDS = [
+  "runechant_generator",
+  "runechant_burst",
+  "runechant_granter",
+  "rune_gate",
+  "runechant_discount",
+  "arcane_payoff",
+  "runechant_trigger",
+  "gate_generator",
+  "gate_target",
+  "banish_play_payoff",
+  "hand_banisher",
+  "deck_banisher",
+  "self_banisher",
+  "plays_from_banish",
+  "banish_type_payoff",
+  "banish_trigger",
+  "aura_generator",
+  "sinchant",
+  "aura_payoff",
+  "go_again_granter",
+  "eloquence",
+  "tempo_payoff",
+  "usurp",
+  "disruption",
+  "tutor",
+] as const;
+export type RoleId = (typeof ROLE_IDS)[number];
 export type RoleKind = "generator" | "payoff" | "support";
 
 export interface RoleCard {
   type: string;
+  subtypes?: string[];
   attributes: CardAttributes;
   /** Each pitch's own attributes (they can differ, e.g. how many Runechants). */
   variantAttributes?: Partial<AuthoredCardAttributes>[];
 }
 
 export interface RoleDef {
-  id: string;
+  id: RoleId;
   name: string;
   /** null: a role outside the engines, recorded but not linked. */
   engine: Engine | null;
@@ -109,8 +141,10 @@ export const ROLES: RoleDef[] = [
     name: "Runechant trigger",
     engine: "runechant",
     kind: "support",
-    // Weapon attacks fire Runechants (attack action cards do too, but that's most of the deck).
-    matches: (c) => c.type === "weapon" && c.attributes.canAttack,
+    // Attack action cards and weapon attacks fire Runechants (maintainer, 15 Oct 2026).
+    matches: (c) =>
+      c.type === "attack_action" ||
+      (c.type === "weapon" && c.attributes.canAttack),
   },
 
   // Gate engine (Usurper: create or use a Gate to traverse)
@@ -125,15 +159,15 @@ export const ROLES: RoleDef[] = [
     id: "gate_target",
     name: "Gate target",
     engine: "gate",
-    // Maintainer, 15 Oct 2026: Gate targets count as generators.
-    kind: "generator",
+    // Maintainer, 15 Oct 2026: the Gate's payoff. A Gate plays a blood debt card out of
+    // banish, so it isn't stuck there, and creating or using a Gate lets Usurper traverse.
+    kind: "payoff",
     matches: (c) => c.attributes.isGateTarget,
   },
   {
     id: "banish_play_payoff",
     name: "Banish-play payoff",
     engine: "gate",
-    // Open question: what the Gate engine's payoffs are.
     kind: "payoff",
     matches: (c) =>
       any(c, (a) => a.rewardsPlayFromBanish) ||
@@ -187,29 +221,66 @@ export const ROLES: RoleDef[] = [
     matches: (c) => inGroup(c, "triggers_when_banished"),
   },
 
-  // Outside the engines: recorded, not linked
+  // Aura engine: Runechants, Gates and Eloquence are all aura tokens (README "Tokens")
+  {
+    id: "aura_generator",
+    name: "Aura generator",
+    engine: "aura",
+    kind: "generator",
+    matches: (c) =>
+      !!c.subtypes?.includes("Aura") ||
+      any(c, (a) => (a.tokens?.length ?? 0) > 0),
+  },
+  {
+    id: "sinchant",
+    name: "Sinchant",
+    engine: "aura",
+    kind: "generator",
+    matches: (c) => inGroup(c, "runechant_aura"),
+  },
+  {
+    id: "aura_payoff",
+    name: "Aura payoff",
+    engine: "aura",
+    kind: "payoff",
+    matches: (c) =>
+      mentions(c, [
+        "played_or_created_aura_this_turn",
+        "played_or_created_2_or_more_auras_this_turn",
+        "played_or_created_3_or_more_auras_this_turn",
+        "destroyed_own_aura",
+      ]),
+  },
+
+  // Tempo engine: more action cards in a turn
   {
     id: "go_again_granter",
     name: "Go again granter",
-    engine: null,
-    kind: null,
+    engine: "tempo",
+    kind: "generator",
     matches: (c) => any(c, (a) => a.grantsGoAgain),
   },
   {
     id: "eloquence",
     name: "Eloquence",
-    engine: null,
-    kind: null,
+    engine: "tempo",
+    kind: "generator",
     matches: (c) =>
       any(c, (a) => a.tokens?.some((t) => t.token === "eloquence")),
   },
   {
-    id: "sinchant",
-    name: "Sinchant",
-    engine: null,
-    kind: null,
-    matches: (c) => inGroup(c, "runechant_aura"),
+    id: "tempo_payoff",
+    name: "Tempo payoff",
+    engine: "tempo",
+    kind: "payoff",
+    matches: (c) =>
+      mentions(c, [
+        "played_attack_action_this_turn",
+        "played_non_attack_action_this_turn",
+      ]),
   },
+
+  // Outside the engines: recorded, not linked
   {
     id: "usurp",
     name: "Usurp",
@@ -233,11 +304,16 @@ export const ROLES: RoleDef[] = [
   },
 ];
 
-const byId = new Map(ROLES.map((r) => [r.id, r]));
+const byId = new Map<string, RoleDef>(ROLES.map((r) => [r.id, r]));
 
-/** The roles a card has, in the order of ROLES. */
-export function rolesOf(card: RoleCard): string[] {
-  return ROLES.filter((r) => r.matches(card)).map((r) => r.id);
+/** The roles a card has, after any corrections by hand, in the order of ROLE_IDS. */
+export function rolesOf(card: RoleCard): RoleId[] {
+  const roles = new Set(ROLES.filter((r) => r.matches(card)).map((r) => r.id));
+  for (const a of each(card)) {
+    for (const id of a.roles?.remove ?? []) roles.delete(id);
+    for (const id of a.roles?.add ?? []) roles.add(id);
+  }
+  return ROLE_IDS.filter((id) => roles.has(id));
 }
 
 /** Within one engine: generators fit payoffs, and supports fit generators. */
@@ -252,20 +328,15 @@ export function fits(a: string[], b: string[]): boolean {
     ids.map((id) => byId.get(id)).filter((r): r is RoleDef => !!r?.engine);
   const ra = roles(a);
   const rb = roles(b);
-  // Gate generators make Gates for Gate targets, though both are generators.
-  const gatePair = (x: string, y: string) =>
-    x === "gate_generator" && y === "gate_target";
   return ra.some((x) =>
     rb.some(
       (y) =>
-        (x.engine === y.engine &&
-          LINKS.some(
-            ([from, to]) =>
-              (x.kind === from && y.kind === to) ||
-              (y.kind === from && x.kind === to),
-          )) ||
-        gatePair(x.id, y.id) ||
-        gatePair(y.id, x.id),
+        x.engine === y.engine &&
+        LINKS.some(
+          ([from, to]) =>
+            (x.kind === from && y.kind === to) ||
+            (y.kind === from && x.kind === to),
+        ),
     ),
   );
 }
