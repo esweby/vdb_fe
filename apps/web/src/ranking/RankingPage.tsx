@@ -354,7 +354,8 @@ export function RankingPage() {
   }
 
   // Fill each pitch to its target: cards already in the core stay, the rest come best fits first.
-  function fill() {
+  /** The core filled to the pitch targets; cards already in it stay. */
+  function filled(): Record<string, number> {
     // In the board's order: preferences always, fits first when the board is ordered by them.
     const candidates = [...deckCards]
       .map((r) => ({
@@ -375,7 +376,7 @@ export function RankingPage() {
       locked: new Map(core.map((c) => [c.variantId, c.quantity])),
       removed: new Set(),
     });
-    setCore(Object.fromEntries(s.picks.map((p) => [p.variantId, p.quantity])));
+    return Object.fromEntries(s.picks.map((p) => [p.variantId, p.quantity]));
   }
 
   async function addCore(id: string, start: Deck["cards"]) {
@@ -532,13 +533,14 @@ export function RankingPage() {
             targets={targets}
             onTargets={setTargets}
             pitchCounts={pitchCounts}
-            onFill={fill}
+            // One navigation, so the tab change can't overwrite the new core.
+            onBuild={() => update({ core: filled() }, deckId, "board")}
             questions={questions}
             myAnswers={myAnswers}
             community={community}
             signedIn={!!user}
             onAnswer={(key, n) => void answer(key, n)}
-            onDone={() => setTab("board")}
+            onSkip={() => setTab("board")}
           />
         )}
         {tab === "readings" && (
