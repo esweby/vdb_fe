@@ -15,6 +15,7 @@ const variants = [
 ];
 
 function Harness(props: {
+  chosenVariantId?: string;
   initial?: ScoreRow[];
   onSet?: (r: Omit<ScoreRow, "score">, s: number | null) => void;
 }) {
@@ -23,6 +24,7 @@ function Harness(props: {
     <ScoreEditor
       dimensions={dimensions}
       variants={variants}
+      chosenVariantId={props.chosenVariantId}
       rows={rows}
       onSet={(key, score) => {
         props.onSet?.(key, score);
@@ -108,21 +110,6 @@ describe("ScoreEditor", () => {
     ).toHaveLength(2);
   });
 
-  it("scores each pitch separately when asked", async () => {
-    render(<Harness />);
-    await userEvent
-      .setup()
-      .click(
-        screen.getByRole("checkbox", { name: "Score each pitch separately" }),
-      );
-    expect(
-      screen.getByRole("slider", { name: "Gate creation, pitch 1" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("slider", { name: "Gate creation, pitch 3" }),
-    ).toBeInTheDocument();
-  });
-
   it("only offers per-pitch scoring when the card has several pitches", () => {
     render(
       <ScoreEditor
@@ -133,7 +120,7 @@ describe("ScoreEditor", () => {
       />,
     );
     expect(
-      screen.queryByRole("checkbox", { name: "Score each pitch separately" }),
+      screen.queryByRole("checkbox", { name: /^Different score for/ }),
     ).not.toBeInTheDocument();
   });
 
@@ -263,22 +250,64 @@ describe("ScoreEditor", () => {
     ).toHaveAttribute("aria-valuetext", "70");
   });
 
-  it("opens per pitch when pitch scores exist, and turning it off removes them", async () => {
-    const onSet = vi.fn();
+  it("scores the pitch being looked at separately with the same single slider", async () => {
     render(
       <Harness
-        onSet={onSet}
-        initial={[{ variantId: "red", side: null, dimensionId: 1, score: 80 }]}
+        chosenVariantId="blue"
+        initial={[{ variantId: null, side: null, dimensionId: 2, score: 70 }]}
       />,
     );
-    expect(
-      screen.getByRole("slider", { name: "Runechant creation, pitch 1" }),
-    ).toHaveAttribute("aria-valuetext", "80");
     await userEvent
       .setup()
       .click(
-        screen.getByRole("checkbox", { name: "Score each pitch separately" }),
+        screen.getByRole("checkbox", { name: "Different score for Blue" }),
       );
+    const gate = within(screen.getByRole("group", { name: "Gate creation" }));
+    // One slider per rating: now Blue's, falling back to the all-pitches score
+    expect(gate.getAllByRole("slider")).toHaveLength(1);
+    expect(
+      gate.getByRole("slider", { name: "Gate creation, Blue" }),
+    ).toHaveAttribute("aria-valuetext", "Not set");
+    expect(gate.getByText("Inherits 70")).toBeInTheDocument();
+    expect(gate.queryByText("All pitches")).not.toBeInTheDocument();
+  });
+
+  it("opens the pitch's own scores, and says which other pitches have their own", () => {
+    const initial = [
+      { variantId: "red", side: null, dimensionId: 1, score: 80 },
+    ] as ScoreRow[];
+    const { unmount } = render(
+      <Harness chosenVariantId="red" initial={initial} />,
+    );
+    expect(
+      screen.getByRole("checkbox", { name: "Different score for Red" }),
+    ).toBeChecked();
+    expect(
+      screen.getByRole("slider", { name: "Runechant creation, Red" }),
+    ).toHaveAttribute("aria-valuetext", "80");
+    unmount();
+    render(<Harness chosenVariantId="blue" initial={initial} />);
+    expect(
+      screen.getByRole("checkbox", { name: "Different score for Blue" }),
+    ).not.toBeChecked();
+    expect(screen.getByText("Red has its own scores.")).toBeInTheDocument();
+  });
+
+  it("turning it off clears only that pitch's scores", async () => {
+    const onSet = vi.fn();
+    render(
+      <Harness
+        chosenVariantId="red"
+        onSet={onSet}
+        initial={[
+          { variantId: "red", side: null, dimensionId: 1, score: 80 },
+          { variantId: "blue", side: null, dimensionId: 1, score: 30 },
+        ]}
+      />,
+    );
+    await userEvent
+      .setup()
+      .click(screen.getByRole("checkbox", { name: "Different score for Red" }));
     expect(onSet.mock.calls).toEqual([
       [{ variantId: "red", side: null, dimensionId: 1 }, null],
     ]);

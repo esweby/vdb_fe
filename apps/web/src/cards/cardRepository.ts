@@ -8,6 +8,8 @@ export interface VariantSummary {
   cost: number | null;
   power: number | null;
   defense: number | null;
+  /** The official card image, when the dataset has one. */
+  imageUrl?: string | null;
   /** This pitch's overrides, merged over the card's attributes. */
   attributes: AuthoredCardAttributes;
 }
@@ -40,7 +42,7 @@ export function supabaseCardRepository(client: SupabaseClient): CardRepository {
         const { data, error } = await client
           .from("cards")
           .select(
-            "id, name, type, subtypes, classes, talents, keywords, attributes, attributesVerified:attributes_verified, variants(id, pitch, cost, power, defense, attributes)",
+            "id, name, type, subtypes, classes, talents, keywords, attributes, attributesVerified:attributes_verified, variants(id, pitch, cost, power, defense, imageUrl:image_url, attributes)",
           )
           .eq("hidden", false)
           .order("name")

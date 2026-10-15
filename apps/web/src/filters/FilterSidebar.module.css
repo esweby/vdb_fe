@@ -87,6 +87,11 @@ details[open] > .sectionHeading::before {
 .off .label {
   color: var(--muted);
 }
+/* A mechanic the user chose to hide. */
+.hidden .label {
+  color: var(--muted);
+  text-decoration: line-through;
+}
 .count {
   color: var(--muted);
   font-size: 0.8em;

@@ -1,12 +1,13 @@
 import {
-  describeAttributes,
+  describeAttributeSections,
   hasConditions,
   relevantDimensions,
 } from "@vdb/cards";
 import { Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { selectCanScore } from "../auth/authSlice.ts";
-import { classOf, TYPE_LABELS } from "../cards/filterCards.ts";
+import { TYPE_LABELS } from "../cards/filterCards.ts";
+import { pitchName } from "../cards/pitch.ts";
 import { useCards } from "../cards/useCards.ts";
 import { CardTile } from "../decks/CardTile.tsx";
 import { PITCH_NAMES } from "../decks/deckRules.ts";
@@ -24,17 +25,6 @@ import { ScoreEditor } from "./ScoreEditor.tsx";
 import { spreadWarnings } from "./spread.ts";
 import styles from "./CardScoringPage.module.css";
 
-/** Describes only a variant's own overrides (generated keywords are card-level). */
-const NO_GENERATED = {
-  hasGoAgain: false,
-  hasBloodDebt: false,
-  hasUsurp: false,
-  hasRuneGate: false,
-  isGateTarget: false,
-  canAttack: false,
-  groups: [],
-  specialization: null,
-};
 const PITCH_LABELS: Record<number, string> = Object.fromEntries(
   Object.entries(PITCH_NAMES).map(([p, name]) => [
     p,
@@ -67,10 +57,15 @@ export function CardScoringView(props: {
   showTitle?: boolean;
   /** In the card database's pop-over: a sticky footer with Skip and "Mark reviewed and next". */
   inPopover?: boolean;
-  /** The next card in the results, if there is one. */
+  /** The next stop in the results (Skip), if there is one. */
   onNext?: () => void;
+  /** The next different card, for after a review (defaults to onNext). */
+  onNextCard?: () => void;
+  /** Tells the pop-over which pitch is being looked at. */
+  onChooseVariant?: (variantId: string) => void;
 }) {
   const { cardId, showTitle, inPopover, onNext } = props;
+  const onNextCard = props.onNextCard ?? onNext;
   const { items } = useCards();
   const summary = items.find((c) => c.id === cardId);
   const [variantId, setVariantId] = useState(props.initialVariantId);
@@ -152,7 +147,7 @@ export function CardScoringView(props: {
       // The daily job catches anything this misses.
       if (canScore) await scores.runCommunityJob().catch(() => {});
       // In the pop-over, reviewing moves on to the next card.
-      if (inPopover) onNext?.();
+      if (inPopover) onNextCard?.();
     } catch (e) {
       setError(
         `Couldn't mark reviewed: ${e instanceof Error ? e.message : String(e)}`,
@@ -173,6 +168,10 @@ export function CardScoringView(props: {
   }
   const shownVariant =
     summary?.variants.find((v) => v.id === variantId) ?? summary?.variants[0];
+  // The middle column describes the pitch being looked at, not every pitch.
+  const chosen =
+    card.variants.find((v) => v.id === (shownVariant?.id ?? variantId)) ??
+    card.variants[0];
 
   const relevant = new Set(
     relevantDimensions(
@@ -211,38 +210,49 @@ export function CardScoringView(props: {
     for (const r of toClear) await onSet(r, null);
   }
 
-  const lines = [
-    ...describeAttributes(card.attributes),
-    ...card.variants.flatMap((v) =>
-      describeAttributes({ ...NO_GENERATED, ...v.attributes }).map(
-        (line) => `Pitch ${v.pitch ?? "–"}: ${line}`,
-      ),
-    ),
-  ];
+  // The chosen pitch's attributes: the card's, with that pitch's overrides replacing them.
+  const sections = describeAttributeSections({
+    ...card.attributes,
+    ...(chosen?.attributes ?? {}),
+  });
   return (
     <>
       {showTitle && <h1>{card.name}</h1>}
-      <p className={styles.meta}>
-        {TYPE_LABELS[card.type] ?? card.type} · {classOf(card)}{" "}
-        {!inPopover && (
+      {!inPopover && (
+        <p className={styles.meta}>
           <Tag tone={card.attributesVerified ? "accent" : "neutral"}>
             {card.attributesVerified ? "Verified" : "Unverified"}
           </Tag>
-        )}
-      </p>
+        </p>
+      )}
       {error && <p role="alert">{error}</p>}
 
       <div className={styles.columns}>
         <section aria-label="Card" className={styles.cardColumn}>
-          {summary && summary.variants.length > 1 && (
+          {summary && shownVariant && (
+            <div className={styles.tile}>
+              <CardTile card={summary} variant={shownVariant} />
+            </div>
+          )}
+          {card.variants.length > 1 && (
             <div className={styles.pitches} role="group" aria-label="Pitch">
-              {summary.variants.map((v) => (
+              {card.variants.map((v) => (
                 <button
                   key={v.id}
                   type="button"
-                  aria-pressed={v.id === shownVariant?.id}
-                  onClick={() => setVariantId(v.id)}
+                  className={styles[`pitch${v.pitch ?? "none"}`]}
+                  aria-pressed={v.id === chosen?.id}
+                  title={
+                    v.pitch === null
+                      ? "No pitch"
+                      : `Show the ${PITCH_LABELS[v.pitch]?.toLowerCase() ?? `pitch ${v.pitch}`} version`
+                  }
+                  onClick={() => {
+                    setVariantId(v.id);
+                    props.onChooseVariant?.(v.id);
+                  }}
                 >
+                  <span className={styles.pitchDot} aria-hidden="true" />
                   {v.pitch === null
                     ? "No pitch"
                     : (PITCH_LABELS[v.pitch] ?? `Pitch ${v.pitch}`)}
@@ -250,47 +260,66 @@ export function CardScoringView(props: {
               ))}
             </div>
           )}
-          {summary && shownVariant && (
-            <div className={styles.tile}>
-              <CardTile card={summary} variant={shownVariant} />
-            </div>
-          )}
         </section>
 
         <section aria-label="Details" className={styles.details}>
-          <div className={styles.text}>
-            {card.text ? (
-              <p>{card.text}</p>
-            ) : (
-              card.variants.map((v) => (
-                <p key={v.id}>
-                  <strong>Pitch {v.pitch ?? "–"}:</strong> {v.text}
-                </p>
-              ))
-            )}
+          {/* Loosely follows the printed card: pitch and cost, text box, type line, then
+              power and defense in the bottom corners. */}
+          <div className={styles.face}>
+            <div className={styles.faceTop}>
+              <span className={styles.facePitch}>
+                {pitchName(chosen?.pitch ?? null)}
+              </span>
+              {chosen?.cost != null && (
+                <span
+                  className={styles.coin}
+                  role="img"
+                  aria-label={`Cost ${chosen.cost}`}
+                >
+                  {chosen.cost}
+                </span>
+              )}
+            </div>
+            <div className={styles.textBox}>
+              {(card.text ?? chosen?.text ?? "")
+                .split(/\n+/)
+                .filter((line) => line.trim())
+                .map((line, i) => (
+                  <p key={i}>{withKeywords(line, summary?.keywords ?? [])}</p>
+                ))}
+            </div>
+            <div className={styles.typeLine}>{typeLineOf(card, summary)}</div>
+            <div className={styles.faceBottom}>
+              {chosen?.power != null ? (
+                <span role="img" aria-label={`Power ${chosen.power}`}>
+                  <span aria-hidden="true">⚔ </span>
+                  {chosen.power}
+                </span>
+              ) : (
+                <span />
+              )}
+              {chosen?.defense != null && (
+                <span role="img" aria-label={`Defense ${chosen.defense}`}>
+                  {chosen.defense}
+                  <span aria-hidden="true"> ⛨</span>
+                </span>
+              )}
+            </div>
           </div>
 
-          <ul className={styles.stats}>
-            {card.variants.map((v) => {
-              const stats = [
-                v.cost !== null ? `cost ${v.cost}` : null,
-                v.power !== null ? `power ${v.power}` : null,
-                v.defense !== null ? `defense ${v.defense}` : null,
-              ].filter(Boolean);
-              if (stats.length === 0) return null;
-              const prefix = v.pitch !== null ? `Pitch ${v.pitch}: ` : "";
-              return <li key={v.id}>{prefix + stats.join(" · ")}</li>;
-            })}
-          </ul>
-
-          {lines.length > 0 && (
+          {sections.length > 0 && (
             <>
               <h2>What it does</h2>
-              <ul>
-                {lines.map((line) => (
-                  <li key={line}>{line}</li>
-                ))}
-              </ul>
+              {sections.map((section) => (
+                <div key={section.heading} className={styles.section}>
+                  <h3>{section.heading}</h3>
+                  <ul>
+                    {section.lines.map((line) => (
+                      <li key={line}>{line}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
             </>
           )}
         </section>
@@ -369,6 +398,7 @@ export function CardScoringView(props: {
                 </p>
               )}
               <ScoreEditor
+                chosenVariantId={chosen?.id}
                 sidesTogetherByDefault={sidesTogether}
                 dimensions={dimensions}
                 locked={{
@@ -395,12 +425,11 @@ export function CardScoringView(props: {
 
       {inPopover && (
         <div className={styles.footer}>
-          <span className={styles.hint}>← → to move between cards</span>
           <span className={styles.footerActions}>
             {reviewedAt ? (
               <>
                 <Tag tone="accent">Reviewed {formatDate(reviewedAt)}</Tag>
-                <Button disabled={!onNext} onClick={() => onNext?.()}>
+                <Button disabled={!onNextCard} onClick={() => onNextCard?.()}>
                   Next card
                 </Button>
               </>
@@ -411,7 +440,7 @@ export function CardScoringView(props: {
                 </Button>
                 {user && dimensions.length > 0 && (
                   <Button variant="primary" onClick={() => setReviewing(true)}>
-                    {onNext ? "Mark reviewed and next" : "Mark reviewed"}
+                    {onNextCard ? "Mark reviewed and next" : "Mark reviewed"}
                   </Button>
                 )}
               </>
@@ -421,4 +450,30 @@ export function CardScoringView(props: {
       )}
     </>
   );
+}
+
+/** "Shadow Runeblade Action – Attack", like the printed type line. */
+function typeLineOf(
+  card: CardDetail,
+  summary: { subtypes: string[] } | undefined,
+): string {
+  const base = [
+    ...card.talents,
+    ...card.classes,
+    TYPE_LABELS[card.type] ?? card.type,
+  ].join(" ");
+  const subtypes = summary?.subtypes ?? [];
+  return subtypes.length > 0 ? `${base} – ${subtypes.join(" ")}` : base;
+}
+
+/** The card text with its keywords in bold, as they're printed. */
+function withKeywords(text: string, keywords: string[]): ReactNode {
+  if (keywords.length === 0 || !text) return text;
+  const escaped = [...keywords]
+    .sort((a, b) => b.length - a.length)
+    .map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  const pattern = new RegExp(`\\b(${escaped.join("|")})\\b`, "gi");
+  return text
+    .split(pattern)
+    .map((part, i) => (i % 2 === 1 ? <strong key={i}>{part}</strong> : part));
 }

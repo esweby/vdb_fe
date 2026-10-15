@@ -3,7 +3,7 @@
 export type Side = "forsaken" | "usurper";
 
 export * from "./attributes.ts";
-export { describeAttributes } from "./describe.ts";
+export { describeAttributes, describeAttributeSections } from "./describe.ts";
 export * from "./groups.ts";
 export * from "./routes.ts";
 export { relevantDimensions } from "./relevance.ts";

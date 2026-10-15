@@ -24,16 +24,22 @@ export function withChoice(
   return next;
 }
 
-/** Ticked = not hidden. In an exclusive group with "Only" includes, only those are ticked. */
+/**
+ * Exclusive groups (what a card is): ticked = shown, so everything starts ticked. In an
+ * exclusive group with "Only" includes, only those are ticked.
+ * Feature groups (mechanics only some cards have): ticked = the card must have it, so they
+ * start unticked; hiding is a separate option.
+ */
 export function isTicked<T>(
   facet: Facet<T>,
   state: FilterState,
   valueId: string,
 ): boolean {
   const choices = state[facet.id] ?? {};
+  if (kindOf(facet) === "feature") return choices[valueId] === "include";
   if (choices[valueId] === "exclude") return false;
   const includes = Object.values(choices).includes("include");
-  return kindOf(facet) === "feature" || !includes || !!choices[valueId];
+  return !includes || !!choices[valueId];
 }
 
 /** Toggles a value between ticked and unticked. */
@@ -42,6 +48,15 @@ export function toggled<T>(
   state: FilterState,
   valueId: string,
 ): FilterState {
+  if (kindOf(facet) === "feature") {
+    // Tick = must have; untick = no filter (an exclude becomes a must-have).
+    return withChoice(
+      state,
+      facet.id,
+      valueId,
+      state[facet.id]?.[valueId] === "include" ? undefined : "include",
+    );
+  }
   if (isTicked(facet, state, valueId))
     return withChoice(state, facet.id, valueId, "exclude");
   // Ticking again: clear its exclude, or add it to an exclusive group's "Only" set.
@@ -75,10 +90,6 @@ export function FilterSidebar<T>(props: {
   const sections = [...new Set(side.flatMap((f) => f.section ?? []))];
 
   const only = (facet: Facet<T>, valueId: string): FilterState => {
-    if (kindOf(facet) === "feature") {
-      const on = state[facet.id]?.[valueId] === "include";
-      return withChoice(state, facet.id, valueId, on ? undefined : "include");
-    }
     return {
       ...state,
       [facet.id]: Object.fromEntries(
@@ -127,11 +138,19 @@ export function FilterSidebar<T>(props: {
         <ul>
           {shown.map((v) => {
             const ticked = isTicked(facet, state, v.id);
-            const isOnly = state[facet.id]?.[v.id] === "include";
+            const hidden = state[facet.id]?.[v.id] === "exclude";
             return (
               <li
                 key={v.id}
-                className={`${styles.value} ${ticked ? "" : styles.off}`}
+                className={`${styles.value} ${
+                  feature
+                    ? hidden
+                      ? styles.hidden
+                      : ""
+                    : ticked
+                      ? ""
+                      : styles.off
+                }`}
               >
                 <label>
                   <input
@@ -144,15 +163,36 @@ export function FilterSidebar<T>(props: {
                 <span className={styles.count}>
                   {counts[facet.id]?.[v.id] ?? 0}
                 </span>
-                <button
-                  type="button"
-                  className={`${styles.only} ${isOnly ? styles.onlyOn : ""}`}
-                  aria-label={`Only ${v.label}`}
-                  aria-pressed={feature ? isOnly : undefined}
-                  onClick={() => onChange(only(facet, v.id))}
-                >
-                  {isOnly ? "Only ✓" : "Only"}
-                </button>
+                {feature ? (
+                  <button
+                    type="button"
+                    className={`${styles.only} ${hidden ? styles.onlyOn : ""}`}
+                    aria-label={`Hide ${v.label}`}
+                    aria-pressed={hidden}
+                    title={`Hide cards that have ${v.label}`}
+                    onClick={() =>
+                      onChange(
+                        withChoice(
+                          state,
+                          facet.id,
+                          v.id,
+                          hidden ? undefined : "exclude",
+                        ),
+                      )
+                    }
+                  >
+                    {hidden ? "Hidden ✓" : "Hide"}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className={styles.only}
+                    aria-label={`Only ${v.label}`}
+                    onClick={() => onChange(only(facet, v.id))}
+                  >
+                    Only
+                  </button>
+                )}
               </li>
             );
           })}
