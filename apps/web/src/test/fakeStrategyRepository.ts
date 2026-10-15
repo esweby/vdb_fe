@@ -24,6 +24,8 @@ export function fakeStrategyRepository(
   options: {
     mine?: Record<string, number>;
     community?: Record<string, CommunityAnswer>;
+    /** Answer as the only scorer: the average follows your own answers. */
+    onlyScorer?: boolean;
   } = {},
 ) {
   const mine = { ...options.mine };
@@ -35,7 +37,15 @@ export function fakeStrategyRepository(
       saved.push(`${key} ${answer}`);
       mine[key] = answer;
     },
-    listCommunityAnswers: async () => ({ ...options.community }),
+    listCommunityAnswers: async () =>
+      options.onlyScorer
+        ? Object.fromEntries(
+            Object.entries(mine).map(([k, n]) => [
+              k,
+              { average: n, answers: 1 },
+            ]),
+          )
+        : { ...options.community },
   };
   return { repository, saved };
 }

@@ -14,7 +14,13 @@ import type { FormatRules } from "../decks/deckRules.ts";
 import { useAppSelector } from "../hooks.ts";
 import type { Dimension, ScoreRow } from "../scoring/scoreRepository.ts";
 import { useServices } from "../servicesContext.ts";
-import { CoreTray, type TrayCard } from "./CoreTray.tsx";
+import { CoreRail, type TrayCard } from "./CoreRail.tsx";
+import { ReadingsTab } from "./ReadingsTab.tsx";
+import { SetupTab } from "./SetupTab.tsx";
+import type {
+  CommunityAnswer,
+  StrategyQuestion,
+} from "../strategy/strategyRepository.ts";
 import { EngineBoard, type BoardCard, type GearSlot } from "./EngineBoard.tsx";
 import {
   engineOrder,
@@ -47,6 +53,13 @@ interface Data {
   };
 }
 
+type Tab = "setup" | "board" | "readings";
+const TABS: { id: Tab; label: string }[] = [
+  { id: "setup", label: "Set up" },
+  { id: "board", label: "Board" },
+  { id: "readings", label: "Readings" },
+];
+
 const sideOf = (sideFocus: number): HeroSide =>
   sideFocus <= 25 ? "forsaken" : sideFocus >= 75 ? "usurper" : "both";
 
@@ -64,7 +77,7 @@ const roleCard = (c: CardSummary) => ({
  */
 export function RankingPage() {
   const { status, items } = useCards();
-  const { scores, decks } = useServices();
+  const { scores, decks, strategy } = useServices();
   const user = useAppSelector((s) => s.auth.user);
   const search = route.useSearch();
   const navigate = useNavigate();
@@ -75,6 +88,31 @@ export function RankingPage() {
   const [rules, setRules] = useState<FormatRules | null>(null);
   const [targets, setTargets] = useState<PitchTargets>(EXAMPLE_TARGETS);
   const [query, setQuery] = useState("");
+  const [questions, setQuestions] = useState<StrategyQuestion[]>([]);
+  const [myAnswers, setMyAnswers] = useState<Record<string, number>>({});
+  const [community, setCommunity] = useState<Record<string, CommunityAnswer>>(
+    {},
+  );
+
+  useEffect(() => {
+    let live = true;
+    Promise.all([
+      strategy.listQuestions(),
+      strategy.listCommunityAnswers(),
+      user ? strategy.listMyAnswers(user.id) : Promise.resolve({}),
+    ]).then(
+      ([q, c, mine]) => {
+        if (!live) return;
+        setQuestions(q);
+        setCommunity(c);
+        setMyAnswers(mine);
+      },
+      () => {},
+    );
+    return () => {
+      live = false;
+    };
+  }, [strategy, user]);
 
   useEffect(() => {
     let live = true;
@@ -146,7 +184,14 @@ export function RankingPage() {
   }, [scores, user]);
 
   const settings = readRankingSearch(search);
-  const update = (patch: Partial<RankingSettings>, deckChoice = deckId) =>
+  const tab: Tab = TABS.some((t) => t.id === search.tab)
+    ? (search.tab as Tab)
+    : "board";
+  const update = (
+    patch: Partial<RankingSettings>,
+    deckChoice = deckId,
+    tabChoice = tab,
+  ) =>
     void navigate({
       to: ".",
       replace: true,
@@ -154,8 +199,21 @@ export function RankingPage() {
       search: {
         ...writeRankingSearch({ ...settings, ...patch }),
         ...(deckChoice ? { deck: deckChoice } : {}),
+        ...(tabChoice !== "board" ? { tab: tabChoice } : {}),
       },
     });
+  const setTab = (t: Tab) => update({}, deckId, t);
+
+  async function answer(key: string, n: number) {
+    if (!user) return;
+    const previous = myAnswers;
+    setMyAnswers({ ...myAnswers, [key]: n });
+    try {
+      await strategy.setAnswer(user.id, key, n);
+    } catch {
+      setMyAnswers(previous);
+    }
+  }
 
   const cardsById = useMemo(
     () => new Map(items.map((c) => [c.id, c])),
@@ -248,6 +306,14 @@ export function RankingPage() {
   };
   const toggleCore = (c: BoardCard) =>
     setQuantity(c.variantId, settings.core[c.variantId] ? 0 : copyLimit);
+
+  const coreTotal = core.reduce((n, c) => n + c.quantity, 0);
+  const pitchCounts: Record<number, number> = {};
+  for (const c of core) {
+    if (c.pitch !== null) {
+      pitchCounts[c.pitch] = (pitchCounts[c.pitch] ?? 0) + c.quantity;
+    }
+  }
 
   // Fill each pitch to its target: cards already in the core stay, the rest come best fits first.
   function fill() {
@@ -365,104 +431,176 @@ export function RankingPage() {
           onClose={closeCard}
         />
       )}
-      <h1 className={styles.visuallyHidden}>Ranking</h1>
-      <div className={styles.page}>
-        <div className={styles.main}>
-          <div className={styles.boardBar}>
-            <input
-              type="search"
-              className={styles.search}
-              aria-label="Find a card"
-              placeholder="Find a card"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-            <div className={styles.orderControl}>
-              <span className={styles.label}>Order</span>
-              <div className={styles.presets} role="group" aria-label="Order">
-                {(
-                  [
-                    ["score", "Score"],
-                    ["fits", "Best fits first"],
-                  ] as const
-                ).map(([value, label]) => (
-                  <button
-                    key={value}
-                    type="button"
-                    aria-pressed={settings.order === value}
-                    onClick={() => update({ order: value })}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <span className={styles.boardCount}>
-              {deckCards.length.toLocaleString("en-GB")} ranked
+      <div className={styles.buildHead}>
+        <div className={styles.buildRow}>
+          <h1>Build a core</h1>
+          <div className={styles.summary}>
+            <span className={styles.summaryCount}>
+              {rules?.deckMin
+                ? `${coreTotal} of ${rules.deckMin} deck cards`
+                : `${coreTotal} deck cards`}
+            </span>
+            <span className={styles.miniMix} aria-hidden="true">
+              {[1, 2, 3].map((p) => (
+                <i
+                  key={p}
+                  style={{
+                    flexGrow: pitchCounts[p] ?? 0,
+                    background: `var(--pitch-${p})`,
+                  }}
+                />
+              ))}
+            </span>
+            <span className={styles.mixText}>
+              {[1, 2, 3]
+                .map(
+                  (p) => `${pitchCounts[p] ?? 0} ${pitchName(p).toLowerCase()}`,
+                )
+                .join(" · ")}
             </span>
           </div>
-
-          {deckCards.length === 0 ? (
-            <div className={styles.empty}>
-              <strong>Nothing ranked yet</strong>
-              <span>
-                Cards appear here once {data.minRatingCount} scorers have
-                reviewed them, or once you have.
-              </span>
-              <Link to="/needs-review">Review cards</Link>
-            </div>
-          ) : (
-            <EngineBoard
-              engines={engines}
-              cards={shown}
-              gear={gear}
-              core={core}
-              inDeck={
-                new Map(
-                  (deck?.cards ?? []).map((c) => [c.variantId, c.quantity]),
-                )
-              }
-              order={settings.order}
-              prefs={settings.prefs}
-              onToggleCore={toggleCore}
-              onOpen={(c) => goTo(c.variantId)}
-            />
-          )}
-          <p className={styles.footnote}>
-            “Fits” links come from card roles (docs/roles.md), a first pass that
-            hasn't been checked by an experienced player. They never change a
-            card's score.
-          </p>
         </div>
+        <div className={styles.tabs} role="tablist" aria-label="Build steps">
+          {TABS.map((t, i) => (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              id={`build-tab-${t.id}`}
+              aria-selected={tab === t.id}
+              aria-controls={`build-panel-${t.id}`}
+              onClick={() => setTab(t.id)}
+            >
+              <span className={styles.step} aria-hidden="true">
+                {i + 1}
+              </span>
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
-        <CoreTray
-          settings={settings}
-          onSettings={(patch) => update(patch)}
-          showBlend={!!data.mine}
-          cards={core}
-          copyLimit={copyLimit}
-          deckMin={rules?.deckMin}
-          targets={targets}
-          onTargets={setTargets}
-          onQuantity={setQuantity}
-          onFill={fill}
-          signedIn={!!user}
-          deck={deck}
-          deckId={deckId}
-          deckList={deckList}
-          onChooseDeck={(id) => update({}, id)}
-          onAddToDeck={async () => {
-            if (!deck) return;
-            const cards = await addCore(deck.id, deck.cards);
-            setDeck({ ...deck, cards });
-          }}
-          onSaveAsDeck={async (name) => {
-            const created = await decks.createDeck(name);
-            await addCore(created.id, []);
-            setDeckList([created, ...deckList]);
-            update({}, created.id);
-          }}
-        />
+      <div
+        role="tabpanel"
+        id={`build-panel-${tab}`}
+        aria-labelledby={`build-tab-${tab}`}
+        className={styles.tabPanel}
+      >
+        {tab === "setup" && (
+          <SetupTab
+            settings={settings}
+            onSettings={(patch) => update(patch)}
+            showBlend={!!data.mine}
+            targets={targets}
+            onTargets={setTargets}
+            pitchCounts={pitchCounts}
+            onFill={fill}
+            questions={questions}
+            myAnswers={myAnswers}
+            community={community}
+            signedIn={!!user}
+            onAnswer={(key, n) => void answer(key, n)}
+            onDone={() => setTab("board")}
+          />
+        )}
+        {tab === "readings" && <ReadingsTab cards={core} />}
+        {tab === "board" && (
+          <div className={styles.page}>
+            <div className={styles.main}>
+              <div className={styles.boardBar}>
+                <input
+                  type="search"
+                  className={styles.search}
+                  aria-label="Find a card"
+                  placeholder="Find a card"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                />
+                <div className={styles.orderControl}>
+                  <span className={styles.label}>Order</span>
+                  <div
+                    className={styles.presets}
+                    role="group"
+                    aria-label="Order"
+                  >
+                    {(
+                      [
+                        ["score", "Score"],
+                        ["fits", "Best fits first"],
+                      ] as const
+                    ).map(([value, label]) => (
+                      <button
+                        key={value}
+                        type="button"
+                        aria-pressed={settings.order === value}
+                        onClick={() => update({ order: value })}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <span className={styles.boardCount}>
+                  {deckCards.length.toLocaleString("en-GB")} ranked
+                </span>
+              </div>
+
+              {deckCards.length === 0 ? (
+                <div className={styles.empty}>
+                  <strong>Nothing ranked yet</strong>
+                  <span>
+                    Cards appear here once {data.minRatingCount} scorers have
+                    reviewed them, or once you have.
+                  </span>
+                  <Link to="/needs-review">Review cards</Link>
+                </div>
+              ) : (
+                <EngineBoard
+                  engines={engines}
+                  cards={shown}
+                  gear={gear}
+                  core={core}
+                  inDeck={
+                    new Map(
+                      (deck?.cards ?? []).map((c) => [c.variantId, c.quantity]),
+                    )
+                  }
+                  order={settings.order}
+                  prefs={settings.prefs}
+                  onToggleCore={toggleCore}
+                  onOpen={(c) => goTo(c.variantId)}
+                />
+              )}
+              <p className={styles.footnote}>
+                “Fits” links come from card roles (docs/roles.md), a first pass
+                that hasn't been checked by an experienced player. They never
+                change a card's score.
+              </p>
+            </div>
+
+            <CoreRail
+              cards={core}
+              copyLimit={copyLimit}
+              onQuantity={setQuantity}
+              signedIn={!!user}
+              deck={deck}
+              deckId={deckId}
+              deckList={deckList}
+              onChooseDeck={(id) => update({}, id)}
+              onAddToDeck={async () => {
+                if (!deck) return;
+                const cards = await addCore(deck.id, deck.cards);
+                setDeck({ ...deck, cards });
+              }}
+              onSaveAsDeck={async (name) => {
+                const created = await decks.createDeck(name);
+                await addCore(created.id, []);
+                setDeckList([created, ...deckList]);
+                update({}, created.id);
+              }}
+            />
+          </div>
+        )}
       </div>
     </>
   );

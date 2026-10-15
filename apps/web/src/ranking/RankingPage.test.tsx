@@ -35,14 +35,17 @@ async function open(
   path = "/ranking",
   opts: {
     signedIn?: boolean;
+    onlyScorer?: boolean;
     decks?: Deck[];
     scores?: ReturnType<typeof scores>;
   } = {},
 ) {
   const fake = fakeDeckRepository(opts.decks ?? [gateTempo()]);
-  const strategy = fakeStrategyRepository({
-    community: { traverse_to_usurper: { average: 7.5, answers: 2 } },
-  });
+  const strategy = fakeStrategyRepository(
+    opts.onlyScorer
+      ? { onlyScorer: true }
+      : { community: { traverse_to_usurper: { average: 7.5, answers: 2 } } },
+  );
   const app = await renderApp({
     path,
     auth: opts.signedIn ? signedIn() : fakeAuthService().service,
@@ -283,6 +286,22 @@ describe("strategy questions", () => {
       "aria-pressed",
       "true",
     );
+  });
+
+  it("updates the scoring group's average after you answer", async () => {
+    const { user } = await open("/ranking?tab=setup", {
+      signedIn: true,
+      onlyScorer: true,
+    });
+    const question = within(
+      await panel().findByRole("group", {
+        name: "How important is traversing to Usurper?",
+      }),
+    );
+    await user.click(question.getByRole("button", { name: "6" }));
+    expect(
+      await question.findByText("Scoring group 6.0 · 1 answer"),
+    ).toBeInTheDocument();
   });
 
   it("says when the scoring group hasn't answered yet", async () => {
