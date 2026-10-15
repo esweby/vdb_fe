@@ -73,6 +73,11 @@ export function CardScoringView(props: {
   useEffect(() => {
     setVariantId(props.initialVariantId);
   }, [cardId, props.initialVariantId]);
+  // "Rate floor and ceiling anyway" on a card without recorded conditions, per card.
+  const [rateAnyway, setRateAnyway] = useState(false);
+  useEffect(() => {
+    setRateAnyway(false);
+  }, [cardId]);
   const { scores } = useServices();
   const user = useAppSelector((s) => s.auth.user);
   const canScore = useAppSelector(selectCanScore);
@@ -170,13 +175,18 @@ export function CardScoringView(props: {
       card.variants.map((v) => v.attributes),
     ),
   );
-  // Every card shows floor, ceiling and overall; ones that don't apply are greyed out.
-  const lockedIds = dimensions
+  // Every card shows floor, ceiling and overall; ones that don't apply are greyed out,
+  // unless the scorer chooses to rate them anyway or they already have scores (a saved
+  // score is never hidden or locked).
+  const notRelevantIds = dimensions
     .filter((d) => !relevant.has(d.key))
     .map((d) => d.id);
+  const unlocked =
+    rateAnyway || rows.some((r) => notRelevantIds.includes(r.dimensionId));
+  const lockedIds = unlocked ? [] : notRelevantIds;
   const spreadKeys = new Set(["floor", "ceiling"]);
   const askingSpread = dimensions.some(
-    (d) => spreadKeys.has(d.key) && relevant.has(d.key),
+    (d) => spreadKeys.has(d.key) && !lockedIds.includes(d.id),
   );
   const warnings = spreadWarnings(rows, dimensions, card.variants);
 
@@ -324,6 +334,15 @@ export function CardScoringView(props: {
                     <li key={w}>{w}</li>
                   ))}
                 </ul>
+              )}
+              {lockedIds.length > 0 && (
+                <p className={styles.meta}>
+                  Floor and ceiling are greyed out: this card has no recorded
+                  conditions.{" "}
+                  <Button variant="ghost" onClick={() => setRateAnyway(true)}>
+                    Rate floor and ceiling anyway
+                  </Button>
+                </p>
               )}
               <ScoreEditor
                 sidesTogetherByDefault={sidesTogether}
