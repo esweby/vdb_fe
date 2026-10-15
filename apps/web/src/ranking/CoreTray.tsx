@@ -79,6 +79,11 @@ export function CoreTray(props: {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const total = props.cards.reduce((n, c) => n + c.quantity, 0);
+  // Only engines with cards in the core, so an empty core isn't a wall of zeros.
+  const weighed = ENGINES.map((e) => ({
+    e,
+    b: balance(props.cards, e.id),
+  })).filter(({ b }) => b.generators + b.payoffs > 0);
   const sorted = [...props.cards].sort(
     (a, b) => (a.pitch ?? 9) - (b.pitch ?? 9) || b.value - a.value,
   );
@@ -204,8 +209,12 @@ export function CoreTray(props: {
 
         <div className={styles.traySection}>
           <h3 className={styles.label}>Engines</h3>
-          {ENGINES.map((e) => {
-            const b = balance(props.cards, e.id);
+          {weighed.length === 0 && (
+            <p className={styles.none}>
+              Add cards to see how each engine balances.
+            </p>
+          )}
+          {weighed.map(({ e, b }) => {
             const gap =
               b.generators > 0 && b.payoffs === 0
                 ? e.noPayoffs
