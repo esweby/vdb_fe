@@ -250,22 +250,26 @@ describe("ScoreEditor", () => {
     ).toHaveAttribute("aria-valuetext", "70");
   });
 
-  it("scores the pitch being looked at separately, named by its colour", async () => {
-    render(<Harness chosenVariantId="blue" />);
+  it("scores the pitch being looked at separately with the same single slider", async () => {
+    render(
+      <Harness
+        chosenVariantId="blue"
+        initial={[{ variantId: null, side: null, dimensionId: 2, score: 70 }]}
+      />,
+    );
     await userEvent
       .setup()
       .click(
         screen.getByRole("checkbox", { name: "Different score for Blue" }),
       );
+    const gate = within(screen.getByRole("group", { name: "Gate creation" }));
+    // One slider per rating: now Blue's, falling back to the all-pitches score
+    expect(gate.getAllByRole("slider")).toHaveLength(1);
     expect(
-      screen.getByRole("slider", { name: "Gate creation, Blue" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("slider", { name: "Gate creation" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("slider", { name: "Gate creation, Red" }),
-    ).not.toBeInTheDocument();
+      gate.getByRole("slider", { name: "Gate creation, Blue" }),
+    ).toHaveAttribute("aria-valuetext", "Not set");
+    expect(gate.getByText("Inherits 70")).toBeInTheDocument();
+    expect(gate.queryByText("All pitches")).not.toBeInTheDocument();
   });
 
   it("opens the pitch's own scores, and says which other pitches have their own", () => {
