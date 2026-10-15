@@ -19,12 +19,13 @@ export interface EngineDef {
   /** What the hero does with it (README "The hero"). */
   note: string;
   generators: string;
-  payoffs: string;
+  /** null: nothing is linked as using what the makers make. */
+  payoffs: string | null;
   /** Short words for the core's balance, e.g. "3 make", "2 targets". */
   makeWord: string;
-  useWord: string;
+  useWord: string | null;
   noGenerators: string;
-  noPayoffs: string;
+  noPayoffs: string | null;
 }
 
 export const ENGINES: EngineDef[] = [
@@ -34,11 +35,12 @@ export const ENGINES: EngineDef[] = [
     side: "forsaken",
     note: "Forsaken banishes your top card when you create Runechants, and traverses at 3 in a turn.",
     generators: "Make Runechants",
-    payoffs: "Use Runechants",
+    // Attacks spend Runechants anyway, so nothing is linked as using them (maintainer, 15 Oct 2026).
+    payoffs: null,
     makeWord: "make",
-    useWord: "use",
+    useWord: null,
     noGenerators: "Nothing makes Runechants yet.",
-    noPayoffs: "Nothing uses Runechants yet.",
+    noPayoffs: null,
   },
   {
     id: "gate",

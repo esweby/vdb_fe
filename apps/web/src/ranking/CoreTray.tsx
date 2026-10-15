@@ -216,7 +216,7 @@ export function CoreTray(props: {
           )}
           {weighed.map(({ e, b }) => {
             const gap =
-              b.generators > 0 && b.payoffs === 0
+              e.noPayoffs && b.generators > 0 && b.payoffs === 0
                 ? e.noPayoffs
                 : b.payoffs > 0 && b.generators === 0
                   ? e.noGenerators
@@ -245,9 +245,11 @@ export function CoreTray(props: {
                       <i key={`p${i}`} data-payoff="" />
                     ))}
                   </span>
-                  <span>
-                    {b.payoffs} {e.useWord}
-                  </span>
+                  {e.useWord && (
+                    <span>
+                      {b.payoffs} {e.useWord}
+                    </span>
+                  )}
                 </span>
                 {gap && <span className={styles.gap}>{gap}</span>}
               </div>

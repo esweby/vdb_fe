@@ -79,6 +79,17 @@ describe("engine board", () => {
     ]);
   });
 
+  it("shows only the Runechant makers: nothing is linked as using them", async () => {
+    await open();
+    const runechant = within(
+      screen.getByRole("region", { name: "Runechant engine" }),
+    );
+    expect(
+      runechant.getByRole("list", { name: "Make Runechants" }),
+    ).toBeInTheDocument();
+    expect(runechant.queryByText("Use Runechants")).toBeNull();
+  });
+
   it("shows a card's value and its floor-to-ceiling range", async () => {
     await open();
     const [bsl] = lane("Make Gates");
@@ -226,6 +237,15 @@ describe("the core", () => {
     expect(gate.getByText("3 make")).toBeInTheDocument();
     expect(gate.getByText("0 targets")).toBeInTheDocument();
     expect(gate.getByText("No Gate targets yet.")).toBeInTheDocument();
+  });
+
+  it("weighs the Runechant engine by its makers alone", async () => {
+    await open(`/ranking?${core({ bsl3: 3 })}`);
+    const runechant = within(
+      tray().getByRole("group", { name: "Runechant engine" }),
+    );
+    expect(runechant.getByText("3 make")).toBeInTheDocument();
+    expect(runechant.queryByText(/use/)).toBeNull();
   });
 
   it("only weighs engines that have cards in the core", async () => {

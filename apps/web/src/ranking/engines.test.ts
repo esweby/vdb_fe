@@ -70,7 +70,8 @@ describe("balance", () => {
       { name: "D", roles: ["rune_gate" as const], quantity: 3 },
     ];
     expect(balance(core, "gate")).toEqual({ generators: 4, payoffs: 3 });
-    expect(balance(core, "runechant")).toEqual({ generators: 0, payoffs: 3 });
+    // Rune Gate is recorded but not linked, so it weighs nothing.
+    expect(balance(core, "runechant")).toEqual({ generators: 0, payoffs: 0 });
   });
 });
 

@@ -205,13 +205,17 @@ export function EngineBoard(props: {
               <h2>{e.name}</h2>
               <p>{e.note}</p>
             </header>
-            <div className={styles.pair}>
-              {lane(`${e.id}-g`, e.generators, gens)}
-              <span className={styles.arrow} aria-hidden="true">
-                →
-              </span>
-              {lane(`${e.id}-p`, e.payoffs, pays)}
-            </div>
+            {e.payoffs === null ? (
+              lane(`${e.id}-g`, e.generators, gens)
+            ) : (
+              <div className={styles.pair}>
+                {lane(`${e.id}-g`, e.generators, gens)}
+                <span className={styles.arrow} aria-hidden="true">
+                  →
+                </span>
+                {lane(`${e.id}-p`, e.payoffs, pays)}
+              </div>
+            )}
           </section>
         );
       })}
