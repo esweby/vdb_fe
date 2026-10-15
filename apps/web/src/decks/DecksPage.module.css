@@ -51,13 +51,30 @@
   outline-offset: 2px;
 }
 
+/* A set number of columns for each width, so every row spans the full width and cards are
+   the same size whether there are two decks or twenty. */
 .grid {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+@media (min-width: 96rem) {
+  .grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (max-width: 62rem) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 38rem) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /* A deck card: art across the top, then name, numbers, pitch mix and visibility. */
@@ -78,7 +95,7 @@
 }
 .cover {
   display: block;
-  height: 8.5rem;
+  aspect-ratio: 16 / 9;
   overflow: hidden;
   background: var(--brand);
 }
@@ -102,12 +119,12 @@
 }
 .body {
   display: grid;
-  gap: 0.55rem;
-  padding: 0.85rem 1rem 1rem;
+  gap: 0.65rem;
+  padding: 1rem 1.15rem 1.15rem;
 }
 .name {
   margin: 0;
-  font-size: 1.15rem;
+  font-size: 1.3rem;
   line-height: 1.25;
 }
 .name a {
@@ -128,7 +145,7 @@
 }
 .mix {
   display: flex;
-  height: 0.4rem;
+  height: 0.45rem;
   gap: 2px;
   border-radius: 999px;
   overflow: hidden;
