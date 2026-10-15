@@ -1,17 +1,13 @@
 import { useEffect, useState } from "react";
-import { pitchName } from "../cards/pitch.ts";
 import { Button, Dialog } from "../ui/index.ts";
-import { reviewSummary, suggestedFixes, type Source } from "./reviewSummary.ts";
+import {
+  reviewSummary,
+  suggestedFixes,
+  summaryRows,
+  type Source,
+} from "./reviewSummary.ts";
 import type { Dimension, ScoreRow } from "./scoreRepository.ts";
 import styles from "./ReviewDialog.module.css";
-
-const SOURCE_LABEL: Record<Source, string> = {
-  set: "set",
-  inherited: "inherited",
-  not_relevant: "not relevant",
-  blank: "blank",
-  same_as_overall: "same as overall",
-};
 
 export function ReviewDialog(props: {
   open: boolean;
@@ -33,7 +29,6 @@ export function ReviewDialog(props: {
   }, [props.open]);
   const summary = reviewSummary(props.rows, props.dimensions, props.variants);
   const fixes = suggestedFixes(props.rows, props.dimensions, props.variants);
-  const multiPitch = props.variants.length > 1;
   const checkSame =
     !!props.hasConditions &&
     !confirmedSame &&
@@ -88,24 +83,21 @@ export function ReviewDialog(props: {
         <table key={d.id} className={styles.table}>
           <caption>{d.label}</caption>
           <tbody>
-            {summary
-              .filter((c) => c.dimensionId === d.id)
-              .map((c) => (
-                <tr key={`${c.variantId}-${c.side}`}>
-                  <th scope="row">
-                    {multiPitch ? `${pitchName(c.pitch)}, ` : ""}
-                    {c.side === "forsaken" ? "Forsaken" : "Usurper"}
-                  </th>
-                  <td
-                    className={
-                      needsAttention(c.source) ? styles.blank : undefined
-                    }
-                    data-attention={needsAttention(c.source) || undefined}
-                  >
-                    {c.value} ({SOURCE_LABEL[c.source]})
-                  </td>
-                </tr>
-              ))}
+            {summaryRows(
+              summary.filter((c) => c.dimensionId === d.id),
+              props.variants,
+              { flagSameAsOverall: checkSame },
+            ).map((row) => (
+              <tr key={row.where}>
+                <th scope="row">{row.where}</th>
+                <td
+                  className={row.attention ? styles.blank : undefined}
+                  data-attention={row.attention || undefined}
+                >
+                  {row.value}
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       ))}
