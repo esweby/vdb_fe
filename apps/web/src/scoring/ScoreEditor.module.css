@@ -85,3 +85,8 @@
   font-size: 0.82rem;
   color: var(--muted);
 }
+
+.others {
+  color: var(--muted);
+  font-size: 0.85rem;
+}

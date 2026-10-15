@@ -21,7 +21,7 @@ export const sampleDetail: CardDetail = {
   type: "action",
   classes: ["Runeblade"],
   talents: ["Shadow"],
-  text: "Banish a card from your hand. If it's Runeblade, create a Runechant token.",
+  text: "Banish a card from your hand. If it's Runeblade, create a Runechant token. Go again",
   attributes: {
     hasGoAgain: true,
     hasBloodDebt: false,

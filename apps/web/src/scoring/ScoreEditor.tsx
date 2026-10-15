@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { pitchName } from "../cards/pitch.ts";
 import { Slider } from "../ui/index.ts";
 import { cellValue } from "./inherited.ts";
 import type { Dimension, ScoreKey, ScoreRow } from "./scoreRepository.ts";
@@ -20,11 +21,12 @@ export function ScoreEditor(props: {
   sidesTogetherByDefault?: boolean;
   /** Dimensions shown greyed out and disabled, keeping their place, with why. */
   locked?: { ids: number[]; reason: string };
+  /** The pitch being looked at: it can get its own score under the all-pitches one. */
+  chosenVariantId?: string;
 }) {
   const { rows, onSet } = props;
   const hasSideRows = (dimensionId: number) =>
     rows.some((r) => r.dimensionId === dimensionId && r.side !== null);
-  const hasPitchRows = rows.some((r) => r.variantId !== null);
 
   /** dimension id -> split by side */
   const [split, setSplit] = useState<Record<number, boolean>>(() =>
@@ -35,8 +37,18 @@ export function ScoreEditor(props: {
       ]),
     ),
   );
-  const [perPitch, setPerPitch] = useState(hasPitchRows);
   const multiPitch = props.variants.length > 1;
+  const chosen = multiPitch
+    ? (props.variants.find((v) => v.id === props.chosenVariantId) ??
+      props.variants[0])
+    : undefined;
+  const hasOwnScores = (variantId: string) =>
+    rows.some((r) => r.variantId === variantId);
+  /** variant id -> scored separately from the other pitches */
+  const [ownPitch, setOwnPitch] = useState<Record<string, boolean>>({});
+  const pitchSeparate = chosen
+    ? (ownPitch[chosen.id] ?? hasOwnScores(chosen.id))
+    : false;
 
   // Scores often load after the editor appears: open anything with per-side or per-pitch
   // scores, so they're never hidden. It only ever opens; closing is the user's choice.
@@ -53,7 +65,6 @@ export function ScoreEditor(props: {
         ...Object.fromEntries(opened.map((d) => [d.id, true])),
       };
     });
-    if (rows.some((r) => r.variantId !== null)) setPerPitch(true);
   }, [rows, props.dimensions]);
 
   function setTogether(dimensionId: number, together: boolean) {
@@ -68,9 +79,11 @@ export function ScoreEditor(props: {
   }
 
   function setPitchSeparately(separate: boolean) {
+    if (!chosen) return;
     if (!separate) {
+      // Removes this pitch's own scores only; other pitches keep theirs.
       for (const r of rows) {
-        if (r.variantId !== null) {
+        if (r.variantId === chosen.id) {
           onSet(
             {
               variantId: r.variantId,
@@ -82,28 +95,42 @@ export function ScoreEditor(props: {
         }
       }
     }
-    setPerPitch(separate);
+    setOwnPitch((o) => ({ ...o, [chosen.id]: separate }));
   }
 
+  // Other pitches with their own scores aren't shown while looking at this one, so say so.
+  const othersWithScores = props.variants.filter(
+    (v) => v.id !== chosen?.id && hasOwnScores(v.id),
+  );
+
+  // One slider per rating: all pitches, or (ticked) the pitch being looked at, which falls
+  // back to the all-pitches score when blank.
   const variants: (string | null)[] = [
-    null,
-    ...(multiPitch && perPitch ? props.variants.map((v) => v.id) : []),
+    chosen && pitchSeparate ? chosen.id : null,
   ];
   const pitchOf = (id: string | null) =>
     props.variants.find((v) => v.id === id)?.pitch;
 
   return (
     <div>
-      {multiPitch && (
+      {chosen && (
         <div className={styles.toggles}>
           <label>
             <input
               type="checkbox"
-              checked={perPitch}
+              checked={pitchSeparate}
               onChange={(e) => setPitchSeparately(e.target.checked)}
             />
-            Score each pitch separately
+            Different score for {pitchName(chosen.pitch)}
           </label>
+          {othersWithScores.length > 0 && (
+            <span className={styles.others}>
+              {othersWithScores.map((v) => pitchName(v.pitch)).join(" and ")}{" "}
+              {othersWithScores.length === 1
+                ? "has its own scores."
+                : "have their own scores."}
+            </span>
+          )}
         </div>
       )}
 
@@ -145,7 +172,7 @@ export function ScoreEditor(props: {
                 const { own, inherited } = cellValue(rows, key);
                 const suffix = [
                   variantId !== null
-                    ? `pitch ${pitchOf(variantId) ?? "–"}`
+                    ? pitchName(pitchOf(variantId) ?? null)
                     : null,
                   side ? SIDE_LABEL[side] : null,
                 ]
@@ -161,9 +188,8 @@ export function ScoreEditor(props: {
                     <Slider
                       label={label}
                       visibleLabel={
-                        suffix
-                          ? suffix[0]!.toUpperCase() + suffix.slice(1)
-                          : null
+                        // The tick box says which pitch; only the side needs a label.
+                        side ? SIDE_LABEL[side] : null
                       }
                       value={own}
                       quietScale
