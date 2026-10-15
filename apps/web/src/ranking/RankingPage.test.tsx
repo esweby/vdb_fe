@@ -94,7 +94,7 @@ describe("engine board", () => {
     const { user, router } = await open();
     expect(laneNames("Make Runechants")[0]).toBe("Become the Shadow Lord");
     await user.click(
-      within(screen.getByRole("group", { name: "Play style" })).getByRole(
+      within(tray().getByRole("group", { name: "Play style" })).getByRole(
         "button",
         { name: "Consistent" },
       ),
@@ -113,35 +113,28 @@ describe("engine board", () => {
         .filter((n) => n?.endsWith(" engine"));
     expect(engines()[0]).toBe("Runechant engine");
     await user.click(
-      within(screen.getByRole("group", { name: "Side" })).getByRole("button", {
+      within(tray().getByRole("group", { name: "Side" })).getByRole("button", {
         name: "Usurper",
       }),
     );
     expect(engines()[0]).toBe("Gate engine");
   });
 
-  it("narrows the board with search and pitch", async () => {
+  it("finds a card by name", async () => {
     const { user } = await open();
-    await user.click(
-      within(screen.getByRole("group", { name: "Pitch" })).getByRole("button", {
-        name: "Yellow",
-      }),
-    );
-    expect(laneNames("Gate targets")).toEqual(["Hocus Pocus (yellow)"]);
     await user.type(
       screen.getByRole("searchbox", { name: "Find a card" }),
       "shadow",
     );
+    expect(laneNames("Make Gates")).toEqual(["Become the Shadow Lord"]);
     expect(screen.queryByRole("list", { name: "Gate targets" })).toBeNull();
   });
 
-  it("keeps the rarer filters behind More filters", async () => {
-    const { user } = await open();
+  it("has no filters: the core's priorities and targets do that job", async () => {
+    await open();
     expect(screen.queryByRole("complementary", { name: "Filters" })).toBeNull();
-    await user.click(screen.getByRole("button", { name: "More filters" }));
-    expect(
-      screen.getByRole("complementary", { name: "Filters" }),
-    ).toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: "Pitch" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "More filters" })).toBeNull();
   });
 
   it("explains an empty board and points to Needs review", async () => {
@@ -179,6 +172,13 @@ describe("engine board", () => {
   it("offers whose scores to use only when signed in", async () => {
     await open();
     expect(screen.queryByRole("group", { name: "Whose scores" })).toBeNull();
+  });
+
+  it("keeps the priorities with the core", async () => {
+    await open("/ranking", { signedIn: true });
+    for (const name of ["Play style", "Side", "Whose scores"]) {
+      expect(tray().getByRole("group", { name })).toBeInTheDocument();
+    }
   });
 });
 
