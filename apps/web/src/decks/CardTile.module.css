@@ -54,6 +54,7 @@
 .name {
   display: block;
   text-align: center;
+  font-family: var(--font-display);
   font-weight: 700;
   padding: 0.256em 0.321em;
   border: 1px solid var(--border);
