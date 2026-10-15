@@ -6,7 +6,8 @@
 import type { AuthoredCardAttributes, CardAttributes } from "./attributes.ts";
 import type { CardGroup } from "./groups.ts";
 
-export type Engine = "runechant" | "gate" | "banish" | "aura" | "tempo";
+export type Engine =
+  "runechant" | "gate" | "banish" | "aura" | "tempo" | "usurp";
 
 /** Every role, in the order a card's roles are listed. */
 export const ROLE_IDS = [
@@ -33,6 +34,7 @@ export const ROLE_IDS = [
   "eloquence",
   "tempo_payoff",
   "usurp",
+  "usurp_payoff",
   "disruption",
   "tutor",
 ] as const;
@@ -285,14 +287,22 @@ export const ROLES: RoleDef[] = [
       ]),
   },
 
-  // Outside the engines: recorded, not linked
+  // Usurp engine: Usurp attacks feed what rewards being usurped (Runechant of Lust)
   {
     id: "usurp",
     name: "Usurp",
-    engine: null,
-    kind: null,
+    engine: "usurp",
+    kind: "generator",
     matches: (c) => c.attributes.hasUsurp,
   },
+  {
+    id: "usurp_payoff",
+    name: "Usurp payoff",
+    engine: "usurp",
+    kind: "payoff",
+    matches: (c) => mentions(c, ["on_usurped", "usurped_this_turn"]),
+  },
+  // Outside the engines: recorded, not linked
   {
     id: "disruption",
     name: "Disruption",

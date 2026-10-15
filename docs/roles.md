@@ -4,7 +4,7 @@ A first pass at the jobs cards do for Viserai, drafted from the card attributes 
 
 ## The model
 
-- An **engine** is a plan Viserai can run: Runechants, Gates, banish, auras or tempo.
+- An **engine** is a plan Viserai can run: Runechants, Gates, banish, auras, tempo or usurp.
 - A **role** is a job a card does in an engine, read from its attributes, so new cards get roles automatically. Each role has a kind:
   - **Generators** make the engine's resource.
   - **Payoffs** use the resource or get better because of it.
@@ -73,13 +73,21 @@ More action cards in a turn.
 | Eloquence        | generator | Creates Eloquence                                     |     3 | Eloquent Eulogy, Requiem for the Damned  |
 | Tempo payoff     | payoff    | Needs an attack or non-attack action played this turn |     5 | Bounding Demigon, Revel in Runeblood     |
 
+## Usurp engine
+
+Usurp attacks feed the cards that reward being usurped, such as Runechant of Lust, which creates a Runechant when an attack usurps it.
+
+| Role         | Kind      | Rule                                                          | Cards | For example                                |
+| ------------ | --------- | ------------------------------------------------------------- | ----: | ------------------------------------------ |
+| Usurp        | generator | The Usurp keyword                                             |    11 | Murmuring Gloomblade, Bloodsong Gloomblade |
+| Usurp payoff | payoff    | Triggers when usurped, or needs you to have usurped this turn |     2 | Runechant of Lust, Usurp the Shadow Throne |
+
 ## Outside the engines
 
-| Role       | Rule                                            | Cards | For example                                 |
-| ---------- | ----------------------------------------------- | ----: | ------------------------------------------- |
-| Usurp      | The Usurp keyword                               |    11 | Bloodsong Gloomblade, Demonbound Gloomblade |
-| Disruption | Banishes, discards or destroys opponents' cards |    26 | Widespread Ruin, Bloodsong Gloomblade       |
-| Tutor      | Searches your deck                              |     4 | Become the Arknight, Sinspeaker Gloomblade  |
+| Role       | Rule                                            | Cards | For example                                |
+| ---------- | ----------------------------------------------- | ----: | ------------------------------------------ |
+| Disruption | Banishes, discards or destroys opponents' cards |    26 | Widespread Ruin, Bloodsong Gloomblade      |
+| Tutor      | Searches your deck                              |     4 | Become the Arknight, Sinspeaker Gloomblade |
 
 ## Open questions
 
