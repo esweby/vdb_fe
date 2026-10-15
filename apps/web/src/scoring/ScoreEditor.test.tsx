@@ -312,4 +312,66 @@ describe("ScoreEditor", () => {
       [{ variantId: "red", side: null, dimensionId: 1 }, null],
     ]);
   });
+
+  it("only offers a pitch its own score once there's a score for all pitches", () => {
+    const { unmount } = render(<Harness chosenVariantId="blue" />);
+    expect(
+      screen.getByRole("checkbox", { name: "Different score for Blue" }),
+    ).toBeDisabled();
+    expect(
+      screen.getByText(
+        "Score all pitches first, then give Blue its own score.",
+      ),
+    ).toBeInTheDocument();
+    unmount();
+    render(
+      <Harness
+        chosenVariantId="blue"
+        initial={[{ variantId: null, side: null, dimensionId: 1, score: 70 }]}
+      />,
+    );
+    expect(
+      screen.getByRole("checkbox", { name: "Different score for Blue" }),
+    ).toBeEnabled();
+  });
+
+  it("warns when only a pitch has scores, so the others would count as 0", () => {
+    render(
+      <Harness
+        chosenVariantId="red"
+        initial={[{ variantId: "red", side: null, dimensionId: 1, score: 80 }]}
+      />,
+    );
+    expect(
+      screen.getByText("Blue has no score yet, so it will count as 0."),
+    ).toBeInTheDocument();
+  });
+
+  it("can move a pitch's scores up to all pitches in one click", async () => {
+    const onSet = vi.fn();
+    render(
+      <Harness
+        chosenVariantId="red"
+        onSet={onSet}
+        initial={[{ variantId: "red", side: null, dimensionId: 1, score: 80 }]}
+      />,
+    );
+    await userEvent
+      .setup()
+      .click(
+        screen.getByRole("button", {
+          name: "Use Red's scores for all pitches",
+        }),
+      );
+    expect(onSet.mock.calls).toEqual([
+      [{ variantId: null, side: null, dimensionId: 1 }, 80],
+      [{ variantId: "red", side: null, dimensionId: 1 }, null],
+    ]);
+    expect(
+      screen.getByRole("checkbox", { name: "Different score for Red" }),
+    ).not.toBeChecked();
+    expect(
+      screen.getByRole("slider", { name: "Runechant creation" }),
+    ).toHaveAttribute("aria-valuetext", "80");
+  });
 });
