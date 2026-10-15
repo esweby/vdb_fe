@@ -189,7 +189,7 @@ describe("ranking page", () => {
     expect(await screen.findByText("Nothing ranked yet")).toBeInTheDocument();
     expect(
       ranked().getByRole("link", { name: "Review cards" }),
-    ).toHaveAttribute("href", "/review");
+    ).toHaveAttribute("href", "/needs-review");
   });
 
   it("pins and excludes cards", async () => {
