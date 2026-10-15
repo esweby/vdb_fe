@@ -314,4 +314,26 @@ describe("card page", () => {
       ).toBeTruthy();
     }
   });
+
+  it("groups What it does into sections, keywords after the effects", async () => {
+    await renderApp({
+      path,
+      auth: fakeAuthService().service,
+      scores: fakeScoreRepository().repository,
+    });
+    const details = within(
+      await screen.findByRole("region", { name: "Details" }),
+    );
+    const resolves = await details.findByRole("heading", {
+      name: "When it resolves",
+    });
+    const keywords = details.getByRole("heading", { name: "Keywords" });
+    expect(
+      resolves.compareDocumentPosition(keywords) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      within(keywords.nextElementSibling as HTMLElement).getByText("Go again."),
+    ).toBeInTheDocument();
+  });
 });
