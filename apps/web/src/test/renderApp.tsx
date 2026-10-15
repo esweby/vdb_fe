@@ -11,6 +11,8 @@ import type { ScoreRepository } from "../scoring/scoreRepository.ts";
 import { fakeScoreRepository } from "./fakeScoreRepository.ts";
 import type { DeckRepository } from "../decks/deckRepository.ts";
 import { fakeDeckRepository } from "./fakeDeckRepository.ts";
+import type { StrategyRepository } from "../strategy/strategyRepository.ts";
+import { fakeStrategyRepository } from "./fakeStrategyRepository.ts";
 
 /** Renders the whole app at a path, with a fake auth service. */
 export async function renderApp(options: {
@@ -19,10 +21,12 @@ export async function renderApp(options: {
   cards?: CardRepository;
   scores?: ScoreRepository;
   decks?: DeckRepository;
+  strategy?: StrategyRepository;
 }) {
   const scores = options.scores ?? fakeScoreRepository().repository;
   const cards = options.cards ?? fakeCardRepository();
   const decks = options.decks ?? fakeDeckRepository().repository;
+  const strategy = options.strategy ?? fakeStrategyRepository().repository;
   const store = createStore({ cards });
   listenToAuth(store, options.auth);
   const router = createAppRouter({
@@ -32,7 +36,7 @@ export async function renderApp(options: {
   render(
     <App
       store={store}
-      services={{ auth: options.auth, cards, scores, decks }}
+      services={{ auth: options.auth, cards, scores, decks, strategy }}
       router={router}
     />,
   );
