@@ -400,4 +400,15 @@ describe("cards page", () => {
       screen.getByRole("dialog", { name: "Become the Shadow Lord" }),
     ).toBeInTheDocument();
   });
+
+  it("keeps the page title and field labels for screen readers, with a compact toolbar", async () => {
+    await renderApp({ path: "/cards", auth: fakeAuthService().service });
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Cards" }),
+    ).toHaveClass(/visuallyHidden/);
+    expect(screen.getByLabelText("Search")).toHaveAttribute(
+      "placeholder",
+      "Search card names",
+    );
+  });
 });

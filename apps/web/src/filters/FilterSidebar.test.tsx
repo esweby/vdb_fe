@@ -137,6 +137,13 @@ describe("FilterSidebar", () => {
     expect(groupOf("Keywords")).toHaveAttribute("open");
   });
 
+  it("shows how many filters a group has on its heading", () => {
+    render(
+      <Harness initial={{ type: { instant: "exclude", action: "exclude" } }} />,
+    );
+    expect(sidebar().getByLabelText("2 filters")).toHaveTextContent("2");
+  });
+
   it("keeps mechanics in a collapsed section", () => {
     render(<Harness />);
     const mechanics = sidebar().getByText("Mechanics").closest("details")!;
