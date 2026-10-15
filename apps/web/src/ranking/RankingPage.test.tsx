@@ -28,9 +28,9 @@ describe("ranking page", () => {
     await screen.findByRole("table", { name: "Ranked by your priorities" });
     expect(rankedNames()).toEqual([
       "Become the Shadow Lord",
-      "Hocus Pocus (pitch 1)",
-      "Hocus Pocus (pitch 2)",
-      "Hocus Pocus (pitch 3)",
+      "Hocus Pocus (red)",
+      "Hocus Pocus (yellow)",
+      "Hocus Pocus (blue)",
     ]);
     expect(ranked().getAllByRole("row")[1]).toHaveTextContent("70");
   });
@@ -48,7 +48,7 @@ describe("ranking page", () => {
     risk.focus();
     await userEvent.setup().keyboard("{Home}");
     // At full consistent, Become the Shadow Lord drops to its floor (20).
-    await waitFor(() => expect(rankedNames()[0]).toBe("Hocus Pocus (pitch 1)"));
+    await waitFor(() => expect(rankedNames()[0]).toBe("Hocus Pocus (red)"));
     expect(rankedNames().at(-1)).toBe("Become the Shadow Lord");
     expect(router.state.location.search).toMatchObject({ risk: -100 });
   });
@@ -67,8 +67,8 @@ describe("ranking page", () => {
     await userEvent
       .setup()
       .click(screen.getByRole("button", { name: "Consistent" }));
-    // 70 − 0.5 × (70 − 20) = 45, under Hocus Pocus (pitch 1) at 50
-    await waitFor(() => expect(rankedNames()[0]).toBe("Hocus Pocus (pitch 1)"));
+    // 70 − 0.5 × (70 − 20) = 45, under Hocus Pocus (red) at 50
+    await waitFor(() => expect(rankedNames()[0]).toBe("Hocus Pocus (red)"));
     expect(router.state.location.search).toMatchObject({ risk: -50 });
     expect(screen.getByRole("button", { name: "Consistent" })).toHaveAttribute(
       "aria-pressed",
@@ -97,9 +97,9 @@ describe("ranking page", () => {
     await screen.findByRole("table", { name: "Ranked by your priorities" });
     const user = userEvent.setup();
     await user.click(
-      screen.getByRole("button", { name: "Pin Hocus Pocus (pitch 3)" }),
+      screen.getByRole("button", { name: "Pin Hocus Pocus (blue)" }),
     );
-    expect(rankedNames()[0]).toBe("Hocus Pocus (pitch 3)");
+    expect(rankedNames()[0]).toBe("Hocus Pocus (blue)");
     await user.click(
       screen.getByRole("button", { name: "Exclude Become the Shadow Lord" }),
     );
@@ -150,8 +150,8 @@ describe("ranking page", () => {
           { name: "Yellow" },
         ),
       );
-    expect(rankedNames()).not.toContain("Hocus Pocus (pitch 1)");
-    expect(rankedNames()).toContain("Hocus Pocus (pitch 2)");
+    expect(rankedNames()).not.toContain("Hocus Pocus (red)");
+    expect(rankedNames()).toContain("Hocus Pocus (yellow)");
   });
 
   it("offers the mine/community blend only when signed in", async () => {
@@ -235,7 +235,7 @@ describe("adding ranked cards to a deck", () => {
     );
     await user.click(
       await screen.findByRole("button", {
-        name: "Add Hocus Pocus (pitch 1) to Gate tempo",
+        name: "Add Hocus Pocus (red) to Gate tempo",
       }),
     );
     expect(fake.saved).toEqual(["set deck-1 hp1 1 main"]);
@@ -258,9 +258,9 @@ describe("adding ranked cards to a deck", () => {
         .repository,
     });
     await screen.findByRole("button", {
-      name: "Add Hocus Pocus (pitch 3) to Gate tempo",
+      name: "Add Hocus Pocus (blue) to Gate tempo",
     });
-    expect(rankedNames()[0]).toBe("Hocus Pocus (pitch 3)");
+    expect(rankedNames()[0]).toBe("Hocus Pocus (blue)");
     expect(ranked().getByText("2 in deck")).toBeInTheDocument();
   });
 
@@ -274,12 +274,12 @@ describe("adding ranked cards to a deck", () => {
     });
     expect(
       await screen.findByRole("button", {
-        name: "Add Hocus Pocus (pitch 3) to Gate tempo",
+        name: "Add Hocus Pocus (blue) to Gate tempo",
       }),
     ).toBeDisabled();
     expect(
       screen.getByRole("button", {
-        name: "Add Hocus Pocus (pitch 1) to Gate tempo",
+        name: "Add Hocus Pocus (red) to Gate tempo",
       }),
     ).toBeEnabled();
   });
