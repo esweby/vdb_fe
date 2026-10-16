@@ -44,8 +44,11 @@
   align-self: stretch;
   gap: 0.25rem;
 }
-.spacer {
-  flex: 1;
+.account {
+  display: flex;
+  align-items: stretch;
+  align-self: stretch;
+  gap: 0.25rem;
 }
 .tab,
 .signOut {
@@ -88,8 +91,14 @@
   .subtitle {
     display: none;
   }
+  /* Account beside the name on the first row; the page tabs on their own row below. */
+  .account {
+    order: 1;
+    margin-left: auto;
+  }
   /* One row of tabs that scrolls sideways, rather than wrapping or being cut off. */
   .nav {
+    order: 2;
     flex-basis: 100%;
     overflow-x: auto;
     scrollbar-width: none;
@@ -97,9 +106,6 @@
   }
   .nav::-webkit-scrollbar {
     display: none;
-  }
-  .spacer {
-    flex: 0 0 0.5rem;
   }
   .tab,
   .signOut {

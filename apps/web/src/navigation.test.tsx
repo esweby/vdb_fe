@@ -9,13 +9,19 @@ const users = {
   "user@test.local": { id: "u1", password: "pw", role: "user" as const },
 };
 const nav = () => within(screen.getByRole("navigation", { name: "Main" }));
+// Account, Sign in and Sign out sit apart from the page tabs, so they stay in view on a phone.
+const account = () =>
+  within(screen.getByRole("navigation", { name: "Account" }));
 
 describe("navigation", () => {
   it("shows public pages and Sign in when signed out", async () => {
     await renderApp({ path: "/", auth: fakeAuthService().service });
     expect(nav().getByRole("link", { name: "Cards" })).toBeInTheDocument();
     expect(nav().getByRole("link", { name: "Ranking" })).toBeInTheDocument();
-    expect(nav().getByRole("link", { name: "Sign in" })).toBeInTheDocument();
+    expect(
+      account().getByRole("link", { name: "Sign in" }),
+    ).toBeInTheDocument();
+    expect(nav().queryByRole("link", { name: "Sign in" })).toBeNull();
     // Public decks can be browsed signed out.
     expect(nav().getByRole("link", { name: "Decks" })).toBeInTheDocument();
   });
@@ -74,9 +80,9 @@ describe("navigation", () => {
     await renderApp({ path: "/", auth: fake.service });
     await userEvent
       .setup()
-      .click(await nav().findByRole("button", { name: "Sign out" }));
+      .click(await account().findByRole("button", { name: "Sign out" }));
     expect(
-      await nav().findByRole("link", { name: "Sign in" }),
+      await account().findByRole("link", { name: "Sign in" }),
     ).toBeInTheDocument();
     expect(fake.calls).toContain("signOut");
   });
