@@ -13,6 +13,37 @@ const users = {
 };
 
 describe("card page", () => {
+  it("enlarges the card's picture from a magnifying glass (small on a phone)", async () => {
+    const withImage = sampleCards.map((c) =>
+      c.id === "card-become-the-shadow-lord"
+        ? {
+            ...c,
+            variants: c.variants.map((v) => ({
+              ...v,
+              imageUrl: `https://img/${v.id}.webp`,
+            })),
+          }
+        : c,
+    );
+    await renderApp({
+      path,
+      auth: fakeAuthService().service,
+      scores: fakeScoreRepository().repository,
+      cards: fakeCardRepository(withImage),
+    });
+    const card = within(await screen.findByRole("region", { name: "Card" }));
+    await userEvent.setup().click(
+      await card.findByRole("button", {
+        name: "Enlarge Become the Shadow Lord (blue)",
+      }),
+    );
+    expect(
+      within(
+        screen.getByRole("dialog", { name: "Become the Shadow Lord (blue)" }),
+      ).getByRole("img", { name: "Become the Shadow Lord (blue)" }),
+    ).toHaveAttribute("src", "https://img/bsl3.webp");
+  });
+
   it("shows the card's text and verified attributes in plain English", async () => {
     await renderApp({
       path,
