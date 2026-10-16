@@ -148,4 +148,48 @@ describe("loading and load errors", () => {
     ).toBeInTheDocument();
     expect(screen.queryByRole("alert")).toBeNull();
   });
+
+  it("a deck waits for the cards rather than showing an empty, illegal deck", async () => {
+    const decks = fakeDeckRepository([
+      {
+        id: "deck-1",
+        name: "Gate tempo",
+        updatedAt: "2026-10-14T10:00:00Z",
+        ownerId: "s1",
+        cards: [{ variantId: "hp1", quantity: 3, sideboard: false }],
+        pitchTargets: {},
+      },
+    ]).repository;
+    await renderApp({
+      path: "/decks/deck-1",
+      auth: scorer(),
+      decks,
+      cards: flakyCards(),
+    });
+    await retries("the cards");
+    expect(screen.queryByText(/The deck has 0 cards/)).toBeNull();
+    expect(await screen.findByText(/The deck has 3 cards/)).toBeInTheDocument();
+  });
+
+  it("shows a deck as loading until the cards are in", async () => {
+    await renderApp({
+      path: "/decks/deck-1",
+      auth: scorer(),
+      decks: fakeDeckRepository([
+        {
+          id: "deck-1",
+          name: "Gate tempo",
+          updatedAt: "2026-10-14T10:00:00Z",
+          ownerId: "s1",
+          cards: [{ variantId: "hp1", quantity: 3, sideboard: false }],
+          pitchTargets: {},
+        },
+      ]).repository,
+      cards: { listCards: () => new Promise(() => {}) },
+    });
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "Loading the cards",
+    );
+    expect(screen.queryByText(/The deck has 0 cards/)).toBeNull();
+  });
 });

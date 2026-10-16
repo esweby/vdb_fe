@@ -658,8 +658,11 @@ export function RankingPage() {
               onSaveAsDeck={async (name) => {
                 const created = await decks.createDeck(name);
                 await addCore(created.id, []);
+                // The Set up targets go with it, for the deck's Stats.
+                await decks.setPitchTargets(created.id, targets);
                 setDeckList([created, ...deckList]);
                 update({}, created.id);
+                return created;
               }}
             />
           </div>

@@ -1096,3 +1096,9 @@
 .legend span[data-key="back"]::before {
   background: #1f9d61;
 }
+
+/* "Saved as …" with a link to open the deck, so finishing it is one click away. */
+.saved a {
+  font-weight: 600;
+  white-space: nowrap;
+}
