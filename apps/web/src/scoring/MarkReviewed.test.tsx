@@ -26,7 +26,8 @@ describe("Mark reviewed", () => {
       .setup()
       .click(await screen.findByRole("button", { name: "Mark reviewed" }));
     const dialog = screen.getByRole("dialog", { name: "Mark reviewed" });
-    expect(within(dialog).getAllByText("80").length).toBeGreaterThan(0);
+    // 80, shown out of 10.
+    expect(within(dialog).getAllByText("8").length).toBeGreaterThan(0);
     expect(
       within(dialog).getAllByText("0 · no score, counts as 0").length,
     ).toBeGreaterThan(0);
@@ -119,7 +120,7 @@ describe("Mark reviewed", () => {
     );
     const flagged = () =>
       dialog
-        .getAllByText("70 · same as overall")
+        .getAllByText("7 · same as overall")
         .filter((cell) => cell.getAttribute("data-attention") === "true");
     // Floor and ceiling, one line each ("Both sides")
     expect(flagged()).toHaveLength(2);

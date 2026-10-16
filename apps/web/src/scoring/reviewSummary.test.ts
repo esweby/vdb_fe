@@ -129,21 +129,21 @@ describe("suggestedFixes", () => {
       expect(
         rowsFor([{ variantId: null, side: null, dimensionId: 1, score: 80 }]),
       ).toEqual([
-        { where: "Every pitch and side", value: "80", attention: false },
+        { where: "Every pitch and side", value: "8", attention: false },
       ]);
       expect(
         rowsFor(
           [{ variantId: null, side: null, dimensionId: 1, score: 80 }],
           [{ id: "b", pitch: 3 }],
         ),
-      ).toEqual([{ where: "Both sides", value: "80", attention: false }]);
+      ).toEqual([{ where: "Both sides", value: "8", attention: false }]);
     });
 
     it("groups pitches that match, in plain words", () => {
       expect(
         rowsFor([{ variantId: "r", side: null, dimensionId: 1, score: 80 }]),
       ).toEqual([
-        { where: "Red", value: "80", attention: false },
+        { where: "Red", value: "8", attention: false },
         {
           where: "Yellow, Blue",
           value: "0 · no score, counts as 0",
@@ -162,8 +162,8 @@ describe("suggestedFixes", () => {
           [{ id: "b", pitch: 3 }],
         ),
       ).toEqual([
-        { where: "Forsaken", value: "80", attention: false },
-        { where: "Usurper", value: "60", attention: false },
+        { where: "Forsaken", value: "8", attention: false },
+        { where: "Usurper", value: "6", attention: false },
       ]);
     });
   });

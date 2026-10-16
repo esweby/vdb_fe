@@ -2,6 +2,7 @@
 // comes from (README "Mark reviewed"). Blanks count as 0 once the card is reviewed, except a
 // blank floor or ceiling, which counts as the same as overall (README "Floor, ceiling and overall").
 import type { Side } from "@vdb/scoring";
+import { formatScore } from "./scoreFormat.ts";
 import type { Dimension, ScoreRow } from "./scoreRepository.ts";
 
 export type Source =
@@ -136,9 +137,9 @@ function valueText(cell: SummaryCell): string {
     case "not_relevant":
       return "0 · not relevant";
     case "same_as_overall":
-      return `${cell.value} · same as overall`;
+      return `${formatScore(cell.value)} · same as overall`;
     default:
-      return String(cell.value);
+      return formatScore(cell.value);
   }
 }
 

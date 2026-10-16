@@ -1,5 +1,6 @@
 import type { CommunityRow } from "../ranking/rank.ts";
 import type { Dimension } from "./scoreRepository.ts";
+import { formatScore } from "./scoreFormat.ts";
 import styles from "./CardScoringPage.module.css";
 
 const SIDES = [
@@ -58,7 +59,7 @@ export function CommunityPanel(props: {
                     <td key={side}>
                       {score(side, d.id) === undefined
                         ? "–"
-                        : Math.round(score(side, d.id)!)}
+                        : formatScore(score(side, d.id)!)}
                     </td>
                   ))}
                 </tr>

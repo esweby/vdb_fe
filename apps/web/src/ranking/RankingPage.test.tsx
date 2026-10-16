@@ -112,10 +112,11 @@ describe("engine board", () => {
   it("shows a card's value and its floor-to-ceiling range", async () => {
     await open();
     const [bsl] = lane("Make Gates");
-    expect(bsl).toHaveTextContent("70");
+    // 70, shown out of 10.
+    expect(bsl).toHaveTextContent("7");
     expect(
       within(bsl!).getByRole("img", {
-        name: "Floor 20, overall 70, ceiling 100",
+        name: "Floor 2, overall 7, ceiling 10",
       }),
     ).toBeInTheDocument();
   });
@@ -143,7 +144,7 @@ describe("engine board", () => {
       `/ranking?risk=-50&pref=${encodeURIComponent(JSON.stringify({ gateTargets: 0 }))}`,
     );
     expect(laneNames("Make Runechants")[0]).toBe("Become the Shadow Lord");
-    expect(lane("Make Runechants")[0]).toHaveTextContent("45");
+    expect(lane("Make Runechants")[0]).toHaveTextContent("4.5");
   });
 
   it("marks preferred cards on the board", async () => {

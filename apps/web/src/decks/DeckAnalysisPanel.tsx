@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { formatScore } from "../scoring/scoreFormat.ts";
 import { useAppSelector } from "../hooks.ts";
 import { rankVariants, type CommunityRow } from "../ranking/rank.ts";
 import type { Dimension, ScoreRow } from "../scoring/scoreRepository.ts";
@@ -194,7 +195,7 @@ export function DeckAnalysisPanel(props: {
                     <td>{d.byPitch[1]}</td>
                     <td>{d.byPitch[2]}</td>
                     <td>{d.byPitch[3]}</td>
-                    <td>{d.average}</td>
+                    <td>{formatScore(d.average)}</td>
                     <td>{d.alwaysAvailable}</td>
                   </tr>
                 ))}

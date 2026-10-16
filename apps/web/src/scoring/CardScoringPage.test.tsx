@@ -30,9 +30,9 @@ describe("card page", () => {
       row("Overall")
         .getAllByRole("cell")
         .map((c) => c.textContent),
-    ).toEqual(["70", "70"]);
-    expect(row("Floor").getAllByRole("cell")[0]).toHaveTextContent("20");
-    expect(row("Ceiling").getAllByRole("cell")[0]).toHaveTextContent("100");
+    ).toEqual(["7", "7"]);
+    expect(row("Floor").getAllByRole("cell")[0]).toHaveTextContent(/^2$/);
+    expect(row("Ceiling").getAllByRole("cell")[0]).toHaveTextContent(/^10$/);
     expect(group.getByText("From 3 ratings")).toBeInTheDocument();
   });
 
@@ -154,7 +154,7 @@ describe("card page", () => {
     });
     expect(
       await screen.findByRole("slider", { name: "Floor" }),
-    ).toHaveAttribute("aria-valuetext", "80");
+    ).toHaveAttribute("aria-valuetext", "8");
   });
 
   it("shows floor and ceiling on every card, greyed out when the card has no conditions", async () => {
@@ -313,7 +313,7 @@ describe("card page", () => {
     );
     expect(within(floor).getByRole("slider")).toHaveAttribute(
       "aria-valuetext",
-      "40",
+      "4",
     );
   });
 
