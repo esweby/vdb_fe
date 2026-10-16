@@ -157,6 +157,7 @@ function NewDeckDialog(props: {
       <form className={styles.newDeck} onSubmit={(e) => void submit(e)}>
         <TextField
           label="Deck name"
+          maxLength={80}
           value={name}
           placeholder="Runechant aggro"
           error={error}

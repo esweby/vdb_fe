@@ -166,6 +166,7 @@ export function CoreRail(props: {
               <input
                 type="text"
                 aria-label="New deck name"
+                maxLength={80}
                 placeholder="New deck name"
                 value={name}
                 onChange={(e) => {

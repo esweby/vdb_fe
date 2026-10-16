@@ -2,7 +2,7 @@
 -- the scoring group's answers are averaged. Question wording is UNVERIFIED.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(12);
+select plan(13);
 
 select has_table('public', 'strategy_questions', 'strategy questions live in their own table');
 select has_table('public', 'strategy_answers', 'answers live in their own table');
@@ -74,6 +74,14 @@ select is(
   0, 'a question nobody in the group has answered has no average'
 );
 reset role;
+
+-- One answer alone would be that person's answer, so it isn't averaged (security audit, 16 Oct 2026).
+insert into public.strategy_answers (user_id, question_key, answer)
+  values ('00000000-0000-0000-0000-0000000005a1', 'flip_back_to_forsaken', 4);
+select is(
+  (select count(*)::int from public.strategy_community_answers() where question_key = 'flip_back_to_forsaken'),
+  0, 'a question only one scorer has answered shows no average'
+);
 
 select * from finish();
 rollback;
