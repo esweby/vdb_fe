@@ -1,4 +1,4 @@
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { fakeAuthService } from "../test/fakeAuthService.ts";
@@ -118,6 +118,57 @@ describe("needs review page", () => {
       names(screen.getByRole("region", { name: "Runeblade and Shadow" })),
     ).toEqual(["Hocus Pocus", "Nebula Blade"]);
     expect(screen.getByText("3 cards left to review")).toBeInTheDocument();
+  });
+
+  it("works through cards from the keyboard: rate, Ctrl+Enter, Enter, next card", async () => {
+    const scores = fakeScoreRepository();
+    await renderApp({
+      path: "/needs-review?card=card-become-the-shadow-lord",
+      auth: auth(),
+      scores: scores.repository,
+    });
+    const user = userEvent.setup();
+    const dialog = await screen.findByRole("dialog", {
+      name: "Become the Shadow Lord",
+    });
+    // Focus starts on the first rating, not Close.
+    const overall = await within(dialog).findByRole("slider", {
+      name: "Overall",
+    });
+    await waitFor(() => expect(overall).toHaveFocus());
+    await user.keyboard("{ArrowRight}");
+    // Ctrl+Enter (or Cmd+Enter) asks to mark reviewed; Confirm review has focus.
+    await user.keyboard("{Control>}{Enter}{/Control}");
+    const summary = await screen.findByRole("dialog", {
+      name: "Mark reviewed",
+    });
+    expect(
+      within(summary).getByRole("button", { name: "Confirm review" }),
+    ).toHaveFocus();
+    await user.keyboard("{Enter}");
+    const next = await screen.findByRole("dialog", { name: "Hocus Pocus" });
+    expect(scores.saved).toContain("review card-become-the-shadow-lord");
+    await waitFor(() =>
+      expect(
+        within(next).getByRole("slider", { name: "Overall" }),
+      ).toHaveFocus(),
+    );
+  });
+
+  it("shows the keyboard shortcut beside Mark reviewed", async () => {
+    await renderApp({
+      path: "/needs-review?card=card-become-the-shadow-lord",
+      auth: auth(),
+      scores: fakeScoreRepository().repository,
+    });
+    const dialog = await screen.findByRole("dialog", {
+      name: "Become the Shadow Lord",
+    });
+    expect(
+      await within(dialog).findByRole("button", {
+        name: "Mark reviewed and next",
+      }),
+    ).toHaveAttribute("aria-keyshortcuts", "Control+Enter Meta+Enter");
   });
 
   it("says when everything is reviewed", async () => {

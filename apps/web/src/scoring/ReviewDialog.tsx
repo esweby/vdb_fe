@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button, Dialog } from "../ui/index.ts";
 import {
   reviewSummary,
@@ -27,6 +27,7 @@ export function ReviewDialog(props: {
   useEffect(() => {
     if (props.open) setConfirmedSame(false);
   }, [props.open]);
+  const confirm = useRef<HTMLButtonElement>(null);
   const summary = reviewSummary(props.rows, props.dimensions, props.variants);
   const fixes = suggestedFixes(props.rows, props.dimensions, props.variants);
   const checkSame =
@@ -41,8 +42,11 @@ export function ReviewDialog(props: {
       title="Mark reviewed"
       open={props.open}
       onClose={props.onClose}
+      // Enter confirms, so a scorer can review from the keyboard.
+      initialFocus={confirm}
       actions={
         <Button
+          ref={confirm}
           variant="primary"
           onClick={props.onConfirm}
           disabled={props.busy}
