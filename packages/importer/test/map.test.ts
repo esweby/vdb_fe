@@ -239,6 +239,22 @@ describe("authored attributes", () => {
     ).toThrow(/Darkest Hourr/);
   });
 
+  // Retired cards (e.g. Living Legend weapons) keep their checked attributes, unused.
+  it("accepts attributes for a retired card, but still rejects unknown names", () => {
+    const retired = entries.map((c) =>
+      c.name === "Nebula Blade" ? { ...c, cc_living_legend: true } : c,
+    );
+    expect(() =>
+      toImportCards(retired, { "Nebula Blade": { verified: true, card: {} } }),
+    ).not.toThrow();
+    expect(
+      toImportCards(retired, {}).some((c) => c.name === "Nebula Blade"),
+    ).toBe(false);
+    expect(() =>
+      toImportCards(retired, { "Nebula Bladee": { verified: true, card: {} } }),
+    ).toThrow(/Nebula Bladee/);
+  });
+
   it("accepts references to imported cards", () => {
     expect(() =>
       toImportCards(entries, {

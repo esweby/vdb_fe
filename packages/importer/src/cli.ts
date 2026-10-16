@@ -5,7 +5,8 @@
 import postgres from "postgres";
 import { allAuthored } from "./authored/index.ts";
 import { loadDataset, loadSets } from "./dataset.ts";
-import { upsertCards } from "./db.ts";
+import { hideRetired, upsertCards } from "./db.ts";
+import { retiredNames } from "./classify.ts";
 import { toImportCards } from "./map.ts";
 import { setReleases } from "./releases.ts";
 
@@ -23,8 +24,9 @@ async function main() {
     );
   }
 
+  const dataset = await loadDataset();
   const cards = toImportCards(
-    await loadDataset(),
+    dataset,
     allAuthored(),
     setReleases(await loadSets()),
   );
@@ -38,6 +40,10 @@ async function main() {
   const sql = postgres(dbUrl, { onnotice: () => {} });
   try {
     await upsertCards(sql, cards);
+    // Cards are keyed by name, so a retired card's external id is its name.
+    const hidden = await hideRetired(sql, retiredNames(dataset));
+    if (hidden > 0)
+      console.log(`Hid ${hidden} retired cards (no longer playable).`);
   } finally {
     await sql.end();
   }

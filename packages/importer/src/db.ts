@@ -50,3 +50,19 @@ export async function upsertCards(
     }
   });
 }
+
+/**
+ * Hides cards that are no longer playable (banned, suspended or Living Legend in Classic
+ * Constructed). Hidden, not deleted, so scores and decks that mention them keep working.
+ */
+export async function hideRetired(
+  sql: Sql,
+  externalIds: string[],
+): Promise<number> {
+  if (externalIds.length === 0) return 0;
+  const rows = await sql`
+    update public.cards set hidden = true, updated_at = now()
+     where external_id in ${sql(externalIds)} and not hidden
+    returning id`;
+  return rows.length;
+}

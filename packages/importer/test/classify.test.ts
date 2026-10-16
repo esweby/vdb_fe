@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   classifyTypes,
   isViseraiLegal,
+  retiredNames,
   type DatasetCard,
 } from "../src/classify.ts";
 import fixture from "./fixtures/cards.json" with { type: "json" };
@@ -72,5 +73,28 @@ describe("isViseraiLegal", () => {
   ])("excludes %s", (_label, name) => {
     expect(byName(name).length).toBeGreaterThan(0);
     expect(byName(name).some(isViseraiLegal)).toBe(false);
+  });
+
+  // Scoring group, 16 Oct 2026: Nebula Blade, Galaxxi Black and Rosetta Thorn were offered,
+  // but they're Living Legend in Classic Constructed, so they can't be played there.
+  it.each([
+    ["Living Legend in Classic Constructed", { cc_living_legend: true }],
+    ["suspended in Classic Constructed", { cc_suspended: true }],
+  ])("excludes cards %s", (_label, flags) => {
+    const blade = byName("Nebula Blade")[0]!;
+    expect(isViseraiLegal(blade)).toBe(true);
+    expect(isViseraiLegal({ ...blade, ...flags })).toBe(false);
+  });
+});
+
+describe("retiredNames", () => {
+  it("lists cards a Viserai deck could hold that are no longer playable", () => {
+    const withLivingLegend = entries.map((c) =>
+      c.name === "Nebula Blade" ? { ...c, cc_living_legend: true } : c,
+    );
+    expect(retiredNames(withLivingLegend)).toContain("Nebula Blade");
+    expect(retiredNames(withLivingLegend)).not.toContain("Arknight Shard");
+    // Never ours to begin with: another class.
+    expect(retiredNames(withLivingLegend)).not.toContain("Forsaken Strike");
   });
 });
