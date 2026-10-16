@@ -29,3 +29,9 @@
   border-radius: 0.5rem;
   background: var(--surface);
 }
+
+/* The set a card first came out in, beside its name: the list runs newest first. */
+.set {
+  font-size: 0.82em;
+  color: var(--muted);
+}

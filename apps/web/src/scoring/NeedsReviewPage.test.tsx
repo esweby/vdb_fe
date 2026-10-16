@@ -2,6 +2,7 @@ import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { fakeAuthService } from "../test/fakeAuthService.ts";
+import { fakeCardRepository, sampleCards } from "../test/fakeCardRepository.ts";
 import { fakeScoreRepository } from "../test/fakeScoreRepository.ts";
 import { renderApp } from "../test/renderApp.tsx";
 
@@ -34,6 +35,48 @@ describe("needs review page", () => {
     expect(names(screen.getByRole("region", { name: "Generic" }))).toEqual([
       "Fate Foreseen",
     ]);
+  });
+
+  it("puts the newest cards first in each section, generics last, with their set", async () => {
+    const released: Record<string, [string, string]> = {
+      "card-hocus-pocus": ["Rosetta", "2024-09-20"],
+      "card-nebula-blade": ["Arcane Rising", "2020-03-27"],
+      "card-fate-foreseen": ["Welcome to Rathe", "2019-10-11"],
+    };
+    await renderApp({
+      path: "/needs-review",
+      auth: auth(),
+      scores: fakeScoreRepository().repository,
+      cards: fakeCardRepository(
+        sampleCards.map((c) => ({
+          ...c,
+          firstSet: released[c.id]?.[0] ?? null,
+          firstReleased: released[c.id]?.[1] ?? null,
+        })),
+      ),
+    });
+    const classCards = await screen.findByRole("region", {
+      name: "Runeblade and Shadow",
+    });
+    // Newest first; a card without a release date comes after the dated ones.
+    expect(names(classCards)).toEqual([
+      "Hocus Pocus",
+      "Nebula Blade",
+      "Become the Shadow Lord",
+    ]);
+    expect(
+      within(classCards).getByText("Hocus Pocus").closest("li"),
+    ).toHaveTextContent("Rosetta");
+    expect(names(screen.getByRole("region", { name: "Generic" }))).toEqual([
+      "Fate Foreseen",
+    ]);
+    // Start reviewing follows the same order.
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: "Start reviewing" }));
+    expect(
+      await screen.findByRole("dialog", { name: "Hocus Pocus" }),
+    ).toBeInTheDocument();
   });
 
   it("leaves out cards I've reviewed and shows how many are left", async () => {

@@ -1,4 +1,5 @@
 // Maps dataset entries (one per name + pitch) to our cards and variants.
+import { firstRelease, type Release } from "./releases.ts";
 import {
   attributeGroups,
   authoredAttributesSchema,
@@ -50,6 +51,8 @@ export interface ImportCard {
   text: string | null;
   attributes: CardAttributes;
   attributesVerified: boolean;
+  /** When the card first came out; null without set data. */
+  firstRelease: Release | null;
   variants: ImportVariant[];
 }
 
@@ -112,6 +115,7 @@ export function variantAttributes(
 export function toImportCards(
   entries: DatasetCard[],
   authored: AuthoredAttributes,
+  releases: Map<string, Release> = new Map(),
 ): ImportCard[] {
   const groups = new Map<string, DatasetCard[]>();
   for (const entry of entries.filter(isViseraiLegal)) {
@@ -182,6 +186,12 @@ export function toImportCards(
         ...(entry?.card?.goAgain ? { hasGoAgain: false } : {}),
       },
       attributesVerified: entry?.verified ?? false,
+      firstRelease: firstRelease(
+        group.flatMap((e) =>
+          (e.printings ?? []).flatMap((p) => p.set_id ?? []),
+        ),
+        releases,
+      ),
       variants,
     };
   });

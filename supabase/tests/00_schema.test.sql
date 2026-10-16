@@ -24,7 +24,7 @@ select has_table('public', 'loadout_cards', 'loadout_cards');
 
 select columns_are('public', 'cards', array[
   'id', 'external_id', 'name', 'type', 'subtypes', 'classes', 'talents', 'keywords',
-  'text', 'attributes', 'attributes_verified', 'fringe', 'hidden', 'created_at', 'updated_at'
+  'text', 'attributes', 'attributes_verified', 'first_set', 'first_released', 'fringe', 'hidden', 'created_at', 'updated_at'
 ]);
 select columns_are('public', 'card_scores', array[
   'user_id', 'card_id', 'variant_id', 'side', 'dimension_id', 'score', 'updated_at'

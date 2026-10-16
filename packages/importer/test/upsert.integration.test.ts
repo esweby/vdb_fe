@@ -69,6 +69,28 @@ describe("upsertCards", () => {
     expect(row?.image_url).toBe("https://img/test.webp");
   });
 
+  it("stores when each card first came out", async () => {
+    const released = cards.map((c, i) =>
+      i === 0
+        ? {
+            ...c,
+            firstRelease: {
+              name: "Usurp the Shadow Throne",
+              released: "2026-09-25",
+            },
+          }
+        : c,
+    );
+    await upsertCards(sql, released);
+    const [row] = await sql`
+      select first_set, to_char(first_released, 'YYYY-MM-DD') as first_released
+        from public.cards where external_id = ${released[0]!.externalId}`;
+    expect(row).toEqual({
+      first_set: "Usurp the Shadow Throne",
+      first_released: "2026-09-25",
+    });
+  });
+
   it("is safe to re-run: no duplicates", async () => {
     await upsertCards(sql, cards);
     expect(await counts()).toEqual({

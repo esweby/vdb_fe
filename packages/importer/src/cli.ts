@@ -3,9 +3,10 @@
 // DB_URL defaults to the local Supabase database.
 import postgres from "postgres";
 import { allAuthored } from "./authored/index.ts";
-import { loadDataset } from "./dataset.ts";
+import { loadDataset, loadSets } from "./dataset.ts";
 import { upsertCards } from "./db.ts";
 import { toImportCards } from "./map.ts";
+import { setReleases } from "./releases.ts";
 
 const LOCAL_DB = "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
 
@@ -21,7 +22,11 @@ async function main() {
     );
   }
 
-  const cards = toImportCards(await loadDataset(), allAuthored());
+  const cards = toImportCards(
+    await loadDataset(),
+    allAuthored(),
+    setReleases(await loadSets()),
+  );
   const byType = Object.groupBy(cards, (c) => c.type);
   console.log(
     `Importing ${cards.length} cards, ${cards.flatMap((c) => c.variants).length} variants`,
