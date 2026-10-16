@@ -9,7 +9,10 @@ import {
 /** An in-memory AuthService for tests. */
 export function fakeAuthService(
   options: {
-    users?: Record<string, { password: string; role: AppRole; id: string }>;
+    users?: Record<
+      string,
+      { password: string; role: AppRole; id: string; username?: string }
+    >;
     signedIn?: SessionUser | null;
     /** Sign-up sends a confirmation email instead of signing in. */
     confirmEmail?: boolean;
@@ -37,13 +40,20 @@ export function fakeAuthService(
         listener = null;
       };
     },
-    async signIn(email, password) {
-      calls.push(`signIn:${email}`);
-      const user = users[email];
+    async signIn(usernameOrEmail, password) {
+      calls.push(`signIn:${usernameOrEmail}`);
+      const email = usernameOrEmail.includes("@")
+        ? usernameOrEmail
+        : Object.keys(users).find(
+            (e) =>
+              users[e]!.username?.toLowerCase() ===
+              usernameOrEmail.toLowerCase(),
+          );
+      const user = email ? users[email] : undefined;
       if (!user || user.password !== password) {
         throw new Error("Invalid login credentials");
       }
-      emit({ id: user.id, email });
+      emit({ id: user.id, email: email ?? null });
     },
     async signUp(email, password, username) {
       calls.push(`signUp:${email}${username ? `:${username}` : ""}`);

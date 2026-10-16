@@ -14,7 +14,8 @@ export interface SessionUser {
 export interface AuthService {
   /** Calls back now with the current session, then on every change. Returns an unsubscribe. */
   onSessionChange(callback: (user: SessionUser | null) => void): () => void;
-  signIn(email: string, password: string): Promise<void>;
+  /** Signs in with a username (the main way) or an email. */
+  signIn(usernameOrEmail: string, password: string): Promise<void>;
   /** Creates an account. Some projects need the email confirmed before the first sign-in. */
   signUp(
     email: string,
@@ -30,8 +31,7 @@ export interface AuthService {
   setUsername(userId: string, name: string): Promise<void>;
 }
 
-export const USERNAME_TAKEN =
-  "That username is taken. Try another, or leave it blank for now.";
+export const USERNAME_TAKEN = "That username is taken. Try another.";
 
 export function supabaseAuthService(client: SupabaseClient): AuthService {
   const toUser = (u: { id: string; email?: string } | null | undefined) =>
@@ -44,12 +44,31 @@ export function supabaseAuthService(client: SupabaseClient): AuthService {
       );
       return () => data.subscription.unsubscribe();
     },
-    async signIn(email, password) {
-      const { error } = await client.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) throw error;
+    async signIn(usernameOrEmail, password) {
+      if (usernameOrEmail.includes("@")) {
+        const { error } = await client.auth.signInWithPassword({
+          email: usernameOrEmail,
+          password,
+        });
+        if (error) throw error;
+        return;
+      }
+      // The username-sign-in function finds the email on the server and returns a session,
+      // so emails never reach the browser.
+      const { data, error } = await client.functions.invoke(
+        "username-sign-in",
+        {
+          body: { username: usernameOrEmail, password },
+        },
+      );
+      if (error) {
+        const body = await (error as { context?: Response }).context
+          ?.json()
+          .catch(() => null);
+        throw new Error(body?.error ?? "Couldn't sign in. Try again.");
+      }
+      const { error: sessionError } = await client.auth.setSession(data);
+      if (sessionError) throw sessionError;
     },
     async signUp(email, password, username) {
       // The new-user trigger copies the username to the profile (if it's valid and free).

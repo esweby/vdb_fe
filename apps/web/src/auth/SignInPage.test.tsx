@@ -20,7 +20,10 @@ describe("sign-in page", () => {
       auth: fake.service,
     });
     const user = userEvent.setup();
-    await user.type(screen.getByLabelText("Email"), "scorer@test.local");
+    await user.type(
+      screen.getByLabelText("Username or email"),
+      "scorer@test.local",
+    );
     await user.type(screen.getByLabelText("Password"), "right-password");
     await user.click(screen.getByRole("button", { name: "Sign in" }));
     await waitFor(() => expect(router.state.location.pathname).toBe("/cards"));
@@ -31,7 +34,10 @@ describe("sign-in page", () => {
     const fake = fakeAuthService({ users });
     await renderApp({ path: "/sign-in", auth: fake.service });
     const user = userEvent.setup();
-    await user.type(screen.getByLabelText("Email"), "scorer@test.local");
+    await user.type(
+      screen.getByLabelText("Username or email"),
+      "scorer@test.local",
+    );
     await user.type(screen.getByLabelText("Password"), "wrong");
     await user.click(screen.getByRole("button", { name: "Sign in" }));
     expect(await screen.findByRole("alert")).toHaveTextContent(
@@ -46,10 +52,13 @@ describe("sign-in page", () => {
     await user.click(
       screen.getByRole("button", { name: "Create an account instead" }),
     );
+    await user.type(screen.getByLabelText("Username"), "New_Player");
     await user.type(screen.getByLabelText("Email"), "new@test.local");
     await user.type(screen.getByLabelText("Password"), "a-new-password");
     await user.click(screen.getByRole("button", { name: "Create account" }));
-    await waitFor(() => expect(fake.calls).toEqual(["signUp:new@test.local"]));
+    await waitFor(() =>
+      expect(fake.calls).toEqual(["signUp:new@test.local:New_Player"]),
+    );
   });
 
   it("opens on Create an account from the home page's link", async () => {
@@ -75,7 +84,8 @@ describe("sign-in page", () => {
       auth: fake.service,
     });
     const user = userEvent.setup();
-    await user.type(await screen.findByLabelText("Email"), "new@test.local");
+    await user.type(await screen.findByLabelText("Username"), "New_Player");
+    await user.type(screen.getByLabelText("Email"), "new@test.local");
     await user.type(screen.getByLabelText("Password"), "a-new-password");
     await user.click(screen.getByRole("button", { name: "Create account" }));
     expect(await screen.findByRole("status")).toHaveTextContent(
@@ -90,9 +100,32 @@ describe("sign-in page", () => {
       auth: fakeAuthService().service,
     });
     const user = userEvent.setup();
-    await user.type(await screen.findByLabelText("Email"), "new@test.local");
+    await user.type(await screen.findByLabelText("Username"), "New_Player");
+    await user.type(screen.getByLabelText("Email"), "new@test.local");
     await user.type(screen.getByLabelText("Password"), "a-new-password");
     await user.click(screen.getByRole("button", { name: "Create account" }));
     await waitFor(() => expect(router.state.location.pathname).toBe("/cards"));
+  });
+
+  // Username sign-in (maintainer, 16 Oct 2026): the main way in; email still works.
+  it("signs in with a username", async () => {
+    const fake = fakeAuthService({
+      users: {
+        "scorer@test.local": {
+          ...users["scorer@test.local"],
+          username: "Edd_99",
+        },
+      },
+    });
+    const { router } = await renderApp({
+      path: "/sign-in",
+      auth: fake.service,
+    });
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText("Username or email"), "edd_99");
+    await user.type(screen.getByLabelText("Password"), "right-password");
+    await user.click(screen.getByRole("button", { name: "Sign in" }));
+    await waitFor(() => expect(router.state.location.pathname).toBe("/cards"));
+    expect(fake.calls).toEqual(["signIn:edd_99"]);
   });
 });

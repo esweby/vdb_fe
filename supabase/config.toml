@@ -418,3 +418,7 @@ enabled = true
 # so the platform's automatic JWT check would reject the daily schedule.
 [functions.community-scores]
 verify_jwt = false
+
+# Signs people in with a username, so they have no session yet (see the function's index.ts).
+[functions.username-sign-in]
+verify_jwt = false
