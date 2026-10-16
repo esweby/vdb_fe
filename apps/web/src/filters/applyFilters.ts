@@ -28,6 +28,9 @@ export interface Facet<T> {
   section?: string;
   /** Hide the group (e.g. equipment slot while equipment is unticked). */
   showWhen?: (state: FilterState) => boolean;
+  /** Also applied when "Only" is chosen in this group, e.g. an equipment slot narrows the
+   * card type to equipment, as cards without a slot never match the slot group. */
+  onlyAlso?: FilterState;
   /** Prefix values with the group in the summary ("Power 0–1 hidden"). */
   summaryPrefix?: boolean;
 }

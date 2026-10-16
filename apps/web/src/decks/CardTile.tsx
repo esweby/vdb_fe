@@ -3,6 +3,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import type { CardSummary, VariantSummary } from "../cards/cardRepository.ts";
 import { TYPE_LABELS } from "../cards/filterCards.ts";
 import { variantName } from "./deckRules.ts";
+import { Enlarge } from "./Enlarge.tsx";
 import styles from "./CardTile.module.css";
 
 const GEAR = ["weapon", "equipment"];
@@ -73,6 +74,8 @@ export function CardTile(props: {
   /** Renders the name as a different link (e.g. open the card database's pop-over). */
   nameLink?: (props: { className: string; children: ReactNode }) => ReactNode;
   children?: ReactNode;
+  /** A magnifying glass on hover that opens the picture full size. */
+  enlargeable?: boolean;
 }) {
   const { card, variant, quantity, children } = props;
   const name = variantName(card, variant);
@@ -105,6 +108,13 @@ export function CardTile(props: {
           >
             {image}
           </Link>
+        )}
+        {props.enlargeable && (
+          <Enlarge
+            name={name}
+            src={variant.imageUrl}
+            className={styles.enlarge}
+          />
         )}
         {quantity !== undefined && (
           <output aria-label={`Copies of ${name}`} className={styles.copies}>

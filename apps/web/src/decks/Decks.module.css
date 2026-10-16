@@ -114,7 +114,10 @@
   top: 1rem;
   max-height: calc(100vh - 2rem);
   overflow-y: auto;
-  padding-right: 0.5rem;
+  /* Room for focus rings, which the scroll box would otherwise clip; the negative
+     margin keeps the content lined up with the page. */
+  margin: -0.25rem 0 0 -0.25rem;
+  padding: 0.25rem 0.5rem 0.25rem 0.25rem;
 }
 .results li {
   display: flex;

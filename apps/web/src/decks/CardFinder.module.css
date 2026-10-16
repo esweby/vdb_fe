@@ -165,26 +165,36 @@
   cursor: pointer;
 }
 
-/* A grid of cards, three to a row, each with R / Y / B (or +) underneath to add that pitch. */
+/* A grid of tiles, three to a row, one for each pitch of a card. */
 .results {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.75rem 0.5rem;
+  gap: 0.5rem;
 }
 .tile {
-  display: grid;
-  gap: 0.3rem;
   min-width: 0;
 }
 .art {
+  position: relative;
   display: block;
   aspect-ratio: 5 / 7;
   border-radius: 0.3rem;
   overflow: hidden;
   background: color-mix(in srgb, var(--fg) 8%, var(--bg));
+  /* The pitch along the bottom edge, so red, yellow and blue read apart at a glance. */
+  box-shadow: inset 0 -4px 0 var(--tile-pitch, transparent);
+}
+.tile[data-pitch="1"] {
+  --tile-pitch: var(--pitch-1);
+}
+.tile[data-pitch="2"] {
+  --tile-pitch: var(--pitch-2);
+}
+.tile[data-pitch="3"] {
+  --tile-pitch: var(--pitch-3);
 }
 .art img {
   display: block;
@@ -196,74 +206,135 @@
   display: flex;
   align-items: flex-end;
   height: 100%;
-  padding: 0.35rem;
+  padding: 0.35rem 0.35rem 0.6rem;
   box-sizing: border-box;
   font-family: var(--font-display);
   font-size: 0.7rem;
   line-height: 1.2;
 }
-.adds {
+
+/* Pages of tiles: ‹ Page 1 of 9 ›. */
+.pager {
   display: flex;
-  gap: 0.2rem;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.82rem;
+  color: var(--muted);
 }
-.addWrap {
-  position: relative;
-  flex: 1;
-  display: flex;
-}
-.add {
-  flex: 1;
-  height: 1.6rem;
+.pager button {
+  width: 2rem;
+  height: 2rem;
   padding: 0;
-  border: none;
-  border-radius: 0.3rem;
-  background: var(--pitch-none);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
   font: inherit;
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: #fff;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--fg);
   cursor: pointer;
 }
-.add[data-pitch="1"] {
-  background: var(--pitch-1);
-}
-.add[data-pitch="2"] {
-  background: var(--pitch-2);
-  color: #2b2100;
-}
-.add[data-pitch="3"] {
-  background: var(--pitch-3);
-}
-.add:hover:not(:disabled) {
-  filter: brightness(1.1);
-}
-.add:disabled {
+.pager button:disabled {
   opacity: 0.4;
   cursor: default;
 }
-.have {
+
+/* Down the right of the picture on hover: + for the deck, SB for the sideboard. */
+.actions {
   position: absolute;
-  top: -0.45rem;
-  right: -0.2rem;
-  min-width: 0.95rem;
-  padding: 0 0.2rem;
+  top: 0;
+  right: 0;
+  bottom: 4px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0 0.3rem;
+  background: linear-gradient(to left, rgb(20 15 40 / 0.55), transparent);
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+/* The magnifying glass, centred and a little see-through until you point at it. */
+.enlarge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.tile:hover .actions,
+.actions:focus-within,
+.enlarge:hover,
+.enlarge:focus-visible {
+  opacity: 1;
+}
+.tile:hover .enlarge:not(:hover) {
+  opacity: 0.75;
+}
+@media (pointer: coarse) {
+  .actions {
+    opacity: 1;
+  }
+  .enlarge {
+    opacity: 0.75;
+  }
+  .actions {
+    background: none;
+  }
+}
+.action {
+  width: 2.1rem;
+  height: 2.1rem;
+  padding: 0;
+  border: 1px solid rgb(255 255 255 / 0.35);
+  border-radius: 0.35rem;
+  background: var(--accent);
+  color: var(--accent-fg);
+  font: inherit;
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 3px 8px rgb(0 0 0 / 0.45);
+}
+.action:hover:not(:disabled) {
+  filter: brightness(1.12);
+}
+.action[data-sideboard] {
+  background: var(--surface);
+  color: var(--fg);
+  border-color: var(--border);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+.action:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.action:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+.haveOnArt {
+  position: absolute;
+  top: 0.35rem;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0 0.35rem;
   border-radius: 999px;
   background: var(--fg);
   color: var(--bg);
-  font-size: 0.66rem;
+  font-size: 0.68rem;
   font-weight: 600;
-  line-height: 0.95rem;
-  text-align: center;
+  line-height: 1.1rem;
   pointer-events: none;
 }
-.showMore {
-  justify-self: center;
-  padding: 0.35rem 1rem;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: none;
-  font: inherit;
-  font-size: 0.82rem;
-  color: var(--fg);
-  cursor: pointer;
+@media (prefers-reduced-motion: reduce) {
+  .actions,
+  .enlarge {
+    transition: none;
+  }
 }

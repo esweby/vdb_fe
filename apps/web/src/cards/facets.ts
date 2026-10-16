@@ -111,6 +111,14 @@ export function cardFacets(
       label: "Equipment slot",
       mode: "any",
       showWhen: (state) => state.type?.equipment !== "exclude",
+      onlyAlso: {
+        type: Object.fromEntries(
+          TYPE_VALUES.filter(([id]) => id !== "equipment").map(([id]) => [
+            id,
+            "exclude" as const,
+          ]),
+        ),
+      },
       values: ["Head", "Chest", "Arms", "Legs", "Off-Hand"].map((slot) =>
         value(
           slot,

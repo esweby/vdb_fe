@@ -19,6 +19,7 @@ import {
   PITCH_NAMES,
   type DeckEntry,
   type FormatRules,
+  copyLimitFor,
 } from "./deckRules.ts";
 import styles from "./Decks.module.css";
 
@@ -110,9 +111,14 @@ export function DeckPage() {
   const inPool = (variantId: string) =>
     deck?.cards.find((c) => c.variantId === variantId);
 
-  const copyLimit = rules?.copyLimit ?? Infinity;
+  const limitOf = (card: CardSummary) =>
+    rules ? copyLimitFor(card, rules) : Infinity;
+  const limitOfVariant = (variantId: string) => {
+    const found = byVariant.get(variantId);
+    return found ? limitOf(found.card) : Infinity;
+  };
   const atLimit = (variantId: string) =>
-    (inPool(variantId)?.quantity ?? 0) >= copyLimit;
+    (inPool(variantId)?.quantity ?? 0) >= limitOfVariant(variantId);
 
   function add(variantId: string) {
     if (atLimit(variantId)) return;
@@ -121,6 +127,17 @@ export function DeckPage() {
       variantId,
       quantity: (existing?.quantity ?? 0) + 1,
       sideboard: existing?.sideboard ?? false,
+    });
+  }
+
+  /** A card is in the deck or the sideboard, not both: one already in the deck stays there. */
+  function addToSideboard(variantId: string) {
+    const existing = inPool(variantId);
+    if (atLimit(variantId) || (existing && !existing.sideboard)) return;
+    void setCard({
+      variantId,
+      quantity: (existing?.quantity ?? 0) + 1,
+      sideboard: true,
     });
   }
 
@@ -222,9 +239,15 @@ export function DeckPage() {
               <CardFinder
                 cards={cards}
                 quantityOf={(id) => inPool(id)?.quantity}
+                placeOf={(id) => {
+                  const e = inPool(id);
+                  return e ? (e.sideboard ? "sideboard" : "deck") : undefined;
+                }}
                 atLimit={atLimit}
-                copyLimit={copyLimit}
-                onAdd={add}
+                limitOf={limitOfVariant}
+                onAdd={(id, toSideboard) =>
+                  toSideboard ? addToSideboard(id) : add(id)
+                }
               />
             </section>
             <div>
@@ -249,7 +272,7 @@ export function DeckPage() {
                   title="Weapons and equipment"
                   entries={[...ofSection("weapon"), ...ofSection("equipment")]}
                   order="gear"
-                  copyLimit={copyLimit}
+                  limitOf={limitOf}
                   view={view}
                   onSet={(card) => void setCard(card)}
                 />
@@ -257,14 +280,14 @@ export function DeckPage() {
                   title="Deck"
                   heading={`Deck ${counts.deck}${rules ? ` / ${rules.deckMin}` : ""}`}
                   entries={ofSection("deck")}
-                  copyLimit={copyLimit}
+                  limitOf={limitOf}
                   view={view}
                   onSet={(card) => void setCard(card)}
                 />
                 <PoolSection
                   title="Sideboard"
                   entries={entries.filter((e) => e.sideboard)}
-                  copyLimit={copyLimit}
+                  limitOf={limitOf}
                   view={view}
                   onSet={(card) => void setCard(card)}
                 />
@@ -317,13 +340,14 @@ function PoolSection(props: {
   title: string;
   heading?: string;
   entries: DeckEntry[];
-  copyLimit: number;
+  /** Copies allowed of this card (equipment: one). */
+  limitOf: (card: CardSummary) => number;
   view: View;
   /** "pitch": red, yellow, blue, then no pitch. "gear": weapons, then equipment by slot. */
   order?: "pitch" | "gear";
   onSet: (card: DeckCard) => void;
 }) {
-  const { title, entries, copyLimit, view, onSet } = props;
+  const { title, entries, limitOf, view, onSet } = props;
   const rank = (e: DeckEntry) =>
     props.order === "gear"
       ? sectionOf(e.card) === "weapon"
@@ -345,25 +369,40 @@ function PoolSection(props: {
         sideboard: e.sideboard,
         ...change,
       });
-    const full = e.quantity >= copyLimit;
+    const limit = limitOf(e.card);
+    const full = e.quantity >= limit;
     return (
       <>
-        <button
-          type="button"
-          aria-label={`One fewer ${label}`}
-          onClick={() => set({ quantity: e.quantity - 1 })}
-        >
-          −
-        </button>
-        <button
-          type="button"
-          aria-label={`One more ${label}`}
-          disabled={full}
-          title={full ? `At most ${copyLimit} copies` : undefined}
-          onClick={() => set({ quantity: e.quantity + 1 })}
-        >
-          +
-        </button>
+        {limit === 1 ? (
+          // Only one allowed (equipment): nothing to count, just remove it.
+          <button
+            type="button"
+            aria-label={`Remove ${label}`}
+            title="Remove"
+            onClick={() => set({ quantity: 0 })}
+          >
+            ✕
+          </button>
+        ) : (
+          <>
+            <button
+              type="button"
+              aria-label={`One fewer ${label}`}
+              onClick={() => set({ quantity: e.quantity - 1 })}
+            >
+              −
+            </button>
+            <button
+              type="button"
+              aria-label={`One more ${label}`}
+              disabled={full}
+              title={full ? `At most ${limit} copies` : undefined}
+              onClick={() => set({ quantity: e.quantity + 1 })}
+            >
+              +
+            </button>
+          </>
+        )}
         <label
           className={styles.sideboard}
           title={e.sideboard ? "Move to the deck" : "Move to the sideboard"}
@@ -389,7 +428,12 @@ function PoolSection(props: {
         <ul className={styles.tiles}>
           {sorted.map((e) => (
             <li key={e.variant.id}>
-              <CardTile card={e.card} variant={e.variant} quantity={e.quantity}>
+              <CardTile
+                card={e.card}
+                variant={e.variant}
+                quantity={e.quantity}
+                enlargeable
+              >
                 <span className={styles.tileControls}>{controls(e)}</span>
               </CardTile>
             </li>

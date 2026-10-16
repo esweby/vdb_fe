@@ -224,3 +224,25 @@
   left: auto;
   right: 0.5em;
 }
+
+/* The magnifying glass, centred and a little see-through until you point at it. */
+.enlarge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.tile:hover .enlarge {
+  opacity: 0.75;
+}
+.enlarge:hover,
+.enlarge:focus-visible {
+  opacity: 1;
+}
+@media (hover: none) {
+  .enlarge {
+    opacity: 0.75;
+  }
+}
