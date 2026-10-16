@@ -1,4 +1,5 @@
 import { rolesOf, type RoleId } from "@vdb/cards";
+import { copyLimitFor } from "../decks/deckRules.ts";
 import { getRouteApi, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { CardModal } from "../cards/CardModal.tsx";
@@ -287,6 +288,11 @@ export function RankingPage() {
 
   const copyLimit = rules?.copyLimit ?? 1;
   const byVariant = new Map(ranked.map((r) => [r.variantId, r]));
+  /** A card's own copy limit: one for a Legendary card or equipment (deckRules). */
+  const limitOf = (variantId: string) => {
+    const card = cardsById.get(byVariant.get(variantId)?.cardId ?? "");
+    return card && rules ? copyLimitFor(card, rules) : copyLimit;
+  };
   const deckCards = ranked.filter((r) => !GEAR.includes(r.type));
   const q = query.trim().toLowerCase();
   const shown = q
@@ -307,7 +313,7 @@ export function RankingPage() {
   ].filter((g) => g.cards.length > 0);
 
   const core: TrayCard[] = Object.entries(settings.core)
-    .map(([variantId, quantity]) => {
+    .map(([variantId, quantity]): TrayCard | null => {
       const r = byVariant.get(variantId);
       return r
         ? {
@@ -317,7 +323,8 @@ export function RankingPage() {
             pitch: r.pitch,
             value: r.value,
             roles: r.roles,
-            quantity: Math.min(quantity, rules?.copyLimit ?? quantity),
+            quantity: Math.min(quantity, rules ? limitOf(variantId) : quantity),
+            limit: limitOf(variantId),
           }
         : null;
     })
@@ -326,11 +333,14 @@ export function RankingPage() {
   const setQuantity = (variantId: string, quantity: number) => {
     const next = { ...settings.core };
     if (quantity <= 0) delete next[variantId];
-    else next[variantId] = Math.min(quantity, copyLimit);
+    else next[variantId] = Math.min(quantity, limitOf(variantId));
     setCore(next);
   };
   const toggleCore = (c: BoardCard) =>
-    setQuantity(c.variantId, settings.core[c.variantId] ? 0 : copyLimit);
+    setQuantity(
+      c.variantId,
+      settings.core[c.variantId] ? 0 : limitOf(c.variantId),
+    );
 
   const coreTotal = core.reduce((n, c) => n + c.quantity, 0);
   // What a scenario run used, so a later change to the core can be spotted.
@@ -383,7 +393,7 @@ export function RankingPage() {
           ? b.fits - a.fits || b.key - a.key
           : b.key - a.key,
       )
-      .map(({ r }) => r);
+      .map(({ r }) => ({ ...r, limit: limitOf(r.variantId) }));
     const s = suggestCore(candidates, {
       targets,
       copiesEach: copyLimit,

@@ -37,6 +37,8 @@ export const PITCH_NAMES: Record<number, string> = {
  * of a one-handed one (16 Oct 2026). Deck cards follow the format's copy limit.
  */
 export function copyLimitFor(card: CardSummary, rules: FormatRules): number {
+  // Legendary cards are one per deck (e.g. Arknight Shard).
+  if (card.keywords.includes("Legendary")) return 1;
   if (card.type === "equipment") return 1;
   if (card.type === "weapon") return card.subtypes.includes("2H") ? 1 : 2;
   return rules.copyLimit;
