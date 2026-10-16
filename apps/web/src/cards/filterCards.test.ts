@@ -28,6 +28,27 @@ describe("searchAndSort", () => {
     expect(names("weapon")).toEqual(["Nebula Blade"]);
   });
 
+  // The review priority (maintainer, 16 Oct 2026): Runeblade and Shadow first, generics last,
+  // each newest release first; undated cards after the dated ones.
+  it("sorts newest first, Runeblade and Shadow before generics", () => {
+    const released: Record<string, string> = {
+      "card-hocus-pocus": "2024-09-20",
+      "card-nebula-blade": "2020-03-27",
+      "card-fate-foreseen": "2026-09-25",
+    };
+    const cards = sampleCards.map((c) => ({
+      ...c,
+      firstReleased: released[c.id] ?? null,
+    }));
+    expect(searchAndSort(cards, "", "newest").map((c) => c.name)).toEqual([
+      "Hocus Pocus",
+      "Nebula Blade",
+      "Become the Shadow Lord",
+      // A generic, so last despite being the newest.
+      "Fate Foreseen",
+    ]);
+  });
+
   it("sorts by type, then name", () => {
     expect(names("", "type")).toEqual([
       "Become the Shadow Lord",

@@ -50,10 +50,11 @@ describe("cards page", () => {
     const user = userEvent.setup();
     const pitch = within(screen.getByRole("group", { name: "Pitch" }));
     await user.click(pitch.getByRole("button", { name: "Blue" }));
+    // Newest first by default: Runeblade and Shadow before generics.
     expect(rowNames()).toEqual([
       "Become the Shadow Lord",
-      "Fate Foreseen",
       "Hocus Pocus",
+      "Fate Foreseen",
     ]);
     const cls = within(screen.getByRole("group", { name: "Class" }));
     await user.click(cls.getByRole("button", { name: "Shadow" }));
@@ -190,7 +191,7 @@ describe("cards page", () => {
 
   it("steps through the current results with Next and Previous card", async () => {
     await renderApp({
-      path: "/cards?view=list",
+      path: "/cards?view=list&sort=name",
       auth: fakeAuthService().service,
     });
     const user = userEvent.setup();
@@ -224,6 +225,36 @@ describe("cards page", () => {
     expect(
       await screen.findByRole("dialog", { name: "Nebula Blade" }),
     ).toBeInTheDocument();
+  });
+
+  it("lists the newest cards first by default, generics last, and can sort by name", async () => {
+    const released: Record<string, string> = {
+      "card-hocus-pocus": "2024-09-20",
+      "card-nebula-blade": "2020-03-27",
+    };
+    const { router } = await renderApp({
+      path: "/cards?view=list",
+      auth: fakeAuthService().service,
+      cards: fakeCardRepository(
+        sampleCards.map((c) => ({
+          ...c,
+          firstReleased: released[c.id] ?? null,
+        })),
+      ),
+    });
+    await screen.findByRole("link", { name: "Hocus Pocus" });
+    expect(screen.getByLabelText("Sort")).toHaveValue("newest");
+    expect(rowNames()).toEqual([
+      "Hocus Pocus",
+      "Nebula Blade",
+      "Become the Shadow Lord",
+      "Fate Foreseen",
+    ]);
+    await userEvent
+      .setup()
+      .selectOptions(screen.getByLabelText("Sort"), "name");
+    await waitFor(() => expect(rowNames()[0]).toBe("Become the Shadow Lord"));
+    expect(router.state.location.search).toMatchObject({ sort: "name" });
   });
 
   it("shows cost, power and defense, and sorts by them", async () => {
@@ -330,7 +361,7 @@ describe("cards page", () => {
 
   it("shows where the card is in the results, and moves on with Skip", async () => {
     await renderApp({
-      path: "/cards?view=list&card=card-become-the-shadow-lord",
+      path: "/cards?view=list&sort=name&card=card-become-the-shadow-lord",
       auth: fakeAuthService().service,
     });
     const dialog = await screen.findByRole("dialog", {
@@ -355,7 +386,7 @@ describe("cards page", () => {
   it("marks a card reviewed and moves to the next one", async () => {
     const scores = fakeScoreRepository();
     await renderApp({
-      path: "/cards?view=list&card=card-become-the-shadow-lord",
+      path: "/cards?view=list&sort=name&card=card-become-the-shadow-lord",
       auth: fakeAuthService({
         users: { "s@test.local": { id: "s1", password: "pw", role: "scorer" } },
         signedIn: { id: "s1", email: "s@test.local" },
@@ -420,7 +451,7 @@ describe("cards page", () => {
   it("in card view, steps through each pitch as its own stop", async () => {
     // Tiles by name: BSL (blue), Fate Foreseen ×3, Hocus Pocus ×3, Nebula Blade = 8
     await renderApp({
-      path: "/cards?card=card-hocus-pocus&variant=hp1",
+      path: "/cards?sort=name&card=card-hocus-pocus&variant=hp1",
       auth: fakeAuthService().service,
     });
     const dialog = await screen.findByRole("dialog", { name: "Hocus Pocus" });

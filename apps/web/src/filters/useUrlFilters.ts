@@ -28,7 +28,8 @@ export function validateListSearch(
       : undefined;
   return {
     q: typeof search.q === "string" && search.q ? search.q : undefined,
-    sort: (["type", "cost", "power", "defense"] as const).find(
+    // Newest first is the default, so it's left out of the URL.
+    sort: (["name", "type", "cost", "power", "defense"] as const).find(
       (s) => s === search.sort,
     ),
     inc: strings(search.inc)?.length ? strings(search.inc) : undefined,
@@ -64,7 +65,7 @@ export function useUrlFilters(search: ListSearch) {
     const page = patch.page ?? 1;
     const state = patch.state ?? fromSearch(search);
     const q = patch.q ?? search.q ?? "";
-    const sort = patch.sort ?? search.sort ?? "name";
+    const sort = patch.sort ?? search.sort ?? "newest";
     void navigate({
       to: ".",
       replace: true,
@@ -72,7 +73,7 @@ export function useUrlFilters(search: ListSearch) {
       resetScroll: false,
       search: {
         ...(q ? { q } : {}),
-        ...(sort !== "name" ? { sort } : {}),
+        ...(sort !== "newest" ? { sort } : {}),
         ...toSearch(state),
         ...(view !== "small" ? { view } : {}),
         ...(page > 1 ? { page } : {}),
@@ -82,7 +83,7 @@ export function useUrlFilters(search: ListSearch) {
   return {
     state: fromSearch(search),
     q: search.q ?? "",
-    sort: search.sort ?? ("name" as CardSort),
+    sort: search.sort ?? ("newest" as CardSort),
     setState: (state: FilterState) => update({ state }),
     setQ: (q: string) => update({ q }),
     setSort: (sort: CardSort) => update({ sort }),

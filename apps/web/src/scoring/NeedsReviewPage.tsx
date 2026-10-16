@@ -2,7 +2,11 @@ import { getRouteApi, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { CardModal } from "../cards/CardModal.tsx";
 import { cardFacets } from "../cards/facets.ts";
-import { searchAndSort } from "../cards/filterCards.ts";
+import {
+  isClassCard,
+  newestFirst,
+  searchAndSort,
+} from "../cards/filterCards.ts";
 import { applyFilters } from "../filters/applyFilters.ts";
 import { FilteredLayout } from "../filters/FilteredLayout.tsx";
 import { FilterBar } from "../filters/FilterBar.tsx";
@@ -17,14 +21,6 @@ import styles from "./NeedsReviewPage.module.css";
 
 const route = getRouteApi("/needs-review");
 const facets = cardFacets();
-
-const isClassCard = (c: CardSummary) =>
-  c.classes.includes("Runeblade") || c.talents.includes("Shadow");
-
-/** The review order: newest release first (undated cards after), then by name. */
-export const newestFirst = (a: CardSummary, b: CardSummary) =>
-  (b.firstReleased ?? "").localeCompare(a.firstReleased ?? "") ||
-  a.name.localeCompare(b.name);
 
 function Section(props: { title: string; cards: CardSummary[] }) {
   return (

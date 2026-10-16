@@ -1,7 +1,16 @@
 // Search and sort for card lists. Facet filtering lives in facets.ts / filters/.
 import type { CardSummary } from "./cardRepository.ts";
 
-export type CardSort = "name" | "type" | "cost" | "power" | "defense";
+export type CardSort =
+  "newest" | "name" | "type" | "cost" | "power" | "defense";
+
+export const isClassCard = (c: CardSummary) =>
+  c.classes.includes("Runeblade") || c.talents.includes("Shadow");
+
+/** Newest release first (undated cards after the dated ones), then by name. */
+export const newestFirst = (a: CardSummary, b: CardSummary) =>
+  (b.firstReleased ?? "").localeCompare(a.firstReleased ?? "") ||
+  a.name.localeCompare(b.name);
 export type Stat = "cost" | "power" | "defense";
 
 export const TYPE_LABELS: Record<string, string> = {
@@ -77,6 +86,11 @@ export function searchAndSort(
           a.name.localeCompare(b.name)
         );
       }
+      // The review priority: Runeblade and Shadow first, generics last, each newest first.
+      if (sort === "newest")
+        return (
+          Number(isClassCard(b)) - Number(isClassCard(a)) || newestFirst(a, b)
+        );
       if (sort === "name") return a.name.localeCompare(b.name);
       const ka = statKey(a, sort);
       const kb = statKey(b, sort);
