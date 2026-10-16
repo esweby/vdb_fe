@@ -262,6 +262,7 @@ function PitchRow(props: {
           <input
             type="number"
             min={0}
+            max={80}
             inputMode="numeric"
             placeholder="Target"
             value={draft}
