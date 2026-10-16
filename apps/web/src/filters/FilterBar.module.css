@@ -93,19 +93,19 @@
   border-color: var(--tone);
 }
 .pitch1 {
-  --tone: #d63c35;
+  --tone: var(--pitch-1);
 }
 .pitch2 {
-  --tone: #d9a514;
+  --tone: var(--pitch-2);
 }
 .pitch3 {
-  --tone: #3b7dd8;
+  --tone: var(--pitch-3);
 }
 .pitch4 {
-  --tone: #8a5cc7;
+  --tone: var(--pitch-4);
 }
 .pitchnone {
-  --tone: #8a8a8a;
+  --tone: var(--pitch-none);
 }
 .pitchnone .dot {
   background: none;

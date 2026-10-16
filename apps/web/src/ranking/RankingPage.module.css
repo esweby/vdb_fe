@@ -1,13 +1,5 @@
 /* Build a core: a sticky header with the core's count and the tabs (Set up, Board,
    Readings). On the Board tab, the board sits beside a slim core rail. */
-.buildHead,
-.tabPanel {
-  --pitch-0: #8a8a8a;
-  --pitch-1: #d63c35;
-  --pitch-2: #e6b422;
-  --pitch-3: #3b7dd8;
-  --pitch-4: #8a5cc7;
-}
 .buildHead {
   position: sticky;
   top: 0;
@@ -953,7 +945,7 @@
   border-radius: 0.4rem;
   font-size: 0.84rem;
   color: var(--fg);
-  background: color-mix(in srgb, #e6b422 22%, var(--surface));
+  background: color-mix(in srgb, var(--pitch-2) 22%, var(--surface));
 }
 .scenarioList {
   list-style: none;
@@ -1071,7 +1063,7 @@
 }
 .chartBack {
   fill: none;
-  stroke: #1f9d61;
+  stroke: var(--success);
   stroke-width: 2.5;
   stroke-dasharray: 5 4;
 }
@@ -1094,7 +1086,7 @@
   background: var(--accent);
 }
 .legend span[data-key="back"]::before {
-  background: #1f9d61;
+  background: var(--success);
 }
 
 /* "Saved as …" with a link to open the deck, so finishing it is one click away. */

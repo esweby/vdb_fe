@@ -10,5 +10,5 @@
   color: var(--danger);
 }
 .symbol[data-symbol="x"] {
-  color: var(--pitch-1, #d63c35);
+  color: var(--pitch-1);
 }
