@@ -543,3 +543,15 @@
   gap: 0.6rem;
   color: var(--muted);
 }
+
+/* Scenarios on a deck: a preview note, then the same panels as Build a core. */
+.scenarios {
+  display: grid;
+  gap: 1rem;
+}
+.preview {
+  margin: 0;
+  padding: 0.6rem 0.9rem;
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+}

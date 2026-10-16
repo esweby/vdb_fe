@@ -1,6 +1,6 @@
 // Built-in scenarios (README "Scenarios") and how a card becomes an engine card.
 // UNVERIFIED: the scenarios and their thresholds are a first pass for the scoring group.
-import type { RoleId } from "@vdb/cards";
+import { rolesOf, type RoleId } from "@vdb/cards";
 import type { EngineCard, ScenarioDefinition } from "@vdb/engine";
 import type { CardSummary, VariantSummary } from "../cards/cardRepository.ts";
 
@@ -179,4 +179,21 @@ export function toEngineCard(
       gatesUnconditional: made("gate", true),
     },
   };
+}
+
+/** A card as the engine sees it, with its roles worked out from its attributes. */
+export function engineCardOf(
+  card: CardSummary,
+  variant: VariantSummary,
+): EngineCard {
+  return toEngineCard(
+    card,
+    variant,
+    rolesOf({
+      type: card.type,
+      subtypes: card.subtypes,
+      attributes: card.attributes,
+      variantAttributes: card.variants.map((v) => v.attributes),
+    }),
+  );
 }

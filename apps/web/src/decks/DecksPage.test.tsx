@@ -996,3 +996,35 @@ describe("someone else's public deck", () => {
     expect(pitch.queryByLabelText("Red target")).toBeNull();
   });
 });
+
+// A preview of what's coming (maintainer, 16 Oct 2026): the Ranking page's scenarios, run
+// against a deck's main deck.
+describe("deck scenarios", () => {
+  it("runs the scenarios on the deck from a Scenarios tab", async () => {
+    const { router } = await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      decks: withDeck([
+        { variantId: "hp1", quantity: 3, sideboard: false },
+        { variantId: "bsl3", quantity: 2, sideboard: false },
+        // Not drawn: the sideboard and weapons.
+        { variantId: "hp2", quantity: 1, sideboard: true },
+        { variantId: "nb", quantity: 1, sideboard: false },
+      ]).repository,
+    });
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("tab", { name: "Scenarios" }));
+    expect(router.state.location.search).toMatchObject({ tab: "scenarios" });
+    const panel = within(screen.getByRole("tabpanel"));
+    expect(panel.getByText(/A preview/)).toBeInTheDocument();
+    await user.click(panel.getByRole("button", { name: "Run scenarios" }));
+    expect(
+      await panel.findByText(
+        "10,000 runs each · seed 1 · 5 deck cards + 55 blanks (60)",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      panel.getByRole("region", { name: "Traverse timeline" }),
+    ).toBeInTheDocument();
+  });
+});

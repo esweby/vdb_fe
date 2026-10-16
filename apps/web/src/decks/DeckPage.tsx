@@ -9,6 +9,7 @@ import { analyseDeck } from "./deckAnalysis.ts";
 import { CardFinder } from "./CardFinder.tsx";
 import { CardTile } from "./CardTile.tsx";
 import { DeckAnalysisPanel } from "./DeckAnalysisPanel.tsx";
+import { DeckScenarios } from "./DeckScenarios.tsx";
 import type { Deck, DeckCard, PitchTargets } from "./deckRepository.ts";
 import {
   deckCounts,
@@ -26,11 +27,12 @@ import styles from "./Decks.module.css";
 
 const route = getRouteApi("/decks/$deckId");
 
-type Tab = "cards" | "stats";
+type Tab = "cards" | "stats" | "scenarios";
 type View = "tiles" | "list";
 const TABS: { id: Tab; label: string }[] = [
   { id: "cards", label: "Cards" },
   { id: "stats", label: "Stats" },
+  { id: "scenarios", label: "Scenarios" },
 ];
 
 export function DeckPage() {
@@ -186,7 +188,7 @@ export function DeckPage() {
       // An in-page change (filters, Load more, settings): keep the scroll position.
       resetScroll: false,
       search: {
-        ...(next.tab === "stats" ? { tab: "stats" as const } : {}),
+        ...(next.tab !== "cards" ? { tab: next.tab } : {}),
         ...(next.view === "list" ? { view: "list" as const } : {}),
       },
     });
@@ -249,7 +251,9 @@ export function DeckPage() {
         id={`deck-panel-${tab}`}
         aria-labelledby={`deck-tab-${tab}`}
       >
-        {tab === "stats" ? (
+        {tab === "scenarios" ? (
+          <DeckScenarios entries={entries} deckSize={rules?.deckMin ?? 60} />
+        ) : tab === "stats" ? (
           <DeckAnalysisPanel
             entries={entries}
             pitchTargets={deck.pitchTargets ?? {}}
