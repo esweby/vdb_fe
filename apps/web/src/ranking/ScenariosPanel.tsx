@@ -11,11 +11,14 @@ const n = (x: number) => x.toLocaleString("en-GB");
 /** The built-in scenarios, run together with one button (README "Running a scenario"). */
 export function ScenariosPanel(props: {
   output: ScenarioOutput | null;
+  /** What's shuffled: a core on the Ranking page, or a deck's main deck. */
+  source?: "core" | "deck";
   stale: boolean;
   running: boolean;
   onRun: (seed: number) => void;
 }) {
   const { output } = props;
+  const source = props.source ?? "core";
   // Scenarios that need something no card in the core has: listed apart, not as 0%.
   const cantRun = output?.scenarios.filter((s) => s.missing) ?? [];
   return (
@@ -27,8 +30,8 @@ export function ScenariosPanel(props: {
         <div>
           <h2>Scenarios</h2>
           <p>
-            Shuffles your core thousands of times and checks each scenario. They
-            count what's in hand; they don't play the game.
+            Shuffles your {source} thousands of times and checks each scenario.
+            They count what's in hand; they don't play the game.
           </p>
         </div>
         <div className={styles.runButtons}>
@@ -51,7 +54,7 @@ export function ScenariosPanel(props: {
       </header>
       {output && (
         <p className={styles.runInfo}>
-          {`${n(output.runs)} runs each · seed ${output.seed} · ${output.deck.coreCards} core cards + ${output.deck.blanks} blanks (${output.deck.deckSize})`}
+          {`${n(output.runs)} runs each · seed ${output.seed} · ${output.deck.coreCards} ${source} cards + ${output.deck.blanks} blanks (${output.deck.deckSize})`}
         </p>
       )}
       {props.stale && (
@@ -118,9 +121,9 @@ export function ScenariosPanel(props: {
         </div>
       )}
       <p className={styles.hint}>
-        A hand of 4 (Viserai's intellect), drawn from the core plus blanks up to
-        the deck size. Built-in scenarios are a first pass for the scoring group
-        to check.
+        A hand of 4 (Viserai's intellect), drawn from the {source} plus blanks
+        up to the deck size. Built-in scenarios are a first pass for the scoring
+        group to check.
       </p>
     </section>
   );

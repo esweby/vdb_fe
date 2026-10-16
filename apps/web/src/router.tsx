@@ -107,8 +107,10 @@ const routeTree = rootRoute.addChildren([
     path: "/decks/$deckId",
     validateSearch: (
       search: Record<string, unknown>,
-    ): { tab?: "stats"; view?: "list" } => ({
-      ...(search.tab === "stats" ? { tab: "stats" as const } : {}),
+    ): { tab?: "stats" | "scenarios"; view?: "list" } => ({
+      ...(search.tab === "stats" || search.tab === "scenarios"
+        ? { tab: search.tab as "stats" | "scenarios" }
+        : {}),
       ...(search.view === "list" ? { view: "list" as const } : {}),
     }),
     // A public deck opens signed out, read only; a private one is "not found" to anyone else.
