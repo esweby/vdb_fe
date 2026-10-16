@@ -46,9 +46,18 @@ export function HomePage() {
         </p>
         <div className={styles.actions}>
           {!user && (
-            <Link to="/sign-in" className={button("primary")}>
-              Sign in
-            </Link>
+            <>
+              <Link
+                to="/sign-in"
+                search={{ mode: "signup" }}
+                className={button("primary")}
+              >
+                Create an account
+              </Link>
+              <Link to="/sign-in" className={button("secondary")}>
+                Sign in
+              </Link>
+            </>
           )}
           {user && (
             <Link to="/ranking" className={button("primary")}>

@@ -12,7 +12,11 @@ export interface AuthService {
   /** Calls back now with the current session, then on every change. Returns an unsubscribe. */
   onSessionChange(callback: (user: SessionUser | null) => void): () => void;
   signIn(email: string, password: string): Promise<void>;
-  signUp(email: string, password: string): Promise<void>;
+  /** Creates an account. Some projects need the email confirmed before the first sign-in. */
+  signUp(
+    email: string,
+    password: string,
+  ): Promise<{ needsConfirmation: boolean }>;
   signOut(): Promise<void>;
   getRole(userId: string): Promise<AppRole>;
 }
@@ -36,8 +40,10 @@ export function supabaseAuthService(client: SupabaseClient): AuthService {
       if (error) throw error;
     },
     async signUp(email, password) {
-      const { error } = await client.auth.signUp({ email, password });
+      const { data, error } = await client.auth.signUp({ email, password });
       if (error) throw error;
+      // No session yet means Supabase sent a confirmation email first.
+      return { needsConfirmation: !data.session };
     },
     async signOut() {
       const { error } = await client.auth.signOut();

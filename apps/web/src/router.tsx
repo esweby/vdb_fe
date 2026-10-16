@@ -116,6 +116,9 @@ const routeTree = rootRoute.addChildren([
   createRoute({
     getParentRoute: () => rootRoute,
     path: "/sign-in",
+    // ?mode=signup opens on Create an account (the home page's link for a first visit).
+    validateSearch: (search: Record<string, unknown>): { mode?: "signup" } =>
+      search.mode === "signup" ? { mode: "signup" } : {},
     component: SignInPage,
   }),
 ]);

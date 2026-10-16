@@ -25,6 +25,10 @@ describe("home page", () => {
     expect(
       screen.getAllByRole("link", { name: "Sign in" }).length,
     ).toBeGreaterThan(0);
+    // A first visit has no account yet: creating one is the main way in.
+    expect(
+      screen.getByRole("link", { name: "Create an account" }),
+    ).toHaveAttribute("href", "/sign-in?mode=signup");
   });
 
   it("points a scorer to the cards they have left to review", async () => {
