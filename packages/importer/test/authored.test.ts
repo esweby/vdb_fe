@@ -51,11 +51,11 @@ describe("authored batches", () => {
 
 // Reported by the scoring group, 16 Oct 2026: the pre-release data gave Shadowrealm Walker
 // Shadowrealm Ripper's text. The corrected text: banish a card from hand when it attacks; if
-// it's Shadow, create a Gate to i'Arathael token. Unverified until the maintainer checks it.
+// it's Shadow, create a Gate to i'Arathael token. Checked by the maintainer, 16 Oct 2026.
 describe("corrected cards", () => {
-  it("Shadowrealm Walker creates a Gate, rather than gaining power, and awaits a check", () => {
+  it("Shadowrealm Walker creates a Gate, rather than gaining power (maintainer checked)", () => {
     const walker = allAuthored()["Shadowrealm Walker"]!;
-    expect(walker.verified).toBe(false);
+    expect(walker.verified).toBe(true);
     expect(walker.card?.tokens).toEqual([
       {
         token: "gate",

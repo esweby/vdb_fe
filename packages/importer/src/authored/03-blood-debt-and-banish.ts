@@ -573,9 +573,9 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   // Corrected 16 Oct 2026: the pre-release data had Shadowrealm Ripper's text (+2 power). The
-  // fixed text creates a Gate instead. UNVERIFIED until the maintainer checks it.
+  // fixed text creates a Gate instead. Checked by the maintainer, 16 Oct 2026.
   "Shadowrealm Walker": {
-    verified: false,
+    verified: true,
     card: {
       banishesOwn: [{ from: "hand", trigger: "on_attack", optional: true }],
       tokens: [
