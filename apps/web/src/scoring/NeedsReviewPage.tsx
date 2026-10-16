@@ -17,6 +17,7 @@ import { useCards } from "../cards/useCards.ts";
 import { useAppSelector } from "../hooks.ts";
 import { useServices } from "../servicesContext.ts";
 import { Button, LoadError, Loading } from "../ui/index.ts";
+import ui from "../ui/ui.module.css";
 import styles from "./NeedsReviewPage.module.css";
 
 const route = getRouteApi("/needs-review");
@@ -164,9 +165,18 @@ export function NeedsReviewPage() {
             {todo.length} {todo.length === 1 ? "card" : "cards"} left to review
           </p>
           {stops.length > 0 && (
-            <Button variant="primary" onClick={() => goTo(stops[0]!.id)}>
-              Start reviewing
-            </Button>
+            <>
+              {/* The fast way: one key per card. Start reviewing opens the full view. */}
+              <Link
+                to="/needs-review/quick"
+                className={`${ui.button} ${ui.primary}`}
+              >
+                Quick review
+              </Link>
+              <Button onClick={() => goTo(stops[0]!.id)}>
+                Start reviewing
+              </Button>
+            </>
           )}
         </div>
       )}
