@@ -6,7 +6,9 @@ import type { DatasetCard } from "./classify.ts";
 import type { DatasetSet } from "./releases.ts";
 
 // usurp-the-shadow-throne branch (pre-release). Re-pin once it merges to main.
-export const DATASET_COMMIT = "01fc9344a612a41e5dc451ccc1422050a25a2667";
+// Re-pinned 16 Oct 2026 to the branch head: fixes Shadowrealm Walker (it had Shadowrealm
+// Ripper's text), Darkest Hour's blue (+2) and typos on 12 other cards.
+export const DATASET_COMMIT = "debce79e8ad1fc59f037ff83e7d66932ac9a52b5";
 const DATASET_BASE = `https://raw.githubusercontent.com/the-fab-cube/flesh-and-blood-cards/${DATASET_COMMIT}/json/english`;
 const CACHE_DIR = join(import.meta.dirname, "..", ".cache");
 
