@@ -2,6 +2,7 @@ import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { useServices } from "../servicesContext.ts";
 import { Button, TextField } from "../ui/index.ts";
+import { USERNAME_PATTERN, USERNAME_TAKEN } from "./authService.ts";
 import styles from "./SignInPage.module.css";
 
 const route = getRouteApi("/sign-in");
@@ -16,6 +17,7 @@ export function SignInPage() {
   const [confirmSent, setConfirmSent] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -26,7 +28,21 @@ export function SignInPage() {
     try {
       if (mode === "signIn") await auth.signIn(email, password);
       else {
-        const { needsConfirmation } = await auth.signUp(email, password);
+        // Optional; checked first so a taken one doesn't quietly go missing.
+        const name = username.trim();
+        if (name && !USERNAME_PATTERN.test(name)) {
+          setError("A username is 3 to 24 letters, numbers, _ or -.");
+          return;
+        }
+        if (name && !(await auth.usernameAvailable(name))) {
+          setError(USERNAME_TAKEN);
+          return;
+        }
+        const { needsConfirmation } = await auth.signUp(
+          email,
+          password,
+          name || undefined,
+        );
         if (needsConfirmation) {
           setConfirmSent(email);
           return;
@@ -58,6 +74,19 @@ export function SignInPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
+        {mode === "signUp" && (
+          <TextField
+            label="Username (optional)"
+            autoComplete="username"
+            maxLength={24}
+            value={username}
+            onChange={(e) => {
+              setUsername(e.target.value);
+              setError(null);
+            }}
+            hint="Shown on decks you share. You can add or change it later."
+          />
+        )}
         <TextField
           label="Password"
           type="password"

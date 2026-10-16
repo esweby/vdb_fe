@@ -1,4 +1,10 @@
-import type { AppRole, AuthService, SessionUser } from "../auth/authService.ts";
+import {
+  USERNAME_PATTERN,
+  USERNAME_TAKEN,
+  type AppRole,
+  type AuthService,
+  type SessionUser,
+} from "../auth/authService.ts";
 
 /** An in-memory AuthService for tests. */
 export function fakeAuthService(
@@ -7,12 +13,16 @@ export function fakeAuthService(
     signedIn?: SessionUser | null;
     /** Sign-up sends a confirmation email instead of signing in. */
     confirmEmail?: boolean;
+    /** Usernames already taken (compared ignoring case). */
+    takenUsernames?: string[];
   } = {},
 ) {
   const users = { ...options.users };
   let listener: ((user: SessionUser | null) => void) | null = null;
   let current = options.signedIn ?? null;
   const calls: string[] = [];
+  const taken = options.takenUsernames ?? [];
+  const usernames = new Map<string, string>();
 
   const emit = (user: SessionUser | null) => {
     current = user;
@@ -35,8 +45,8 @@ export function fakeAuthService(
       }
       emit({ id: user.id, email });
     },
-    async signUp(email, password) {
-      calls.push(`signUp:${email}`);
+    async signUp(email, password, username) {
+      calls.push(`signUp:${email}${username ? `:${username}` : ""}`);
       users[email] = { id: `id-${email}`, password, role: "user" };
       if (options.confirmEmail) return { needsConfirmation: true };
       emit({ id: `id-${email}`, email });
@@ -45,6 +55,21 @@ export function fakeAuthService(
     async signOut() {
       calls.push("signOut");
       emit(null);
+    },
+    async usernameAvailable(name) {
+      return (
+        USERNAME_PATTERN.test(name) &&
+        !taken.some((t) => t.toLowerCase() === name.toLowerCase())
+      );
+    },
+    async getUsername(userId) {
+      return usernames.get(userId) ?? null;
+    },
+    async setUsername(userId, name) {
+      if (taken.some((t) => t.toLowerCase() === name.toLowerCase()))
+        throw new Error(USERNAME_TAKEN);
+      calls.push(`setUsername:${name}`);
+      usernames.set(userId, name);
     },
     async getRole(userId) {
       return Object.values(users).find((u) => u.id === userId)?.role ?? "user";

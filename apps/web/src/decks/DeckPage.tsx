@@ -200,8 +200,9 @@ export function DeckPage() {
         <div>
           <h1>{deck.name}</h1>
           {!canEdit && (
-            <p>
+            <p className={styles.byline}>
               <Tag>Read only</Tag>
+              {deck.ownerName && <span>by {deck.ownerName}</span>}
             </p>
           )}
           <p className={styles.meta}>

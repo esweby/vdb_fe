@@ -3,6 +3,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type AppRole = "user" | "scorer" | "curator" | "admin";
 
+/** A username's rules, the same as the database's: 3 to 24 letters, numbers, _ or -. */
+export const USERNAME_PATTERN = /^[A-Za-z0-9_-]{3,24}$/;
+
 export interface SessionUser {
   id: string;
   email: string | null;
@@ -16,10 +19,19 @@ export interface AuthService {
   signUp(
     email: string,
     password: string,
+    username?: string,
   ): Promise<{ needsConfirmation: boolean }>;
   signOut(): Promise<void>;
   getRole(userId: string): Promise<AppRole>;
+  /** Whether a username is valid and nobody has it (in any case). */
+  usernameAvailable(name: string): Promise<boolean>;
+  getUsername(userId: string): Promise<string | null>;
+  /** Sets the signed-in user's username; throws "That username is taken…" if it is. */
+  setUsername(userId: string, name: string): Promise<void>;
 }
+
+export const USERNAME_TAKEN =
+  "That username is taken. Try another, or leave it blank for now.";
 
 export function supabaseAuthService(client: SupabaseClient): AuthService {
   const toUser = (u: { id: string; email?: string } | null | undefined) =>
@@ -39,8 +51,13 @@ export function supabaseAuthService(client: SupabaseClient): AuthService {
       });
       if (error) throw error;
     },
-    async signUp(email, password) {
-      const { data, error } = await client.auth.signUp({ email, password });
+    async signUp(email, password, username) {
+      // The new-user trigger copies the username to the profile (if it's valid and free).
+      const { data, error } = await client.auth.signUp({
+        email,
+        password,
+        options: username ? { data: { username } } : undefined,
+      });
       if (error) throw error;
       // No session yet means Supabase sent a confirmation email first.
       return { needsConfirmation: !data.session };
@@ -57,6 +74,28 @@ export function supabaseAuthService(client: SupabaseClient): AuthService {
         .single();
       if (error) throw error;
       return data.role as AppRole;
+    },
+    async usernameAvailable(name) {
+      const { data, error } = await client.rpc("username_available", { name });
+      if (error) throw error;
+      return data === true;
+    },
+    async getUsername(userId) {
+      const { data, error } = await client
+        .from("profiles")
+        .select("username")
+        .eq("id", userId)
+        .single();
+      if (error) throw error;
+      return (data.username as string | null) ?? null;
+    },
+    async setUsername(userId, name) {
+      const { error } = await client
+        .from("profiles")
+        .update({ username: name })
+        .eq("id", userId);
+      if (error?.code === "23505") throw new Error(USERNAME_TAKEN);
+      if (error) throw error;
     },
   };
 }

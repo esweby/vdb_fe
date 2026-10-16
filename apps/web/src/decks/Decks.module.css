@@ -535,3 +535,11 @@
   margin: 0 0 0.6rem;
   font-size: 1.1rem;
 }
+
+/* Someone else's deck: Read only, and who made it. */
+.byline {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--muted);
+}
