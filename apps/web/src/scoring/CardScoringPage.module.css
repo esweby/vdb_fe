@@ -343,3 +343,15 @@
   font-size: 0.85rem;
   color: var(--muted);
 }
+
+/* The note on a card without conditions, then its button on its own line, at the start. */
+.rateAnyway {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+.rateAnyway .meta {
+  margin: 0;
+}

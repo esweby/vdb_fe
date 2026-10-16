@@ -5,10 +5,15 @@
   gap: 0.5rem;
   margin-bottom: 1rem;
 }
+/* One table per rating, all with the same columns, so the values line up down the summary. */
 .table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   margin-bottom: 0.75rem;
+}
+.table th {
+  width: 45%;
 }
 .table caption {
   text-align: left;

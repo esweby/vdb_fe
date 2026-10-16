@@ -470,13 +470,15 @@ export function CardScoringView(props: {
                 </ul>
               )}
               {lockedIds.length > 0 && (
-                <p className={styles.meta}>
-                  Floor and ceiling are greyed out: this card has no recorded
-                  conditions.{" "}
-                  <Button variant="ghost" onClick={() => setRateAnyway(true)}>
+                <div className={styles.rateAnyway}>
+                  <p className={styles.meta}>
+                    Floor and ceiling are greyed out: this card has no recorded
+                    conditions.
+                  </p>
+                  <Button onClick={() => setRateAnyway(true)}>
                     Rate floor and ceiling anyway
                   </Button>
-                </p>
+                </div>
               )}
               <div ref={ratings}>
                 <ScoreEditor
