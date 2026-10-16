@@ -13,7 +13,7 @@ import { CardTile } from "../decks/CardTile.tsx";
 import { PITCH_NAMES } from "../decks/deckRules.ts";
 import { useAppSelector } from "../hooks.ts";
 import { useServices } from "../servicesContext.ts";
-import { Button, Tag } from "../ui/index.ts";
+import { Button, LoadError, Loading, Tag } from "../ui/index.ts";
 import { ReviewDialog } from "./ReviewDialog.tsx";
 import type {
   CardDetail,
@@ -92,20 +92,26 @@ export function CardScoringView(props: {
   const [loadedFor, setLoadedFor] = useState<string | null>(null);
   const ratings = useRef<HTMLDivElement>(null);
 
+  const [cardFailed, setCardFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let live = true;
+    setCardFailed(false);
     scores.getCard(cardId).then(
       (c) => live && setCard(c),
-      (e) => live && setError(String(e.message ?? e)),
+      () => live && setCardFailed(true),
     );
     return () => {
       live = false;
     };
-  }, [cardId, scores]);
+  }, [cardId, scores, attempt]);
 
+  const [ratingsFailed, setRatingsFailed] = useState(false);
+  const [ratingsAttempt, setRatingsAttempt] = useState(0);
   useEffect(() => {
     if (!user) return;
     let live = true;
+    setRatingsFailed(false);
     Promise.all([
       scores.listDimensions(),
       scores.listMyScores(user.id, cardId),
@@ -120,12 +126,12 @@ export function CardScoringView(props: {
         setReviewedAt(reviewed);
         setLoadedFor(cardId);
       },
-      (e) => live && setError(String(e.message ?? e)),
+      () => live && setRatingsFailed(true),
     );
     return () => {
       live = false;
     };
-  }, [cardId, scores, user]);
+  }, [cardId, scores, user, ratingsAttempt]);
 
   // Fast scoring in the pop-over: each card opens on its first rating.
   useEffect(() => {
@@ -183,7 +189,11 @@ export function CardScoringView(props: {
     }
   }
 
-  if (card === undefined) return <p>Loading…</p>;
+  if (cardFailed && card === undefined)
+    return (
+      <LoadError what="this card" onRetry={() => setAttempt((n) => n + 1)} />
+    );
+  if (card === undefined) return <Loading label="Loading the card" />;
   if (card === null) {
     return (
       <>
@@ -360,6 +370,12 @@ export function CardScoringView(props: {
             )}
           </div>
           {!user && <Link to="/sign-in">Sign in to score this card</Link>}
+          {user && ratingsFailed && (
+            <LoadError
+              what="your ratings"
+              onRetry={() => setRatingsAttempt((n) => n + 1)}
+            />
+          )}
           {user && dimensions.length > 0 && (
             <>
               {!inPopover && (

@@ -82,7 +82,11 @@ export function CardTile(props: {
   const pitchClass = styles[`pitch${variant.pitch ?? 0}`] ?? "";
   // The real image when there is one; the stand-in below if there isn't, or it fails to load.
   const [imageFailed, setImageFailed] = useState(false);
-  useEffect(() => setImageFailed(false), [variant.imageUrl]);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  useEffect(() => {
+    setImageFailed(false);
+    setImageLoaded(false);
+  }, [variant.imageUrl]);
   if (variant.imageUrl && !imageFailed) {
     const image = (
       <img
@@ -90,6 +94,8 @@ export function CardTile(props: {
         alt={name}
         loading="lazy"
         className={styles.image}
+        data-loading={imageLoaded ? undefined : ""}
+        onLoad={() => setImageLoaded(true)}
         onError={() => setImageFailed(true)}
       />
     );

@@ -12,7 +12,7 @@ import type { CardSummary } from "../cards/cardRepository.ts";
 import { useCards } from "../cards/useCards.ts";
 import { useAppSelector } from "../hooks.ts";
 import { useServices } from "../servicesContext.ts";
-import { Button } from "../ui/index.ts";
+import { Button, LoadError, Loading } from "../ui/index.ts";
 import styles from "./NeedsReviewPage.module.css";
 
 const route = getRouteApi("/needs-review");
@@ -59,10 +59,12 @@ function Section(props: { title: string; cards: CardSummary[] }) {
  * the pop-over and step through this list in order; a reviewed card drops off it.
  */
 export function NeedsReviewPage() {
-  const { status, items } = useCards();
+  const { status, items, retry } = useCards();
   const { scores } = useServices();
   const user = useAppSelector((s) => s.auth.user);
   const [reviewed, setReviewed] = useState<Set<string> | null>(null);
+  const [reviewsFailed, setReviewsFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const search = route.useSearch();
   const filters = useUrlFilters(search);
   const navigate = useNavigate();
@@ -70,13 +72,15 @@ export function NeedsReviewPage() {
   useEffect(() => {
     if (!user) return;
     let live = true;
-    void scores
-      .listMyReviewedCardIds(user.id)
-      .then((ids) => live && setReviewed(new Set(ids)));
+    setReviewsFailed(false);
+    scores.listMyReviewedCardIds(user.id).then(
+      (ids) => live && setReviewed(new Set(ids)),
+      () => live && setReviewsFailed(true),
+    );
     return () => {
       live = false;
     };
-  }, [scores, user]);
+  }, [scores, user, attempt]);
 
   const unreviewed = useMemo(
     () =>
@@ -92,7 +96,14 @@ export function NeedsReviewPage() {
     [unreviewed, filters.state],
   );
 
-  if (status !== "loaded" || !reviewed) return <p>Loading…</p>;
+  if (status === "failed")
+    return <LoadError what="the cards" onRetry={retry} />;
+  if (reviewsFailed)
+    return (
+      <LoadError what="your reviews" onRetry={() => setAttempt((n) => n + 1)} />
+    );
+  if (status !== "loaded") return <Loading label="Loading the cards" />;
+  if (!reviewed) return <Loading label="Loading your reviews" />;
   const classCards = todo.filter(isClassCard);
   const generics = todo.filter((c) => !isClassCard(c));
 
