@@ -125,6 +125,7 @@ export function isViseraiLegal(card: DatasetCard): boolean {
 }
 
 export interface DatasetPrinting {
+  set_id?: string;
   /** S standard, R rainbow foil, C cold foil, G gold foil */
   foiling?: string;
   /** e.g. "EA" extended art, "FA" full art; empty for normal art */

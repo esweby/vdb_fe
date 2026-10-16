@@ -21,6 +21,11 @@ const facets = cardFacets();
 const isClassCard = (c: CardSummary) =>
   c.classes.includes("Runeblade") || c.talents.includes("Shadow");
 
+/** The review order: newest release first (undated cards after), then by name. */
+export const newestFirst = (a: CardSummary, b: CardSummary) =>
+  (b.firstReleased ?? "").localeCompare(a.firstReleased ?? "") ||
+  a.name.localeCompare(b.name);
+
 function Section(props: { title: string; cards: CardSummary[] }) {
   return (
     <section aria-label={props.title} className={styles.section}>
@@ -46,6 +51,9 @@ function Section(props: { title: string; cards: CardSummary[] }) {
               >
                 {c.name}
               </Link>
+              {c.firstSet && (
+                <span className={styles.set}> · {c.firstSet}</span>
+              )}
             </li>
           ))}
         </ul>
@@ -55,8 +63,9 @@ function Section(props: { title: string; cards: CardSummary[] }) {
 }
 
 /**
- * Cards the signed-in scorer hasn't marked reviewed, Runeblade and Shadow first. Cards open in
- * the pop-over and step through this list in order; a reviewed card drops off it.
+ * Cards the signed-in scorer hasn't marked reviewed: Runeblade and Shadow first, generics last,
+ * each newest release first. Cards open in the pop-over and step through this list in order; a
+ * reviewed card drops off it.
  */
 export function NeedsReviewPage() {
   const { status, items } = useCards();
@@ -84,7 +93,7 @@ export function NeedsReviewPage() {
         items.filter((c) => !reviewed?.has(c.id)),
         "",
         "name",
-      ),
+      ).sort(newestFirst),
     [items, reviewed],
   );
   const todo = useMemo(

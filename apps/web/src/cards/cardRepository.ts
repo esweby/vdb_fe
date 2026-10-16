@@ -24,6 +24,9 @@ export interface CardSummary {
   keywords: string[];
   attributes: CardAttributes;
   attributesVerified: boolean;
+  /** The set the card first came out in, and when (YYYY-MM-DD); null when undated. */
+  firstSet?: string | null;
+  firstReleased?: string | null;
   variants: VariantSummary[];
 }
 
@@ -42,7 +45,7 @@ export function supabaseCardRepository(client: SupabaseClient): CardRepository {
         const { data, error } = await client
           .from("cards")
           .select(
-            "id, name, type, subtypes, classes, talents, keywords, attributes, attributesVerified:attributes_verified, variants(id, pitch, cost, power, defense, imageUrl:image_url, attributes)",
+            "id, name, type, subtypes, classes, talents, keywords, attributes, attributesVerified:attributes_verified, firstSet:first_set, firstReleased:first_released, variants(id, pitch, cost, power, defense, imageUrl:image_url, attributes)",
           )
           .eq("hidden", false)
           .order("name")
