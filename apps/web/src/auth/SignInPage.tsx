@@ -1,13 +1,19 @@
-import { useNavigate } from "@tanstack/react-router";
+import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { useServices } from "../servicesContext.ts";
 import { Button, TextField } from "../ui/index.ts";
 import styles from "./SignInPage.module.css";
 
+const route = getRouteApi("/sign-in");
+
 export function SignInPage() {
   const { auth } = useServices();
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"signIn" | "signUp">("signIn");
+  const search = route.useSearch();
+  const [mode, setMode] = useState<"signIn" | "signUp">(
+    search.mode === "signup" ? "signUp" : "signIn",
+  );
+  const [confirmSent, setConfirmSent] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -19,7 +25,13 @@ export function SignInPage() {
     setBusy(true);
     try {
       if (mode === "signIn") await auth.signIn(email, password);
-      else await auth.signUp(email, password);
+      else {
+        const { needsConfirmation } = await auth.signUp(email, password);
+        if (needsConfirmation) {
+          setConfirmSent(email);
+          return;
+        }
+      }
       await navigate({ to: "/cards" });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
@@ -31,6 +43,12 @@ export function SignInPage() {
   return (
     <div className={styles.page}>
       <h1>{mode === "signIn" ? "Sign in" : "Create an account"}</h1>
+      {mode === "signUp" && (
+        <p className={styles.intro}>
+          An account saves your decks and lets you share them. Scorers are added
+          by the maintainer.
+        </p>
+      )}
       <form onSubmit={submit}>
         <TextField
           label="Email"
@@ -48,6 +66,12 @@ export function SignInPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
+        {confirmSent && (
+          <p role="status" className={styles.notice}>
+            Check your email: we've sent a link to {confirmSent}. Open it to
+            finish creating your account, then sign in.
+          </p>
+        )}
         {error && (
           <p role="alert" className={styles.error}>
             {error}
@@ -60,7 +84,11 @@ export function SignInPage() {
       <Button
         variant="ghost"
         className={styles.switch}
-        onClick={() => setMode(mode === "signIn" ? "signUp" : "signIn")}
+        onClick={() => {
+          setMode(mode === "signIn" ? "signUp" : "signIn");
+          setConfirmSent(null);
+          setError(null);
+        }}
       >
         {mode === "signIn" ? "Create an account instead" : "Sign in instead"}
       </Button>

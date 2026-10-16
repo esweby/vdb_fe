@@ -8,3 +8,13 @@
   margin-top: 1rem;
   padding-left: 0;
 }
+.notice {
+  margin: 0;
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.4rem;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+.intro {
+  margin: 0 0 1rem;
+  color: var(--muted);
+}

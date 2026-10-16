@@ -5,6 +5,8 @@ export function fakeAuthService(
   options: {
     users?: Record<string, { password: string; role: AppRole; id: string }>;
     signedIn?: SessionUser | null;
+    /** Sign-up sends a confirmation email instead of signing in. */
+    confirmEmail?: boolean;
   } = {},
 ) {
   const users = { ...options.users };
@@ -36,7 +38,9 @@ export function fakeAuthService(
     async signUp(email, password) {
       calls.push(`signUp:${email}`);
       users[email] = { id: `id-${email}`, password, role: "user" };
+      if (options.confirmEmail) return { needsConfirmation: true };
       emit({ id: `id-${email}`, email });
+      return { needsConfirmation: false };
     },
     async signOut() {
       calls.push("signOut");
