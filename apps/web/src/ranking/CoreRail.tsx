@@ -181,7 +181,7 @@ export function CoreRail(props: {
         )}
         {message && (
           <p role="status" className={styles.saved}>
-            {message.text} ·{" "}
+            <span>{message.text}</span> ·{" "}
             <Link to="/decks/$deckId" params={{ deckId: message.deck.id }}>
               Open {message.deck.name}
             </Link>
