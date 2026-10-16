@@ -21,6 +21,13 @@ describe("searchAndSort", () => {
     expect(names("shadow")).toEqual(["Become the Shadow Lord"]);
   });
 
+  // The same search as Add cards in the deck builder, so "usurp" finds the same cards in both.
+  it("searches keywords and the type line as well as names", () => {
+    expect(names("blood debt")).toEqual(["Hocus Pocus"]);
+    expect(names("GO AGAIN")).toEqual(["Become the Shadow Lord"]);
+    expect(names("weapon")).toEqual(["Nebula Blade"]);
+  });
+
   it("sorts by type, then name", () => {
     expect(names("", "type")).toEqual([
       "Become the Shadow Lord",

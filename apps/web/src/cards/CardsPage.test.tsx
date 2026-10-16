@@ -413,7 +413,7 @@ describe("cards page", () => {
     ).toHaveClass(/visuallyHidden/);
     expect(screen.getByLabelText("Search")).toHaveAttribute(
       "placeholder",
-      "Search card names",
+      "Search by name or keyword",
     );
   });
 

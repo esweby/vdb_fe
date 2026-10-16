@@ -60,6 +60,8 @@ export interface ScoreRepository {
   getPreferences(userId: string): Promise<Preferences>;
   savePreferences(userId: string, preferences: Preferences): Promise<void>;
   listCommunityScores(): Promise<CommunityRow[]>;
+  /** One card's community scores, for its page. */
+  listCommunityScoresForCard(cardId: string): Promise<CommunityRow[]>;
   listAllMyScores(userId: string): Promise<(ScoreRow & { cardId: string })[]>;
   getMinRatingCount(): Promise<number>;
 }
@@ -68,6 +70,24 @@ export interface Preferences {
   /** Default for "Same score for both sides" on card pages. Defaults to true. */
   scoreSidesTogether?: boolean;
 }
+
+const COMMUNITY_COLUMNS =
+  "card_id, variant_id, side, dimension_id, score, rating_count";
+const toCommunityRow = (r: {
+  card_id: string;
+  variant_id: string;
+  side: CommunityRow["side"];
+  dimension_id: number;
+  score: number | string;
+  rating_count: number;
+}): CommunityRow => ({
+  cardId: r.card_id,
+  variantId: r.variant_id,
+  side: r.side,
+  dimensionId: r.dimension_id,
+  score: Number(r.score),
+  ratingCount: r.rating_count,
+});
 
 export function supabaseScoreRepository(
   client: SupabaseClient,
@@ -188,25 +208,24 @@ export function supabaseScoreRepository(
       for (let from = 0; ; from += 1000) {
         const { data, error } = await client
           .from("community_scores")
-          .select(
-            "card_id, variant_id, side, dimension_id, score, rating_count",
-          )
+          .select(COMMUNITY_COLUMNS)
           .not("variant_id", "is", null)
           .not("side", "is", null)
           .range(from, from + 999);
         if (error) throw error;
-        rows.push(
-          ...data.map((r) => ({
-            cardId: r.card_id,
-            variantId: r.variant_id,
-            side: r.side,
-            dimensionId: r.dimension_id,
-            score: Number(r.score),
-            ratingCount: r.rating_count,
-          })),
-        );
+        rows.push(...data.map(toCommunityRow));
         if (data.length < 1000) return rows;
       }
+    },
+    async listCommunityScoresForCard(cardId) {
+      const { data, error } = await client
+        .from("community_scores")
+        .select(COMMUNITY_COLUMNS)
+        .eq("card_id", cardId)
+        .not("variant_id", "is", null)
+        .not("side", "is", null);
+      if (error) throw error;
+      return data.map(toCommunityRow);
     },
     async listAllMyScores(user) {
       const { data, error } = await client

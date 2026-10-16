@@ -1,0 +1,11 @@
+/* A card symbol in running text: about the size of a letter, never on its own line. */
+.symbol {
+  display: inline-block;
+  margin: 0 0.05em;
+  font-style: normal;
+  line-height: 1;
+  white-space: nowrap;
+}
+.symbol[data-symbol="h"] {
+  color: var(--danger);
+}

@@ -216,7 +216,7 @@ export function CardsPage() {
                 hideLabel
                 type="search"
                 className={styles.search}
-                placeholder="Search card names"
+                placeholder="Search by name or keyword"
                 value={filters.q}
                 onChange={(e) => filters.setQ(e.target.value)}
               />

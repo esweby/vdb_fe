@@ -7,7 +7,7 @@ import {
   type FilterState,
 } from "../filters/applyFilters.ts";
 import { FilterSidebar } from "../filters/FilterSidebar.tsx";
-import { typeLine } from "./CardTile.tsx";
+import { matchesSearch } from "../cards/filterCards.ts";
 import { Enlarge } from "./Enlarge.tsx";
 import { variantName } from "./deckRules.ts";
 import styles from "./CardFinder.module.css";
@@ -22,13 +22,6 @@ const PITCHES: [string, string][] = [
 ];
 const CLASSES = ["Runeblade", "Shadow", "Generic"];
 const GEAR = ["weapon", "equipment"];
-
-/** Matches the name, a keyword (Usurp, Blood Debt, Go again…) or the type line. */
-const matches = (card: CardSummary, q: string) =>
-  !q ||
-  card.name.toLowerCase().includes(q) ||
-  card.keywords.some((k) => k.toLowerCase().includes(q)) ||
-  typeLine(card).toLowerCase().includes(q);
 
 /**
  * Cards to add to a deck: shown straight away, narrowed by a search, quiet pitch and class
@@ -59,7 +52,7 @@ export function CardFinder(props: {
   const found = useMemo(() => {
     const q = query.trim().toLowerCase();
     const searched = props.cards
-      .filter((c) => matches(c, q))
+      .filter((c) => matchesSearch(c, q))
       .sort(
         (a, b) =>
           Number(GEAR.includes(b.type)) - Number(GEAR.includes(a.type)) ||
