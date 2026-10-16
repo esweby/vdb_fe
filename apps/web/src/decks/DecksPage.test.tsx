@@ -306,9 +306,14 @@ describe("deck page", () => {
   });
 
   it("won't add to the sideboard a card that's already in the deck", async () => {
+    // One-handed, so a second copy is still allowed in the deck.
+    const oneHanded = sampleCards.map((c) =>
+      c.name === "Nebula Blade" ? { ...c, subtypes: ["Sword", "1H"] } : c,
+    );
     await renderApp({
       path: "/decks/deck-1",
       auth: auth(),
+      cards: fakeCardRepository(oneHanded),
       decks: withDeck([{ variantId: "nb", quantity: 1, sideboard: false }])
         .repository,
     });

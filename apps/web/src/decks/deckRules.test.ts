@@ -112,9 +112,9 @@ describe("deckProblems", () => {
     expect(
       copyLimitFor(card("Face Purgatory", "equipment", ["Head"]), rules),
     ).toBe(1);
-    expect(copyLimitFor(card("Nebula Blade", "weapon", ["Sword"]), rules)).toBe(
-      3,
-    );
+    // Weapons (maintainer, 16 Oct 2026): one of a two-handed weapon, two of a one-handed one.
+    expect(copyLimitFor(sword, rules)).toBe(1);
+    expect(copyLimitFor(scepter, rules)).toBe(2);
     expect(copyLimitFor(card("Hocus Pocus"), rules)).toBe(3);
     const purgatory = card("Face Purgatory", "equipment", ["Head"]);
     const noPitch = {
@@ -124,6 +124,27 @@ describe("deckProblems", () => {
     expect(
       deckProblems([...filler(20), entry(noPitch, 2, true)], rules),
     ).toEqual(["Face Purgatory has 2 copies; at most 1 is allowed."]);
+  });
+
+  it("counts a weapon's copies across the deck and the sideboard together", () => {
+    expect(
+      deckProblems(
+        [...filler(20), entry(scepter, 1), entry(scepter, 2, true)],
+        rules,
+      ),
+    ).toEqual(["Scepter (red) has 3 copies; at most 2 are allowed."]);
+    expect(
+      deckProblems(
+        [...filler(20), entry(scepter, 1), entry(scepter, 1, true)],
+        rules,
+      ),
+    ).toEqual([]);
+    expect(
+      deckProblems(
+        [...filler(20), entry(sword, 1), entry(sword, 1, true)],
+        rules,
+      ),
+    ).toEqual(["Sword (red) has 2 copies; at most 1 is allowed."]);
   });
 
   it("allows one piece of equipment per slot in the loadout, but more in the sideboard", () => {

@@ -32,11 +32,14 @@ export const PITCH_NAMES: Record<number, string> = {
 };
 
 /**
- * Copies allowed of a card and pitch: one of each piece of equipment (checked by the maintainer,
- * 15 Oct 2026); weapons and deck cards follow the format's copy limit.
+ * Copies allowed of a card and pitch, across the deck and the sideboard together. Checked by the
+ * maintainer: one of each piece of equipment (15 Oct 2026); one of a two-handed weapon and two
+ * of a one-handed one (16 Oct 2026). Deck cards follow the format's copy limit.
  */
 export function copyLimitFor(card: CardSummary, rules: FormatRules): number {
-  return card.type === "equipment" ? 1 : rules.copyLimit;
+  if (card.type === "equipment") return 1;
+  if (card.type === "weapon") return card.subtypes.includes("2H") ? 1 : 2;
+  return rules.copyLimit;
 }
 
 export function sectionOf(card: CardSummary): DeckSection {
@@ -93,11 +96,20 @@ export function deckProblems(
       `The card pool has ${cards(counts.pool)}; at most ${rules.poolMax} are allowed.`,
     );
   }
+  // Copies of each card and pitch, in the deck and the sideboard together.
+  const copies = new Map<string, { entry: DeckEntry; quantity: number }>();
   for (const e of entries) {
+    const seen = copies.get(e.variant.id);
+    copies.set(e.variant.id, {
+      entry: seen?.entry ?? e,
+      quantity: (seen?.quantity ?? 0) + e.quantity,
+    });
+  }
+  for (const { entry: e, quantity } of copies.values()) {
     const limit = copyLimitFor(e.card, rules);
-    if (e.quantity > limit) {
+    if (quantity > limit) {
       problems.push(
-        `${variantName(e.card, e.variant)} has ${e.quantity} copies; at most ${limit} ${limit === 1 ? "is" : "are"} allowed.`,
+        `${variantName(e.card, e.variant)} has ${quantity} copies; at most ${limit} ${limit === 1 ? "is" : "are"} allowed.`,
       );
     }
   }
