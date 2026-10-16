@@ -1,7 +1,7 @@
 // Community score job: recalculates community_scores from every scorer's reviewed scores.
 // Runs on the server because it needs the hidden rating weights (README "Backend").
 // The logic lives in @vdb/scoring; this function only fetches, computes and saves.
-import { createClient } from "npm:@supabase/supabase-js@2.45.4";
+import { createClient } from "npm:@supabase/supabase-js@2.117.3";
 import { buildScoringInput, computeCommunityScores } from "@vdb/scoring";
 import { authorizeJobCaller } from "./auth.ts";
 
