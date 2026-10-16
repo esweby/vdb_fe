@@ -4,7 +4,7 @@ import {
   relevantDimensions,
 } from "@vdb/cards";
 import { Link } from "@tanstack/react-router";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { selectCanScore } from "../auth/authSlice.ts";
 import { TYPE_LABELS } from "../cards/filterCards.ts";
 import { pitchName } from "../cards/pitch.ts";
@@ -88,6 +88,9 @@ export function CardScoringView(props: {
   const [busy, setBusy] = useState(false);
   const [sidesTogether, setSidesTogether] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Which card the ratings are loaded for, so focus moves to them once they're there.
+  const [loadedFor, setLoadedFor] = useState<string | null>(null);
+  const ratings = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let live = true;
@@ -115,6 +118,7 @@ export function CardScoringView(props: {
         setDimensions(d);
         setRows(r);
         setReviewedAt(reviewed);
+        setLoadedFor(cardId);
       },
       (e) => live && setError(String(e.message ?? e)),
     );
@@ -122,6 +126,28 @@ export function CardScoringView(props: {
       live = false;
     };
   }, [cardId, scores, user]);
+
+  // Fast scoring in the pop-over: each card opens on its first rating.
+  useEffect(() => {
+    if (!inPopover || loadedFor !== cardId) return;
+    ratings.current
+      ?.querySelector<HTMLElement>("input[type=range]:not(:disabled)")
+      ?.focus();
+  }, [inPopover, loadedFor, cardId]);
+
+  // Ctrl+Enter (Cmd+Enter on a Mac): mark reviewed, or the next card once it is.
+  const canReview = !!user && dimensions.length > 0;
+  useEffect(() => {
+    if (!inPopover) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Enter" || !(e.ctrlKey || e.metaKey) || reviewing) return;
+      e.preventDefault();
+      if (reviewedAt) onNextCard?.();
+      else if (canReview) setReviewing(true);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [inPopover, reviewing, reviewedAt, canReview, onNextCard]);
 
   async function onSet(key: ScoreKey, score: number | null) {
     const previous = rows;
@@ -397,18 +423,20 @@ export function CardScoringView(props: {
                   </Button>
                 </p>
               )}
-              <ScoreEditor
-                chosenVariantId={chosen?.id}
-                sidesTogetherByDefault={sidesTogether}
-                dimensions={dimensions}
-                locked={{
-                  ids: lockedIds,
-                  reason: "Same as overall: this card has no conditions.",
-                }}
-                variants={card.variants}
-                rows={rows}
-                onSet={(key, score) => void onSet(key, score)}
-              />
+              <div ref={ratings}>
+                <ScoreEditor
+                  chosenVariantId={chosen?.id}
+                  sidesTogetherByDefault={sidesTogether}
+                  dimensions={dimensions}
+                  locked={{
+                    ids: lockedIds,
+                    reason: "Same as overall: this card has no conditions.",
+                  }}
+                  variants={card.variants}
+                  rows={rows}
+                  onSet={(key, score) => void onSet(key, score)}
+                />
+              </div>
               {askingSpread && (
                 <Button
                   variant="ghost"
@@ -429,8 +457,16 @@ export function CardScoringView(props: {
             {reviewedAt ? (
               <>
                 <Tag tone="accent">Reviewed {formatDate(reviewedAt)}</Tag>
-                <Button disabled={!onNextCard} onClick={() => onNextCard?.()}>
+                <Button
+                  disabled={!onNextCard}
+                  aria-keyshortcuts="Control+Enter Meta+Enter"
+                  title={SHORTCUT}
+                  onClick={() => onNextCard?.()}
+                >
                   Next card
+                  <kbd className={styles.kbd} aria-hidden="true">
+                    {SHORTCUT}
+                  </kbd>
                 </Button>
               </>
             ) : (
@@ -439,8 +475,16 @@ export function CardScoringView(props: {
                   Skip
                 </Button>
                 {user && dimensions.length > 0 && (
-                  <Button variant="primary" onClick={() => setReviewing(true)}>
+                  <Button
+                    variant="primary"
+                    aria-keyshortcuts="Control+Enter Meta+Enter"
+                    title={SHORTCUT}
+                    onClick={() => setReviewing(true)}
+                  >
                     {onNextCard ? "Mark reviewed and next" : "Mark reviewed"}
+                    <kbd className={styles.kbd} aria-hidden="true">
+                      {SHORTCUT}
+                    </kbd>
                   </Button>
                 )}
               </>
@@ -451,6 +495,12 @@ export function CardScoringView(props: {
     </>
   );
 }
+
+/** The review shortcut as this keyboard shows it. */
+const SHORTCUT =
+  typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform)
+    ? "⌘ Enter"
+    : "Ctrl+Enter";
 
 /** "Shadow Runeblade Action – Attack", like the printed type line. */
 function typeLineOf(
