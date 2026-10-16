@@ -20,6 +20,15 @@ describe("CardText", () => {
       expect(screen.getByRole("img", { name })).toBeInTheDocument();
   });
 
+  // Maintainer, 16 Oct 2026: printed as a red circle with an X; {r} is the minimum cost and each
+  // {x} is a resource you may also pay (e.g. Beckoning Haunt's "{x}{x}{r}").
+  it("shows {x} as an optional resource", () => {
+    render(<CardText text="Action - {x}{x}{r}, destroy this" />);
+    expect(
+      screen.getAllByRole("img", { name: "optional resource" }),
+    ).toHaveLength(2);
+  });
+
   it("puts keywords in bold, as they're printed", () => {
     render(
       <CardText text="Usurp. Go again" keywords={["Go again", "Usurp"]} />,

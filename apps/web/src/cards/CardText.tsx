@@ -2,9 +2,9 @@ import type { ReactNode } from "react";
 import styles from "./CardText.module.css";
 
 /**
- * The dataset's symbol codes and what they stand for. {x} appears in costs such as
- * "{x}{x}{r}"; it isn't certain which printed symbol it is, so it shows as a plain X
- * (UNVERIFIED, for the maintainer to check).
+ * The dataset's symbol codes and what they stand for. {x} is printed as a red circle with an X
+ * (maintainer, 16 Oct 2026): in "{x}{x}{r}" the {r} is the minimum cost and each {x} is a
+ * resource you may also pay.
  */
 const SYMBOLS: Record<string, { glyph: string; name: string }> = {
   p: { glyph: "⚔", name: "power" },
@@ -15,7 +15,7 @@ const SYMBOLS: Record<string, { glyph: string; name: string }> = {
   c: { glyph: "☯", name: "chi" },
   t: { glyph: "↷", name: "tap" },
   u: { glyph: "↶", name: "untap" },
-  x: { glyph: "X", name: "X" },
+  x: { glyph: "⊗", name: "optional resource" },
 };
 
 function withSymbols(text: string, key: string): ReactNode[] {
