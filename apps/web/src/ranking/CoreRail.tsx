@@ -10,6 +10,8 @@ export interface TrayCard extends CoreCard {
   label: string;
   pitch: number | null;
   value: number;
+  /** This card's copy limit (1 for a Legendary card). */
+  limit?: number;
 }
 
 /** The core beside the board: its cards with their copies, and saving to a deck. */
@@ -102,7 +104,7 @@ export function CoreRail(props: {
                   <button
                     type="button"
                     aria-label={`More ${c.label}`}
-                    disabled={c.quantity >= props.copyLimit}
+                    disabled={c.quantity >= (c.limit ?? props.copyLimit)}
                     onClick={() =>
                       props.onQuantity(c.variantId, c.quantity + 1)
                     }

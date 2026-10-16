@@ -126,6 +126,18 @@ describe("deckProblems", () => {
     ).toEqual(["Face Purgatory has 2 copies; at most 1 is allowed."]);
   });
 
+  // Legendary cards are one per deck (scoring group, 16 Oct 2026: Arknight Shard).
+  it("allows one copy of a Legendary card", () => {
+    const shard = {
+      ...card("Arknight Shard", "resource"),
+      keywords: ["Legendary"],
+    };
+    expect(copyLimitFor(shard, rules)).toBe(1);
+    expect(deckProblems([...filler(20), entry(shard, 2)], rules)).toEqual([
+      "Arknight Shard (red) has 2 copies; at most 1 is allowed.",
+    ]);
+  });
+
   it("counts a weapon's copies across the deck and the sideboard together", () => {
     expect(
       deckProblems(

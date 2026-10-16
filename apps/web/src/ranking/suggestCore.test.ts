@@ -53,6 +53,18 @@ describe("suggestCore", () => {
     ]);
   });
 
+  // A Legendary card (e.g. Arknight Shard) is limited to one copy (scoring group, 16 Oct 2026).
+  it("takes one copy of a card limited to one, and fills the rest from the next cards", () => {
+    const withLegendary = ranked.map((r) =>
+      r.variantId === "b1" ? { ...r, limit: 1 } : r,
+    );
+    expect(
+      suggestCore(withLegendary, constraints())
+        .picks.filter((p) => p.pitch === 3)
+        .map((p) => `${p.variantId}×${p.quantity}`),
+    ).toEqual(["b1×1", "b2×2"]);
+  });
+
   it("never goes over the copy limit", () => {
     expect(picked(constraints({ targets: { 1: 4 }, copiesEach: 5 }))).toEqual([
       "r1×3",

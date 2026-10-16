@@ -5,6 +5,8 @@ export interface CoreCandidate {
   cardId: string;
   pitch: number | null;
   value: number;
+  /** This card's own copy limit (e.g. 1 for a Legendary card); the general limit otherwise. */
+  limit?: number;
 }
 
 export interface CoreConstraints {
@@ -40,7 +42,8 @@ export function suggestCore(
   const quantity = new Map<string, number>();
   for (const r of ranked) {
     const q = c.locked.get(r.variantId);
-    if (q !== undefined) quantity.set(r.variantId, Math.min(q, c.copyLimit));
+    if (q !== undefined)
+      quantity.set(r.variantId, Math.min(q, r.limit ?? c.copyLimit));
   }
   const filledFor = (pitch: number) =>
     ranked
@@ -55,7 +58,7 @@ export function suggestCore(
       if (left <= 0) break;
       if (r.pitch !== pitch || quantity.has(r.variantId)) continue;
       if (c.removed.has(r.variantId)) continue;
-      const q = Math.min(each, left);
+      const q = Math.min(each, r.limit ?? c.copyLimit, left);
       quantity.set(r.variantId, q);
       left -= q;
     }
