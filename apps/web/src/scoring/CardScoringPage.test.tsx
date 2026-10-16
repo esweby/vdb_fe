@@ -6,6 +6,7 @@ import { sampleCards } from "../test/fakeCardRepository.ts";
 import { fakeCardRepository } from "../test/fakeCardRepository.ts";
 import { fakeScoreRepository } from "../test/fakeScoreRepository.ts";
 import { renderApp } from "../test/renderApp.tsx";
+import { sampleCommunity } from "../test/sampleCommunity.ts";
 
 const path = "/cards/card-become-the-shadow-lord";
 const users = {
@@ -13,6 +14,46 @@ const users = {
 };
 
 describe("card page", () => {
+  it("shows the scoring group's ratings for the card, by side", async () => {
+    await renderApp({
+      path,
+      auth: fakeAuthService().service,
+      scores: fakeScoreRepository([], { community: sampleCommunity() })
+        .repository,
+    });
+    const group = within(
+      await screen.findByRole("region", { name: "Scoring group" }),
+    );
+    const row = (name: string) =>
+      within(group.getByRole("row", { name: new RegExp(`^${name}`) }));
+    expect(
+      row("Overall")
+        .getAllByRole("cell")
+        .map((c) => c.textContent),
+    ).toEqual(["70", "70"]);
+    expect(row("Floor").getAllByRole("cell")[0]).toHaveTextContent("20");
+    expect(row("Ceiling").getAllByRole("cell")[0]).toHaveTextContent("100");
+    expect(group.getByText("From 3 ratings")).toBeInTheDocument();
+  });
+
+  it("says when the scoring group hasn't rated a card enough yet", async () => {
+    await renderApp({
+      path,
+      auth: fakeAuthService().service,
+      scores: fakeScoreRepository([], {
+        community: sampleCommunity(),
+        minRatingCount: 5,
+      }).repository,
+    });
+    const group = within(
+      await screen.findByRole("region", { name: "Scoring group" }),
+    );
+    expect(
+      group.getByText("Not enough ratings yet: 3 of the 5 needed."),
+    ).toBeInTheDocument();
+    expect(group.queryByRole("table")).toBeNull();
+  });
+
   it("enlarges the card's picture from a magnifying glass (small on a phone)", async () => {
     const withImage = sampleCards.map((c) =>
       c.id === "card-become-the-shadow-lord"

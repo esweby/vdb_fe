@@ -310,3 +310,36 @@
     display: none;
   }
 }
+
+/* The scoring group's ratings for the card, beside what it does. */
+.community {
+  margin-top: 1.25rem;
+}
+.community h2 {
+  margin-bottom: 0.4rem;
+}
+.communityTable {
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.communityTable th,
+.communityTable td {
+  padding: 0.3rem 0.9rem 0.3rem 0;
+  text-align: left;
+}
+.communityTable thead th {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+.communityTable tbody th {
+  font-weight: 500;
+}
+.communityTable tbody td {
+  font-weight: 700;
+}
+.muted {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}

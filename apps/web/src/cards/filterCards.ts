@@ -45,14 +45,31 @@ function statKey(c: CardSummary, stat: Stat): number | null {
   return stat === "cost" ? Math.min(...values) : -Math.max(...values);
 }
 
+/**
+ * Whether a card matches a search: its name, a keyword (Usurp, Blood Debt, Go again…) or its
+ * type line (Shadow, Weapon, Sword…). The card database and Add cards share it.
+ */
+export function matchesSearch(card: CardSummary, search: string): boolean {
+  const q = search.trim().toLowerCase();
+  if (!q) return true;
+  const typeLine = [
+    ...card.talents,
+    ...card.classes,
+    TYPE_LABELS[card.type] ?? card.type,
+    ...card.subtypes,
+  ].join(" ");
+  return [card.name, ...card.keywords, typeLine].some((s) =>
+    s.toLowerCase().includes(q),
+  );
+}
+
 export function searchAndSort(
   cards: CardSummary[],
   search: string,
   sort: CardSort,
 ): CardSummary[] {
-  const q = search.trim().toLowerCase();
   return cards
-    .filter((c) => !q || c.name.toLowerCase().includes(q))
+    .filter((c) => matchesSearch(c, search))
     .sort((a, b) => {
       if (sort === "type") {
         return (

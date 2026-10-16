@@ -133,6 +133,8 @@ export function fakeScoreRepository(
     getMyReview: async () => reviewedAt,
     listMyReviewedCardIds: async () => options.reviewedCardIds ?? [],
     listCommunityScores: async () => options.community ?? [],
+    listCommunityScoresForCard: async (cardId) =>
+      (options.community ?? []).filter((r) => r.cardId === cardId),
     listAllMyScores: async () => options.allMyScores ?? [],
     getMinRatingCount: async () => options.minRatingCount ?? 2,
     getPreferences: async () => preferences,

@@ -14,6 +14,9 @@ import { PITCH_NAMES } from "../decks/deckRules.ts";
 import { useAppSelector } from "../hooks.ts";
 import { useServices } from "../servicesContext.ts";
 import { Button, LoadError, Loading, Tag } from "../ui/index.ts";
+import type { CommunityRow } from "../ranking/rank.ts";
+import { CommunityPanel } from "./CommunityPanel.tsx";
+import { CardText } from "../cards/CardText.tsx";
 import { ReviewDialog } from "./ReviewDialog.tsx";
 import type {
   CardDetail,
@@ -154,6 +157,30 @@ export function CardScoringView(props: {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [inPopover, reviewing, reviewedAt, canReview, onNextCard]);
+
+  // The scoring group's ratings, for anyone (signed in or not). Not essential: on failure the
+  // panel just isn't shown.
+  const [community, setCommunity] = useState<{
+    rows: CommunityRow[];
+    dimensions: Dimension[];
+    minRatingCount: number;
+  } | null>(null);
+  useEffect(() => {
+    let live = true;
+    setCommunity(null);
+    Promise.all([
+      scores.listCommunityScoresForCard(cardId),
+      scores.listDimensions(),
+      scores.getMinRatingCount(),
+    ]).then(
+      ([rows, d, minRatingCount]) =>
+        live && setCommunity({ rows, dimensions: d, minRatingCount }),
+      () => {},
+    );
+    return () => {
+      live = false;
+    };
+  }, [cardId, scores]);
 
   async function onSet(key: ScoreKey, score: number | null) {
     const previous = rows;
@@ -321,7 +348,9 @@ export function CardScoringView(props: {
                 .split(/\n+/)
                 .filter((line) => line.trim())
                 .map((line, i) => (
-                  <p key={i}>{withKeywords(line, summary?.keywords ?? [])}</p>
+                  <p key={i}>
+                    <CardText text={line} keywords={summary?.keywords} />
+                  </p>
                 ))}
             </div>
             <div className={styles.typeLine}>{typeLineOf(card, summary)}</div>
@@ -351,12 +380,22 @@ export function CardScoringView(props: {
                   <h3>{section.heading}</h3>
                   <ul>
                     {section.lines.map((line) => (
-                      <li key={line}>{line}</li>
+                      <li key={line}>
+                        <CardText text={line} />
+                      </li>
                     ))}
                   </ul>
                 </div>
               ))}
             </>
+          )}
+          {community && (
+            <CommunityPanel
+              rows={community.rows}
+              dimensions={community.dimensions}
+              variantId={chosen?.id}
+              minRatingCount={community.minRatingCount}
+            />
           )}
         </section>
 
@@ -530,16 +569,4 @@ function typeLineOf(
   ].join(" ");
   const subtypes = summary?.subtypes ?? [];
   return subtypes.length > 0 ? `${base} – ${subtypes.join(" ")}` : base;
-}
-
-/** The card text with its keywords in bold, as they're printed. */
-function withKeywords(text: string, keywords: string[]): ReactNode {
-  if (keywords.length === 0 || !text) return text;
-  const escaped = [...keywords]
-    .sort((a, b) => b.length - a.length)
-    .map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
-  const pattern = new RegExp(`\\b(${escaped.join("|")})\\b`, "gi");
-  return text
-    .split(pattern)
-    .map((part, i) => (i % 2 === 1 ? <strong key={i}>{part}</strong> : part));
 }
