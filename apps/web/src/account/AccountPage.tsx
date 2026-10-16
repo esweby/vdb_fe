@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
+import { USERNAME_PATTERN } from "../auth/authService.ts";
+import { Button, TextField } from "../ui/index.ts";
 import { useAppSelector } from "../hooks.ts";
 import { useServices } from "../servicesContext.ts";
 import type { Preferences } from "../scoring/scoreRepository.ts";
@@ -11,10 +13,43 @@ const ROLE_LABEL = {
 };
 
 export function AccountPage() {
-  const { scores } = useServices();
+  const { scores, auth } = useServices();
   const { user, role } = useAppSelector((s) => s.auth);
   const [preferences, setPreferences] = useState<Preferences | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [username, setUsername] = useState("");
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [usernameSaved, setUsernameSaved] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    let live = true;
+    auth.getUsername(user.id).then(
+      (name) => live && setUsername(name ?? ""),
+      () => {},
+    );
+    return () => {
+      live = false;
+    };
+  }, [auth, user]);
+
+  async function saveUsername(e: FormEvent) {
+    e.preventDefault();
+    if (!user) return;
+    const name = username.trim();
+    setUsernameSaved(false);
+    if (!USERNAME_PATTERN.test(name)) {
+      setUsernameError("A username is 3 to 24 letters, numbers, _ or -.");
+      return;
+    }
+    try {
+      await auth.setUsername(user.id, name);
+      setUsernameError(null);
+      setUsernameSaved(true);
+    } catch (err) {
+      setUsernameError(err instanceof Error ? err.message : String(err));
+    }
+  }
 
   useEffect(() => {
     if (!user) return;
@@ -46,6 +81,24 @@ export function AccountPage() {
         <dt>Role</dt>
         <dd>{role ? ROLE_LABEL[role] : "…"}</dd>
       </dl>
+      <h2>Username</h2>
+      <form onSubmit={(e) => void saveUsername(e)}>
+        <TextField
+          label="Username"
+          autoComplete="username"
+          maxLength={24}
+          value={username}
+          error={usernameError}
+          hint="Shown on decks you share."
+          onChange={(e) => {
+            setUsername(e.target.value);
+            setUsernameError(null);
+            setUsernameSaved(false);
+          }}
+        />
+        <Button type="submit">Save username</Button>
+        {usernameSaved && <p role="status">Username saved</p>}
+      </form>
       <h2>Scoring</h2>
       {preferences && (
         <label>

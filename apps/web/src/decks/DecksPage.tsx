@@ -82,6 +82,12 @@ function DeckTile(props: {
           </span>
           <span aria-hidden="true">·</span>
           <span>Updated {updatedAgo(deck.updatedAt)}</span>
+          {!props.yours && deck.ownerName && (
+            <>
+              <span aria-hidden="true">·</span>
+              <span>by {deck.ownerName}</span>
+            </>
+          )}
         </p>
         <span
           className={styles.mix}

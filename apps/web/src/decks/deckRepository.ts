@@ -9,6 +9,8 @@ export interface DeckSummary {
   /** Anyone can see a public deck; a private one only its owner. */
   isPublic: boolean;
   ownerId: string;
+  /** The owner's username, if they've chosen one (shown on public decks). */
+  ownerName?: string | null;
   cards: DeckCard[];
 }
 
@@ -48,6 +50,26 @@ const SUMMARY =
   "id, name, updatedAt:updated_at, isPublic:is_public, ownerId:user_id, cards:deck_cards(variantId:variant_id, quantity, sideboard)";
 
 export function supabaseDeckRepository(client: SupabaseClient): DeckRepository {
+  /** Adds each owner's username, read through public.usernames() (profiles stay private). */
+  async function withOwnerNames<T extends { ownerId: string }>(
+    decks: T[],
+  ): Promise<(T & { ownerName: string | null })[]> {
+    const ids = [...new Set(decks.map((d) => d.ownerId))];
+    if (ids.length === 0) return [];
+    const { data, error } = await client.rpc("usernames", { ids });
+    if (error) throw error;
+    const names = new Map(
+      (data as { id: string; username: string }[]).map((r) => [
+        r.id,
+        r.username,
+      ]),
+    );
+    return decks.map((d) => ({
+      ...d,
+      ownerName: names.get(d.ownerId) ?? null,
+    }));
+  }
+
   return {
     async listMyDecks(userId) {
       // Public decks are readable too, so filter by owner.
@@ -67,7 +89,7 @@ export function supabaseDeckRepository(client: SupabaseClient): DeckRepository {
         .order("updated_at", { ascending: false })
         .limit(60);
       if (error) throw error;
-      return data as DeckSummary[];
+      return withOwnerNames(data as DeckSummary[]);
     },
     async createDeck(name, options) {
       const { data, error } = await client
@@ -93,7 +115,7 @@ export function supabaseDeckRepository(client: SupabaseClient): DeckRepository {
         .maybeSingle();
       if (error?.code === INVALID_UUID) return null;
       if (error) throw error;
-      return data;
+      return data ? (await withOwnerNames([data as Deck]))[0]! : null;
     },
     async setCard(deckId, card) {
       const { error } =
