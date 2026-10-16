@@ -9,6 +9,7 @@ import { authSettled } from "./auth/listenToAuth.ts";
 import { selectCanScore, selectIsSignedIn } from "./auth/authSlice.ts";
 import { SignInPage } from "./auth/SignInPage.tsx";
 import { CardScoringPage } from "./scoring/CardScoringPage.tsx";
+import { QuickReviewPage } from "./scoring/QuickReviewPage.tsx";
 import { NeedsReviewPage } from "./scoring/NeedsReviewPage.tsx";
 import { AccountPage } from "./account/AccountPage.tsx";
 import { HomePage } from "./home/HomePage.tsx";
@@ -86,6 +87,12 @@ const routeTree = rootRoute.addChildren([
     validateSearch: validateListSearch,
     beforeLoad: requireScorer,
     component: NeedsReviewPage,
+  }),
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/needs-review/quick",
+    beforeLoad: requireScorer,
+    component: QuickReviewPage,
   }),
   createRoute({
     getParentRoute: () => rootRoute,

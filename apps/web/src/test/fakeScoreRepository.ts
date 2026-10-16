@@ -154,6 +154,10 @@ export function fakeScoreRepository(
     async runCommunityJob() {
       saved.push("job");
     },
+    async unmarkReviewed(cardId) {
+      saved.push(`unreview ${cardId}`);
+      reviewedAt = null;
+    },
     async clearScore(_cardId, key) {
       saved.push(
         `clear ${key.dimensionId}:${key.variantId ?? "card"}:${key.side ?? "both"}`,

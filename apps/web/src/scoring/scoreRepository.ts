@@ -54,6 +54,8 @@ export interface ScoreRepository {
   getMyReview(userId: string, cardId: string): Promise<string | null>;
   /** Marks the card reviewed; returns the timestamp. */
   markReviewed(cardId: string): Promise<string>;
+  /** Takes the signed-in user's review off a card (Undo in Quick review). */
+  unmarkReviewed(cardId: string): Promise<void>;
   /** Asks the community score job to recalculate (scorers only; the function checks). */
   runCommunityJob(): Promise<void>;
   listMyReviewedCardIds(userId: string): Promise<string[]>;
@@ -161,6 +163,14 @@ export function supabaseScoreRepository(
         .maybeSingle();
       if (error) throw error;
       return data?.reviewed_at ?? null;
+    },
+    async unmarkReviewed(cardId) {
+      const { error } = await client
+        .from("card_reviews")
+        .delete()
+        .eq("user_id", await userId())
+        .eq("card_id", cardId);
+      if (error) throw error;
     },
     async markReviewed(cardId) {
       const { data, error } = await client
