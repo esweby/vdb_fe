@@ -480,6 +480,9 @@ describe("the core", () => {
     expect(
       await tray().findByText("Added 3 cards to Gate tempo"),
     ).toBeInTheDocument();
+    expect(
+      tray().getByRole("link", { name: "Open Gate tempo" }),
+    ).toHaveAttribute("href", "/decks/deck-1");
   });
 
   it("saves the core as a new deck", async () => {
@@ -491,10 +494,19 @@ describe("the core", () => {
       "Red core",
     );
     await user.click(tray().getByRole("button", { name: "Save as new deck" }));
+    // The Set up pitch targets go with it, so the deck's Stats compare against them.
     await waitFor(() =>
-      expect(fake.saved).toEqual(["create Red core", "set deck-2 hp1 3 main"]),
+      expect(fake.saved).toEqual([
+        "create Red core",
+        "set deck-2 hp1 3 main",
+        "targets deck-2 1:18,2:5,3:22",
+      ]),
     );
     expect(router.state.location.search).toMatchObject({ deck: "deck-2" });
+    // And the way forward: open the deck to finish it.
+    expect(
+      await tray().findByRole("link", { name: "Open Red core" }),
+    ).toHaveAttribute("href", "/decks/deck-2");
   });
 
   it("marks cards already in the chosen deck", async () => {

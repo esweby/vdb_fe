@@ -38,7 +38,7 @@ export function DeckPage() {
   const { tab = "cards", view = "tiles" } = route.useSearch();
   const navigate = useNavigate();
   const { decks } = useServices();
-  const { items: cards } = useCards();
+  const { items: cards, status: cardsStatus, retry } = useCards();
   const [deck, setDeck] = useState<Deck | null | undefined>(undefined);
   const [rules, setRules] = useState<FormatRules | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -156,6 +156,11 @@ export function DeckPage() {
       <LoadError what="this deck" onRetry={() => setAttempt((n) => n + 1)} />
     );
   if (deck === undefined) return <Loading label="Loading the deck" />;
+  // Without the cards the deck would look empty and illegal; wait for them.
+  if (cardsStatus === "failed")
+    return <LoadError what="the cards" onRetry={retry} />;
+  if (deck && cardsStatus !== "loaded")
+    return <Loading label="Loading the cards" />;
   if (deck === null) {
     return (
       <>

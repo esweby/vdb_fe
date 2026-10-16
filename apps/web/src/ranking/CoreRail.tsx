@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import type { Deck, DeckSummary } from "../decks/deckRepository.ts";
 import { Button } from "../ui/index.ts";
@@ -22,22 +23,30 @@ export function CoreRail(props: {
   deckList: DeckSummary[];
   onChooseDeck: (deckId: string | undefined) => void;
   onAddToDeck: () => Promise<void>;
-  onSaveAsDeck: (name: string) => Promise<void>;
+  /** Saves the core as a new deck, returning it. */
+  onSaveAsDeck: (name: string) => Promise<{ id: string; name: string }>;
 }) {
   const [name, setName] = useState("");
-  const [message, setMessage] = useState<string | null>(null);
+  // What was saved, and the deck it went to, so the next step is one click away.
+  const [message, setMessage] = useState<{
+    text: string;
+    deck: { id: string; name: string };
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const total = props.cards.reduce((n, c) => n + c.quantity, 0);
   const sorted = [...props.cards].sort(
     (a, b) => (a.pitch ?? 9) - (b.pitch ?? 9) || b.value - a.value,
   );
 
-  async function save(action: () => Promise<void>, done: string) {
+  async function save(
+    action: () => Promise<{ id: string; name: string }>,
+    done: (deck: { name: string }) => string,
+  ) {
     setError(null);
     setMessage(null);
     try {
-      await action();
-      setMessage(done);
+      const deck = await action();
+      setMessage({ text: done(deck), deck });
     } catch (e) {
       setError(
         `Couldn't save the core: ${e instanceof Error ? e.message : String(e)}`,
@@ -47,7 +56,10 @@ export function CoreRail(props: {
   function saveAsDeck(e: FormEvent) {
     e.preventDefault();
     if (!name.trim()) return setError("Name the deck first.");
-    void save(() => props.onSaveAsDeck(name.trim()), `Saved as ${name.trim()}`);
+    void save(
+      () => props.onSaveAsDeck(name.trim()),
+      (deck) => `Saved as ${deck.name}`,
+    );
   }
 
   return (
@@ -139,8 +151,11 @@ export function CoreRail(props: {
                 disabled={total === 0}
                 onClick={() =>
                   void save(
-                    props.onAddToDeck,
-                    `Added ${total} cards to ${props.deck!.name}`,
+                    async () => {
+                      await props.onAddToDeck();
+                      return props.deck!;
+                    },
+                    (deck) => `Added ${total} cards to ${deck.name}`,
                   )
                 }
               >
@@ -164,7 +179,14 @@ export function CoreRail(props: {
             </form>
           </>
         )}
-        {message && <p role="status">{message}</p>}
+        {message && (
+          <p role="status" className={styles.saved}>
+            {message.text} ·{" "}
+            <Link to="/decks/$deckId" params={{ deckId: message.deck.id }}>
+              Open {message.deck.name}
+            </Link>
+          </p>
+        )}
         {error && (
           <p role="alert" className={styles.error}>
             {error}
