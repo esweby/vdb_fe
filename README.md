@@ -511,7 +511,7 @@ Edge Functions run on Deno, so how they import a workspace package (bundling, an
 
 ```
 profiles         (id → auth.users, role, preferences jsonb)
-                 -- role: user | scorer | curator | admin (changed in the dashboard)
+                 -- role: user | scorer | curator | admin; new accounts are scorers (changed in the dashboard)
                  -- preferences: e.g. { scoreSidesTogether: true }
 rater_weights    (user_id → auth.users, rating_weight default 1.0)
                  -- a separate table so it can be admin-only; never returned to non-admins or used client-side

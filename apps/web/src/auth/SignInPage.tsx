@@ -45,8 +45,8 @@ export function SignInPage() {
       <h1>{mode === "signIn" ? "Sign in" : "Create an account"}</h1>
       {mode === "signUp" && (
         <p className={styles.intro}>
-          An account saves your decks and lets you share them. Scorers are added
-          by the maintainer.
+          An account lets you score cards with the scoring group, and save and
+          share your decks.
         </p>
       )}
       <form onSubmit={submit}>

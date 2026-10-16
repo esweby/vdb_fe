@@ -21,6 +21,8 @@ insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-0000000005a3', 'user-c@test.local');
 update public.profiles set role = 'scorer'
  where id in ('00000000-0000-0000-0000-0000000005a1', '00000000-0000-0000-0000-0000000005a2');
+-- New accounts join as scorers; this one is a plain user, to check users aren't counted.
+update public.profiles set role = 'user' where id = '00000000-0000-0000-0000-0000000005a3';
 
 select throws_ok(
   $$insert into public.strategy_answers (user_id, question_key, answer)

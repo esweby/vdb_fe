@@ -63,7 +63,7 @@ describe("sign-in page", () => {
     // What an account is for, and that scoring is by invitation.
     expect(
       screen.getByText(
-        "An account saves your decks and lets you share them. Scorers are added by the maintainer.",
+        "An account lets you score cards with the scoring group, and save and share your decks.",
       ),
     ).toBeInTheDocument();
   });
