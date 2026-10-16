@@ -1,6 +1,7 @@
 // Imports Viserai-legal cards from a pinned commit of the-fab-cube dataset.
 // Usage: npm run import -w @vdb/importer [-- --yes-remote]
-// DB_URL defaults to the local Supabase database.
+// DB_URL defaults to the local Supabase database. Put the hosted one in packages/importer/.env
+// (git-ignored) as DB_URL="postgresql://…" to import there with --yes-remote.
 import postgres from "postgres";
 import { allAuthored } from "./authored/index.ts";
 import { loadDataset, loadSets } from "./dataset.ts";

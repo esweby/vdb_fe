@@ -48,3 +48,26 @@ describe("authored batches", () => {
     ).toEqual([{ target: { group: "triggers_when_banished" } }]);
   });
 });
+
+// Reported by the scoring group, 16 Oct 2026: the pre-release data gave Shadowrealm Walker
+// Shadowrealm Ripper's text. The corrected text: banish a card from hand when it attacks; if
+// it's Shadow, create a Gate to i'Arathael token. Unverified until the maintainer checks it.
+describe("corrected cards", () => {
+  it("Shadowrealm Walker creates a Gate, rather than gaining power, and awaits a check", () => {
+    const walker = allAuthored()["Shadowrealm Walker"]!;
+    expect(walker.verified).toBe(false);
+    expect(walker.card?.tokens).toEqual([
+      {
+        token: "gate",
+        amount: 1,
+        trigger: "on_attack",
+        conditions: ["banished_card_is_shadow"],
+      },
+    ]);
+    expect(walker.card?.conditionalBonuses).toBeUndefined();
+  });
+
+  it("Darkest Hour's note matches the corrected blue (+2)", () => {
+    expect(allAuthored()["Darkest Hour"]!.card?.notes).toContain("+4/+3/+2");
+  });
+});

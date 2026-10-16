@@ -151,7 +151,7 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     verified: true,
     card: {
       notes:
-        "Your next Shadow attack gets +4/+3/+1 power (red/yellow/blue). Can be paid for by putting a card from hand on top of your deck.",
+        "Your next Shadow attack gets +4/+3/+2 power (red/yellow/blue). Can be paid for by putting a card from hand on top of your deck.",
     },
   },
   "Deathly Delight": {
@@ -572,14 +572,17 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
       ],
     },
   },
+  // Corrected 16 Oct 2026: the pre-release data had Shadowrealm Ripper's text (+2 power). The
+  // fixed text creates a Gate instead. UNVERIFIED until the maintainer checks it.
   "Shadowrealm Walker": {
-    verified: true,
+    verified: false,
     card: {
       banishesOwn: [{ from: "hand", trigger: "on_attack", optional: true }],
-      conditionalBonuses: [
+      tokens: [
         {
-          effect: "plus_power",
-          amount: 2,
+          token: "gate",
+          amount: 1,
+          trigger: "on_attack",
           conditions: ["banished_card_is_shadow"],
         },
       ],
