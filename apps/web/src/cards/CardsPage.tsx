@@ -226,6 +226,7 @@ export function CardsPage() {
                   value={filters.sort}
                   onChange={(e) => filters.setSort(e.target.value as CardSort)}
                 >
+                  <option value="newest">Newest first</option>
                   <option value="name">Name</option>
                   <option value="type">Type</option>
                   <option value="power">Power (highest)</option>
