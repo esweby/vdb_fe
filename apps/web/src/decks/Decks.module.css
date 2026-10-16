@@ -109,15 +109,24 @@
   color: var(--muted);
 }
 
+/* Add cards: pinned beside the deck at the screen's height. The search and filters stay at the
+   top and the pages at the bottom; only the cards between them scroll. */
 .finder {
   position: sticky;
   top: 1rem;
-  max-height: calc(100vh - 2rem);
-  overflow-y: auto;
-  /* Room for focus rings, which the scroll box would otherwise clip; the negative
-     margin keeps the content lined up with the page. */
+  height: calc(100vh - 2rem);
+  display: flex;
+  flex-direction: column;
+  /* Room for focus rings; the negative margin keeps the content lined up with the page. */
   margin: -0.25rem 0 0 -0.25rem;
   padding: 0.25rem 0.5rem 0.25rem 0.25rem;
+  box-sizing: border-box;
+}
+@media (max-width: 800px) {
+  .finder {
+    position: static;
+    height: auto;
+  }
 }
 .results li {
   display: flex;

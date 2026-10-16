@@ -457,7 +457,13 @@ describe("deck page", () => {
     expect(pages.getByText("Page 1 of 2")).toBeInTheDocument();
     expect(pages.getByRole("button", { name: "Previous page" })).toBeDisabled();
     const user = userEvent.setup();
+    // The cards scroll on their own under the search and filters; a new page starts at the top.
+    const list = finder.getByRole("list", {
+      name: "Cards to add",
+    }).parentElement!;
+    list.scrollTop = 400;
     await user.click(pages.getByRole("button", { name: "Next page" }));
+    expect(list.scrollTop).toBe(0);
     expect(tiles()).toHaveLength(14);
     expect(pages.getByText("Page 2 of 2")).toBeInTheDocument();
     expect(pages.getByRole("button", { name: "Next page" })).toBeDisabled();
