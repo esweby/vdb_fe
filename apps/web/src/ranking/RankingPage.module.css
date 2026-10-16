@@ -962,7 +962,7 @@
 }
 .scenarioList li {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 4rem 4.5rem;
+  grid-template-columns: minmax(0, 1fr) 5rem 4.5rem;
   grid-template-areas:
     "name rate turns"
     "why why why";
@@ -988,6 +988,28 @@
   text-align: right;
   font-size: 0.82rem;
   color: var(--muted);
+}
+/* Scenarios the core can't meet at all, in a quiet note below the results. */
+.cantRun {
+  margin-top: 0.9rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--fg) 4%, transparent);
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.cantRun h3 {
+  margin: 0 0 0.35rem;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--fg);
+}
+.cantRun ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.2rem;
 }
 .byTurn {
   grid-area: turns;

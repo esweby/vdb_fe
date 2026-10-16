@@ -1,4 +1,5 @@
 import { scenarioSchema } from "@vdb/engine";
+import { lacking } from "./scenarioRuns.ts";
 import { describe, expect, it } from "vitest";
 import { sampleCards } from "../test/fakeCardRepository.ts";
 import { BUILT_IN_SCENARIOS, toEngineCard } from "./scenarios.ts";
@@ -48,5 +49,45 @@ describe("toEngineCard", () => {
     expect(card.traits).toContain("blood_debt");
     expect(card.pitch).toBe(1);
     expect(card.name).toBe("Hocus Pocus");
+  });
+});
+
+describe("what a core can't meet", () => {
+  const card = (roles: string[]) => ({
+    id: roles.join(),
+    name: "Card",
+    pitch: 1,
+    roles,
+    traits: [],
+    amounts: { runechants: 0 },
+  });
+  const banish = {
+    all: [
+      {
+        any: [
+          { label: "a banisher", filter: { role: "hand_banisher" }, min: 1 },
+          { label: "a banisher", filter: { role: "self_banisher" }, min: 1 },
+        ],
+      },
+      { label: "a payoff", filter: { role: "plays_from_banish" }, min: 1 },
+    ],
+  };
+
+  it("needs only one of an 'any' group, and names the first thing missing", () => {
+    expect(
+      lacking(banish, [card(["self_banisher"]), card(["plays_from_banish"])]),
+    ).toBeUndefined();
+    expect(lacking(banish, [card(["plays_from_banish"])])).toBe("a banisher");
+    expect(lacking(banish, [card(["hand_banisher"])])).toBe("a payoff");
+  });
+
+  it("counts a total only from cards that make some", () => {
+    const three = {
+      all: [{ label: "3 Runechants", filter: {}, total: "runechants", min: 3 }],
+    };
+    expect(lacking(three, [card([])])).toBe("3 Runechants");
+    expect(
+      lacking(three, [{ ...card([]), amounts: { runechants: 1 } }]),
+    ).toBeUndefined();
   });
 });

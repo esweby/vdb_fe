@@ -543,11 +543,12 @@ describe("scenarios", () => {
     );
     const row = within(
       await scenarios.findByRole("listitem", {
-        name: "Opening hand has a Gate maker and a Gate target",
+        name: "Opening hand creates 3 or more Runechants",
       }),
     );
-    expect(row.getByText(/^\d+%$/)).toBeInTheDocument();
-    expect(row.getByText(/^Most often missing/)).toBeInTheDocument();
+    // To a tenth of a percent, so a new seed's small differences show.
+    expect(row.getByText(/^\d+\.\d%$/)).toBeInTheDocument();
+    expect(row.getByText(/^Fails without/)).toBeInTheDocument();
     expect(
       scenarios.getByText(
         "10,000 runs each · seed 1 · 6 core cards + 54 blanks (60)",
@@ -568,17 +569,52 @@ describe("scenarios", () => {
     expect(row.getByText("Fails without a blue card")).toBeInTheDocument();
   });
 
-  it("says which scenarios need a card that isn't in the core", async () => {
+  it("doesn't run a scenario the core can't meet, and says why in a note below the list", async () => {
     const { user } = await open(`/ranking?tab=readings&${core({ hp1: 3 })}`);
     await user.click(screen.getByRole("button", { name: "Run scenarios" }));
-    const row = within(
-      await screen.findByRole("listitem", {
+    const scenarios = within(
+      await screen.findByRole("region", { name: "Scenarios" }),
+    );
+    const note = within(
+      await scenarios.findByRole("list", { name: "Can't run with this core" }),
+    );
+    // A named card that isn't in the core, and a role no card in the core has.
+    expect(
+      note.getByRole("listitem", {
         name: "Opening hand has Become the Shadow Lord and another Shadow card",
       }),
-    );
+    ).toHaveTextContent("needs Become the Shadow Lord");
     expect(
-      row.getByText("Needs Become the Shadow Lord in your core"),
-    ).toBeInTheDocument();
+      note.getByRole("listitem", {
+        name: "Opening hand has a Gate maker and a Gate target",
+      }),
+    ).toHaveTextContent("needs a Gate maker");
+    // They aren't shown as 0% in the main list.
+    expect(
+      within(scenarios.getByRole("list", { name: "Results" })).queryByRole(
+        "listitem",
+        { name: "Opening hand has a Gate maker and a Gate target" },
+      ),
+    ).toBeNull();
+  });
+
+  it("gives slightly different results for a new seed", async () => {
+    const { user } = await open(
+      `/ranking?tab=readings&${core({ bsl3: 3, hp1: 3 })}`,
+    );
+    const scenarios = within(screen.getByRole("region", { name: "Scenarios" }));
+    const rate = () =>
+      within(
+        scenarios.getByRole("listitem", {
+          name: "Opening hand has a blue card to pitch",
+        }),
+      ).getByText(/%$/).textContent;
+    await user.click(screen.getByRole("button", { name: "Run scenarios" }));
+    await scenarios.findByText(/seed 1 ·/);
+    const first = rate();
+    await user.click(screen.getByRole("button", { name: "New seed" }));
+    await scenarios.findByText(/seed 2 ·/);
+    expect(rate()).not.toBe(first);
   });
 
   it("draws the traverse timeline when run", async () => {

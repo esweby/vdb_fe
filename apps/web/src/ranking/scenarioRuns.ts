@@ -3,6 +3,8 @@
 import {
   buildDeck,
   runScenario,
+  type Block,
+  type ConditionGroup,
   type EngineCard,
   type ScenarioResult,
 } from "@vdb/engine";
@@ -25,7 +27,8 @@ export interface ScenarioInput {
 export interface ScenarioOutput {
   scenarios: {
     name: string;
-    /** A needed card that isn't in the core; the scenario didn't run. */
+    /** Something it needs that no card in the core has (a card, or a role such as "a
+     * Gate maker"); the scenario didn't run, as it could only ever fail. */
     missing?: string;
     result?: ScenarioResult;
   }[];
@@ -35,13 +38,48 @@ export interface ScenarioOutput {
   seed: number;
 }
 
+const isBlock = (x: ConditionGroup | Block): x is Block => "label" in x;
+
+/** Whether any card in the core could ever meet a block. */
+function possible(b: Block, cards: EngineCard[]) {
+  const f = b.filter;
+  return cards.some(
+    (c) =>
+      (f.name === undefined || c.name === f.name) &&
+      (f.role === undefined || c.roles.includes(f.role)) &&
+      (f.trait === undefined || c.traits.includes(f.trait)) &&
+      (f.pitch === undefined || c.pitch === f.pitch) &&
+      (!b.total || (c.amounts[b.total] ?? 0) > 0),
+  );
+}
+
+/** The label of the first thing a condition needs that the core doesn't have at all. */
+export function lacking(
+  g: ConditionGroup,
+  cards: EngineCard[],
+): string | undefined {
+  const items = "all" in g ? g.all : g.any;
+  const missing = items.map((item) =>
+    isBlock(item)
+      ? item.min > 0 && !possible(item, cards)
+        ? item.label
+        : undefined
+      : lacking(item, cards),
+  );
+  return "all" in g
+    ? missing.find((m) => m !== undefined)
+    : missing.every((m) => m !== undefined)
+      ? missing[0]
+      : undefined;
+}
+
 export function runAll(input: ScenarioInput): ScenarioOutput {
   const deck = buildDeck(input.core, input.deckSize);
-  const names = new Set(input.core.map((c) => c.card.name));
+  const cards = input.core.map((c) => c.card);
   const options = { runs: input.runs, seed: input.seed };
   return {
     scenarios: BUILT_IN_SCENARIOS.map((s) => {
-      const missing = s.needs?.find((n) => !names.has(n));
+      const missing = lacking(s.definition.condition, cards);
       return missing
         ? { name: s.definition.name, missing }
         : {
