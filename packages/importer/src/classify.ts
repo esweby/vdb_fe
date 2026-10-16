@@ -16,6 +16,9 @@ export interface DatasetCard {
   type_text: string;
   cc_legal: boolean;
   cc_banned: boolean;
+  cc_suspended?: boolean;
+  /** Retired from Classic Constructed with its hero (e.g. Nebula Blade). */
+  cc_living_legend?: boolean;
 }
 
 export interface ClassifiedTypes {
@@ -111,8 +114,39 @@ export function specializationOf(card: DatasetCard): string | null {
   );
 }
 
+/** Playable in Classic Constructed: legal, and not banned, suspended or Living Legend. */
+export function isCcPlayable(card: DatasetCard): boolean {
+  return (
+    card.cc_legal &&
+    !card.cc_banned &&
+    !card.cc_suspended &&
+    !card.cc_living_legend
+  );
+}
+
 export function isViseraiLegal(card: DatasetCard): boolean {
-  if (!card.cc_legal || card.cc_banned) return false;
+  return isCcPlayable(card) && fitsViserai(card);
+}
+
+/**
+ * Cards a Viserai deck could hold that aren't playable in Classic Constructed (banned,
+ * suspended or Living Legend). Once imported, they're hidden rather than deleted, so scores
+ * and decks that mention them keep working.
+ */
+export function retiredNames(cards: DatasetCard[]): string[] {
+  const playable = new Set(cards.filter(isViseraiLegal).map((c) => c.name));
+  return [
+    ...new Set(
+      cards
+        .filter((c) => fitsViserai(c) && !isCcPlayable(c))
+        .map((c) => c.name)
+        .filter((name) => !playable.has(name)),
+    ),
+  ].sort();
+}
+
+/** Viserai's class, talents and specialization, whatever the format's legality. */
+function fitsViserai(card: DatasetCard): boolean {
   const specialization = specializationOf(card);
   if (specialization !== null && specialization !== "Viserai") return false;
   const { mainType, classes, talents } = classifyTypes(card.types);

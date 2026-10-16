@@ -2,7 +2,7 @@
 import postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { DatasetCard } from "../src/classify.ts";
-import { upsertCards } from "../src/db.ts";
+import { hideRetired, upsertCards } from "../src/db.ts";
 import { toImportCards } from "../src/map.ts";
 import fixture from "./fixtures/cards.json" with { type: "json" };
 
@@ -67,6 +67,22 @@ describe("upsertCards", () => {
       select v.image_url from public.variants v join public.cards c on c.id = v.card_id
        where c.external_id = ${withImage[0]!.externalId} limit 1`;
     expect(row?.image_url).toBe("https://img/test.webp");
+  });
+
+  it("hides retired cards (no longer playable) rather than deleting them", async () => {
+    await upsertCards(sql, cards);
+    const retired = cards[0]!;
+    await hideRetired(sql, [retired.externalId]);
+    const rows = await sql`
+      select external_id, hidden from public.cards where external_id in ${sql(externalIds)}`;
+    expect(rows.find((r) => r.external_id === retired.externalId)?.hidden).toBe(
+      true,
+    );
+    expect(
+      rows
+        .filter((r) => r.external_id !== retired.externalId)
+        .every((r) => !r.hidden),
+    ).toBe(true);
   });
 
   it("stores when each card first came out", async () => {

@@ -10,6 +10,7 @@ import {
 } from "@vdb/cards";
 import {
   classifyTypes,
+  retiredNames,
   isViseraiLegal,
   specializationOf,
   type DatasetCard,
@@ -122,8 +123,10 @@ export function toImportCards(
     groups.set(entry.name, [...(groups.get(entry.name) ?? []), entry]);
   }
 
+  // Retired cards (no longer playable) aren't imported, but keep their checked attributes.
+  const retired = new Set(retiredNames(entries));
   for (const name of Object.keys(authored)) {
-    if (!groups.has(name))
+    if (!groups.has(name) && !retired.has(name))
       throw new Error(
         `Authored attributes for "${name}", which isn't an imported card`,
       );
