@@ -4,7 +4,7 @@ import type { CardSummary, VariantSummary } from "../cards/cardRepository.ts";
 import { useCards } from "../cards/useCards.ts";
 import { useAppSelector } from "../hooks.ts";
 import { useServices } from "../servicesContext.ts";
-import { Tag, TextField } from "../ui/index.ts";
+import { LoadError, Loading, Tag, TextField } from "../ui/index.ts";
 import { analyseDeck } from "./deckAnalysis.ts";
 import { CardFinder } from "./CardFinder.tsx";
 import { CardTile } from "./CardTile.tsx";
@@ -44,20 +44,23 @@ export function DeckPage() {
   const [error, setError] = useState<string | null>(null);
   const user = useAppSelector((s) => s.auth.user);
 
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let live = true;
+    setLoadFailed(false);
     Promise.all([decks.getDeck(deckId), decks.getFormatRules()]).then(
       ([d, r]) => {
         if (!live) return;
         setDeck(d);
         setRules(r);
       },
-      (e) => live && setError(String(e.message ?? e)),
+      () => live && setLoadFailed(true),
     );
     return () => {
       live = false;
     };
-  }, [deckId, decks]);
+  }, [deckId, decks, attempt]);
 
   const byVariant = useMemo(() => {
     const map = new Map<
@@ -148,12 +151,16 @@ export function DeckPage() {
     [entries],
   );
 
-  if (deck === undefined && !error) return <p>Loading…</p>;
-  if (deck === null || deck === undefined) {
+  if (loadFailed && deck === undefined)
+    return (
+      <LoadError what="this deck" onRetry={() => setAttempt((n) => n + 1)} />
+    );
+  if (deck === undefined) return <Loading label="Loading the deck" />;
+  if (deck === null) {
     return (
       <>
         <h1>Deck not found</h1>
-        {error && <p role="alert">{error}</p>}
+        <p>It may be private, or it's been deleted.</p>
         <Link to="/decks">Back to decks</Link>
       </>
     );

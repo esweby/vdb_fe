@@ -212,6 +212,26 @@
   display: block;
   height: 100%;
 }
+/* Until the picture arrives, a soft card-shaped placeholder rather than a blank space. */
+.imageTile {
+  aspect-ratio: 5 / 7;
+  background: color-mix(in srgb, var(--fg) 8%, var(--bg));
+  animation: placeholder 1.6s ease-in-out infinite alternate;
+}
+.imageTile:has(.image:not([data-loading])) {
+  animation: none;
+  background: none;
+}
+@keyframes placeholder {
+  to {
+    background: color-mix(in srgb, var(--fg) 14%, var(--bg));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .imageTile {
+    animation: none;
+  }
+}
 .image {
   display: block;
   width: 100%;

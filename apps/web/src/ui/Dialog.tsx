@@ -1,4 +1,10 @@
-import { useEffect, useId, useRef, type ReactNode } from "react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  type ReactNode,
+  type RefObject,
+} from "react";
 import { Button } from "./Button.tsx";
 import styles from "./ui.module.css";
 
@@ -33,6 +39,8 @@ export function Dialog(props: {
   titleExtra?: ReactNode;
   /** Extra controls in the title bar, before Close. */
   headerExtra?: ReactNode;
+  /** What gets focus on open (e.g. the confirm button); Close by default. */
+  initialFocus?: RefObject<HTMLElement | null>;
 }) {
   const titleId = useId();
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -41,13 +49,15 @@ export function Dialog(props: {
   // (which would pull focus back to Close while someone is using the dialog).
   const onClose = useRef(props.onClose);
   onClose.current = props.onClose;
+  const initialFocus = useRef(props.initialFocus);
+  initialFocus.current = props.initialFocus;
 
   useEffect(() => {
     if (!open) return;
     const me = Symbol("dialog");
     openDialogs.push(me);
     lockScroll();
-    closeRef.current?.focus();
+    (initialFocus.current?.current ?? closeRef.current)?.focus();
     const onKey = (e: globalThis.KeyboardEvent) => {
       if (e.key === "Escape" && openDialogs.at(-1) === me) onClose.current();
     };
