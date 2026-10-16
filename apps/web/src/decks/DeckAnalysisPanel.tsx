@@ -29,7 +29,8 @@ const capitalise = (s: string) => s[0]!.toUpperCase() + s.slice(1);
 export function DeckAnalysisPanel(props: {
   entries: DeckEntry[];
   pitchTargets: PitchTargets;
-  onTargetsChange: (targets: PitchTargets) => void;
+  /** Without it (someone else's deck) the targets show but can't be changed. */
+  onTargetsChange?: (targets: PitchTargets) => void;
 }) {
   const { entries, pitchTargets, onTargetsChange } = props;
   const { scores } = useServices();
@@ -140,12 +141,15 @@ export function DeckAnalysisPanel(props: {
               pitch={p}
               have={analysis.pitch[p]}
               target={pitchTargets[p]}
-              onTarget={(target) => {
-                const next = { ...pitchTargets };
-                if (target === undefined) delete next[p];
-                else next[p] = target;
-                onTargetsChange(next);
-              }}
+              onTarget={
+                onTargetsChange &&
+                ((target) => {
+                  const next = { ...pitchTargets };
+                  if (target === undefined) delete next[p];
+                  else next[p] = target;
+                  onTargetsChange(next);
+                })
+              }
             />
           ))}
           <h2 className={styles.subheading}>Cost</h2>
@@ -214,7 +218,7 @@ function PitchRow(props: {
   pitch: 1 | 2 | 3;
   have: number;
   target: number | undefined;
-  onTarget: (target: number | undefined) => void;
+  onTarget?: (target: number | undefined) => void;
 }) {
   const { pitch, have, target, onTarget } = props;
   const name = capitalise(PITCH_NAMES[pitch]!);
@@ -231,7 +235,7 @@ function PitchRow(props: {
       n === undefined || !Number.isFinite(n) || n < 0
         ? undefined
         : Math.round(n);
-    if (next !== target) onTarget(next);
+    if (next !== target) onTarget?.(next);
     else setDraft(target === undefined ? "" : String(target));
   }
 
@@ -252,19 +256,21 @@ function PitchRow(props: {
       >
         <span style={{ width: `${ratio * 100}%` }} />
       </span>
-      <label className={styles.target}>
-        <span className={styles.visuallyHidden}>{name} target</span>
-        <input
-          type="number"
-          min={0}
-          inputMode="numeric"
-          placeholder="Target"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onBlur={commit}
-          onKeyDown={(e) => e.key === "Enter" && commit()}
-        />
-      </label>
+      {onTarget && (
+        <label className={styles.target}>
+          <span className={styles.visuallyHidden}>{name} target</span>
+          <input
+            type="number"
+            min={0}
+            inputMode="numeric"
+            placeholder="Target"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onBlur={commit}
+            onKeyDown={(e) => e.key === "Enter" && commit()}
+          />
+        </label>
+      )}
     </div>
   );
 }

@@ -925,3 +925,68 @@ describe("deck analysis", () => {
     ).toEqual(["5", "3", "0", "2", "42", "1"]);
   });
 });
+
+describe("someone else's public deck", () => {
+  const theirs = (cards: DeckCard[]) =>
+    fakeDeckRepository([
+      {
+        id: "deck-9",
+        name: "Usurp aggro",
+        updatedAt: "2026-10-13T10:00:00Z",
+        ownerId: "u2",
+        isPublic: true,
+        cards,
+        pitchTargets: { 1: 20 },
+      },
+    ]).repository;
+  const cards: DeckCard[] = [
+    { variantId: "hp1", quantity: 3, sideboard: false },
+    { variantId: "nb", quantity: 1, sideboard: false },
+    { variantId: "hp2", quantity: 1, sideboard: true },
+  ];
+
+  const expectReadOnly = async () => {
+    expect(
+      await screen.findByRole("heading", { name: "Usurp aggro" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Read only")).toBeInTheDocument();
+    // The cards show, but nothing changes them.
+    expect(
+      region("Deck").getByRole("article", { name: "Hocus Pocus (red)" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Add cards" })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /^(One more|One fewer|Remove)/ }),
+    ).toBeNull();
+    expect(screen.queryByRole("checkbox", { name: /^Sideboard/ })).toBeNull();
+  };
+
+  it("opens signed out, read only", async () => {
+    await renderApp({
+      path: "/decks/deck-9",
+      auth: fakeAuthService().service,
+      decks: theirs(cards),
+    });
+    await expectReadOnly();
+  });
+
+  it("is read only for a signed-in player who doesn't own it", async () => {
+    await renderApp({
+      path: "/decks/deck-9",
+      auth: auth(),
+      decks: theirs(cards),
+    });
+    await expectReadOnly();
+  });
+
+  it("shows the owner's pitch targets in Stats without letting you change them", async () => {
+    await renderApp({
+      path: "/decks/deck-9?tab=stats",
+      auth: fakeAuthService().service,
+      decks: theirs(cards),
+    });
+    const pitch = within(await screen.findByRole("region", { name: "Pitch" }));
+    expect(pitch.getByText("Red 3 / 20")).toBeInTheDocument();
+    expect(pitch.queryByLabelText("Red target")).toBeNull();
+  });
+});
