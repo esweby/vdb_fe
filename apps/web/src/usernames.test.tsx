@@ -14,10 +14,9 @@ describe("usernames", () => {
   ) {
     await renderApp({ path: "/sign-in?mode=signup", auth: fake.service });
     const user = userEvent.setup();
+    if (name) await user.type(await screen.findByLabelText("Username"), name);
     await user.type(await screen.findByLabelText("Email"), "new@test.local");
     await user.type(screen.getByLabelText("Password"), "a-new-password");
-    if (name)
-      await user.type(screen.getByLabelText("Username (optional)"), name);
     await user.click(screen.getByRole("button", { name: "Create account" }));
   }
 
@@ -29,17 +28,21 @@ describe("usernames", () => {
     );
   });
 
-  it("is optional", async () => {
+  // Required now it's how people sign in (maintainer, 16 Oct 2026).
+  it("is required", async () => {
     const fake = fakeAuthService();
     await signUp(fake, "");
-    await waitFor(() => expect(fake.calls).toEqual(["signUp:new@test.local"]));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Choose a username: it's how you sign in.",
+    );
+    expect(fake.calls).toEqual([]);
   });
 
   it("says when a username is taken, before creating the account", async () => {
     const fake = fakeAuthService({ takenUsernames: ["edd_99"] });
     await signUp(fake, "EDD_99");
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "That username is taken. Try another, or leave it blank for now.",
+      "That username is taken. Try another.",
     );
     expect(fake.calls).toEqual([]);
   });
@@ -67,6 +70,19 @@ describe("usernames", () => {
     expect(await screen.findByRole("status")).toHaveTextContent(
       "Username saved",
     );
+  });
+
+  it("asks an account without one to choose a username to sign in with", async () => {
+    const fake = fakeAuthService({
+      users: { "s@test.local": { id: "s1", password: "pw", role: "scorer" } },
+      signedIn: { id: "s1", email: "s@test.local" },
+    });
+    await renderApp({ path: "/account", auth: fake.service });
+    expect(
+      await screen.findByText(
+        "Choose a username: you'll be able to sign in with it instead of your email.",
+      ),
+    ).toBeInTheDocument();
   });
 
   it("shows who made a public deck", async () => {

@@ -20,12 +20,18 @@ export function AccountPage() {
   const [username, setUsername] = useState("");
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [usernameSaved, setUsernameSaved] = useState(false);
+  // Whether the account had a username when the page loaded (older accounts may not).
+  const [hadUsername, setHadUsername] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (!user) return;
     let live = true;
     auth.getUsername(user.id).then(
-      (name) => live && setUsername(name ?? ""),
+      (name) => {
+        if (!live) return;
+        setUsername(name ?? "");
+        setHadUsername(!!name);
+      },
       () => {},
     );
     return () => {
@@ -82,6 +88,12 @@ export function AccountPage() {
         <dd>{role ? ROLE_LABEL[role] : "…"}</dd>
       </dl>
       <h2>Username</h2>
+      {hadUsername === false && !usernameSaved && (
+        <p role="note">
+          Choose a username: you'll be able to sign in with it instead of your
+          email.
+        </p>
+      )}
       <form onSubmit={(e) => void saveUsername(e)}>
         <TextField
           label="Username"
@@ -89,7 +101,7 @@ export function AccountPage() {
           maxLength={24}
           value={username}
           error={usernameError}
-          hint="Shown on decks you share."
+          hint="You sign in with it, and it's shown on decks you share."
           onChange={(e) => {
             setUsername(e.target.value);
             setUsernameError(null);

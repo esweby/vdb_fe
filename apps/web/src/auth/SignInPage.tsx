@@ -16,6 +16,8 @@ export function SignInPage() {
   );
   const [confirmSent, setConfirmSent] = useState<string | null>(null);
   const [email, setEmail] = useState("");
+  // Sign-in takes a username (the main way) or an email.
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -26,23 +28,23 @@ export function SignInPage() {
     setError(null);
     setBusy(true);
     try {
-      if (mode === "signIn") await auth.signIn(email, password);
+      if (mode === "signIn") await auth.signIn(identifier.trim(), password);
       else {
-        // Optional; checked first so a taken one doesn't quietly go missing.
+        // Required, as it's how people sign in; checked before the account is made.
         const name = username.trim();
-        if (name && !USERNAME_PATTERN.test(name)) {
+        if (!name) {
+          setError("Choose a username: it's how you sign in.");
+          return;
+        }
+        if (!USERNAME_PATTERN.test(name)) {
           setError("A username is 3 to 24 letters, numbers, _ or -.");
           return;
         }
-        if (name && !(await auth.usernameAvailable(name))) {
+        if (!(await auth.usernameAvailable(name))) {
           setError(USERNAME_TAKEN);
           return;
         }
-        const { needsConfirmation } = await auth.signUp(
-          email,
-          password,
-          name || undefined,
-        );
+        const { needsConfirmation } = await auth.signUp(email, password, name);
         if (needsConfirmation) {
           setConfirmSent(email);
           return;
@@ -66,26 +68,37 @@ export function SignInPage() {
         </p>
       )}
       <form onSubmit={submit}>
-        <TextField
-          label="Email"
-          type="email"
-          autoComplete="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        {mode === "signUp" && (
+        {mode === "signIn" ? (
           <TextField
-            label="Username (optional)"
+            label="Username or email"
             autoComplete="username"
-            maxLength={24}
-            value={username}
-            onChange={(e) => {
-              setUsername(e.target.value);
-              setError(null);
-            }}
-            hint="Shown on decks you share. You can add or change it later."
+            required
+            value={identifier}
+            onChange={(e) => setIdentifier(e.target.value)}
           />
+        ) : (
+          <>
+            <TextField
+              label="Username"
+              autoComplete="username"
+              maxLength={24}
+              value={username}
+              onChange={(e) => {
+                setUsername(e.target.value);
+                setError(null);
+              }}
+              hint="You sign in with it, and it's shown on decks you share. 3 to 24 letters, numbers, _ or -."
+            />
+            <TextField
+              label="Email"
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              hint="For confirming your account and resetting your password. Not shown to anyone."
+            />
+          </>
         )}
         <TextField
           label="Password"
