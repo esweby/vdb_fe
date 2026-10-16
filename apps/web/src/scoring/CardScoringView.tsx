@@ -267,7 +267,7 @@ export function CardScoringView(props: {
         <section aria-label="Card" className={styles.cardColumn}>
           {summary && shownVariant && (
             <div className={styles.tile}>
-              <CardTile card={summary} variant={shownVariant} />
+              <CardTile card={summary} variant={shownVariant} enlargeable />
             </div>
           )}
           {card.variants.length > 1 && (
