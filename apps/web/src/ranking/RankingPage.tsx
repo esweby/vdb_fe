@@ -40,6 +40,7 @@ import {
 } from "./rankingSearch.ts";
 import { preferenceBoost } from "./preferences.ts";
 import { suggestCore } from "./suggestCore.ts";
+import { LoadError, Loading } from "../ui/index.ts";
 import styles from "./RankingPage.module.css";
 
 const route = getRouteApi("/ranking");
@@ -79,12 +80,14 @@ const roleCard = (c: CardSummary) => ({
  * (docs/roles.md, unverified), shown beside the scores and never blended into them.
  */
 export function RankingPage() {
-  const { status, items } = useCards();
+  const { status, items, retry } = useCards();
   const { scores, decks, strategy } = useServices();
   const user = useAppSelector((s) => s.auth.user);
   const search = route.useSearch();
   const navigate = useNavigate();
   const [data, setData] = useState<Data | null>(null);
+  const [scoresFailed, setScoresFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const deckId = typeof search.deck === "string" ? search.deck : undefined;
   const [deckList, setDeckList] = useState<DeckSummary[]>([]);
   const [deck, setDeck] = useState<Deck | null>(null);
@@ -168,28 +171,32 @@ export function RankingPage() {
 
   useEffect(() => {
     let live = true;
-    void Promise.all([
+    setScoresFailed(false);
+    Promise.all([
       scores.listDimensions(),
       scores.listCommunityScores(),
       scores.getMinRatingCount(),
       user ? scores.listAllMyScores(user.id) : Promise.resolve(null),
       user ? scores.listMyReviewedCardIds(user.id) : Promise.resolve(null),
-    ]).then(([dimensions, community, minRatingCount, myRows, reviewed]) => {
-      if (!live) return;
-      setData({
-        dimensions,
-        community,
-        minRatingCount,
-        mine:
-          myRows && reviewed
-            ? { rows: myRows, reviewedCardIds: new Set(reviewed) }
-            : undefined,
-      });
-    });
+    ]).then(
+      ([dimensions, community, minRatingCount, myRows, reviewed]) => {
+        if (!live) return;
+        setData({
+          dimensions,
+          community,
+          minRatingCount,
+          mine:
+            myRows && reviewed
+              ? { rows: myRows, reviewedCardIds: new Set(reviewed) }
+              : undefined,
+        });
+      },
+      () => live && setScoresFailed(true),
+    );
     return () => {
       live = false;
     };
-  }, [scores, user]);
+  }, [scores, user, attempt]);
 
   const settings = readRankingSearch(search);
   // Set up is step 1, so it's where the page opens; the other tabs are kept in the URL.
@@ -269,7 +276,14 @@ export function RankingPage() {
     });
   }, [data, items, cardsById, rolesById, JSON.stringify(settings)]);
 
-  if (status !== "loaded" || !data) return <p>Loading…</p>;
+  if (status === "failed")
+    return <LoadError what="the cards" onRetry={retry} />;
+  if (scoresFailed)
+    return (
+      <LoadError what="the scores" onRetry={() => setAttempt((n) => n + 1)} />
+    );
+  if (status !== "loaded") return <Loading label="Loading the cards" />;
+  if (!data) return <Loading label="Loading the scores" />;
 
   const copyLimit = rules?.copyLimit ?? 1;
   const byVariant = new Map(ranked.map((r) => [r.variantId, r]));
