@@ -2,6 +2,7 @@ import { getRouteApi, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import type { CardSummary, VariantSummary } from "../cards/cardRepository.ts";
 import { useCards } from "../cards/useCards.ts";
+import { useAppSelector } from "../hooks.ts";
 import { useServices } from "../servicesContext.ts";
 import { Tag, TextField } from "../ui/index.ts";
 import { analyseDeck } from "./deckAnalysis.ts";
@@ -41,6 +42,7 @@ export function DeckPage() {
   const [deck, setDeck] = useState<Deck | null | undefined>(undefined);
   const [rules, setRules] = useState<FormatRules | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const user = useAppSelector((s) => s.auth.user);
 
   useEffect(() => {
     let live = true;
@@ -157,6 +159,9 @@ export function DeckPage() {
     );
   }
 
+  // Only the owner changes a deck; anyone else sees a public one read only.
+  const canEdit = user?.id === deck.ownerId;
+  const onSet = canEdit ? (card: DeckCard) => void setCard(card) : undefined;
   const counts = deckCounts(entries);
   const problems = rules ? deckProblems(entries, rules) : [];
   const main = entries.filter((e) => !e.sideboard);
@@ -182,6 +187,11 @@ export function DeckPage() {
       <header className={styles.deckHeader}>
         <div>
           <h1>{deck.name}</h1>
+          {!canEdit && (
+            <p>
+              <Tag>Read only</Tag>
+            </p>
+          )}
           <p className={styles.meta}>
             {counts.deck} deck cards · {counts.sideboard} sideboard ·{" "}
             {counts.pool} in the pool
@@ -230,26 +240,30 @@ export function DeckPage() {
           <DeckAnalysisPanel
             entries={entries}
             pitchTargets={deck.pitchTargets ?? {}}
-            onTargetsChange={(t) => void setPitchTargets(t)}
+            onTargetsChange={
+              canEdit ? (t) => void setPitchTargets(t) : undefined
+            }
           />
         ) : (
-          <div className={styles.editor}>
-            <section className={styles.finder} aria-label="Add cards">
-              <h2 className={styles.finderTitle}>Add cards</h2>
-              <CardFinder
-                cards={cards}
-                quantityOf={(id) => inPool(id)?.quantity}
-                placeOf={(id) => {
-                  const e = inPool(id);
-                  return e ? (e.sideboard ? "sideboard" : "deck") : undefined;
-                }}
-                atLimit={atLimit}
-                limitOf={limitOfVariant}
-                onAdd={(id, toSideboard) =>
-                  toSideboard ? addToSideboard(id) : add(id)
-                }
-              />
-            </section>
+          <div className={canEdit ? styles.editor : undefined}>
+            {canEdit && (
+              <section className={styles.finder} aria-label="Add cards">
+                <h2 className={styles.finderTitle}>Add cards</h2>
+                <CardFinder
+                  cards={cards}
+                  quantityOf={(id) => inPool(id)?.quantity}
+                  placeOf={(id) => {
+                    const e = inPool(id);
+                    return e ? (e.sideboard ? "sideboard" : "deck") : undefined;
+                  }}
+                  atLimit={atLimit}
+                  limitOf={limitOfVariant}
+                  onAdd={(id, toSideboard) =>
+                    toSideboard ? addToSideboard(id) : add(id)
+                  }
+                />
+              </section>
+            )}
             <div>
               <div className={styles.viewToggle}>
                 {(["tiles", "list"] as const).map((v) => (
@@ -274,7 +288,7 @@ export function DeckPage() {
                   order="gear"
                   limitOf={limitOf}
                   view={view}
-                  onSet={(card) => void setCard(card)}
+                  onSet={onSet}
                 />
                 <PoolSection
                   title="Deck"
@@ -282,14 +296,14 @@ export function DeckPage() {
                   entries={ofSection("deck")}
                   limitOf={limitOf}
                   view={view}
-                  onSet={(card) => void setCard(card)}
+                  onSet={onSet}
                 />
                 <PoolSection
                   title="Sideboard"
                   entries={entries.filter((e) => e.sideboard)}
                   limitOf={limitOf}
                   view={view}
-                  onSet={(card) => void setCard(card)}
+                  onSet={onSet}
                 />
               </div>
             </div>
@@ -345,7 +359,8 @@ function PoolSection(props: {
   view: View;
   /** "pitch": red, yellow, blue, then no pitch. "gear": weapons, then equipment by slot. */
   order?: "pitch" | "gear";
-  onSet: (card: DeckCard) => void;
+  /** Changes a card; without it (someone else's deck) the section is read only. */
+  onSet?: (card: DeckCard) => void;
 }) {
   const { title, entries, limitOf, view, onSet } = props;
   const rank = (e: DeckEntry) =>
@@ -363,7 +378,7 @@ function PoolSection(props: {
   const controls = (e: DeckEntry) => {
     const label = variantName(e.card, e.variant);
     const set = (change: Partial<DeckCard>) =>
-      onSet({
+      onSet?.({
         variantId: e.variant.id,
         quantity: e.quantity,
         sideboard: e.sideboard,
@@ -434,7 +449,9 @@ function PoolSection(props: {
                 quantity={e.quantity}
                 enlargeable
               >
-                <span className={styles.tileControls}>{controls(e)}</span>
+                {onSet && (
+                  <span className={styles.tileControls}>{controls(e)}</span>
+                )}
               </CardTile>
             </li>
           ))}
@@ -469,7 +486,9 @@ function PoolSection(props: {
                 {(slot || hands) && (
                   <span className={styles.muted}>{slot ?? hands}</span>
                 )}
-                <span className={styles.controls}>{controls(e)}</span>
+                {onSet && (
+                  <span className={styles.controls}>{controls(e)}</span>
+                )}
               </li>
             );
           })}

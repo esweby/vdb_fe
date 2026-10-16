@@ -104,7 +104,7 @@ const routeTree = rootRoute.addChildren([
       ...(search.tab === "stats" ? { tab: "stats" as const } : {}),
       ...(search.view === "list" ? { view: "list" as const } : {}),
     }),
-    beforeLoad: requireSignedIn,
+    // A public deck opens signed out, read only; a private one is "not found" to anyone else.
     component: DeckPage,
   }),
   createRoute({
