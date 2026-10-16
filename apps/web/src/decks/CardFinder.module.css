@@ -1,9 +1,5 @@
 /* Add cards: a search, a quiet row of toggles, and compact result rows. */
 .finder {
-  --pitch-1: #d63c35;
-  --pitch-2: #e6b422;
-  --pitch-3: #3b7dd8;
-  --pitch-none: #8a8a8a;
   display: flex;
   flex-direction: column;
   gap: 0.6rem;

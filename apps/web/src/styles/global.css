@@ -12,6 +12,13 @@
   --brand-fg: #eeedfe;
   --brand-highlight: #afa9ec;
   --surface: #ffffff;
+  /* Pitch colours, the same everywhere a pitch appears (red 1, yellow 2, blue 3). */
+  --pitch-1: #d63c35;
+  --pitch-2: #e6b422;
+  --pitch-3: #3b7dd8;
+  --pitch-4: #8a5cc7;
+  --pitch-none: #8a8a8a;
+  --success: #1f9d61;
   --font-display: "Cinzel", "Trajan Pro", Georgia, serif;
   --font-ui: "Inter", system-ui, sans-serif;
   font-family: var(--font-ui);

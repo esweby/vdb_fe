@@ -15,13 +15,13 @@
   overflow: hidden;
 }
 .pitch1 {
-  --pitch: #d63c35;
+  --pitch: var(--pitch-1);
 }
 .pitch2 {
-  --pitch: #e6b422;
+  --pitch: var(--pitch-2);
 }
 .pitch3 {
-  --pitch: #3b7dd8;
+  --pitch: var(--pitch-3);
 }
 
 .top {

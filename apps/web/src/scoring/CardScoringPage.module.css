@@ -123,7 +123,7 @@
   margin-top: 0.75rem;
 }
 .pitches button {
-  --tone: #8a8a8a;
+  --tone: var(--pitch-none);
   font: inherit;
   font-size: 0.85rem;
   display: inline-flex;
@@ -155,16 +155,16 @@
   background: var(--tone);
 }
 .pitch1 {
-  --tone: #d63c35 !important;
+  --tone: var(--pitch-1) !important;
 }
 .pitch2 {
-  --tone: #d9a514 !important;
+  --tone: var(--pitch-2) !important;
 }
 .pitch3 {
-  --tone: #3b7dd8 !important;
+  --tone: var(--pitch-3) !important;
 }
 .pitch4 {
-  --tone: #8a5cc7 !important;
+  --tone: var(--pitch-4) !important;
 }
 .stats {
   margin: 0.5rem 0 0;

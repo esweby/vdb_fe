@@ -1,8 +1,5 @@
 /* Decks: a header with New deck, My decks | Public decks tabs, and a grid of deck cards. */
 .page {
-  --pitch-1: #d63c35;
-  --pitch-2: #e6b422;
-  --pitch-3: #3b7dd8;
   display: grid;
   gap: 1.25rem;
 }
