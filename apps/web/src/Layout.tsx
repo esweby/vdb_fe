@@ -40,7 +40,9 @@ export function Layout() {
             <Tab to="/ranking">Ranking</Tab>
             {canScore && <Tab to="/needs-review">Needs review</Tab>}
             <Tab to="/decks">Decks</Tab>
-            <span className={styles.spacer} />
+          </nav>
+          {/* Apart from the page tabs, so on a phone it stays in view beside the name. */}
+          <nav aria-label="Account" className={styles.account}>
             {signedIn && <Tab to="/account">Account</Tab>}
             {signedIn ? (
               <button
