@@ -127,6 +127,9 @@ These three tasks go first because any of them could change the plan.
 - [x] Copy limits, plus format limits from configuration (`app_settings.format_classic_constructed`). **Unverified:** 3 copies per card and pitch, at least 60 deck cards, at most 80 in the pool, 2 hands for weapons and off-hand. Needs a player check.
 - [x] Dimension totals and pitch breakdown, with "always available" (weapons and equipment) shown separately. Pitch targets per deck (e.g. 22 blue, 18 red, 5 yellow).
 - [x] Add ranked cards to the deck. Cards already in the deck count as pinned.
+- [x] Copy limits checked by the maintainer: one of each piece of equipment (15 Oct 2026); one of a two-handed weapon and two of a one-handed one, counted across the deck and sideboard (16 Oct 2026). A deck without a weapon isn't a legality problem; that's the builder's call.
+- [x] Deck lists: public and private decks, My decks and Public decks tabs, New deck. Someone else's public deck opens read only, signed out too.
+- [x] Add cards panel: a tile per pitch with + and SB on hover, a magnifying glass to enlarge, pages, search by name or keyword, and the filters pinned while the cards scroll.
 
 **Done when:** a user can build a legal deck from the ranking or by hand and save it.
 
@@ -143,13 +146,15 @@ Scorers are volunteers. If the app feels like a prototype they won't engage, and
 
 **Minimum polish bar,** for every screen in those journeys:
 
-- [ ] **No dead ends or placeholders.** A real home page explains the app and points to the next step. Every page has a way forward. _Home page done (first visit, a scorer's reviews left, build a core); Needs review no longer dead-ends after a review (#59)._
-- [ ] **Every state is designed:** loading, empty (with the next action), error (in plain words, with a retry) and saved (visible confirmation).
-- [ ] **Consistent look:** one type scale, spacing scale and colour tokens. Pitch colours everywhere a pitch appears. Dark mode checked.
+- [x] **No dead ends or placeholders.** A real home page explains the app and points to the next step. Every page has a way forward. _Home page (first visit, a scorer's reviews left, build a core); Needs review after a review (#59); a saved core links to its deck (#77); Create an account on the home page (#79)._
+- [x] **Every state is designed:** loading, empty (with the next action), error (in plain words, with a retry) and saved (visible confirmation). _`Loading` and `LoadError` with Try again (#73); the deck page waits for the cards rather than showing an empty deck (#77); check-your-email after sign-up (#79)._
+- [ ] **Consistent look:** one type scale, spacing scale and colour tokens. Pitch colours everywhere a pitch appears. Dark mode checked. _Pitch colours are global tokens with a guard test, and dark mode is checked on every journey (#80). Not yet: a shared type scale and spacing scale._
 - [x] **Card images** on the card page and in the deck builder, moved forward from the backlog. Recognising cards by their art is what makes it feel like a FaB tool. Done: `variants.image_url` from the latest standard, normal-art printing; the stand-in shows when there is no image or it fails to load.
-- [ ] **Works on a phone** for scoring and browsing. Deck building can be desktop-first.
-- [ ] **Fast scoring:** "Next card" after Mark reviewed, and sensible keyboard focus, so a scorer can work through a list without reaching for the mouse each time.
-- [ ] **Accessible:** keyboard reachable, visible focus, labelled controls (mostly true already, because the tests query by role and name).
+- [x] **Works on a phone** for scoring and browsing. Deck building can be desktop-first. _Account and Sign out stay in view (#74); the review dialog fills the screen and the card enlarges (#75). Checked at 320 and 375px._
+- [x] **Fast scoring:** "Next card" after Mark reviewed, and sensible keyboard focus, so a scorer can work through a list without reaching for the mouse each time. _Each card opens on Overall; Ctrl/⌘+Enter, then Enter, reviews and moves on (#72)._
+- [ ] **Accessible:** keyboard reachable, visible focus, labelled controls (mostly true already, because the tests query by role and name). _Focus fixes in scoring, labelled card symbols (#78). Not yet: a full keyboard and screen-reader pass._
+
+**First pass done (16 Oct 2026):** Claude walked all four journeys at desktop and phone widths and fixed what it found (#72–#80). Also from the walk: Needs review runs newest release first, generics last (#76); each card shows the scoring group's ratings (#78). Next: the maintainer's walk, and the "done when" check below.
 
 **How:** Claude walks each journey in the browser at desktop and phone widths and lists the friction. The maintainer walks the same journeys and adds to the list. Fixes land as small test-first PRs. A second pass follows after the scoring group has used the app for a week or two.
 
@@ -198,5 +203,6 @@ If time runs out, ship in this order and stop where the budget ends. Never cut t
 ## Supabase setup (current state)
 
 - GitHub integration is connected to `esweby/vdb_fe`, working directory `.`.
-- "Deploy to production" is **off**. Branching (preview databases per pull request) needs the Pro plan, so it isn't available.
-- Workflow until then: develop and test migrations against the local Supabase stack. Turn on "Deploy to production" with `main` as the production branch once the first migrations are ready, so merging to `main` applies them.
+- Merging to `main` applies migrations to the hosted project: every migration up to `20261016100000` was there on 16 Oct 2026 without a manual push. Branching (preview databases per pull request) needs the Pro plan, so it isn't available.
+- Develop and test migrations against the local Supabase stack. After a migration that the importer fills (such as `first_set` and `first_released`), re-run the import against the hosted project with `DB_URL` set and `--yes-remote`.
+- Before hosting the app: set the Site URL and redirect URLs (Authentication → URL Configuration) so sign-up confirmation emails open the app.
