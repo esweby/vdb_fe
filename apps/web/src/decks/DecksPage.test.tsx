@@ -927,8 +927,9 @@ describe("deck analysis", () => {
       within(row)
         .getAllByRole("cell")
         .map((c) => c.textContent),
-      // hp1 ×3 (overall 50) and hp3 ×2 (overall 30): average 42; Nebula Blade is always available
-    ).toEqual(["5", "3", "0", "2", "42", "1"]);
+      // hp1 ×3 (overall 50) and hp3 ×2 (overall 30): average 42, shown out of 10 as 4.2;
+      // Nebula Blade is always available
+    ).toEqual(["5", "3", "0", "2", "4.2", "1"]);
   });
 });
 

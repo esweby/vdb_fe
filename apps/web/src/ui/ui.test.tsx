@@ -53,6 +53,14 @@ describe("Slider", () => {
     expect(screen.getByText("Not set")).toBeInTheDocument();
   });
 
+  // Stored 0-100, shown out of 10 (scoring group feedback, 16 Oct 2026).
+  it("shows the value out of 10", () => {
+    render(<Harness initial={70} />);
+    const slider = screen.getByRole("slider", { name: "Gate creation" });
+    expect(slider).toHaveAttribute("aria-valuetext", "7");
+    expect(slider).toHaveValue("70");
+  });
+
   it("shows the value, including an explicit 0", () => {
     render(<Harness initial={0} />);
     expect(
@@ -66,19 +74,7 @@ describe("Slider", () => {
     expect(scale).toHaveAttribute("aria-hidden", "true");
     expect(
       [...scale.querySelectorAll("span")].map((s) => s.textContent),
-    ).toEqual([
-      "0",
-      "10",
-      "20",
-      "30",
-      "40",
-      "50",
-      "60",
-      "70",
-      "80",
-      "90",
-      "100",
-    ]);
+    ).toEqual(["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]);
   });
 
   it("highlights the tick for the current value", () => {
@@ -86,7 +82,7 @@ describe("Slider", () => {
     const current = screen
       .getByTestId("slider-scale")
       .querySelector("[data-current]");
-    expect(current).toHaveTextContent("70");
+    expect(current).toHaveTextContent("7");
   });
 
   it("moves in steps of 10 with the keyboard", async () => {
@@ -94,7 +90,7 @@ describe("Slider", () => {
     const slider = screen.getByRole("slider", { name: "Gate creation" });
     slider.focus();
     await userEvent.setup().keyboard("{ArrowRight}");
-    expect(slider).toHaveAttribute("aria-valuetext", "60");
+    expect(slider).toHaveAttribute("aria-valuetext", "6");
   });
 });
 
@@ -191,17 +187,17 @@ describe("Slider scale on a wide range", () => {
       .map((t) => t.textContent)
       .filter(Boolean);
     expect(labels).toEqual([
-      "-100",
-      "-80",
-      "-60",
-      "-40",
-      "-20",
+      "-10",
+      "-8",
+      "-6",
+      "-4",
+      "-2",
       "0",
-      "20",
-      "40",
-      "60",
-      "80",
-      "100",
+      "2",
+      "4",
+      "6",
+      "8",
+      "10",
     ]);
   });
 });
@@ -238,26 +234,26 @@ describe("Slider tap targets (touch screens)", () => {
     );
     expect(taps.getAllByRole("button").map((b) => b.textContent)).toEqual([
       "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
       "10",
-      "20",
-      "30",
-      "40",
-      "50",
-      "60",
-      "70",
-      "80",
-      "90",
-      "100",
     ]);
-    await userEvent.setup().click(taps.getByRole("button", { name: "60" }));
-    expect(taps.getByRole("button", { name: "60" })).toHaveAttribute(
+    await userEvent.setup().click(taps.getByRole("button", { name: "6" }));
+    expect(taps.getByRole("button", { name: "6" })).toHaveAttribute(
       "aria-pressed",
       "true",
     );
-    expect(screen.getByRole("slider", { name: "Overall" })).toHaveAttribute(
-      "aria-valuetext",
-      "60",
-    );
+    const slider = screen.getByRole("slider", { name: "Overall" });
+    expect(slider).toHaveAttribute("aria-valuetext", "6");
+    // Stored as 60.
+    expect(slider).toHaveValue("60");
   });
 
   it("has none unless asked for", () => {

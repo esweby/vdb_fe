@@ -213,7 +213,7 @@ describe("ScoreEditor", () => {
     );
     expect(
       screen.getByRole("slider", { name: "Gate creation, Forsaken" }),
-    ).toHaveAttribute("aria-valuetext", "60");
+    ).toHaveAttribute("aria-valuetext", "6");
     expect(
       screen.getByRole("checkbox", {
         name: "Same score for both sides: Gate creation",
@@ -247,7 +247,7 @@ describe("ScoreEditor", () => {
     ]);
     expect(
       screen.getByRole("slider", { name: "Gate creation" }),
-    ).toHaveAttribute("aria-valuetext", "70");
+    ).toHaveAttribute("aria-valuetext", "7");
   });
 
   it("scores the pitch being looked at separately with the same single slider", async () => {
@@ -284,7 +284,7 @@ describe("ScoreEditor", () => {
     ).toBeChecked();
     expect(
       screen.getByRole("slider", { name: "Runechant creation, Red" }),
-    ).toHaveAttribute("aria-valuetext", "80");
+    ).toHaveAttribute("aria-valuetext", "8");
     unmount();
     render(<Harness chosenVariantId="blue" initial={initial} />);
     expect(
@@ -370,7 +370,7 @@ describe("ScoreEditor", () => {
     ).not.toBeChecked();
     expect(
       screen.getByRole("slider", { name: "Runechant creation" }),
-    ).toHaveAttribute("aria-valuetext", "80");
+    ).toHaveAttribute("aria-valuetext", "8");
   });
 
   it("can be rated with one tap on a touch screen", async () => {
@@ -379,7 +379,8 @@ describe("ScoreEditor", () => {
     const taps = within(
       screen.getByRole("group", { name: "Runechant creation, tap a score" }),
     );
-    await userEvent.setup().click(taps.getByRole("button", { name: "70" }));
+    // Shown as 7, saved as 70.
+    await userEvent.setup().click(taps.getByRole("button", { name: "7" }));
     expect(onSet).toHaveBeenCalledWith(
       expect.objectContaining({ dimensionId: 1, variantId: null, side: null }),
       70,

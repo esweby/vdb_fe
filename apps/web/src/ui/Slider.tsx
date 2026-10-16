@@ -1,8 +1,11 @@
 import { useId, type KeyboardEvent } from "react";
 import styles from "./ui.module.css";
 
+/** Values are stored 0–100 and shown out of 10 (scoring group feedback, 16 Oct 2026). */
+const shown = (n: number) => String(Math.round(n) / 10);
+
 /**
- * A 0–100 slider that distinguishes "not set" (null) from an explicit 0.
+ * A 0–100 slider, shown out of 10, that distinguishes "not set" (null) from an explicit 0.
  * Keyboard: arrows move by step, Home/End jump to the ends.
  */
 export function Slider(props: {
@@ -30,7 +33,7 @@ export function Slider(props: {
 }) {
   const { label, value, onChange, min = 0, max = 100, step = 10 } = props;
   const id = useId();
-  const text = value === null ? "Not set" : String(value);
+  const text = value === null ? "Not set" : shown(value);
   const clamp = (n: number) => Math.min(max, Math.max(min, n));
   const ticks = Array.from(
     { length: Math.floor((max - min) / step) + 1 },
@@ -89,7 +92,7 @@ export function Slider(props: {
                 data-current={value === t || undefined}
               >
                 {/* More than 11 labels crowd together: label every other step. */}
-                {ticks.length <= 11 || i % 2 === 0 ? t : ""}
+                {ticks.length <= 11 || i % 2 === 0 ? shown(t) : ""}
               </span>
             ))}
           </div>
@@ -128,7 +131,7 @@ export function Slider(props: {
               aria-pressed={value === t}
               onClick={() => onChange(t)}
             >
-              {t}
+              {shown(t)}
             </button>
           ))}
         </div>

@@ -1,4 +1,5 @@
 import { fits, type RoleId } from "@vdb/cards";
+import { formatScore } from "../scoring/scoreFormat.ts";
 import { useState } from "react";
 import type { RankedVariant } from "./rank.ts";
 import { preferenceBoost } from "./preferences.ts";
@@ -29,7 +30,7 @@ const LANE_SIZE = 6;
 /** Floor to ceiling as a track, overall as a tick, and the value ranked on as a dot. */
 export function RangeBar(props: { card: BoardCard }) {
   const { floor, overall, ceiling } = props.card.parts;
-  const n = Math.round;
+  const n = formatScore;
   return (
     <span
       className={styles.range}
@@ -133,7 +134,7 @@ export function EngineBoard(props: {
           ) : null}
         </span>
         <span className={styles.foot}>
-          <span className={styles.value}>{Math.round(c.value)}</span>
+          <span className={styles.value}>{formatScore(c.value)}</span>
           <RangeBar card={c} />
           <button
             type="button"
@@ -250,7 +251,7 @@ export function EngineBoard(props: {
                     <button type="button" onClick={() => props.onOpen(c)}>
                       {c.name}
                     </button>
-                    <span className={styles.value}>{Math.round(c.value)}</span>
+                    <span className={styles.value}>{formatScore(c.value)}</span>
                   </div>
                 ))}
               </div>
