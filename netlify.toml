@@ -1,0 +1,31 @@
+# Netlify: builds the web app (a Vite single-page app) from the repo root.
+# VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set in Netlify's UI (Site configuration →
+# Environment variables): the anon key is public by design; row level security guards the data.
+
+[build]
+  command = "npm run build -w @vdb/web"
+  publish = "apps/web/dist"
+
+[build.environment]
+  # The same Node as CI; Vite 8 needs a recent one.
+  NODE_VERSION = "24"
+
+# The router runs in the browser: every path loads the app, so deep links and refreshes work.
+# Files that exist (the built assets) are served first; Netlify only applies this otherwise.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Built assets have content hashes in their names, so they can be cached for good.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Frame-Options = "DENY"
