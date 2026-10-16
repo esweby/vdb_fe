@@ -16,7 +16,7 @@ insert into public.variants (id, card_id, external_id, pitch, defense) values
 -- Profiles and weights are created automatically for new users
 select is(
   (select role::text from public.profiles where id = '00000000-0000-0000-0000-00000000000a'),
-  'user', 'a new user gets a profile with role user'
+  'scorer', 'a new user joins as a scorer (maintainer, 16 Oct 2026)'
 );
 select is(
   (select rating_weight from public.rater_weights where user_id = '00000000-0000-0000-0000-00000000000a'),
