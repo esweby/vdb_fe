@@ -41,6 +41,19 @@ export function Slider(props: {
   );
 
   function onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    // On a rating out of 10, a number key sets it, as in quick review: 1-9, and 0 for 10.
+    const outOf10 = min === 0 && max === 100 && step === 10;
+    if (
+      outOf10 &&
+      /^[0-9]$/.test(event.key) &&
+      !event.ctrlKey &&
+      !event.metaKey &&
+      !event.altKey
+    ) {
+      event.preventDefault();
+      onChange(event.key === "0" ? 100 : Number(event.key) * 10);
+      return;
+    }
     const current = value ?? min;
     const next = {
       ArrowRight: current + step,

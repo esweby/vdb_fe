@@ -92,6 +92,34 @@ describe("Slider", () => {
     await userEvent.setup().keyboard("{ArrowRight}");
     expect(slider).toHaveAttribute("aria-valuetext", "6");
   });
+
+  // Like quick review: 1-9 are 1 to 9 and 0 is 10 (maintainer, 19 Oct 2026: number keys did nothing).
+  it("sets the value from a number key, with 0 as 10", async () => {
+    render(<Harness initial={null} />);
+    const slider = screen.getByRole("slider", { name: "Gate creation" });
+    slider.focus();
+    const user = userEvent.setup();
+    await user.keyboard("7");
+    expect(slider).toHaveAttribute("aria-valuetext", "7");
+    await user.keyboard("0");
+    expect(slider).toHaveAttribute("aria-valuetext", "10");
+  });
+
+  it("ignores number keys on a slider that isn't scored out of 10", async () => {
+    const onChange = vi.fn();
+    render(
+      <Slider
+        label="Risk"
+        value={0}
+        onChange={onChange}
+        min={-100}
+        step={25}
+      />,
+    );
+    screen.getByRole("slider", { name: "Risk" }).focus();
+    await userEvent.setup().keyboard("7");
+    expect(onChange).not.toHaveBeenCalled();
+  });
 });
 
 describe("Table", () => {

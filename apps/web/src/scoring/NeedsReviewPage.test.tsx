@@ -198,6 +198,36 @@ describe("needs review page", () => {
     );
   });
 
+  // Maintainer, 19 Oct 2026: on a MacBook, typing a number and pressing Enter did nothing.
+  it("works through cards with number keys and plain Enter", async () => {
+    const scores = fakeScoreRepository();
+    await renderApp({
+      path: "/needs-review?card=card-become-the-shadow-lord",
+      auth: auth(),
+      scores: scores.repository,
+    });
+    const user = userEvent.setup();
+    const dialog = await screen.findByRole("dialog", {
+      name: "Become the Shadow Lord",
+    });
+    const overall = await within(dialog).findByRole("slider", {
+      name: "Overall",
+    });
+    await waitFor(() => expect(overall).toHaveFocus());
+    await user.keyboard("8");
+    expect(overall).toHaveAttribute("aria-valuetext", "8");
+    await user.keyboard("{Enter}");
+    const summary = await screen.findByRole("dialog", {
+      name: "Mark reviewed",
+    });
+    expect(
+      within(summary).getByRole("button", { name: "Confirm review" }),
+    ).toHaveFocus();
+    await user.keyboard("{Enter}");
+    await screen.findByRole("dialog", { name: "Hocus Pocus" });
+    expect(scores.saved).toContain("review card-become-the-shadow-lord");
+  });
+
   it("shows the keyboard shortcut beside Mark reviewed", async () => {
     await renderApp({
       path: "/needs-review?card=card-become-the-shadow-lord",
