@@ -2,16 +2,19 @@ import {
   act,
   newGame,
   redo,
+  replay,
   undo,
+  type CardInstance,
   type GameAction,
   type GameHistory,
-  type GameSetup,
+  type HeroSide,
   type Zone,
 } from "@vdb/engine";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import { engineCardOf } from "../ranking/scenarios.ts";
 import { Button, TextField } from "../ui/index.ts";
 import { sectionOf, variantName, type DeckEntry } from "./deckRules.ts";
+import { turnRecaps } from "./goldfishRecap.ts";
 import styles from "./Goldfish.module.css";
 
 /** Card zones shown as lists; the deck is face down and only counted. */
@@ -25,46 +28,65 @@ const ZONE_LABELS: { zone: Zone; label: string }[] = [
   { zone: "weapons", label: "Weapons" },
   { zone: "equipment", label: "Equipment" },
 ];
-const LABEL = Object.fromEntries(ZONE_LABELS.map((z) => [z.zone, z.label]));
+const LABEL: Record<string, string> = Object.fromEntries(
+  ZONE_LABELS.map((z) => [z.zone, z.label]),
+);
 
-/** What a card can do, from the menu on it: a move, a pitch, or the top or bottom of the deck. */
+/** What a card can do, from its menu, its keyboard key, or a drag. */
 const CARD_ACTIONS: {
   label: string;
-  action: (uid: string) => GameAction;
+  key?: string;
   zone?: Zone;
+  action: (uid: string) => GameAction;
 }[] = [
   {
     label: "Play",
+    key: "p",
     zone: "arena",
     action: (uid) => ({ type: "move", uid, to: "arena" }),
   },
-  { label: "Pitch", zone: "pitch", action: (uid) => ({ type: "pitch", uid }) },
+  {
+    label: "Pitch",
+    key: "i",
+    zone: "pitch",
+    action: (uid) => ({ type: "pitch", uid }),
+  },
   {
     label: "Hand",
+    key: "h",
     zone: "hand",
     action: (uid) => ({ type: "move", uid, to: "hand" }),
   },
   {
     label: "Arsenal",
+    key: "a",
     zone: "arsenal",
     action: (uid) => ({ type: "move", uid, to: "arsenal" }),
   },
   {
     label: "Graveyard",
+    key: "g",
     zone: "graveyard",
     action: (uid) => ({ type: "move", uid, to: "graveyard" }),
   },
   {
     label: "Banish",
+    key: "b",
     zone: "banished",
     action: (uid) => ({ type: "move", uid, to: "banished" }),
   },
   {
+    label: "Banish face down",
+    action: (uid) => ({ type: "move", uid, to: "banished", faceDown: true }),
+  },
+  {
     label: "Top of deck",
+    key: "t",
     action: (uid) => ({ type: "move", uid, to: "deck", position: "top" }),
   },
   {
     label: "Bottom of deck",
+    key: "u",
     action: (uid) => ({ type: "move", uid, to: "deck", position: "bottom" }),
   },
 ];
@@ -77,12 +99,39 @@ const TOKENS = [
 
 const randomSeed = () => Math.floor(Math.random() * 1_000_000);
 
+/** A session's log in a link: base64url JSON. */
+function encodeLog(log: GameAction[]): string {
+  return btoa(JSON.stringify(log))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+}
+function decodeLog(text: string): GameAction[] | null {
+  try {
+    const parsed: unknown = JSON.parse(
+      atob(text.replace(/-/g, "+").replace(/_/g, "/")),
+    );
+    return Array.isArray(parsed) ? (parsed as GameAction[]) : null;
+  } catch {
+    return null;
+  }
+}
+
+const typing = (target: EventTarget | null) =>
+  !!(target as HTMLElement | null)?.closest?.("input, select, textarea");
+
 /**
  * The goldfish tool (README "Goldfishing", phase two step 5): a sandbox for playing a deck's
  * turns alone, on the shared game engine. The user moves every card; the tool keeps count and
  * enforces no game rules. End turn is a helper: pitched cards to the bottom, draw up to 4.
  */
-export function Goldfish(props: { entries: DeckEntry[]; seed?: number }) {
+export function Goldfish(props: {
+  entries: DeckEntry[];
+  seed?: number;
+  side?: HeroSide;
+  /** A shared session's log, from its link. */
+  log?: string;
+}) {
   // Each copy, by section: the main deck, then the weapons and equipment in play.
   const { setup, names, images } = useMemo(() => {
     const main = props.entries.filter((e) => !e.sideboard);
@@ -107,55 +156,95 @@ export function Goldfish(props: { entries: DeckEntry[]; seed?: number }) {
     };
   }, [props.entries]);
 
-  const start = (seed: number, side: GameSetup["side"] = "forsaken") =>
-    newGame({ ...setup, seed, side });
   const [seed, setSeed] = useState(() => props.seed ?? randomSeed());
   const [seedInput, setSeedInput] = useState(String(seed));
-  const [startSide, setStartSide] = useState<"forsaken" | "usurper">(
-    "forsaken",
+  const [startSide, setStartSide] = useState<HeroSide>(
+    props.side ?? "forsaken",
   );
-  const [history, setHistory] = useState<GameHistory>(() => start(seed));
+  const [history, setHistory] = useState<GameHistory>(() => {
+    const game = { ...setup, seed, side: props.side ?? "forsaken" };
+    const log = props.log ? decodeLog(props.log) : null;
+    if (log) {
+      try {
+        return replay(game, log);
+      } catch {
+        // A link for a deck that has changed since: start fresh.
+      }
+    }
+    return newGame(game);
+  });
+  const [lookAt, setLookAt] = useState(3);
+  const [looking, setLooking] = useState(false);
+  const [searching, setSearching] = useState(false);
+  const [dragging, setDragging] = useState<string | null>(null);
+  const [shareLink, setShareLink] = useState<string | null>(null);
   const g = history.present;
   const doAction = (action: GameAction) => setHistory((h) => act(h, action));
-  const nameOf = (id: string) => names.get(id) ?? id;
   const sideName = (side: string) =>
     side === "usurper" ? "Usurper" : "Forsaken";
+  const startedOn = history.past[0]?.side ?? g.side;
+
+  // Every copy is always in some zone, so the present state names them all.
+  const uidNames = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const zone of Object.values(g.zones))
+      for (const c of zone) m.set(c.uid, names.get(c.card.id) ?? c.card.name);
+    return m;
+  }, [g.zones, names]);
+  const nameOf = (uid: string) => uidNames.get(uid) ?? uid;
 
   function restart(nextSeed = seed) {
     setSeed(nextSeed);
     setSeedInput(String(nextSeed));
-    setHistory(start(nextSeed, startSide));
+    setShareLink(null);
+    setHistory(newGame({ ...setup, seed: nextSeed, side: startSide }));
   }
 
-  /** The log in words, with the side after each traverse and the turn each one ended. */
-  const logLines = useMemo(() => {
-    let side = g.log.length ? (history.past[0]?.side ?? g.side) : g.side;
-    let turn = 1;
-    const cardName = (uid: string) => {
-      for (const s of [g, ...history.past]) {
-        for (const z of Object.values(s.zones)) {
-          const c = z.find((x) => x.uid === uid);
-          if (c) return nameOf(c.card.id);
-        }
-      }
-      return uid;
+  // Keys for the table: D draw, E end turn, Ctrl/⌘+Z undo, with Shift redo.
+  useEffect(() => {
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if (typing(e.target) || e.altKey) return;
+      const key = e.key.toLowerCase();
+      if ((e.ctrlKey || e.metaKey) && key === "z") {
+        e.preventDefault();
+        setHistory(e.shiftKey ? redo : undo);
+      } else if (e.ctrlKey || e.metaKey) return;
+      else if (key === "d") setHistory((h) => act(h, { type: "draw" }));
+      else if (key === "e") setHistory((h) => act(h, { type: "endTurn" }));
     };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const logLines = useMemo(() => {
+    let side = startedOn;
+    let turn = 1;
     return g.log.map((a) => {
       switch (a.type) {
         case "draw":
           return a.count && a.count > 1 ? `Draw ${a.count}` : "Draw";
         case "move":
-          return `${cardName(a.uid)} to ${
+          return `${nameOf(a.uid)} to ${
             a.to === "deck"
               ? `${a.position === "bottom" ? "bottom" : "top"} of deck`
               : LABEL[a.to]!.toLowerCase()
-          }`;
+          }${a.faceDown ? " face down" : ""}`;
         case "pitch":
-          return `Pitch ${cardName(a.uid)}`;
+          return `Pitch ${nameOf(a.uid)}`;
         case "token":
           return `${a.delta > 0 ? "+" : ""}${a.delta} ${a.token}`;
         case "resources":
           return `${a.delta > 0 ? "+" : ""}${a.delta} resources`;
+        case "attack":
+          return `Attack with ${nameOf(a.uid)}`;
+        case "use":
+          return `Use ${nameOf(a.uid)}`;
+        case "counter":
+          return `${a.delta > 0 ? "+" : ""}${a.delta} counter on ${nameOf(a.uid)}`;
+        case "life":
+          return `${a.delta > 0 ? "+" : ""}${a.delta} life`;
+        case "damage":
+          return `${a.delta > 0 ? "+" : ""}${a.delta} damage`;
         case "traverse":
           side = side === "forsaken" ? "usurper" : "forsaken";
           return `Traverse to ${sideName(side)}`;
@@ -166,7 +255,104 @@ export function Goldfish(props: { entries: DeckEntry[]; seed?: number }) {
       }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [history]);
+  }, [history, uidNames]);
+  const recaps = useMemo(
+    () => turnRecaps(g.log, startedOn, nameOf),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [history, uidNames],
+  );
+
+  /** A card: its picture (or the back if face down), its menu, its keys, and dragging. */
+  const renderCard = (c: CardInstance, zone: Zone) => {
+    const faceDown = g.faceDown.includes(c.uid);
+    const name = nameOf(c.uid);
+    const label = faceDown ? `${name} (face down)` : name;
+    const image = images.get(c.card.id);
+    const used = g.used.includes(c.uid);
+    const onKeyDown = (e: KeyboardEvent<HTMLLIElement>) => {
+      if (typing(e.target) || e.ctrlKey || e.metaKey || e.altKey) return;
+      const choice = CARD_ACTIONS.find(
+        (a) => a.key === e.key.toLowerCase() && a.zone !== zone,
+      );
+      if (!choice) return;
+      e.preventDefault();
+      e.stopPropagation();
+      doAction(choice.action(c.uid));
+    };
+    return (
+      <li
+        key={c.uid}
+        aria-label={label}
+        className={styles.card}
+        tabIndex={0}
+        draggable
+        onDragStart={() => setDragging(c.uid)}
+        onDragEnd={() => setDragging(null)}
+        onKeyDown={onKeyDown}
+      >
+        {faceDown ? (
+          <span className={styles.back} />
+        ) : image ? (
+          <img src={image} alt="" loading="lazy" />
+        ) : (
+          <span className={styles.standIn}>{name}</span>
+        )}
+        <select
+          aria-label={`Action for ${label}`}
+          value=""
+          onChange={(e) => {
+            const choice = CARD_ACTIONS.find((a) => a.label === e.target.value);
+            if (choice) doAction(choice.action(c.uid));
+          }}
+        >
+          <option value="" disabled>
+            Move…
+          </option>
+          {CARD_ACTIONS.filter((a) => a.zone !== zone).map((a) => (
+            <option key={a.label} value={a.label}>
+              {a.label}
+            </option>
+          ))}
+        </select>
+        {(zone === "weapons" || zone === "equipment") && (
+          <div className={styles.gear}>
+            {zone === "weapons" ? (
+              <Button
+                disabled={used}
+                onClick={() => doAction({ type: "attack", uid: c.uid })}
+              >
+                {`Attack with ${name}`}
+              </Button>
+            ) : (
+              <Button onClick={() => doAction({ type: "use", uid: c.uid })}>
+                {`${used ? "Unuse" : "Use"} ${name}`}
+              </Button>
+            )}
+            {used && <span className={styles.used}>Used this turn</span>}
+            <Counter
+              label={`counters on ${name}`}
+              text={`Counters ${g.counters[c.uid] ?? 0}`}
+              onChange={(delta) =>
+                doAction({ type: "counter", uid: c.uid, delta })
+              }
+            />
+          </div>
+        )}
+      </li>
+    );
+  };
+  const dropOn = (zone: Zone) => ({
+    onDragOver: (e: React.DragEvent) => e.preventDefault(),
+    onDrop: (e: React.DragEvent) => {
+      e.preventDefault();
+      if (dragging) doAction({ type: "move", uid: dragging, to: zone });
+      setDragging(null);
+    },
+  });
+
+  const sortedDeck = [...g.zones.deck].sort((a, b) =>
+    nameOf(a.uid).localeCompare(nameOf(b.uid)),
+  );
 
   return (
     <section aria-label="Goldfish" className={styles.goldfish}>
@@ -209,7 +395,7 @@ export function Goldfish(props: { entries: DeckEntry[]; seed?: number }) {
             <span>Start on</span>
             <select
               value={startSide}
-              onChange={(e) => setStartSide(e.target.value as typeof startSide)}
+              onChange={(e) => setStartSide(e.target.value as HeroSide)}
             >
               <option value="forsaken">Forsaken</option>
               <option value="usurper">Usurper</option>
@@ -239,10 +425,20 @@ export function Goldfish(props: { entries: DeckEntry[]; seed?: number }) {
             />
           );
         })}
+        <Counter
+          label="life"
+          text={`Life ${g.life}`}
+          onChange={(delta) => doAction({ type: "life", delta })}
+        />
+        <Counter
+          label="damage"
+          text={`Damage ${g.damageThisTurn} · ${g.damageTotal} in total`}
+          onChange={(delta) => doAction({ type: "damage", delta })}
+        />
       </div>
 
       <div className={styles.table}>
-        <section aria-label="Deck" className={styles.zone}>
+        <section aria-label="Deck" className={styles.zone} {...dropOn("deck")}>
           <h3>{`Deck · ${g.zones.deck.length}`}</h3>
           <div className={styles.deckBack} aria-hidden="true" />
           <div className={styles.deckActions}>
@@ -255,7 +451,66 @@ export function Goldfish(props: { entries: DeckEntry[]; seed?: number }) {
             <Button onClick={() => doAction({ type: "shuffle" })}>
               Shuffle
             </Button>
+            <Button
+              onClick={() => {
+                setLooking(true);
+                setSearching(false);
+              }}
+            >
+              {`Look at top ${lookAt}`}
+            </Button>
+            <label className={styles.lookAt}>
+              <span className={styles.visuallyHidden}>How many to look at</span>
+              <input
+                type="number"
+                min={1}
+                max={20}
+                value={lookAt}
+                onChange={(e) =>
+                  setLookAt(
+                    Math.max(1, Math.min(20, Number(e.target.value) || 1)),
+                  )
+                }
+              />
+            </label>
+            <Button
+              onClick={() => {
+                setSearching(true);
+                setLooking(false);
+              }}
+            >
+              Search the deck
+            </Button>
           </div>
+          {looking && (
+            <div className={styles.peek}>
+              <ol aria-label="Top of deck" className={styles.cards}>
+                {g.zones.deck
+                  .slice(0, lookAt)
+                  .map((c) => renderCard(c, "deck"))}
+              </ol>
+              <Button onClick={() => setLooking(false)}>Close</Button>
+            </div>
+          )}
+          {searching && (
+            <div className={styles.peek}>
+              <ul aria-label="Cards in the deck" className={styles.cards}>
+                {sortedDeck.map((c) => renderCard(c, "deck"))}
+              </ul>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  doAction({ type: "shuffle" });
+                  setSearching(false);
+                }}
+              >
+                Shuffle and close
+              </Button>
+              <Button onClick={() => setSearching(false)}>
+                Close without shuffling
+              </Button>
+            </div>
+          )}
         </section>
         {ZONE_LABELS.map(({ zone, label }) => (
           <section
@@ -263,58 +518,70 @@ export function Goldfish(props: { entries: DeckEntry[]; seed?: number }) {
             aria-label={label}
             className={styles.zone}
             data-zone={zone}
+            {...dropOn(zone)}
           >
             <h3>{`${label} · ${g.zones[zone].length}`}</h3>
             <ul className={styles.cards}>
-              {g.zones[zone].map((c) => {
-                const name = nameOf(c.card.id);
-                const image = images.get(c.card.id);
-                return (
-                  <li key={c.uid} aria-label={name} className={styles.card}>
-                    {image ? (
-                      <img src={image} alt="" loading="lazy" />
-                    ) : (
-                      <span className={styles.standIn}>{name}</span>
-                    )}
-                    <select
-                      aria-label={`Action for ${name}`}
-                      value=""
-                      onChange={(e) => {
-                        const choice = CARD_ACTIONS.find(
-                          (a) => a.label === e.target.value,
-                        );
-                        if (choice) doAction(choice.action(c.uid));
-                      }}
-                    >
-                      <option value="" disabled>
-                        Move…
-                      </option>
-                      {CARD_ACTIONS.filter((a) => a.zone !== zone).map((a) => (
-                        <option key={a.label} value={a.label}>
-                          {a.label}
-                        </option>
-                      ))}
-                    </select>
-                  </li>
-                );
-              })}
+              {g.zones[zone].map((c) => renderCard(c, zone))}
             </ul>
           </section>
         ))}
       </div>
 
-      <section className={styles.logBox}>
-        <h3>Action log</h3>
-        {logLines.length === 0 ? (
-          <p className={styles.muted}>Nothing yet.</p>
-        ) : (
-          <ol aria-label="Action log" className={styles.log}>
-            {logLines.map((line, i) => (
-              <li key={i}>{line}</li>
-            ))}
-          </ol>
-        )}
-      </section>
+      <div className={styles.history}>
+        <section className={styles.logBox}>
+          <h3>Turn recaps</h3>
+          {recaps.length === 0 ? (
+            <p className={styles.muted}>Each turn is summed up when it ends.</p>
+          ) : (
+            <ol aria-label="Turn recaps" className={styles.log}>
+              {recaps.map((line, i) => (
+                <li key={i}>{line}</li>
+              ))}
+            </ol>
+          )}
+        </section>
+        <section className={styles.logBox}>
+          <h3>Action log</h3>
+          {logLines.length === 0 ? (
+            <p className={styles.muted}>Nothing yet.</p>
+          ) : (
+            <ol aria-label="Action log" className={styles.log}>
+              {logLines.map((line, i) => (
+                <li key={i}>{line}</li>
+              ))}
+            </ol>
+          )}
+        </section>
+        <section className={styles.logBox}>
+          <h3>Share</h3>
+          <Button
+            onClick={() => {
+              const url = new URL(window.location.href);
+              url.search = new URLSearchParams({
+                tab: "goldfish",
+                seed: String(seed),
+                ...(startedOn === "usurper" ? { side: "usurper" } : {}),
+                log: encodeLog(g.log),
+              }).toString();
+              setShareLink(url.toString());
+              void navigator.clipboard
+                ?.writeText(url.toString())
+                .catch(() => {});
+            }}
+          >
+            Share this session
+          </Button>
+          {shareLink && (
+            <TextField label="Share link" readOnly value={shareLink} />
+          )}
+          <p className={styles.muted}>
+            Keys: on a card, P play, I pitch, A arsenal, G graveyard, B banish,
+            H hand, T or U top or bottom of the deck. D draw, E end turn,
+            Ctrl/⌘+Z undo, with Shift redo. Cards can be dragged between zones.
+          </p>
+        </section>
+      </div>
     </section>
   );
 }
