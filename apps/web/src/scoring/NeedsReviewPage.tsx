@@ -180,6 +180,10 @@ export function NeedsReviewPage() {
           )}
         </div>
       )}
+      <p className={styles.synergies}>
+        Check the links the rules suggest between cards:{" "}
+        <Link to="/needs-review/synergies">Confirm synergies</Link>
+      </p>
       <FilteredLayout
         state={filters.state}
         facets={facets}
