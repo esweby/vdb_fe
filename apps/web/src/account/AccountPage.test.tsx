@@ -36,23 +36,6 @@ describe("account page", () => {
     );
   });
 
-  it("turns hero prompts in goldfish on, off by default", async () => {
-    const fake = fakeScoreRepository();
-    await renderApp({
-      path: "/account",
-      auth: auth(),
-      scores: fake.repository,
-    });
-    const box = await screen.findByRole("checkbox", {
-      name: "Hero prompts in goldfish",
-    });
-    expect(box).not.toBeChecked();
-    await userEvent.setup().click(box);
-    await waitFor(() =>
-      expect(fake.saved).toContain("preferences heroPrompts=true"),
-    );
-  });
-
   it("the card page starts split by side when the preference is off", async () => {
     const fake = fakeScoreRepository([], {
       preferences: { scoreSidesTogether: false },

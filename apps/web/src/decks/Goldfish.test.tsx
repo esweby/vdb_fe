@@ -1,13 +1,14 @@
-// The goldfish tool (README "Goldfishing", phase two step 5): a sandbox for playing a deck's
-// turns alone. The user moves every card; the tool keeps count and enforces no game rules.
+// The goldfish tool (README "Goldfishing", phase two step 5), on the rules engine since step 8
+// of docs/rules-engine.md: cards with verified rules are played by them, so Viserai, Runechants
+// and Blood Debt happen by themselves; everything else is still moved by hand, as a sandbox.
 import { fireEvent, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { fakeAuthService } from "../test/fakeAuthService.ts";
 import { fakeDeckRepository } from "../test/fakeDeckRepository.ts";
-import { fakeScoreRepository } from "../test/fakeScoreRepository.ts";
 import { renderApp } from "../test/renderApp.tsx";
 import type { DeckCard } from "./deckRepository.ts";
+import { encodeFixed } from "./goldfishLink.ts";
 
 const card = (variantId: string, quantity: number): DeckCard => ({
   variantId,
@@ -17,10 +18,7 @@ const card = (variantId: string, quantity: number): DeckCard => ({
 // 10 deck cards and a weapon.
 const deck = [card("hp1", 3), card("bsl3", 3), card("ff1", 4), card("nb", 1)];
 
-async function open(
-  path = "/decks/deck-1?tab=goldfish&seed=7",
-  options: { heroPrompts?: boolean } = {},
-) {
+async function open(path = "/decks/deck-1?tab=goldfish&seed=7") {
   await renderApp({
     path,
     auth: fakeAuthService({
@@ -36,9 +34,6 @@ async function open(
         pitchTargets: {},
       },
     ]).repository,
-    scores: fakeScoreRepository([], {
-      preferences: { heroPrompts: options.heroPrompts },
-    }).repository,
   });
   // The latest render: one test opens the page twice.
   const table = within(
@@ -92,13 +87,13 @@ describe("goldfish", () => {
     );
   });
 
-  it("plays a card to the arena, and moves it on", async () => {
+  it("puts a card in the arena by hand, and moves it on", async () => {
     const { table, user } = await open();
     const [first] = zoneCards(table, "Hand");
     const name = first!.getAttribute("aria-label")!;
     await user.selectOptions(
       within(first!).getByRole("combobox", { name: `Action for ${name}` }),
-      "Play",
+      "To arena (by hand)",
     );
     const played = zoneCards(table, "Arena")[0]!;
     await user.selectOptions(
@@ -305,76 +300,83 @@ describe("goldfish", () => {
   });
 });
 
-// Phase two step 10 (README "Hero prompts"): optional, off by default, and nothing happens
-// unless the user says yes. The rules are UNVERIFIED.
-describe("hero prompts", () => {
-  const promptsOn = () =>
-    open("/decks/deck-1?tab=goldfish&seed=7", { heroPrompts: true });
-
-  it("are off by default, with a pointer to turn them on", async () => {
-    const { table, user } = await open();
-    await user.click(table.getByRole("button", { name: "More Runechants" }));
-    expect(table.queryByRole("region", { name: "Hero prompts" })).toBeNull();
-    expect(table.getByText(/Hero prompts are off/)).toBeInTheDocument();
-  });
-
-  it("ask, and do it only on Yes, as an action that can be undone", async () => {
-    const { table, user } = await promptsOn();
-    await user.click(table.getByRole("button", { name: "More Runechants" }));
-    const prompts = within(
-      await table.findByRole("region", { name: "Hero prompts" }),
+// docs/rules-engine.md, step 8b: goldfish on the rules engine.
+describe("by the rules", () => {
+  /** A seed-7 game with these cards fixed in hand. */
+  const withHand = (names: string[], extra = "") =>
+    open(
+      `/decks/deck-1?tab=goldfish&seed=7${extra}&fixed=${encodeFixed(
+        names.map((name) => ({ name, zone: "hand" as const })),
+      )}`,
     );
-    const prompt = prompts.getByRole("listitem");
-    expect(prompt).toHaveTextContent(
-      "You created a Runechant. Banish the top card of your deck?",
+  const act = async (
+    table: ReturnType<typeof within>,
+    user: ReturnType<typeof userEvent.setup>,
+    label: string,
+    action: string,
+  ) => {
+    const card = zoneCards(table, "Hand").find(
+      (li) => li.getAttribute("aria-label") === label,
+    )!;
+    await user.selectOptions(
+      within(card).getByRole("combobox", { name: `Action for ${label}` }),
+      action,
     );
-    expect(
-      table.getByRole("heading", { name: "Deck · 6" }),
-    ).toBeInTheDocument();
-    await user.click(within(prompt).getByRole("button", { name: "Yes" }));
-    expect(zoneCards(table, "Banished")).toHaveLength(1);
-    expect(
-      table.getByRole("heading", { name: "Deck · 5" }),
-    ).toBeInTheDocument();
-    expect(table.queryByRole("region", { name: "Hero prompts" })).toBeNull();
-    await user.click(table.getByRole("button", { name: "Undo" }));
-    expect(zoneCards(table, "Banished")).toHaveLength(0);
-  });
+  };
 
-  it("work out what a yes does when it's answered, so two banishes take two cards", async () => {
-    const { table, user } = await promptsOn();
-    await user.click(table.getByRole("button", { name: "More Runechants" }));
-    await user.click(table.getByRole("button", { name: "More Runechants" }));
-    const yes = () =>
-      within(table.getByRole("region", { name: "Hero prompts" })).getAllByRole(
-        "button",
-        { name: "Yes" },
-      )[0]!;
-    await user.click(yes());
-    await user.click(yes());
+  it("plays a card with verified rules by them, asking for the choice it needs", async () => {
+    const { table, user } = await withHand([
+      "Become the Shadow Lord",
+      "Hocus Pocus",
+    ]);
+    await act(table, user, "Become the Shadow Lord (blue)", "Play");
+    const choice = within(await table.findByRole("region", { name: "Choose" }));
+    expect(choice.getByText("Banish a card from hand")).toBeInTheDocument();
+    await user.click(
+      choice.getAllByRole("button", { name: "Hocus Pocus (red)" })[0]!,
+    );
+    // Runeblade: a Runechant; Viserai then banishes the top card of the deck.
+    expect(
+      table.getByText("Runechants 1 · 1 made this turn"),
+    ).toBeInTheDocument();
     expect(zoneCards(table, "Banished")).toHaveLength(2);
+    expect(table.queryByRole("region", { name: "Choose" })).toBeNull();
   });
 
-  it("do nothing on No", async () => {
-    const { table, user } = await promptsOn();
-    await user.click(table.getByRole("button", { name: "More Runechants" }));
-    const prompt = within(
-      await table.findByRole("region", { name: "Hero prompts" }),
-    ).getByRole("listitem");
-    await user.click(within(prompt).getByRole("button", { name: "No" }));
-    expect(zoneCards(table, "Banished")).toHaveLength(0);
-    expect(table.queryByRole("region", { name: "Hero prompts" })).toBeNull();
+  it("says why the rules refuse an action", async () => {
+    const { table, user } = await open();
+    const blade = zoneCards(table, "Weapons")[0]!;
+    await user.selectOptions(
+      within(blade).getByRole("combobox", { name: "Action for Nebula Blade" }),
+      "Pitch",
+    );
+    expect(table.getByRole("alert")).toHaveTextContent(
+      "Nebula Blade can't be pitched.",
+    );
   });
 
-  it("ask after the D and E keys too", async () => {
-    const { table, user } = await promptsOn();
-    await user.click(table.getByRole("button", { name: "Traverse" }));
-    await user.click(table.getByRole("button", { name: "More Gates" }));
-    await user.keyboard("e");
+  it("asks before an optional trigger, in plain words", async () => {
+    const { table, user } = await withHand(
+      ["Become the Shadow Lord", "Become the Shadow Lord"],
+      "&side=usurper",
+    );
+    await act(table, user, "Become the Shadow Lord (blue)", "Play");
+    const choice = within(await table.findByRole("region", { name: "Choose" }));
+    await user.click(choice.getAllByRole("button")[0]!);
+    await user.click(table.getByRole("button", { name: "End turn" }));
+    const confirm = within(
+      await table.findByRole("region", { name: "Choose" }),
+    );
     expect(
-      await table.findByText(
-        "You created a Gate this turn. Traverse back to Forsaken?",
-      ),
+      confirm.getByText("Viserai, the Usurper: traverse to Forsaken?"),
     ).toBeInTheDocument();
+    await user.click(confirm.getByRole("button", { name: "Yes" }));
+    expect(table.getByText("On Forsaken")).toBeInTheDocument();
+    expect(table.getByText("Turn 2")).toBeInTheDocument();
+  });
+
+  it("has no hero prompts any more: the engine resolves Viserai itself", async () => {
+    const { table } = await open();
+    expect(table.queryByText(/Hero prompts/)).toBeNull();
   });
 });

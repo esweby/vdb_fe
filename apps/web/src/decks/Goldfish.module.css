@@ -261,3 +261,11 @@
 .prompts li span {
   flex: 1 1 18rem;
 }
+
+.refused {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--danger, #b42318) 10%, transparent);
+  color: var(--fg);
+}
