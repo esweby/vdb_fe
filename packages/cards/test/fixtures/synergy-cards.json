@@ -1,0 +1,650 @@
+{
+  "Cull": {
+    "type": "action",
+    "subtypes": [],
+    "attributes": {
+      "groups": ["runeblade_non_attack_action", "banishes_from_hand"],
+      "disrupts": [
+        {
+          "from": "hand",
+          "action": "banish",
+          "amount": 1,
+          "target": "each_hero",
+          "trigger": "on_play"
+        }
+      ],
+      "hasUsurp": false,
+      "canAttack": false,
+      "hasGoAgain": false,
+      "hasRuneGate": false,
+      "hasBloodDebt": true,
+      "instantSpeed": {
+        "conditions": ["hero_lost_life_this_turn"]
+      },
+      "isGateTarget": true,
+      "specialization": null,
+      "playableFromBanish": {}
+    },
+    "variantAttributes": []
+  },
+  "Ebon Fold": {
+    "type": "equipment",
+    "subtypes": ["Head"],
+    "attributes": {
+      "notes": "Instant: {r}, destroy it.",
+      "groups": ["banishes_from_hand", "rewards_shadow_banish"],
+      "oneUse": true,
+      "hasUsurp": false,
+      "canAttack": false,
+      "hasGoAgain": false,
+      "banishesOwn": [
+        {
+          "from": "hand",
+          "trigger": "activated"
+        }
+      ],
+      "hasRuneGate": false,
+      "hasBloodDebt": false,
+      "isGateTarget": false,
+      "specialization": null,
+      "conditionalBonuses": [
+        {
+          "amount": 1,
+          "effect": "draw",
+          "conditions": ["banished_card_is_shadow"]
+        }
+      ]
+    },
+    "variantAttributes": []
+  },
+  "Embrace Sin": {
+    "type": "action",
+    "subtypes": [],
+    "attributes": {
+      "notes": "Your next attack this turn also gets +2 power.",
+      "groups": ["runeblade_non_attack_action"],
+      "hasUsurp": false,
+      "canAttack": false,
+      "hasGoAgain": true,
+      "hasRuneGate": false,
+      "hasBloodDebt": false,
+      "isGateTarget": false,
+      "specialization": null,
+      "enablesPlayFromBanish": [
+        {
+          "target": {
+            "group": "runechant_aura"
+          }
+        }
+      ]
+    },
+    "variantAttributes": []
+  },
+  "Abyssal Bite": {
+    "type": "action",
+    "subtypes": [],
+    "attributes": {
+      "notes": "Your next Shadow attack this turn gets +1 power.",
+      "groups": [],
+      "hasUsurp": false,
+      "canAttack": false,
+      "hasGoAgain": true,
+      "hasRuneGate": false,
+      "hasBloodDebt": true,
+      "isGateTarget": true,
+      "specialization": null,
+      "playableFromBanish": {}
+    },
+    "variantAttributes": []
+  },
+  "Carrion Husk": {
+    "type": "equipment",
+    "subtypes": ["Chest"],
+    "attributes": {
+      "notes": "6 defense. The start-of-turn banish only happens if you have 13 or less life.",
+      "groups": [],
+      "hasUsurp": false,
+      "canAttack": false,
+      "hasGoAgain": false,
+      "hasRuneGate": false,
+      "banishesSelf": [
+        {
+          "trigger": "combat_chain_closes",
+          "conditions": ["it_defended"]
+        },
+        {
+          "trigger": "start_of_turn"
+        }
+      ],
+      "hasBloodDebt": true,
+      "isGateTarget": false,
+      "specialization": null
+    },
+    "variantAttributes": []
+  },
+  "Nebula Blade": {
+    "type": "weapon",
+    "subtypes": ["Sword", "2H"],
+    "attributes": {
+      "notes": "+3 power if you've played a non-attack action card this turn.",
+      "groups": [],
+      "tokens": [
+        {
+          "token": "runechant",
+          "amount": 1,
+          "trigger": "on_hit"
+        }
+      ],
+      "hasUsurp": false,
+      "canAttack": true,
+      "hasGoAgain": false,
+      "hasRuneGate": false,
+      "hasBloodDebt": false,
+      "isGateTarget": false,
+      "specialization": null
+    },
+    "variantAttributes": []
+  },
+  "Blood Tribute": {
+    "type": "instant",
+    "subtypes": [],
+    "attributes": {
+      "notes": "Opt 3/2/1 (red/yellow/blue) first.",
+      "groups": [],
+      "hasUsurp": false,
+      "canAttack": false,
+      "hasGoAgain": false,
+      "banishesOwn": [
+        {
+          "from": "deck_top",
+          "trigger": "on_play"
+        }
+      ],
+      "hasRuneGate": false,
+      "hasBloodDebt": false,
+      "isGateTarget": false,
+      "specialization": null
+    },
+    "variantAttributes": []
+  },
+  "Arcane Cussing": {
+    "type": "action",
+    "subtypes": ["Aura"],
+    "attributes": {
+      "notes": "Only creates Runechants if it leaves the arena during your turn.",
+      "groups": ["runeblade_aura", "runeblade_non_attack_action"],
+      "hasUsurp": false,
+      "canAttack": false,
+      "hasGoAgain": true,
+      "hasRuneGate": false,
+      "hasBloodDebt": false,
+      "isGateTarget": false,
+      "specialization": null
+    },
+    "variantAttributes": [
+      {
+        "tokens": [
+          {
+            "token": "runechant",
+            "amount": 3,
+            "trigger": "on_leave_arena"
+          }
+        ]
+      },
+      {
+        "tokens": [
+          {
+            "token": "runechant",
+            "amount": 2,
+            "trigger": "on_leave_arena"
+          }
+        ]
+      },
+      {
+        "tokens": [
+          {
+            "token": "runechant",
+            "amount": 1,
+            "trigger": "on_leave_arena"
+          }
+        ]
+      }
+    ]
+  },
+  "Mauvrion Skies": {
+    "type": "action",
+    "subtypes": [],
+    "attributes": {
+      "groups": ["runeblade_non_attack_action"],
+      "hasUsurp": false,
+      "canAttack": false,
+      "hasGoAgain": true,
+      "hasRuneGate": false,
+      "hasBloodDebt": false,
+      "isGateTarget": false,
+      "grantsGoAgain": "next_runeblade_attack_action",
+      "specialization": null
+    },
+    "variantAttributes": [
+      {
+        "tokens": [
+          {
+            "token": "runechant",
+            "amount": 3,
+            "trigger": "on_hit",
+            "grantedTo": "next_runeblade_attack_action"
+          }
+        ]
+      },
+      {
+        "tokens": [
+          {
+            "token": "runechant",
+            "amount": 2,
+            "trigger": "on_hit",
+            "grantedTo": "next_runeblade_attack_action"
+          }
+        ]
+      },
+      {
+        "tokens": [
+          {
+            "token": "runechant",
+            "amount": 1,
+            "trigger": "on_hit",
+            "grantedTo": "next_runeblade_attack_action"
+          }
+        ]
+      }
+    ]
+  },
+  "Eloquent Eulogy": {
+    "type": "attack_action",
+    "subtypes": ["Attack"],
+    "attributes": {
+      "groups": ["runeblade_attack_action", "rune_gate"],
+      "tokens": [
+        {
+          "token": "eloquence",
+          "amount": 1,
+          "trigger": "combat_chain_closes",
+          "conditions": ["hero_lost_life_this_turn"]
+        }
+      ],
+      "hasUsurp": false,
+      "canAttack": false,
+      "hasGoAgain": false,
+      "hasRuneGate": true,
+      "hasBloodDebt": true,
+      "isGateTarget": true,
+      "specialization": null
+    },
+    "variantAttributes": []
+  },
+  "Widespread Ruin": {
+    "type": "attack_action",
+    "subtypes": ["Attack"],
+    "attributes": {
+      "notes": "Only heroes who have lost life this turn.",
+      "groups": ["runeblade_attack_action", "rune_gate"],
+      "disrupts": [
+        {
+          "from": "deck_top",
+          "action": "banish",
+          "amount": 1,
+          "target": "each_hero",
+          "trigger": "combat_chain_closes",
+          "conditions": ["hero_lost_life_this_turn"]
+        }
+      ],
+      "hasUsurp": false,
+      "canAttack": false,
+      "hasGoAgain": false,
+      "hasRuneGate": true,
+      "hasBloodDebt": true,
+      "isGateTarget": true,
+      "specialization": null
+    },
+    "variantAttributes": []
+  },
+  "Bounding Demigon": {
+    "type": "attack_action",
+    "subtypes": ["Attack"],
+    "attributes": {
+      "notes": "From banish: +1 power.",
+      "groups": ["runeblade_attack_action"],
+      "hasUsurp": false,
+      "canAttack": false,
+      "hasGoAgain": false,
+      "hasRuneGate": false,
+      "hasBloodDebt": true,
+      "isGateTarget": true,
+      "specialization": null,
+      "playableFromBanish": {
+        "conditions": ["played_non_attack_action_this_turn"]
+      },
+      "rewardsPlayFromBanish": true
+    },
+    "variantAttributes": []
+  },
+  "Runechant of Envy": {
+    "type": "instant",
+    "subtypes": ["Aura"],
+    "attributes": {
+      "notes": "Counts as a Runechant itself. When usurped, gain 1 life.",
+      "groups": ["runechant_aura", "runeblade_aura"],
+      "tokens": [
+        {
+          "token": "runechant",
+          "amount": 1,
+          "trigger": "on_destroyed"
+        }
+      ],
+      "hasUsurp": false,
+      "canAttack": false,
+      "hasGoAgain": false,
+      "hasRuneGate": false,
+      "hasBloodDebt": false,
+      "isGateTarget": false,
+      "specialization": null
+    },
+    "variantAttributes": []
+  },
+  "Runechant of Lust": {
+    "type": "instant",
+    "subtypes": ["Aura"],
+    "attributes": {
+      "notes": "Counts as a Runechant itself.",
+      "groups": ["runechant_aura", "runeblade_aura"],
+      "tokens": [
+        {
+          "token": "runechant",
+          "amount": 1,
+          "trigger": "on_usurped"
+        },
+        {
+          "token": "runechant",
+          "amount": 1,
+          "trigger": "on_destroyed"
+        }
+      ],
+      "hasUsurp": false,
+      "canAttack": false,
+      "hasGoAgain": false,
+      "hasRuneGate": false,
+      "hasBloodDebt": false,
+      "isGateTarget": false,
+      "specialization": null
+    },
+    "variantAttributes": []
+  },
+  "Dabble in Darkness": {
+    "type": "attack_action",
+    "subtypes": ["Attack"],
+    "attributes": {
+      "notes": "Loses power equal to the banished card's pitch value.",
+      "groups": [],
+      "hasUsurp": false,
+      "canAttack": false,
+      "hasGoAgain": false,
+      "banishesOwn": [
+        {
+          "from": "deck_top",
+          "trigger": "on_attack"
+        }
+      ],
+      "hasRuneGate": false,
+      "hasBloodDebt": true,
+      "isGateTarget": true,
+      "specialization": null
+    },
+    "variantAttributes": []
+  },
+  "Revel in Runeblood": {
+    "type": "action",
+    "subtypes": [],
+    "attributes": {
+      "notes": "Requires another non-attack action card besides this one. Destroys all your Runechants at your end phase.",
+      "groups": ["runeblade_non_attack_action"],
+      "tokens": [
+        {
+          "token": "runechant",
+          "amount": 4,
+          "trigger": "on_play",
+          "conditions": [
+            "played_attack_action_this_turn",
+            "played_non_attack_action_this_turn"
+          ]
+        }
+      ],
+      "hasUsurp": false,
+      "canAttack": false,
+      "hasGoAgain": true,
+      "hasRuneGate": false,
+      "hasBloodDebt": false,
+      "isGateTarget": false,
+      "specialization": null
+    },
+    "variantAttributes": []
+  },
+  "Shadowrealm Reaper": {
+    "type": "attack_action",
+    "subtypes": ["Attack"],
+    "attributes": {
+      "notes": "From banish: also +1 power.",
+      "groups": [],
+      "goAgain": {
+        "conditions": ["played_from_banish"]
+      },
+      "hasUsurp": false,
+      "canAttack": false,
+      "hasGoAgain": false,
+      "hasRuneGate": false,
+      "hasBloodDebt": true,
+      "isGateTarget": true,
+      "specialization": null,
+      "rewardsPlayFromBanish": true
+    },
+    "variantAttributes": []
+  },
+  "Envelop in Darkness": {
+    "type": "action",
+    "subtypes": [],
+    "attributes": {
+      "groups": ["runeblade_non_attack_action"],
+      "tokens": [
+        {
+          "token": "runechant",
+          "amount": 1,
+          "trigger": "on_play"
+        }
+      ],
+      "hasUsurp": false,
+      "supports": [
+        {
+          "note": "+3/+2/+1 power to the next one you rune gate this turn",
+          "target": {
+            "group": "rune_gate"
+          }
+        }
+      ],
+      "canAttack": false,
+      "hasGoAgain": true,
+      "hasRuneGate": false,
+      "hasBloodDebt": false,
+      "isGateTarget": false,
+      "specialization": null
+    },
+    "variantAttributes": []
+  },
+  "Arknight Descendancy": {
+    "type": "attack_action",
+    "subtypes": ["Attack"],
+    "attributes": {
+      "notes": "Banished from anywhere; X is the life paid, up to 3.",
+      "groups": ["runeblade_attack_action", "triggers_when_banished"],
+      "tokens": [
+        {
+          "token": "runechant",
+          "amount": "X",
+          "trigger": "on_banished"
+        }
+      ],
+      "hasUsurp": false,
+      "canAttack": false,
+      "hasGoAgain": false,
+      "hasRuneGate": false,
+      "hasBloodDebt": true,
+      "isGateTarget": true,
+      "specialization": "Viserai",
+      "costReducedPerRunechant": true
+    },
+    "variantAttributes": []
+  },
+  "Condemn to Slaughter": {
+    "type": "action",
+    "subtypes": [],
+    "attributes": {
+      "notes": "Destroying your own aura is optional (a Runechant counts). Your next Runeblade attack gets +3/+2/+1 power (red/yellow/blue).",
+      "groups": ["runeblade_non_attack_action"],
+      "disrupts": [
+        {
+          "from": "auras",
+          "action": "destroy",
+          "amount": 1,
+          "target": "opponent",
+          "trigger": "on_play",
+          "conditions": ["destroyed_own_aura"]
+        }
+      ],
+      "hasUsurp": false,
+      "canAttack": false,
+      "hasGoAgain": true,
+      "hasRuneGate": false,
+      "hasBloodDebt": false,
+      "isGateTarget": false,
+      "specialization": null
+    },
+    "variantAttributes": []
+  },
+  "Murmuring Gloomblade": {
+    "type": "attack_action",
+    "subtypes": ["Attack"],
+    "attributes": {
+      "groups": ["runeblade_attack_action"],
+      "tokens": [
+        {
+          "token": "runechant",
+          "amount": 1,
+          "trigger": "on_attack"
+        },
+        {
+          "token": "runechant",
+          "amount": 1,
+          "trigger": "on_hit"
+        }
+      ],
+      "hasUsurp": true,
+      "canAttack": false,
+      "hasGoAgain": false,
+      "hasRuneGate": false,
+      "hasBloodDebt": true,
+      "isGateTarget": true,
+      "specialization": null,
+      "playableFromBanish": {}
+    },
+    "variantAttributes": []
+  },
+  "Sinspeaker Gloomblade": {
+    "type": "attack_action",
+    "subtypes": ["Attack"],
+    "attributes": {
+      "groups": ["runeblade_attack_action"],
+      "tutors": [
+        {
+          "to": "arena",
+          "target": {
+            "group": "runechant_aura"
+          },
+          "trigger": "on_attack",
+          "optional": true,
+          "conditions": ["played_from_banish"]
+        }
+      ],
+      "hasUsurp": true,
+      "canAttack": false,
+      "hasGoAgain": false,
+      "hasRuneGate": false,
+      "hasBloodDebt": true,
+      "isGateTarget": true,
+      "specialization": null,
+      "playableFromBanish": {}
+    },
+    "variantAttributes": []
+  },
+  "Become the Shadow Lord": {
+    "type": "action",
+    "subtypes": [],
+    "attributes": {
+      "groups": [
+        "runeblade_non_attack_action",
+        "banishes_from_hand",
+        "rewards_shadow_banish",
+        "rewards_runeblade_banish"
+      ],
+      "tokens": [
+        {
+          "token": "runechant",
+          "amount": 1,
+          "trigger": "on_play",
+          "conditions": ["banished_card_is_runeblade"]
+        },
+        {
+          "token": "gate",
+          "amount": 1,
+          "trigger": "on_play",
+          "conditions": ["banished_card_is_shadow"]
+        }
+      ],
+      "hasUsurp": false,
+      "canAttack": false,
+      "hasGoAgain": true,
+      "banishesOwn": [
+        {
+          "from": "hand",
+          "trigger": "on_play"
+        }
+      ],
+      "hasRuneGate": false,
+      "hasBloodDebt": false,
+      "isGateTarget": false,
+      "specialization": null
+    },
+    "variantAttributes": []
+  },
+  "Usurp the Shadow Throne": {
+    "type": "attack_action",
+    "subtypes": ["Attack"],
+    "attributes": {
+      "notes": "When it hits, turns all cards in their banished zone face-down; they lose X life and you gain X, where X is the number turned.",
+      "groups": ["runeblade_attack_action"],
+      "hasUsurp": false,
+      "canAttack": false,
+      "hasGoAgain": false,
+      "hasRuneGate": false,
+      "hasBloodDebt": true,
+      "isGateTarget": true,
+      "costReductions": [
+        {
+          "amount": 6,
+          "conditions": ["usurped_this_turn"]
+        }
+      ],
+      "specialization": "Viserai",
+      "playableFromBanish": {
+        "conditions": ["usurped_this_turn"]
+      }
+    },
+    "variantAttributes": []
+  }
+}

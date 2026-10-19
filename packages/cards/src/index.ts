@@ -19,3 +19,13 @@ export {
   type RoleCard,
   type RoleDef,
 } from "./roles.ts";
+export {
+  SYNERGY_RULES,
+  deriveSynergies,
+  type SynergyCard,
+  type SynergyEdge,
+  type SynergyRule,
+  type SynergyRuleId,
+  type RoleRule,
+  type ReferenceRule,
+} from "./synergy.ts";
