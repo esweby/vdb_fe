@@ -26,3 +26,10 @@ The design is in [README.md](README.md), and the current plan is in [docs/phase-
 - `npm test`: unit tests
 - `npm run typecheck`: TypeScript
 - `supabase start` / `supabase test db`: local stack and database tests
+
+## Agents
+
+Use these without being asked. They run on a cheaper model and keep long output out of the main conversation.
+
+- `test-runner` (`.claude/agents/test-runner.md`): run the checks through it instead of running them directly. Use it to confirm a new test fails before writing the code for it, and again after the change.
+- `migration-checker` (`.claude/agents/migration-checker.md`): run it on any change to `supabase/migrations` before opening a PR.
