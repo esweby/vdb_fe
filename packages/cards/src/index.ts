@@ -7,7 +7,7 @@ export { describeAttributes, describeAttributeSections } from "./describe.ts";
 export * from "./groups.ts";
 export * from "./routes.ts";
 export { relevantDimensions } from "./relevance.ts";
-export { hasConditions } from "./conditions.ts";
+export { conditionsOf, hasConditions } from "./conditions.ts";
 export {
   ROLES,
   ROLE_IDS,

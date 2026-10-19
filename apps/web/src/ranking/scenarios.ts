@@ -172,6 +172,7 @@ export function toEngineCard(
       ...(card.talents.includes("Shadow") ? ["shadow"] : []),
       ...(card.classes.includes("Runeblade") ? ["runeblade"] : []),
       ...(card.classes.includes("Generic") ? ["generic"] : []),
+      ...(card.subtypes.includes("Aura") ? ["aura"] : []),
     ],
     type: card.type,
     amounts: {

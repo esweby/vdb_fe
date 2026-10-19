@@ -1,6 +1,8 @@
 import {
   runAll,
+  runMany,
   runOne,
+  type ManyInput,
   type OneInput,
   type OneOutput,
   type ScenarioInput,
@@ -34,4 +36,9 @@ export function runScenarios(input: ScenarioInput): Promise<ScenarioOutput> {
 /** One scenario of the user's. */
 export function runScenario(input: OneInput): Promise<OneOutput> {
   return inWorker(input, runOne);
+}
+
+/** Several scenarios on one deck. */
+export function runScenarioBatch(input: ManyInput): Promise<OneOutput[]> {
+  return inWorker(input, runMany);
 }
