@@ -1,11 +1,7 @@
 // Build a scenario from blocks and run it against a deck (README "Building a rule" and "Running
-// a scenario", phase two step 6). Steps (stage 2) and saving come later.
+// a scenario", phase two step 6), and save it (README "Saved scenarios"). Steps are stage 2.
 import { ROLES } from "@vdb/cards";
-import type {
-  ConditionGroup,
-  EngineCard,
-  ScenarioDefinition,
-} from "@vdb/engine";
+import type { EngineCard, ScenarioDefinition } from "@vdb/engine";
 import { useMemo, useState } from "react";
 import { TYPE_LABELS } from "../cards/filterCards.ts";
 import { PITCH_NAMES } from "../decks/deckRules.ts";
@@ -13,7 +9,8 @@ import { runScenario } from "../ranking/runScenarios.ts";
 import { RUNS, type OneOutput } from "../ranking/scenarioRuns.ts";
 import { BUILT_IN_SCENARIOS } from "../ranking/scenarios.ts";
 import { Button, TextField } from "../ui/index.ts";
-import { TRAITS } from "./blocks.ts";
+import { labelsOf, TRAITS } from "./blocks.ts";
+import type { SavedScenario, Visibility } from "./scenarioRepository.ts";
 import {
   fromDefinition,
   newBlock,
@@ -74,8 +71,35 @@ function Select(props: {
   );
 }
 
-export function ScenarioBuilder(props: { deck: DeckForScenarios }) {
-  const [draft, setDraft] = useState<Draft>(newDraft);
+export const VISIBILITY: Record<Visibility, string> = {
+  private: "Private",
+  link: "Anyone with the link",
+  library: "In the library",
+};
+
+export const shareLink = (id: string) =>
+  `${window.location.origin}/scenarios/${id}`;
+
+export function ScenarioBuilder(props: {
+  deck: DeckForScenarios;
+  /** A saved scenario of the person's own, to edit. */
+  editing?: SavedScenario;
+  /** Saving is for signed-in people; without it there's no Save. */
+  onSave?: (
+    definition: ScenarioDefinition,
+    visibility: Visibility,
+    id?: string,
+  ) => void;
+  /** Curators and admins can save straight into the library. */
+  canUseLibrary?: boolean;
+}) {
+  const { editing } = props;
+  const [draft, setDraft] = useState<Draft>(() =>
+    editing ? fromDefinition(editing.definition) : newDraft(),
+  );
+  const [visibility, setVisibility] = useState<Visibility>(
+    editing?.visibility ?? "private",
+  );
   const [run, setRun] = useState<{
     output: OneOutput;
     key: string;
@@ -306,25 +330,26 @@ export function ScenarioBuilder(props: { deck: DeckForScenarios }) {
             each. It counts what's visible; it doesn't play the game.
           </p>
         </div>
-        <Select
-          label="Start from"
-          value=""
-          options={[
-            ["", "Choose a scenario…"],
-            ["blank", "A blank scenario"],
-            ...BUILT_IN_SCENARIOS.map(({ definition: d }): [string, string] => [
-              d.name,
-              d.name,
-            ]),
-          ]}
-          onChange={(v) => {
-            const built = BUILT_IN_SCENARIOS.find(
-              (s) => s.definition.name === v,
-            );
-            if (v === "blank") setDraft(newDraft());
-            else if (built) setDraft(fromDefinition(built.definition));
-          }}
-        />
+        {!editing && (
+          <Select
+            label="Start from"
+            value=""
+            options={[
+              ["", "Choose a scenario…"],
+              ["blank", "A blank scenario"],
+              ...BUILT_IN_SCENARIOS.map(
+                ({ definition: d }): [string, string] => [d.name, d.name],
+              ),
+            ]}
+            onChange={(v) => {
+              const built = BUILT_IN_SCENARIOS.find(
+                (s) => s.definition.name === v,
+              );
+              if (v === "blank") setDraft(newDraft());
+              else if (built) setDraft(fromDefinition(built.definition));
+            }}
+          />
+        )}
       </header>
 
       <div className={styles.settings}>
@@ -450,6 +475,53 @@ export function ScenarioBuilder(props: { deck: DeckForScenarios }) {
       {renderGroup(draft.condition, [])}
 
       <div className={styles.runRow}>
+        {props.onSave && (
+          <div className={styles.save}>
+            <Select
+              label="Who can see it"
+              value={visibility}
+              options={(Object.keys(VISIBILITY) as Visibility[])
+                .filter(
+                  (v) =>
+                    v !== "library" ||
+                    props.canUseLibrary ||
+                    editing?.visibility === "library",
+                )
+                .map((v) => [v, VISIBILITY[v]])}
+              onChange={(v) => setVisibility(v as Visibility)}
+            />
+            {"definition" in checked && (
+              <>
+                <Button
+                  onClick={() =>
+                    props.onSave!(checked.definition, visibility, editing?.id)
+                  }
+                >
+                  {editing ? "Save changes" : "Save scenario"}
+                </Button>
+                {editing && (
+                  <Button
+                    variant="ghost"
+                    onClick={() =>
+                      props.onSave!(checked.definition, visibility)
+                    }
+                  >
+                    Save as new
+                  </Button>
+                )}
+              </>
+            )}
+            {editing && editing.visibility !== "private" && (
+              <TextField
+                label="Share link"
+                className={styles.link}
+                readOnly
+                value={shareLink(editing.id)}
+                onFocus={(e) => e.target.select()}
+              />
+            )}
+          </div>
+        )}
         {"problem" in checked && (
           <p className={styles.problem} role="status">
             {checked.problem}
@@ -532,18 +604,4 @@ export function ScenarioBuilder(props: { deck: DeckForScenarios }) {
       )}
     </section>
   );
-}
-
-/** The block labels of a condition, in reading order. */
-function labelsOf(group: ConditionGroup): string[] {
-  const out: string[] = [];
-  const walk = (g: ConditionGroup) => {
-    for (const item of "all" in g ? g.all : g.any) {
-      if ("label" in item) {
-        if (!out.includes(item.label)) out.push(item.label);
-      } else walk(item);
-    }
-  };
-  walk(group);
-  return out;
 }

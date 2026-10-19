@@ -16,6 +16,7 @@ import { CardScoringPage } from "./scoring/CardScoringPage.tsx";
 import { QuickReviewPage } from "./scoring/QuickReviewPage.tsx";
 import { NeedsReviewPage } from "./scoring/NeedsReviewPage.tsx";
 import { AccountPage } from "./account/AccountPage.tsx";
+import { SharedScenarioPage } from "./scenarios/SharedScenarioPage.tsx";
 import { HomePage } from "./home/HomePage.tsx";
 import { RankingPage } from "./ranking/RankingPage.tsx";
 import { CardsPage } from "./cards/CardsPage.tsx";
@@ -163,6 +164,12 @@ const routeTree = rootRoute.addChildren([
     }),
     // A public deck opens signed out, read only; a private one is "not found" to anyone else.
     component: DeckPage,
+  }),
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/scenarios/$scenarioId",
+    // Shared by link: anyone can view it, signed out too.
+    component: SharedScenarioPage,
   }),
   createRoute({
     getParentRoute: () => rootRoute,

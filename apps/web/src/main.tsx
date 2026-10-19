@@ -8,6 +8,7 @@ import { supabaseScoreRepository } from "./scoring/scoreRepository.ts";
 import { supabaseDeckRepository } from "./decks/deckRepository.ts";
 import { supabaseStrategyRepository } from "./strategy/strategyRepository.ts";
 import { supabaseSynergyRepository } from "./synergy/synergyRepository.ts";
+import { supabaseScenarioRepository } from "./scenarios/scenarioRepository.ts";
 import { supabase } from "./lib/supabase.ts";
 import { createAppRouter } from "./router.tsx";
 import { createStore } from "./store.ts";
@@ -19,6 +20,7 @@ const scores = supabaseScoreRepository(supabase);
 const decks = supabaseDeckRepository(supabase);
 const strategy = supabaseStrategyRepository(supabase);
 const synergy = supabaseSynergyRepository(supabase);
+const scenarios = supabaseScenarioRepository(supabase);
 const store = createStore({ cards });
 listenToAuth(store, auth);
 const router = createAppRouter({ store });
@@ -27,7 +29,7 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <App
       store={store}
-      services={{ auth, cards, scores, decks, strategy, synergy }}
+      services={{ auth, cards, scores, decks, strategy, synergy, scenarios }}
       router={router}
     />
   </StrictMode>,

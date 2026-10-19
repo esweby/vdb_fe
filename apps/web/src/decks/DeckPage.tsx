@@ -266,7 +266,11 @@ export function DeckPage() {
             empty="Add cards to the deck to see how they link."
           />
         ) : tab === "scenarios" ? (
-          <DeckScenarios entries={entries} deckSize={rules?.deckMin ?? 60} />
+          <DeckScenarios
+            deckId={deckId}
+            entries={entries}
+            deckSize={rules?.deckMin ?? 60}
+          />
         ) : tab === "stats" ? (
           <DeckAnalysisPanel
             entries={entries}
