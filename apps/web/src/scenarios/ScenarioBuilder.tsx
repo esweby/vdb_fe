@@ -2,7 +2,9 @@
 // a scenario", phase two step 6), and save it (README "Saved scenarios"). Steps are stage 2.
 import { ROLES } from "@vdb/cards";
 import type { EngineCard, ScenarioDefinition } from "@vdb/engine";
+import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { encodeFixed } from "../decks/goldfishLink.ts";
 import { TYPE_LABELS } from "../cards/filterCards.ts";
 import { PITCH_NAMES } from "../decks/deckRules.ts";
 import { runScenario } from "../ranking/runScenarios.ts";
@@ -82,6 +84,8 @@ export const shareLink = (id: string) =>
 
 export function ScenarioBuilder(props: {
   deck: DeckForScenarios;
+  /** The deck's id, for opening failed runs in its goldfish tab. */
+  deckId?: string;
   /** A saved scenario of the person's own, to edit. */
   editing?: SavedScenario;
   /** Saving is for signed-in people; without it there's no Save. */
@@ -597,6 +601,41 @@ export function ScenarioBuilder(props: {
                     ", padded with blanks up to the deck size"}
                   .
                 </p>
+                {props.deckId &&
+                  result.failedSeeds.length > 0 &&
+                  (output.deck.blanks > 0 ? (
+                    <p className={styles.hint}>
+                      {`Fill the deck to ${output.deck.deckSize} cards to open failed hands in goldfish: these runs pad it with blanks, which goldfish doesn't have.`}
+                    </p>
+                  ) : (
+                    <>
+                      <h3 id="failed-hands">Failed hands</h3>
+                      <ul aria-labelledby="failed-hands">
+                        {result.failedSeeds.map((seed) => (
+                          <li key={seed}>
+                            <Link
+                              to="/decks/$deckId"
+                              params={{ deckId: props.deckId! }}
+                              search={{
+                                tab: "goldfish",
+                                seed,
+                                ...(run.definition.fixed?.length
+                                  ? { fixed: encodeFixed(run.definition.fixed) }
+                                  : {}),
+                              }}
+                            >
+                              {`Open in goldfish (seed ${seed})`}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                      <p className={styles.hint}>
+                        Each opens that run's exact shuffle on turn 1, fixed
+                        cards included, to play out by hand. A few examples: the
+                        reasons above are the full picture.
+                      </p>
+                    </>
+                  ))}
               </>
             )
           )}
