@@ -339,52 +339,19 @@ describe("tabs", () => {
   });
 });
 
-// README "Phase Two" step 2: the core and the cards nearest it, rules' and scoring group's
-// links drawn differently. The sample's only rule link is Become the Shadow Lord → Hocus Pocus.
-describe("synergy graph", () => {
-  const items = (name: string) =>
-    within(panel().getByRole("list", { name }))
-      .getAllByRole("listitem")
-      .map((li) => li.textContent);
-
-  it("asks for a core first", async () => {
-    await open("/ranking?tab=graph");
+// The synergy explorer replaced the chord diagram (maintainer, 19 Oct 2026): the board links to
+// it, starting from the core.
+describe("synergy explorer link", () => {
+  it("doesn't link to the explorer from the board (a Synergies tab comes next)", async () => {
+    await open(`/ranking?${core({ hp3: 3 })}`);
     expect(
-      panel().getByText("Add cards to your core to see how they link."),
-    ).toBeInTheDocument();
+      screen.queryByRole("link", { name: "Explore your core's synergies" }),
+    ).toBeNull();
   });
 
-  it("shows the core and the cards linked to it, with each link and where it comes from", async () => {
-    const synergy = fakeSynergyRepository(
-      {},
-      {
-        edges: [
-          {
-            fromCardId: "card-fate-foreseen",
-            toCardId: "card-hocus-pocus",
-            weight: 0.4,
-            ratingCount: 2,
-            totalWeight: 2,
-          },
-        ],
-        feedback: [],
-      },
-    );
-    await open(`/ranking?tab=graph&${core({ hp3: 3 })}`, { synergy });
-    expect(
-      await panel().findByRole("img", { name: "Synergy graph" }),
-    ).toBeInTheDocument();
-    await waitFor(() =>
-      expect(items("Cards shown")).toEqual([
-        "Hocus Pocus (in your core)",
-        "Become the Shadow Lord",
-        "Fate Foreseen",
-      ]),
-    );
-    expect(items("Links shown")).toEqual([
-      "Become the Shadow Lord helps Hocus Pocus · rules · 0.8 · enables traverse",
-      "Fate Foreseen helps Hocus Pocus · scoring group · 0.4",
-    ]);
+  it("has no Graph tab any more", async () => {
+    await open();
+    expect(screen.queryByRole("tab", { name: /Graph/ })).toBeNull();
   });
 });
 
@@ -445,7 +412,10 @@ describe("strategy questions", () => {
       }),
     );
     expect(question.getByRole("button", { name: "8" })).toBeDisabled();
-    expect(panel().getAllByText("Sign in to answer.")[0]).toBeInTheDocument();
+    // Maintainer, 19 Oct 2026: plain text was easy to miss; it's a link to sign in.
+    expect(
+      panel().getByRole("link", { name: "Sign in to answer" }),
+    ).toHaveAttribute("href", "/sign-in");
   });
 });
 

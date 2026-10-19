@@ -23,6 +23,7 @@ import { DeckPage } from "./decks/DeckPage.tsx";
 import { DecksPage } from "./decks/DecksPage.tsx";
 import { SynergyWeightsPage } from "./synergy/SynergyWeightsPage.tsx";
 import { SynergyQueuePage } from "./synergy/SynergyQueuePage.tsx";
+import { SynergyExplorerPage } from "./synergy/SynergyExplorerPage.tsx";
 import { Layout } from "./Layout.tsx";
 import { validateListSearch } from "./filters/useUrlFilters.ts";
 import { PlaceholderPage } from "./pages/PlaceholderPage.tsx";
@@ -113,6 +114,13 @@ const routeTree = rootRoute.addChildren([
     path: "/needs-review/synergies",
     beforeLoad: requireScorer,
     component: SynergyQueuePage,
+  }),
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/synergies",
+    // Read by readExplorerSearch; kept as given so the core stays an object.
+    validateSearch: (search: Record<string, unknown>) => search,
+    component: SynergyExplorerPage,
   }),
   createRoute({
     getParentRoute: () => rootRoute,
