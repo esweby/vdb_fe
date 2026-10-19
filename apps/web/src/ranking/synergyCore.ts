@@ -21,7 +21,7 @@ export interface SynergyLink {
 /** Card id → its links, both ways round (a card gains from partners either side). */
 export type SynergyGraph = Map<string, SynergyLink[]>;
 
-export function buildSynergyGraph(input: {
+export interface SynergyInput {
   derived: SynergyEdge[];
   /** Admin-set weights by rule id; a rule without one uses its default. */
   ruleWeights: Record<string, number>;
@@ -30,7 +30,27 @@ export function buildSynergyGraph(input: {
     "ruleId" | "fromCardId" | "toCardId" | "confirmShare" | "fixedPart"
   >[];
   community: { fromCardId: string; toCardId: string; weight: number }[];
-}): SynergyGraph {
+}
+
+/** A directed link at its final weight, and where it comes from. */
+export interface WeightedEdge {
+  from: string;
+  to: string;
+  weight: number;
+  /** See SynergyLink. */
+  bucket: string;
+  /** From the rules, the scoring group's own links, or both. */
+  kind: "rule" | "community" | "both";
+  traverse: boolean;
+  reasons: string[];
+}
+
+/**
+ * Every link at its final weight: a rule's weight (the admins', or the default), changed by
+ * the scoring group's feedback, and raised by their own link where that's higher. Rule links
+ * first, in order, then links only the scoring group makes. Links weighing 0 are left out.
+ */
+export function weightedEdges(input: SynergyInput): WeightedEdge[] {
   const key = (from: string, to: string) => `${from}\u0000${to}`;
   const feedback = new Map(
     input.feedback.map((f) => [
@@ -40,10 +60,7 @@ export function buildSynergyGraph(input: {
   );
   const defaults = new Map(SYNERGY_RULES.map((r) => [r.id, r.weight]));
 
-  const edges = new Map<
-    string,
-    { from: string; to: string; weight: number; bucket: string }
-  >();
+  const edges = new Map<string, WeightedEdge>();
   for (const e of input.derived) {
     const weight = Math.max(
       ...e.reasons.map((id) => {
@@ -58,24 +75,41 @@ export function buildSynergyGraph(input: {
       to: e.to,
       weight,
       bucket: e.engine ?? "reference",
+      kind: "rule",
+      traverse: e.traverse,
+      reasons: e.reasons,
     });
   }
   for (const c of input.community) {
     const k = key(c.fromCardId, c.toCardId);
     const existing = edges.get(k);
-    edges.set(k, {
-      from: c.fromCardId,
-      to: c.toCardId,
-      weight: Math.max(existing?.weight ?? 0, c.weight),
-      bucket: existing?.bucket ?? "community",
-    });
+    edges.set(
+      k,
+      existing
+        ? {
+            ...existing,
+            weight: Math.max(existing.weight, c.weight),
+            kind: "both",
+          }
+        : {
+            from: c.fromCardId,
+            to: c.toCardId,
+            weight: c.weight,
+            bucket: "community",
+            kind: "community",
+            traverse: false,
+            reasons: [],
+          },
+    );
   }
+  return [...edges.values()].filter((e) => e.weight > 0);
+}
 
+export function buildSynergyGraph(input: SynergyInput): SynergyGraph {
   const graph: SynergyGraph = new Map();
   const link = (card: string, l: SynergyLink) =>
     graph.set(card, [...(graph.get(card) ?? []), l]);
-  for (const e of edges.values()) {
-    if (e.weight <= 0) continue;
+  for (const e of weightedEdges(input)) {
     link(e.from, { other: e.to, weight: e.weight, bucket: e.bucket });
     link(e.to, { other: e.from, weight: e.weight, bucket: e.bucket });
   }
