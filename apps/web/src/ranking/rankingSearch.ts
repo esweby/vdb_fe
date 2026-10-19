@@ -13,6 +13,12 @@ export interface RankingSettings {
   core: Record<string, number>;
   /** Preferences (preferences.ts): id → 0 (avoid) to 100 (prefer); missing = 50. */
   prefs: Record<string, number>;
+  /**
+   * Synergy strength, 0 (off: rank by value alone) to 100. Fill to targets adds up to
+   * synergy / 10 value points per engine for cards that work with ones already in the core.
+   * Off by default until the scoring group agrees one (docs/synergy-rules.md).
+   */
+  synergy: number;
 }
 
 export interface RankingSearch {
@@ -22,6 +28,7 @@ export interface RankingSearch {
   order?: BoardOrder;
   core?: Record<string, number>;
   pref?: Record<string, number>;
+  syn?: number;
 }
 
 /** README "Ranking" presets. UNVERIFIED values, for the scoring group to confirm. */
@@ -70,6 +77,7 @@ export function readRankingSearch(
     order: search.order === "fits" ? "fits" : "score",
     core: readCore(search.core),
     prefs: readPrefs(search.pref),
+    synergy: or(search.syn, 0, 0, 100),
   };
 }
 
@@ -82,5 +90,6 @@ export function writeRankingSearch(s: RankingSettings): RankingSearch {
     ...(s.order !== "score" ? { order: s.order } : {}),
     ...(Object.keys(s.core).length ? { core: s.core } : {}),
     ...(Object.keys(s.prefs).length ? { pref: s.prefs } : {}),
+    ...(s.synergy !== 0 ? { syn: s.synergy } : {}),
   };
 }

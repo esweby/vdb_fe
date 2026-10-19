@@ -163,6 +163,22 @@ export function SetupTab(props: {
             />
           </div>
         )}
+        <div className={styles.field}>
+          <Slider
+            label="Synergy strength"
+            noScale
+            value={settings.synergy}
+            onChange={(synergy) => props.onSettings({ synergy })}
+          />
+          <span className={styles.ends} aria-hidden="true">
+            <span>Off</span>
+            <span>Strong</span>
+          </span>
+          <span className={styles.hint}>
+            Building the core picks cards that work with the ones already in it.
+            Off until the scoring group agrees a setting.
+          </span>
+        </div>
       </section>
 
       <section className={styles.formCard} aria-labelledby="setup-prefs">

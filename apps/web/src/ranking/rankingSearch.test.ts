@@ -10,6 +10,7 @@ describe("ranking URL state", () => {
       order: "score",
       core: {},
       prefs: {},
+      synergy: 0,
     });
     expect(writeRankingSearch(readRankingSearch({}))).toEqual({});
   });
@@ -22,6 +23,7 @@ describe("ranking URL state", () => {
       order: "fits" as const,
       core: { a1: 3, b2: 1 },
       prefs: { usurp: 100, runeGate: 0 },
+      synergy: 60,
     };
     expect(readRankingSearch(writeRankingSearch(state))).toEqual(state);
   });
@@ -49,5 +51,15 @@ describe("ranking URL state", () => {
         .core,
     ).toEqual({ a: 2, e: 9 });
     expect(readRankingSearch({ core: "nonsense" }).core).toEqual({});
+  });
+
+  // Synergy strength starts off, so the ranking doesn't change until the scoring group
+  // agrees a default (docs/synergy-rules.md).
+  it("keeps synergy strength between 0 and 100, off by default", () => {
+    expect(readRankingSearch({ syn: 250 }).synergy).toBe(100);
+    expect(readRankingSearch({ syn: "x" }).synergy).toBe(0);
+    expect(writeRankingSearch(readRankingSearch({ syn: 40 }))).toEqual({
+      syn: 40,
+    });
   });
 });
