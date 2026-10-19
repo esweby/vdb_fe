@@ -1,18 +1,19 @@
+import { ScenarioCannotRun, type HeroSide, type Zone } from "@vdb/engine";
 import {
-  act,
-  newGame,
-  redo,
-  ScenarioCannotRun,
-  replay,
-  undo,
-  type CardInstance,
-  type GameAction,
-  type GameSetup,
-  type GameHistory,
-  type HeroSide,
-  type Zone,
-} from "@vdb/engine";
-import { Link } from "@tanstack/react-router";
+  applySessionAction,
+  BLOOD_DEBT,
+  NeedsChoice,
+  replaySession,
+  RulesError,
+  RUNECHANT,
+  setUp,
+  VISERAI,
+  type ChoiceRequest,
+  type RulesInstance,
+  type RulesSetup,
+  type RulesState,
+  type SessionAction,
+} from "@vdb/engine/rules";
 import {
   useEffect,
   useMemo,
@@ -20,14 +21,11 @@ import {
   useState,
   type KeyboardEvent,
 } from "react";
-import { useAppSelector } from "../hooks.ts";
-import { useServices } from "../servicesContext.ts";
-import { engineCardOf } from "../ranking/scenarios.ts";
+import { rulesCardOf } from "../scenarios/rulesCards.ts";
 import { Button, TextField } from "../ui/index.ts";
 import { sectionOf, variantName, type DeckEntry } from "./deckRules.ts";
 import { decodeFixed, encodeFixed } from "./goldfishLink.ts";
 import { turnRecaps } from "./goldfishRecap.ts";
-import { promptsAfter, type Prompt } from "./heroPrompts.ts";
 import styles from "./Goldfish.module.css";
 
 /** Card zones shown as lists; the deck is face down and only counted. */
@@ -45,62 +43,84 @@ const LABEL: Record<string, string> = Object.fromEntries(
   ZONE_LABELS.map((z) => [z.zone, z.label]),
 );
 
-/** What a card can do, from its menu, its keyboard key, or a drag. */
+const PLAYABLE_FROM: Zone[] = ["hand", "arsenal", "banished"];
+
+/**
+ * What a card can do, from its menu, its keyboard key, or a drag. Play and Pitch follow the
+ * rules for cards whose rules are verified; everything else is a move by hand.
+ */
 const CARD_ACTIONS: {
   label: string;
   key?: string;
   zone?: Zone;
-  action: (uid: string) => GameAction;
+  action: (c: RulesInstance, from: Zone) => SessionAction;
 }[] = [
   {
     label: "Play",
     key: "p",
     zone: "arena",
-    action: (uid) => ({ type: "move", uid, to: "arena" }),
+    action: (c, from) =>
+      c.card.effects !== undefined && PLAYABLE_FROM.includes(from)
+        ? { type: "play", uid: c.uid }
+        : { type: "move", uid: c.uid, to: "arena" },
   },
   {
     label: "Pitch",
     key: "i",
     zone: "pitch",
-    action: (uid) => ({ type: "pitch", uid }),
+    action: (c) => ({ type: "pitch", uid: c.uid }),
+  },
+  {
+    label: "To arena (by hand)",
+    action: (c) => ({ type: "move", uid: c.uid, to: "arena" }),
   },
   {
     label: "Hand",
     key: "h",
     zone: "hand",
-    action: (uid) => ({ type: "move", uid, to: "hand" }),
+    action: (c) => ({ type: "move", uid: c.uid, to: "hand" }),
   },
   {
     label: "Arsenal",
     key: "a",
     zone: "arsenal",
-    action: (uid) => ({ type: "move", uid, to: "arsenal" }),
+    action: (c) => ({ type: "move", uid: c.uid, to: "arsenal" }),
   },
   {
     label: "Graveyard",
     key: "g",
     zone: "graveyard",
-    action: (uid) => ({ type: "move", uid, to: "graveyard" }),
+    action: (c) => ({ type: "move", uid: c.uid, to: "graveyard" }),
   },
   {
     label: "Banish",
     key: "b",
     zone: "banished",
-    action: (uid) => ({ type: "move", uid, to: "banished" }),
+    action: (c) => ({ type: "move", uid: c.uid, to: "banished" }),
   },
   {
     label: "Banish face down",
-    action: (uid) => ({ type: "move", uid, to: "banished", faceDown: true }),
+    action: (c) => ({
+      type: "move",
+      uid: c.uid,
+      to: "banished",
+      faceDown: true,
+    }),
   },
   {
     label: "Top of deck",
     key: "t",
-    action: (uid) => ({ type: "move", uid, to: "deck", position: "top" }),
+    action: (c) => ({ type: "move", uid: c.uid, to: "deck", position: "top" }),
   },
   {
     label: "Bottom of deck",
     key: "u",
-    action: (uid) => ({ type: "move", uid, to: "deck", position: "bottom" }),
+    action: (c) => ({
+      type: "move",
+      uid: c.uid,
+      to: "deck",
+      position: "bottom",
+    }),
   },
 ];
 
@@ -110,43 +130,60 @@ const TOKENS = [
   { token: "eloquence", label: "Eloquence" },
 ];
 
+/** Starting life (UNVERIFIED for the new Viserai). */
+const LIFE = 40;
+
+/** Optional triggers, asked in plain words. */
+const CONFIRM_TEXT: Record<string, string> = {
+  "viserai-usurper-traverse": "Viserai, the Usurper: traverse to Forsaken?",
+};
+
 const randomSeed = () => Math.floor(Math.random() * 1_000_000);
 
 /** A session's log in a link: base64url JSON. */
-function encodeLog(log: GameAction[]): string {
-  return btoa(JSON.stringify(log))
+function encodeLog(log: SessionAction[]): string {
+  const bytes = new TextEncoder().encode(JSON.stringify(log));
+  return btoa(String.fromCharCode(...bytes))
     .replace(/\+/g, "-")
     .replace(/\//g, "_")
     .replace(/=+$/, "");
 }
-function decodeLog(text: string): GameAction[] | null {
+function decodeLog(text: string): SessionAction[] | null {
   try {
+    const binary = atob(text.replace(/-/g, "+").replace(/_/g, "/"));
     const parsed: unknown = JSON.parse(
-      atob(text.replace(/-/g, "+").replace(/_/g, "/")),
+      new TextDecoder().decode(Uint8Array.from(binary, (c) => c.charCodeAt(0))),
     );
-    return Array.isArray(parsed) ? (parsed as GameAction[]) : null;
+    return Array.isArray(parsed) ? (parsed as SessionAction[]) : null;
   } catch {
     return null;
   }
 }
 
 /** A new game; fixed cards the deck no longer has are left out rather than failing. */
-function start(setup: GameSetup) {
+function start(setup: RulesSetup) {
   try {
-    return newGame(setup);
+    return setUp(setup);
   } catch (e) {
-    if (e instanceof ScenarioCannotRun) return newGame({ ...setup, fixed: [] });
+    if (e instanceof ScenarioCannotRun) return setUp({ ...setup, fixed: [] });
     throw e;
   }
+}
+
+interface History {
+  initial: RulesState;
+  steps: { action: SessionAction; state: RulesState }[];
+  /** How many steps are in effect; the rest can be redone. */
+  cursor: number;
 }
 
 const typing = (target: EventTarget | null) =>
   !!(target as HTMLElement | null)?.closest?.("input, select, textarea");
 
 /**
- * The goldfish tool (README "Goldfishing", phase two step 5): a sandbox for playing a deck's
- * turns alone, on the shared game engine. The user moves every card; the tool keeps count and
- * enforces no game rules. End turn is a helper: pitched cards to the bottom, draw up to 4.
+ * The goldfish tool (README "Goldfishing"; docs/rules-engine.md, step 8): playing a deck's turns
+ * alone. Cards with verified rules are played by them, and Viserai, Runechants and Blood Debt
+ * resolve by themselves; anything else is moved by hand, as a sandbox.
  */
 export function Goldfish(props: {
   entries: DeckEntry[];
@@ -165,7 +202,7 @@ export function Goldfish(props: {
         .filter((e) => sectionOf(e.card) === section)
         .flatMap((e) =>
           Array.from({ length: e.quantity }, () =>
-            engineCardOf(e.card, e.variant),
+            rulesCardOf(e.card, e.variant),
           ),
         );
     return {
@@ -174,6 +211,7 @@ export function Goldfish(props: {
         weapons: copies("weapon"),
         equipment: copies("equipment"),
         fixed: props.fixed ? decodeFixed(props.fixed) : [],
+        triggers: [...VISERAI, RUNECHANT, BLOOD_DEBT],
       },
       names: new Map(
         main.map((e) => [e.variant.id, variantName(e.card, e.variant)]),
@@ -187,72 +225,103 @@ export function Goldfish(props: {
   const [startSide, setStartSide] = useState<HeroSide>(
     props.side ?? "forsaken",
   );
-  const [history, setHistory] = useState<GameHistory>(() => {
+  const [history, setHistory] = useState<History>(() => {
     const game = { ...setup, seed, side: props.side ?? "forsaken" };
+    const initial = start(game);
     const log = props.log ? decodeLog(props.log) : null;
     if (log) {
       try {
-        return replay(game, log);
+        // Replays the whole log, then keeps each step so it can be undone.
+        replaySession(game, log);
+        let state = initial;
+        const steps = log.map((action) => {
+          state = applySessionAction(state, action);
+          return { action, state };
+        });
+        return { initial, steps, cursor: steps.length };
       } catch {
         // A link for a deck that has changed since: start fresh.
       }
     }
-    return start(game);
+    return { initial, steps: [], cursor: 0 };
   });
+  const [pending, setPending] = useState<{
+    action: SessionAction;
+    request: ChoiceRequest;
+  } | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [lookAt, setLookAt] = useState(3);
   const [looking, setLooking] = useState(false);
   const [searching, setSearching] = useState(false);
   const [dragging, setDragging] = useState<string | null>(null);
   const [shareLink, setShareLink] = useState<string | null>(null);
-  const g = history.present;
 
-  // Hero prompts (README "Hero prompts"): off unless the user turned them on in Account.
-  const { scores } = useServices();
-  const user = useAppSelector((s) => s.auth.user);
-  const [heroPrompts, setHeroPrompts] = useState(false);
-  const [prompts, setPrompts] = useState<Prompt[]>([]);
-  useEffect(() => {
-    if (!user) return;
-    let live = true;
-    scores.getPreferences(user.id).then(
-      (p) => live && setHeroPrompts(p.heroPrompts ?? false),
-      () => {},
-    );
-    return () => {
-      live = false;
-    };
-  }, [scores, user]);
+  const g =
+    history.cursor > 0
+      ? history.steps[history.cursor - 1]!.state
+      : history.initial;
+  const log = history.steps.slice(0, history.cursor).map((s) => s.action);
+  const startedOn = history.initial.side;
 
-  // The latest history, so actions from keys and prompts build on it.
+  // The latest history, so actions from keys build on it.
   const latest = useRef(history);
   latest.current = history;
-  const apply = (action: GameAction) => {
-    const before = latest.current;
-    const next = act(before, action);
-    latest.current = next;
-    setHistory(next);
-    return { before: before.present, after: next.present };
-  };
-  const doAction = (action: GameAction) => {
-    const { before, after } = apply(action);
-    if (heroPrompts)
-      setPrompts((ps) => [...ps, ...promptsAfter(before, action, after)]);
-  };
-  const doActionRef = useRef(doAction);
-  doActionRef.current = doAction;
-  /** Undo, redo or restart: earlier prompts no longer fit the table. */
-  const rewind = (change: (h: GameHistory) => GameHistory) => {
-    setPrompts([]);
-    setHistory(change);
-  };
-  function answer(p: Prompt, yes: boolean) {
-    if (yes)
-      for (const action of p.actions(latest.current.present)) apply(action);
-    setPrompts((ps) => ps.filter((x) => x.id !== p.id));
+
+  /** Apply an action: by the rules or by hand. A choice the rules need is asked first. */
+  function perform(action: SessionAction) {
+    const h = latest.current;
+    const present = h.cursor > 0 ? h.steps[h.cursor - 1]!.state : h.initial;
+    try {
+      const state = applySessionAction(present, action);
+      const next: History = {
+        ...h,
+        steps: [...h.steps.slice(0, h.cursor), { action, state }],
+        cursor: h.cursor + 1,
+      };
+      latest.current = next;
+      setHistory(next);
+      setPending(null);
+      setError(null);
+    } catch (e) {
+      if (e instanceof NeedsChoice) {
+        setPending({ action, request: e.request });
+        setError(null);
+      } else if (e instanceof RulesError) {
+        setPending(null);
+        setError(e.message);
+      } else throw e;
+    }
   }
+  const performRef = useRef(perform);
+  performRef.current = perform;
+
+  function answer(pick: string[]) {
+    if (!pending) return;
+    const { action } = pending;
+    if (!("answers" in action) && !isRulesAction(action)) return;
+    perform({
+      ...action,
+      answers: [...(("answers" in action && action.answers) || []), pick],
+    } as SessionAction);
+  }
+
+  /** Undo, redo or restart: a half-asked choice no longer fits the table. */
+  const move = (change: (h: History) => History) => {
+    setPending(null);
+    setError(null);
+    setHistory((h) => {
+      const next = change(h);
+      latest.current = next;
+      return next;
+    });
+  };
+  const undo = (h: History) => ({ ...h, cursor: Math.max(0, h.cursor - 1) });
+  const redo = (h: History) => ({
+    ...h,
+    cursor: Math.min(h.steps.length, h.cursor + 1),
+  });
   const sideName = (side: string) =>
     side === "usurper" ? "Usurper" : "Forsaken";
-  const startedOn = history.past[0]?.side ?? g.side;
 
   // Every copy is always in some zone, so the present state names them all.
   const uidNames = useMemo(() => {
@@ -267,7 +336,11 @@ export function Goldfish(props: {
     setSeed(nextSeed);
     setSeedInput(String(nextSeed));
     setShareLink(null);
-    rewind(() => start({ ...setup, seed: nextSeed, side: startSide }));
+    move(() => ({
+      initial: start({ ...setup, seed: nextSeed, side: startSide }),
+      steps: [],
+      cursor: 0,
+    }));
   }
 
   // Keys for the table: D draw, E end turn, Ctrl/⌘+Z undo, with Shift redo.
@@ -277,20 +350,20 @@ export function Goldfish(props: {
       const key = e.key.toLowerCase();
       if ((e.ctrlKey || e.metaKey) && key === "z") {
         e.preventDefault();
-        setPrompts([]);
-        setHistory(e.shiftKey ? redo : undo);
+        move(e.shiftKey ? redo : undo);
       } else if (e.ctrlKey || e.metaKey) return;
-      else if (key === "d") doActionRef.current({ type: "draw" });
-      else if (key === "e") doActionRef.current({ type: "endTurn" });
+      else if (key === "d") performRef.current({ type: "draw" });
+      else if (key === "e") performRef.current({ type: "endTurn" });
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const logLines = useMemo(() => {
     let side = startedOn;
     let turn = 1;
-    return g.log.map((a) => {
+    return log.map((a) => {
       switch (a.type) {
         case "draw":
           return a.count && a.count > 1 ? `Draw ${a.count}` : "Draw";
@@ -300,14 +373,19 @@ export function Goldfish(props: {
               ? `${a.position === "bottom" ? "bottom" : "top"} of deck`
               : LABEL[a.to]!.toLowerCase()
           }${a.faceDown ? " face down" : ""}`;
+        case "play":
+          return `Play ${nameOf(a.uid)}`;
         case "pitch":
           return `Pitch ${nameOf(a.uid)}`;
+        case "activateGate":
+          return `Activate a Gate for ${nameOf(a.target)}`;
+        case "weaponAttack":
+        case "markAttack":
+          return `Attack with ${nameOf(a.uid)}`;
         case "token":
           return `${a.delta > 0 ? "+" : ""}${a.delta} ${a.token}`;
         case "resources":
           return `${a.delta > 0 ? "+" : ""}${a.delta} resources`;
-        case "attack":
-          return `Attack with ${nameOf(a.uid)}`;
         case "use":
           return `Use ${nameOf(a.uid)}`;
         case "counter":
@@ -328,18 +406,31 @@ export function Goldfish(props: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [history, uidNames]);
   const recaps = useMemo(
-    () => turnRecaps(g.log, startedOn, nameOf),
+    () => turnRecaps(g.events, startedOn, nameOf),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [history, uidNames],
   );
 
+  // Damage dealt: arcane damage from the rules, plus damage noted by hand.
+  const turnStart = g.events.findLastIndex((e) => e.type === "turnStarted");
+  const damageOf = (from: number) =>
+    g.events
+      .slice(from)
+      .reduce(
+        (n, e) =>
+          e.type === "arcaneDamage" || e.type === "damageNoted"
+            ? n + e.amount
+            : n,
+        0,
+      );
+
   /** A card: its picture (or the back if face down), its menu, its keys, and dragging. */
-  const renderCard = (c: CardInstance, zone: Zone) => {
+  const renderCard = (c: RulesInstance, zone: Zone) => {
     const faceDown = g.faceDown.includes(c.uid);
     const name = nameOf(c.uid);
     const label = faceDown ? `${name} (face down)` : name;
     const image = images.get(c.card.id);
-    const used = g.used.includes(c.uid);
+    const used = g.usedThisTurn.includes(c.uid);
     const onKeyDown = (e: KeyboardEvent<HTMLLIElement>) => {
       if (typing(e.target) || e.ctrlKey || e.metaKey || e.altKey) return;
       const choice = CARD_ACTIONS.find(
@@ -348,7 +439,7 @@ export function Goldfish(props: {
       if (!choice) return;
       e.preventDefault();
       e.stopPropagation();
-      doAction(choice.action(c.uid));
+      perform(choice.action(c, zone));
     };
     return (
       <li
@@ -373,7 +464,7 @@ export function Goldfish(props: {
           value=""
           onChange={(e) => {
             const choice = CARD_ACTIONS.find((a) => a.label === e.target.value);
-            if (choice) doAction(choice.action(c.uid));
+            if (choice) perform(choice.action(c, zone));
           }}
         >
           <option value="" disabled>
@@ -390,12 +481,18 @@ export function Goldfish(props: {
             {zone === "weapons" ? (
               <Button
                 disabled={used}
-                onClick={() => doAction({ type: "attack", uid: c.uid })}
+                onClick={() =>
+                  perform(
+                    c.card.weaponAttack
+                      ? { type: "weaponAttack", uid: c.uid }
+                      : { type: "markAttack", uid: c.uid },
+                  )
+                }
               >
                 {`Attack with ${name}`}
               </Button>
             ) : (
-              <Button onClick={() => doAction({ type: "use", uid: c.uid })}>
+              <Button onClick={() => perform({ type: "use", uid: c.uid })}>
                 {`${used ? "Unuse" : "Use"} ${name}`}
               </Button>
             )}
@@ -404,7 +501,7 @@ export function Goldfish(props: {
               label={`counters on ${name}`}
               text={`Counters ${g.counters[c.uid] ?? 0}`}
               onChange={(delta) =>
-                doAction({ type: "counter", uid: c.uid, delta })
+                perform({ type: "counter", uid: c.uid, delta })
               }
             />
           </div>
@@ -416,7 +513,7 @@ export function Goldfish(props: {
     onDragOver: (e: React.DragEvent) => e.preventDefault(),
     onDrop: (e: React.DragEvent) => {
       e.preventDefault();
-      if (dragging) doAction({ type: "move", uid: dragging, to: zone });
+      if (dragging) perform({ type: "move", uid: dragging, to: zone });
       setDragging(null);
     },
   });
@@ -424,25 +521,23 @@ export function Goldfish(props: {
   const sortedDeck = [...g.zones.deck].sort((a, b) =>
     nameOf(a.uid).localeCompare(nameOf(b.uid)),
   );
+  const request = pending?.request;
 
   return (
     <section aria-label="Goldfish" className={styles.goldfish}>
       <header className={styles.bar}>
         <strong>{`Turn ${g.turn}`}</strong>
         <span className={styles.side}>{`On ${sideName(g.side)}`}</span>
-        <Button onClick={() => doAction({ type: "traverse" })}>Traverse</Button>
-        <Button variant="primary" onClick={() => doAction({ type: "endTurn" })}>
+        <Button onClick={() => perform({ type: "traverse" })}>Traverse</Button>
+        <Button variant="primary" onClick={() => perform({ type: "endTurn" })}>
           End turn
         </Button>
-        <Button
-          onClick={() => rewind(undo)}
-          disabled={history.past.length === 0}
-        >
+        <Button onClick={() => move(undo)} disabled={history.cursor === 0}>
           Undo
         </Button>
         <Button
-          onClick={() => rewind(redo)}
-          disabled={history.future.length === 0}
+          onClick={() => move(redo)}
+          disabled={history.cursor === history.steps.length}
         >
           Redo
         </Button>
@@ -477,35 +572,48 @@ export function Goldfish(props: {
         </form>
       </header>
 
-      {prompts.length > 0 && (
-        <section aria-label="Hero prompts" className={styles.prompts}>
-          <h3>Hero prompts</h3>
-          <ul>
-            {prompts.map((p) => (
-              <li key={p.id}>
-                <span>{p.text}</span>
-                <Button variant="primary" onClick={() => answer(p, true)}>
-                  Yes
-                </Button>
-                <Button onClick={() => answer(p, false)}>No</Button>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-      {!heroPrompts && (
-        <p className={styles.muted}>
-          Hero prompts are off. Turn them on in{" "}
-          <Link to="/account">Account</Link> to be asked when a hero ability or
-          token might trigger.
+      {error && (
+        <p role="alert" className={styles.refused}>
+          {error}
         </p>
+      )}
+      {request && (
+        <section aria-label="Choose" className={styles.prompts}>
+          <h3>
+            {request.kind === "confirm"
+              ? (CONFIRM_TEXT[request.source ?? ""] ?? request.prompt)
+              : request.prompt}
+          </h3>
+          {request.kind === "confirm" ? (
+            <div className={styles.deckActions}>
+              <Button variant="primary" onClick={() => answer(["yes"])}>
+                Yes
+              </Button>
+              <Button onClick={() => answer([])}>No</Button>
+            </div>
+          ) : (
+            <div className={styles.deckActions}>
+              {request.options.map((uid) => (
+                <Button key={uid} onClick={() => answer([uid])}>
+                  {nameOf(uid)}
+                </Button>
+              ))}
+              {request.optional && (
+                <Button onClick={() => answer([])}>None</Button>
+              )}
+            </div>
+          )}
+          <Button variant="ghost" onClick={() => setPending(null)}>
+            Cancel
+          </Button>
+        </section>
       )}
 
       <div className={styles.counters}>
         <Counter
           label="Resources"
           text={`Resources ${g.resources}`}
-          onChange={(delta) => doAction({ type: "resources", delta })}
+          onChange={(delta) => perform({ type: "resources", delta })}
         />
         {TOKENS.map((t) => {
           const made = g.createdThisTurn[t.token] ?? 0;
@@ -515,20 +623,20 @@ export function Goldfish(props: {
               label={t.label}
               text={`${t.label} ${g.tokens[t.token] ?? 0}${made ? ` · ${made} made this turn` : ""}`}
               onChange={(delta) =>
-                doAction({ type: "token", token: t.token, delta })
+                perform({ type: "token", token: t.token, delta })
               }
             />
           );
         })}
         <Counter
           label="life"
-          text={`Life ${g.life}`}
-          onChange={(delta) => doAction({ type: "life", delta })}
+          text={`Life ${LIFE - g.lifeLost}`}
+          onChange={(delta) => perform({ type: "life", delta })}
         />
         <Counter
           label="damage"
-          text={`Damage ${g.damageThisTurn} · ${g.damageTotal} in total`}
-          onChange={(delta) => doAction({ type: "damage", delta })}
+          text={`Damage ${damageOf(turnStart + 1)} · ${damageOf(0)} in total`}
+          onChange={(delta) => perform({ type: "damage", delta })}
         />
       </div>
 
@@ -538,12 +646,12 @@ export function Goldfish(props: {
           <div className={styles.deckBack} aria-hidden="true" />
           <div className={styles.deckActions}>
             <Button
-              onClick={() => doAction({ type: "draw" })}
+              onClick={() => perform({ type: "draw" })}
               disabled={g.zones.deck.length === 0}
             >
               Draw
             </Button>
-            <Button onClick={() => doAction({ type: "shuffle" })}>
+            <Button onClick={() => perform({ type: "shuffle" })}>
               Shuffle
             </Button>
             <Button
@@ -595,7 +703,7 @@ export function Goldfish(props: {
               <Button
                 variant="primary"
                 onClick={() => {
-                  doAction({ type: "shuffle" });
+                  perform({ type: "shuffle" });
                   setSearching(false);
                 }}
               >
@@ -657,7 +765,7 @@ export function Goldfish(props: {
                 tab: "goldfish",
                 seed: String(seed),
                 ...(startedOn === "usurper" ? { side: "usurper" } : {}),
-                log: encodeLog(g.log),
+                log: encodeLog(log),
                 ...(setup.fixed.length
                   ? { fixed: encodeFixed(setup.fixed) }
                   : {}),
@@ -674,15 +782,27 @@ export function Goldfish(props: {
             <TextField label="Share link" readOnly value={shareLink} />
           )}
           <p className={styles.muted}>
-            Keys: on a card, P play, I pitch, A arsenal, G graveyard, B banish,
-            H hand, T or U top or bottom of the deck. D draw, E end turn,
-            Ctrl/⌘+Z undo, with Shift redo. Cards can be dragged between zones.
+            Cards with verified rules are played by them (Play), and Viserai,
+            Runechants and Blood Debt happen by themselves. Anything else moves
+            by hand. Keys: on a card, P play, I pitch, A arsenal, G graveyard, B
+            banish, H hand, T or U top or bottom of the deck. D draw, E end
+            turn, Ctrl/⌘+Z undo, with Shift redo. Cards can be dragged between
+            zones.
           </p>
         </section>
       </div>
     </section>
   );
 }
+
+const RULES_ACTIONS = new Set([
+  "play",
+  "pitch",
+  "activateGate",
+  "weaponAttack",
+  "endTurn",
+]);
+const isRulesAction = (a: SessionAction) => RULES_ACTIONS.has(a.type);
 
 function Counter(props: {
   label: string;

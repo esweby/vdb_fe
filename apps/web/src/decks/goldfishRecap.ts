@@ -1,7 +1,8 @@
 // Turn recaps for the goldfish tool (README "Goldfishing": a short summary of each turn: cards
 // played and pitched, weapon attacks, tokens created, damage dealt, and whether the side
-// changed). Worked out from the action log alone.
-import type { GameAction, HeroSide } from "@vdb/engine";
+// changed). Worked out from the rules engine's events (docs/rules-engine.md, step 8).
+import type { HeroSide } from "@vdb/engine";
+import type { RulesEvent } from "@vdb/engine/rules";
 
 const TOKEN_NAMES: Record<string, [string, string]> = {
   runechant: ["Runechant", "Runechants"],
@@ -9,9 +10,12 @@ const TOKEN_NAMES: Record<string, [string, string]> = {
   eloquence: ["Eloquence", "Eloquence"],
 };
 
+/** Weapons are the setup's w0, w1… copies. */
+const isWeapon = (uid: string) => uid.startsWith("w");
+
 /** One line per finished turn, e.g. "Turn 1: pitched X; made 2 Runechants; traversed to Usurper." */
 export function turnRecaps(
-  log: GameAction[],
+  events: RulesEvent[],
   startSide: HeroSide,
   nameOf: (uid: string) => string,
 ): string[] {
@@ -26,30 +30,39 @@ export function turnRecaps(
   let sideAtStart = side;
   let traverses = 0;
 
-  for (const a of log) {
-    switch (a.type) {
-      case "move":
-        if (a.to === "arena") played.push(nameOf(a.uid));
+  for (const e of events) {
+    switch (e.type) {
+      // A card put in the arena by hand counts as played; a played card is counted once.
+      case "played":
+        if (!played.includes(e.uid)) played.push(e.uid);
         break;
-      case "pitch":
-        pitched.push(nameOf(a.uid));
+      case "moved":
+        if (e.to === "arena" && !played.includes(e.uid)) played.push(e.uid);
         break;
-      case "attack":
-        attacks.push(nameOf(a.uid));
+      case "pitched":
+        pitched.push(nameOf(e.uid));
         break;
-      case "token":
-        if (a.delta > 0) made[a.token] = (made[a.token] ?? 0) + a.delta;
+      case "attackPlayed":
+        if (isWeapon(e.uid)) attacks.push(nameOf(e.uid));
         break;
-      case "damage":
-        damage += a.delta;
+      case "attackNoted":
+        attacks.push(nameOf(e.uid));
         break;
-      case "traverse":
-        side = side === "forsaken" ? "usurper" : "forsaken";
+      case "tokensCreated":
+        made[e.token] = (made[e.token] ?? 0) + e.amount;
+        break;
+      case "arcaneDamage":
+      case "damageNoted":
+        damage += e.amount;
+        break;
+      case "traversed":
+        side = e.to;
         traverses++;
         break;
-      case "endTurn": {
+      case "turnEnded": {
         const parts: string[] = [];
-        if (played.length) parts.push(`played ${played.join(", ")}`);
+        if (played.length)
+          parts.push(`played ${played.map(nameOf).join(", ")}`);
         if (pitched.length) parts.push(`pitched ${pitched.join(", ")}`);
         if (attacks.length) parts.push(`attacked with ${attacks.join(", ")}`);
         for (const [token, n] of Object.entries(made)) {
