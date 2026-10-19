@@ -2,7 +2,7 @@
 -- authenticated by default (local stacks do), so every grant must be explicit.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(37);
+select plan(43);
 
 -- Public reference data: readable by everyone
 select table_privs_are('public', t, 'anon', array['SELECT'], 'anon can only read ' || t)
@@ -14,6 +14,15 @@ select table_privs_are('public', 'strategy_questions', 'anon', array['SELECT'], 
 select table_privs_are('public', 'strategy_questions', 'authenticated', array['SELECT'], 'signed-in users can only read strategy_questions');
 select table_privs_are('public', 'strategy_answers', 'anon', array[]::text[], 'anon has no access to strategy_answers');
 select table_privs_are('public', 'strategy_answers', 'authenticated', array['SELECT', 'INSERT', 'UPDATE', 'DELETE'], 'signed-in users manage their own strategy_answers');
+
+-- Synergy (phase two): rule weights are public reference data, admins write them (row level
+-- security); community edges and feedback are private to each person.
+select table_privs_are('public', 'synergy_rule_weights', 'anon', array['SELECT'], 'anon can only read synergy_rule_weights');
+select table_privs_are('public', 'synergy_rule_weights', 'authenticated', array['SELECT', 'INSERT', 'UPDATE', 'DELETE'], 'signed-in users read synergy_rule_weights (admins write, by row level security)');
+select table_privs_are('public', t, 'anon', array[]::text[], 'anon has no access to ' || t)
+  from unnest(array['card_synergies', 'synergy_feedback']) t;
+select table_privs_are('public', t, 'authenticated', array['SELECT', 'INSERT', 'UPDATE', 'DELETE'], 'signed-in users manage their own ' || t)
+  from unnest(array['card_synergies', 'synergy_feedback']) t;
 
 -- Private tables: nothing for anon
 select table_privs_are('public', t, 'anon', array[]::text[], 'anon has no access to ' || t)
