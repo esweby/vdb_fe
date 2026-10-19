@@ -555,3 +555,29 @@
   border-radius: 0.5rem;
   background: color-mix(in srgb, var(--accent) 9%, transparent);
 }
+
+.gaps {
+  display: grid;
+  gap: 0.5rem;
+  /* The full width of the Stats tab, below pitch and ratings. */
+  grid-column: 1 / -1;
+}
+.gapList,
+.fillers {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.gapList > li p {
+  margin: 0;
+}
+.fillers {
+  padding-left: 1rem;
+}
+.fillers li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}

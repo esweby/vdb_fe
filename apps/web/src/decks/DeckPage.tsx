@@ -270,6 +270,13 @@ export function DeckPage() {
             onTargetsChange={
               canEdit ? (t) => void setPitchTargets(t) : undefined
             }
+            pool={cards}
+            onAdd={
+              canEdit
+                ? (variantId) =>
+                    void setCard({ variantId, quantity: 1, sideboard: false })
+                : undefined
+            }
           />
         ) : (
           <div className={canEdit ? styles.editor : undefined}>
