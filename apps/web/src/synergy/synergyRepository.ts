@@ -13,6 +13,14 @@ export interface FeedbackRow {
   weight: number | null;
 }
 
+/** One person's own link (card_synergies): "from helps to". */
+export interface LinkRow {
+  fromCardId: string;
+  toCardId: string;
+  weight: number;
+  note: string | null;
+}
+
 export interface SynergyRepository {
   /** Admin-set weights by rule id. A rule with no entry uses its default in code. */
   listRuleWeights(): Promise<Record<string, number>>;
@@ -23,6 +31,14 @@ export interface SynergyRepository {
   saveFeedback(userId: string, rows: FeedbackRow[]): Promise<void>;
   /** Takes back every verdict on one link (Undo in the queue). */
   clearFeedback(
+    userId: string,
+    fromCardId: string,
+    toCardId: string,
+  ): Promise<void>;
+  /** The signed-in person's links to or from a card (the related-cards picker). */
+  listMyLinks(userId: string, cardId: string): Promise<LinkRow[]>;
+  saveLinks(userId: string, rows: LinkRow[]): Promise<void>;
+  removeLink(
     userId: string,
     fromCardId: string,
     toCardId: string,
@@ -98,6 +114,37 @@ export function supabaseSynergyRepository(
     async clearFeedback(userId, fromCardId, toCardId) {
       const { error } = await client
         .from("synergy_feedback")
+        .delete()
+        .eq("user_id", userId)
+        .eq("from_card_id", fromCardId)
+        .eq("to_card_id", toCardId);
+      if (error) throw error;
+    },
+    async listMyLinks(userId, cardId) {
+      const { data, error } = await client
+        .from("card_synergies")
+        .select("fromCardId:from_card_id, toCardId:to_card_id, weight, note")
+        .eq("user_id", userId)
+        .or(`from_card_id.eq.${cardId},to_card_id.eq.${cardId}`);
+      if (error) throw error;
+      return data.map((r) => ({ ...r, weight: Number(r.weight) })) as LinkRow[];
+    },
+    async saveLinks(userId, rows) {
+      const { error } = await client.from("card_synergies").upsert(
+        rows.map((r) => ({
+          user_id: userId,
+          from_card_id: r.fromCardId,
+          to_card_id: r.toCardId,
+          weight: r.weight,
+          note: r.note,
+          updated_at: new Date().toISOString(),
+        })),
+      );
+      if (error) throw error;
+    },
+    async removeLink(userId, fromCardId, toCardId) {
+      const { error } = await client
+        .from("card_synergies")
         .delete()
         .eq("user_id", userId)
         .eq("from_card_id", fromCardId)

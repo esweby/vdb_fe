@@ -16,6 +16,7 @@ import { useServices } from "../servicesContext.ts";
 import { Button, LoadError, Loading, Tag } from "../ui/index.ts";
 import type { CommunityRow } from "../ranking/rank.ts";
 import { CommunityPanel } from "./CommunityPanel.tsx";
+import { RelatedCards } from "../synergy/RelatedCards.tsx";
 import { CardText } from "../cards/CardText.tsx";
 import { ReviewDialog } from "./ReviewDialog.tsx";
 import type {
@@ -401,6 +402,7 @@ export function CardScoringView(props: {
               minRatingCount={community.minRatingCount}
             />
           )}
+          {canScore && <RelatedCards cardId={cardId} />}
         </section>
 
         <section aria-label="Scores" className={styles.scores}>
