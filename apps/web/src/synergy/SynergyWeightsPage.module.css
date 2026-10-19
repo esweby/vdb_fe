@@ -1,0 +1,37 @@
+.page {
+  max-width: 72rem;
+}
+
+.intro {
+  color: var(--muted);
+  max-width: 48rem;
+}
+
+.description {
+  display: block;
+}
+
+.id,
+.example {
+  display: block;
+  color: var(--muted);
+  font-size: 0.85em;
+}
+
+.weight {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.weight input {
+  width: 6rem;
+}
+
+.default {
+  display: inline-flex;
+  gap: 0.5rem;
+  color: var(--muted);
+  font-size: 0.85em;
+}

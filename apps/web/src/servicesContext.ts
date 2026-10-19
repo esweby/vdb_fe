@@ -5,6 +5,7 @@ import type { CardRepository } from "./cards/cardRepository.ts";
 import type { DeckRepository } from "./decks/deckRepository.ts";
 import type { ScoreRepository } from "./scoring/scoreRepository.ts";
 import type { StrategyRepository } from "./strategy/strategyRepository.ts";
+import type { SynergyRepository } from "./synergy/synergyRepository.ts";
 
 export interface Services {
   auth: AuthService;
@@ -12,6 +13,7 @@ export interface Services {
   scores: ScoreRepository;
   decks: DeckRepository;
   strategy: StrategyRepository;
+  synergy: SynergyRepository;
 }
 
 export const ServicesContext = createContext<Services | null>(null);
