@@ -40,12 +40,12 @@ Where a card pair matches more than one rule, the edge takes the **highest** wei
 
 Synergies that cross engines and aren't obvious from the roles, but are real.
 
-| From                       | To             | Default weight | Why                                                                                                                          |
-| -------------------------- | -------------- | -------------: | ---------------------------------------------------------------------------------------------------------------------------- |
-| Runechant generator        | Rune Gate card |            0.4 | Rune Gate plays it from banish if you control at least as many Runechants as its cost (e.g. Revel in Runeblood enabling one) |
-| Runechant generator        | Usurp card     |            0.4 | Making a Runechant cheaply enables a usurp card                                                                              |
-| Hand banisher              | Gate target    |            0.6 | Banishes a blood debt card from hand where a Gate can play it, which lets Usurper traverse (e.g. Cull)                       |
-| Deck or graveyard banisher | Gate target    |            0.3 | The same, but whether a blood debt card is hit is down to luck                                                               |
+| From                          | To             | Default weight | Why                                                                                                                          |
+| ----------------------------- | -------------- | -------------: | ---------------------------------------------------------------------------------------------------------------------------- |
+| Runechant generator           | Rune Gate card |            0.4 | Rune Gate plays it from banish if you control at least as many Runechants as its cost (e.g. Revel in Runeblood enabling one) |
+| Runechant generator, Sinchant | Usurp card     |            0.6 | Every usurp card needs a Runechant or a sinchant to usurp (maintainer, 19 Oct 2026)                                          |
+| Hand banisher                 | Gate target    |            0.6 | Banishes a blood debt card from hand where a Gate can play it, which lets Usurper traverse (e.g. Cull)                       |
+| Deck or graveyard banisher    | Gate target    |            0.3 | The same, but whether a blood debt card is hit is down to luck                                                               |
 
 The two Runechant rows are the "non-obvious" kind. If they turn out too broad (most Runechant makers linking to every Rune Gate card), the related-cards picker and the confirm-suggestions queue are where scorers trim them.
 
@@ -129,7 +129,7 @@ synergy(card, picked) = λ × Σ over engines  min(1, Σ weight of edges between
 
 ## Decisions (19 Oct 2026)
 
-1. **Runechant engine:** Runechants do have synergies, but non-obvious ones: enabling a Rune Gate card (Revel in Runeblood) or a usurp card. Added as rule set 2.
+1. **Runechant engine:** Runechants do have synergies, but non-obvious ones: enabling a Rune Gate card (Revel in Runeblood) or a usurp card. Every usurp card needs a Runechant or a sinchant to usurp. Added as rule set 2.
 2. **Weights:** adjustable by admins in the app, not fixed in code.
 3. **Sides:** unsure; maybe engines that count for both. Engines are tagged by side but not scaled yet.
 4. **Anti-synergy:** left to deck analysis.
