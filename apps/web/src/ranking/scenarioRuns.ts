@@ -15,6 +15,15 @@ import {
   type TraverseResult,
 } from "@vdb/engine/rulesets/viseraiTraverse";
 import { BUILT_IN_SCENARIOS } from "./scenarios.ts";
+import {
+  BLOOD_DEBT,
+  parseScript,
+  RUNECHANT,
+  runBatch,
+  VISERAI,
+  type BatchReport,
+  type RulesCard,
+} from "@vdb/engine/rules";
 
 export const RUNS = 10_000;
 export const TRAVERSE_TURNS = 6;
@@ -165,4 +174,64 @@ export function runMany(input: ManyInput): OneOutput[] {
   return input.definitions.map((definition) =>
     runOne({ ...input, definition }),
   );
+}
+
+/** A deck played by the rules engine's baseline script (docs/rules-engine.md, step 7b). */
+export interface RulesInput {
+  kind: "rules";
+  deck: RulesCard[];
+  weapons: RulesCard[];
+  side: "forsaken" | "usurper";
+  turns: number;
+  runs: number;
+  seed: number;
+}
+
+/** The report without each run's summary, which the page doesn't need. */
+export type RulesOutput = Omit<BatchReport, "perRun">;
+
+export const RULES_RUNS = 1_000;
+
+/**
+ * The baseline script: each turn, play every card the rules allow (the scripted policy's order:
+ * lowest pitch first), then end the turn. A policy, not the best play.
+ */
+export function baselineScript(turns: number) {
+  return parseScript({
+    version: 1,
+    steps: [
+      {
+        do: "repeat",
+        times: turns,
+        steps: [
+          { do: "repeat", times: 10, steps: [{ do: "play", card: {} }] },
+          { do: "endTurn" },
+        ],
+      },
+    ],
+  });
+}
+
+export function runRules(input: RulesInput): RulesOutput {
+  const { perRun: _, ...report } = runBatch(
+    {
+      deck: input.deck,
+      weapons: input.weapons,
+      side: input.side,
+      triggers: [...VISERAI, RUNECHANT, BLOOD_DEBT],
+    },
+    baselineScript(input.turns),
+    {
+      runs: input.runs,
+      seed: input.seed,
+      queries: [
+        {
+          id: "bloodDebtBanished",
+          kind: "remains",
+          card: { trait: "blood_debt" },
+        },
+      ],
+    },
+  );
+  return report;
 }

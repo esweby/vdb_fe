@@ -3,20 +3,22 @@ import {
   runAll,
   runMany,
   runOne,
+  runRules,
   type ManyInput,
   type OneInput,
+  type RulesInput,
   type ScenarioInput,
 } from "./scenarioRuns.ts";
 
-self.onmessage = (
-  event: MessageEvent<ScenarioInput | OneInput | ManyInput>,
-) => {
-  const input = event.data;
-  self.postMessage(
-    "definitions" in input
-      ? runMany(input)
-      : "definition" in input
-        ? runOne(input)
-        : runAll(input),
-  );
+type Input = ScenarioInput | OneInput | ManyInput | RulesInput;
+
+function run(input: Input) {
+  if ("kind" in input) return runRules(input);
+  if ("definitions" in input) return runMany(input);
+  if ("definition" in input) return runOne(input);
+  return runAll(input);
+}
+
+self.onmessage = (event: MessageEvent<Input>) => {
+  self.postMessage(run(event.data));
 };

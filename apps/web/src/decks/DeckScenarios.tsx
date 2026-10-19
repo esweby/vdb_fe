@@ -8,6 +8,7 @@ import {
 } from "../ranking/ScenariosPanel.tsx";
 import { SavedScenarios } from "../scenarios/SavedScenarios.tsx";
 import { scenarioDeck } from "../scenarios/scenarioDeck.ts";
+import { RulesPanel } from "../scenarios/RulesPanel.tsx";
 import { sectionOf, type DeckEntry } from "./deckRules.ts";
 import styles from "./Decks.module.css";
 
@@ -81,6 +82,7 @@ export function DeckScenarios(props: {
         deck={forBuilder}
         deckMin={props.deckSize}
       />
+      <RulesPanel entries={props.entries} />
       <ScenariosPanel
         source="deck"
         output={run?.output ?? null}

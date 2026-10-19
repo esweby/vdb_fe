@@ -2,7 +2,10 @@ import {
   runAll,
   runMany,
   runOne,
+  runRules,
   type ManyInput,
+  type RulesInput,
+  type RulesOutput,
   type OneInput,
   type OneOutput,
   type ScenarioInput,
@@ -41,4 +44,9 @@ export function runScenario(input: OneInput): Promise<OneOutput> {
 /** Several scenarios on one deck. */
 export function runScenarioBatch(input: ManyInput): Promise<OneOutput[]> {
   return inWorker(input, runMany);
+}
+
+/** A deck played by the rules engine. */
+export function runByTheRules(input: RulesInput): Promise<RulesOutput> {
+  return inWorker(input, runRules);
 }
