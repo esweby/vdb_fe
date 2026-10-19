@@ -144,12 +144,16 @@ export function CardScoringView(props: {
       ?.focus();
   }, [inPopover, loadedFor, cardId]);
 
-  // Ctrl+Enter (Cmd+Enter on a Mac): mark reviewed, or the next card once it is.
+  // Ctrl+Enter (Cmd+Enter on a Mac): mark reviewed, or the next card once it is. Plain Enter
+  // does the same from a rating slider, where it has no other job.
   const canReview = !!user && dimensions.length > 0;
   useEffect(() => {
     if (!inPopover) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "Enter" || !(e.ctrlKey || e.metaKey) || reviewing) return;
+      const onSlider =
+        e.target instanceof HTMLInputElement && e.target.type === "range";
+      if (e.key !== "Enter" || reviewing) return;
+      if (!(e.ctrlKey || e.metaKey || onSlider)) return;
       e.preventDefault();
       if (reviewedAt) onNextCard?.();
       else if (canReview) setReviewing(true);
