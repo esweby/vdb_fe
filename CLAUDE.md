@@ -5,6 +5,7 @@ The design is in [README.md](README.md), and the current plan is in [docs/phase-
 ## Git
 
 - Never commit or push to `main`. Work on a branch and merge through a pull request once CI passes.
+- When every CI check passes on a PR Claude opened, Claude asks the maintainer whether to merge it. It merges only after they confirm.
 
 ## Test first
 
