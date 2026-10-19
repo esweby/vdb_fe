@@ -280,6 +280,55 @@ describe("tabs", () => {
   });
 });
 
+// README "Phase Two" step 2: the core and the cards nearest it, rules' and scoring group's
+// links drawn differently. The sample's only rule link is Become the Shadow Lord → Hocus Pocus.
+describe("synergy graph", () => {
+  const items = (name: string) =>
+    within(panel().getByRole("list", { name }))
+      .getAllByRole("listitem")
+      .map((li) => li.textContent);
+
+  it("asks for a core first", async () => {
+    await open("/ranking?tab=graph");
+    expect(
+      panel().getByText("Add cards to your core to see how they link."),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the core and the cards linked to it, with each link and where it comes from", async () => {
+    const synergy = fakeSynergyRepository(
+      {},
+      {
+        edges: [
+          {
+            fromCardId: "card-fate-foreseen",
+            toCardId: "card-hocus-pocus",
+            weight: 0.4,
+            ratingCount: 2,
+            totalWeight: 2,
+          },
+        ],
+        feedback: [],
+      },
+    );
+    await open(`/ranking?tab=graph&${core({ hp3: 3 })}`, { synergy });
+    expect(
+      await panel().findByRole("img", { name: "Synergy graph" }),
+    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(items("Cards shown")).toEqual([
+        "Hocus Pocus (in your core)",
+        "Become the Shadow Lord",
+        "Fate Foreseen",
+      ]),
+    );
+    expect(items("Links shown")).toEqual([
+      "Become the Shadow Lord helps Hocus Pocus · rules · 0.8 · enables traverse",
+      "Fate Foreseen helps Hocus Pocus · scoring group · 0.4",
+    ]);
+  });
+});
+
 describe("strategy questions", () => {
   it("saves your answer and shows the scoring group's average beside it", async () => {
     const { user, strategy } = await open("/ranking?tab=setup", {

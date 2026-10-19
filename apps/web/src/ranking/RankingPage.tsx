@@ -46,7 +46,11 @@ import {
   buildSynergyGraph,
   fillWithSynergy,
   synergyBonus,
+  weightedEdges,
+  type SynergyInput,
 } from "./synergyCore.ts";
+import { graphView } from "./graphView.ts";
+import { GraphTab } from "./GraphTab.tsx";
 import { LoadError, Loading } from "../ui/index.ts";
 import styles from "./RankingPage.module.css";
 
@@ -64,10 +68,11 @@ interface Data {
   };
 }
 
-type Tab = "setup" | "board" | "readings";
+type Tab = "setup" | "board" | "graph" | "readings";
 const TABS: { id: Tab; label: string }[] = [
   { id: "setup", label: "Set up" },
   { id: "board", label: "Board" },
+  { id: "graph", label: "Graph" },
   { id: "readings", label: "Readings" },
 ];
 
@@ -213,8 +218,10 @@ export function RankingPage() {
 
   const settings = readRankingSearch(search);
   const synergyOn = settings.synergy > 0;
+  // The Graph tab needs the links too, whatever the strength.
+  const wantsSynergy = synergyOn || search.tab === "graph";
   useEffect(() => {
-    if (!synergyOn || synergyData) return;
+    if (!wantsSynergy || synergyData) return;
     let live = true;
     Promise.all([
       synergy.listRuleWeights(),
@@ -228,7 +235,7 @@ export function RankingPage() {
     return () => {
       live = false;
     };
-  }, [synergy, synergyOn, synergyData]);
+  }, [synergy, wantsSynergy, synergyData]);
   // Set up is step 1, so it's where the page opens; the other tabs are kept in the URL.
   const tab: Tab = TABS.some((t) => t.id === search.tab)
     ? (search.tab as Tab)
@@ -273,10 +280,10 @@ export function RankingPage() {
     [items],
   );
 
-  const synergyGraph = useMemo(() => {
-    if (!synergyOn) return null;
+  const synergyInput = useMemo((): SynergyInput | null => {
+    if (!wantsSynergy) return null;
     const weights = synergyData?.weights ?? {};
-    return buildSynergyGraph({
+    return {
       derived: deriveSynergies(
         items.map((c) => ({ ...roleCard(c), id: c.id, name: c.name })),
         weights,
@@ -284,8 +291,16 @@ export function RankingPage() {
       ruleWeights: weights,
       feedback: synergyData?.feedback ?? [],
       community: synergyData?.edges ?? [],
-    });
-  }, [items, synergyOn, synergyData]);
+    };
+  }, [items, wantsSynergy, synergyData]);
+  const synergyGraph = useMemo(
+    () => (synergyOn && synergyInput ? buildSynergyGraph(synergyInput) : null),
+    [synergyOn, synergyInput],
+  );
+  const allEdges = useMemo(
+    () => (synergyInput ? weightedEdges(synergyInput) : []),
+    [synergyInput],
+  );
 
   const ranked = useMemo((): BoardCard[] => {
     if (!data) return [];
@@ -620,6 +635,18 @@ export function RankingPage() {
             signedIn={!!user}
             onAnswer={(key, n) => void answer(key, n)}
             onSkip={() => setTab("board")}
+          />
+        )}
+        {tab === "graph" && (
+          <GraphTab
+            {...graphView({
+              coreCardIds: core.flatMap((c) => {
+                const cardId = byVariant.get(c.variantId)?.cardId;
+                return cardId ? [cardId] : [];
+              }),
+              edges: allEdges,
+              names: new Map(items.map((c) => [c.id, c.name])),
+            })}
           />
         )}
         {tab === "readings" && (
