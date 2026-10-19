@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { runScenarios } from "../ranking/runScenarios.ts";
 import { RUNS, type ScenarioOutput } from "../ranking/scenarioRuns.ts";
 import { engineCardOf } from "../ranking/scenarios.ts";
@@ -6,12 +6,13 @@ import {
   ScenariosPanel,
   TraverseTimeline,
 } from "../ranking/ScenariosPanel.tsx";
+import { ScenarioBuilder } from "../scenarios/ScenarioBuilder.tsx";
 import { sectionOf, type DeckEntry } from "./deckRules.ts";
 import styles from "./Decks.module.css";
 
 /**
- * The Ranking page's scenarios, run against a deck's main deck: a preview of the deck testing
- * still to come (maintainer, 16 Oct 2026). Weapons, equipment and the sideboard aren't drawn.
+ * Scenarios on a deck: build your own (phase two step 6), and the Ranking page's built-ins run
+ * against the main deck. Weapons and equipment aren't drawn; the sideboard isn't used.
  */
 export function DeckScenarios(props: {
   entries: DeckEntry[];
@@ -23,6 +24,34 @@ export function DeckScenarios(props: {
   // What a run used, so a later change to the deck can be spotted.
   const signature = JSON.stringify(
     drawn.map((e) => [e.variant.id, e.quantity]).sort(),
+  );
+  const gear = props.entries.filter(
+    (e) => !e.sideboard && sectionOf(e.card) !== "deck",
+  );
+  const deckSize = Math.max(
+    props.deckSize,
+    drawn.reduce((n, e) => n + e.quantity, 0),
+  );
+  const forBuilder = useMemo(
+    () => ({
+      core: drawn.map((e) => ({
+        card: engineCardOf(e.card, e.variant),
+        copies: e.quantity,
+      })),
+      gear: gear.flatMap((e) =>
+        Array.from({ length: e.quantity }, () =>
+          engineCardOf(e.card, e.variant),
+        ),
+      ),
+      deckSize,
+    }),
+    // The signature covers what's drawn; gear changes rarely and is cheap to redo.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      signature,
+      JSON.stringify(gear.map((e) => [e.variant.id, e.quantity])),
+      deckSize,
+    ],
   );
   const [run, setRun] = useState<{
     output: ScenarioOutput;
@@ -38,10 +67,7 @@ export function DeckScenarios(props: {
         card: engineCardOf(e.card, e.variant),
         copies: e.quantity,
       })),
-      deckSize: Math.max(
-        props.deckSize,
-        drawn.reduce((n, e) => n + e.quantity, 0),
-      ),
+      deckSize,
       runs: RUNS,
       seed,
     }).then(
@@ -56,10 +82,10 @@ export function DeckScenarios(props: {
   return (
     <div className={styles.scenarios}>
       <p className={styles.preview}>
-        <strong>A preview.</strong> These are the built-in scenarios from Build
-        a core, run on this deck. Saved scenarios, fixed cards and turn-by-turn
-        play are still to come.
+        Build a scenario of your own, or run the built-in ones from Build a
+        core. Saving scenarios and scripted steps are still to come.
       </p>
+      <ScenarioBuilder deck={forBuilder} />
       <ScenariosPanel
         source="deck"
         output={run?.output ?? null}

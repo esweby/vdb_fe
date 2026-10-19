@@ -1017,7 +1017,7 @@ describe("deck scenarios", () => {
     await user.click(await screen.findByRole("tab", { name: "Scenarios" }));
     expect(router.state.location.search).toMatchObject({ tab: "scenarios" });
     const panel = within(screen.getByRole("tabpanel"));
-    expect(panel.getByText(/A preview/)).toBeInTheDocument();
+    expect(panel.getByText(/Build a scenario of your own/)).toBeInTheDocument();
     await user.click(panel.getByRole("button", { name: "Run scenarios" }));
     expect(
       await panel.findByText(

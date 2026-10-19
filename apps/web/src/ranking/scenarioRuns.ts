@@ -3,6 +3,8 @@
 import {
   buildDeck,
   runScenario,
+  ScenarioCannotRun,
+  type ScenarioDefinition,
   type Block,
   type ConditionGroup,
   type EngineCard,
@@ -107,4 +109,49 @@ export function runAll(input: ScenarioInput): ScenarioOutput {
     runs: input.runs,
     seed: input.seed,
   };
+}
+
+/** One scenario of the user's, run against a deck (phase two step 6). */
+export interface OneInput {
+  definition: ScenarioDefinition;
+  core: { card: EngineCard; copies: number }[];
+  /** Weapons and equipment: always visible to conditions. */
+  gear: EngineCard[];
+  deckSize: number;
+  runs: number;
+  seed: number;
+}
+
+export interface OneOutput {
+  result?: ScenarioResult;
+  /** Why it can't run on this deck, such as fixing more copies than the deck has. */
+  error?: string;
+  deck: { deckSize: number; coreCards: number; blanks: number };
+  runs: number;
+  seed: number;
+}
+
+export function runOne(input: OneInput): OneOutput {
+  const deck = buildDeck(input.core, input.deckSize, input.gear);
+  const base = {
+    deck: {
+      deckSize: deck.cards.length,
+      coreCards: deck.coreCards,
+      blanks: deck.blanks,
+    },
+    runs: input.runs,
+    seed: input.seed,
+  };
+  try {
+    return {
+      ...base,
+      result: runScenario(input.definition, deck, {
+        runs: input.runs,
+        seed: input.seed,
+      }),
+    };
+  } catch (e) {
+    if (e instanceof ScenarioCannotRun) return { ...base, error: e.message };
+    throw e;
+  }
 }

@@ -1,8 +1,9 @@
 import { scenarioSchema } from "@vdb/engine";
-import { lacking } from "./scenarioRuns.ts";
+import { lacking, runOne } from "./scenarioRuns.ts";
+import { buildDeck } from "@vdb/engine";
 import { describe, expect, it } from "vitest";
 import { sampleCards } from "../test/fakeCardRepository.ts";
-import { BUILT_IN_SCENARIOS, toEngineCard } from "./scenarios.ts";
+import { BUILT_IN_SCENARIOS, engineCardOf, toEngineCard } from "./scenarios.ts";
 
 const byName = (name: string) => sampleCards.find((c) => c.name === name)!;
 
@@ -89,5 +90,68 @@ describe("what a core can't meet", () => {
     expect(
       lacking(three, [{ ...card([]), amounts: { runechants: 1 } }]),
     ).toBeUndefined();
+  });
+});
+
+describe("cards for user scenarios (phase two step 6)", () => {
+  it("carry their type, and Generic as a trait", () => {
+    const ff = byName("Fate Foreseen");
+    const card = engineCardOf(ff, ff.variants[0]!);
+    expect(card.type).toBe("defense_reaction");
+    expect(card.traits).toContain("generic");
+  });
+});
+
+describe("runOne", () => {
+  const bsl = byName("Become the Shadow Lord");
+  const core = [{ card: engineCardOf(bsl, bsl.variants[0]!), copies: 2 }];
+  const definition = (fixed: number) => ({
+    version: 1 as const,
+    name: "Fixed",
+    horizon: 0,
+    turnModel: "fresh" as const,
+    access: ["hand" as const],
+    fixed: Array.from({ length: fixed }, () => ({
+      name: "Become the Shadow Lord",
+      pitch: 3,
+      zone: "hand" as const,
+    })),
+    condition: {
+      all: [
+        {
+          label: "BSL",
+          filter: { name: "Become the Shadow Lord" },
+          min: 1,
+        },
+      ],
+    },
+  });
+
+  it("runs one scenario on a deck", () => {
+    const out = runOne({
+      definition: definition(1),
+      core,
+      gear: [],
+      deckSize: 60,
+      runs: 100,
+      seed: 1,
+    });
+    expect(out.result?.successRate).toBe(1);
+    expect(buildDeck(core, 60).cards).toHaveLength(60);
+  });
+
+  it("says why it can't run, rather than passing or failing", () => {
+    const out = runOne({
+      definition: definition(3),
+      core,
+      gear: [],
+      deckSize: 60,
+      runs: 100,
+      seed: 1,
+    });
+    expect(out.result).toBeUndefined();
+    expect(out.error).toBe(
+      "Needs 3 copies of Become the Shadow Lord (blue); the deck has 2.",
+    );
   });
 });
