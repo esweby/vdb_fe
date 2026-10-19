@@ -1,7 +1,7 @@
 // Condition blocks in plain words. Failures are grouped by block (README "Why runs failed"), so
 // a block's label is what the user reads there.
 import { ROLES } from "@vdb/cards";
-import type { Block } from "@vdb/engine";
+import type { Block, ConditionGroup } from "@vdb/engine";
 import { TYPE_LABELS } from "../cards/filterCards.ts";
 import { PITCH_NAMES } from "../decks/deckRules.ts";
 
@@ -55,4 +55,18 @@ export function blockLabel(block: Omit<Block, "label">): string {
   }
   const distinct = block.distinct ? "different " : "";
   return `${compare} ${distinct}${cards}`;
+}
+
+/** The block labels of a condition, in reading order. */
+export function labelsOf(group: ConditionGroup): string[] {
+  const out: string[] = [];
+  const walk = (g: ConditionGroup) => {
+    for (const item of "all" in g ? g.all : g.any) {
+      if ("label" in item) {
+        if (!out.includes(item.label)) out.push(item.label);
+      } else walk(item);
+    }
+  };
+  walk(group);
+  return out;
 }

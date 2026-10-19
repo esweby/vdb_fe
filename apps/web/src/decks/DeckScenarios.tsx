@@ -6,7 +6,7 @@ import {
   ScenariosPanel,
   TraverseTimeline,
 } from "../ranking/ScenariosPanel.tsx";
-import { ScenarioBuilder } from "../scenarios/ScenarioBuilder.tsx";
+import { SavedScenarios } from "../scenarios/SavedScenarios.tsx";
 import { sectionOf, type DeckEntry } from "./deckRules.ts";
 import styles from "./Decks.module.css";
 
@@ -15,6 +15,7 @@ import styles from "./Decks.module.css";
  * against the main deck. Weapons and equipment aren't drawn; the sideboard isn't used.
  */
 export function DeckScenarios(props: {
+  deckId: string;
   entries: DeckEntry[];
   deckSize: number;
 }) {
@@ -83,9 +84,13 @@ export function DeckScenarios(props: {
     <div className={styles.scenarios}>
       <p className={styles.preview}>
         Build a scenario of your own, or run the built-in ones from Build a
-        core. Saving scenarios and scripted steps are still to come.
+        core. Scripted steps are still to come.
       </p>
-      <ScenarioBuilder deck={forBuilder} />
+      <SavedScenarios
+        deckId={props.deckId}
+        entries={props.entries}
+        deck={forBuilder}
+      />
       <ScenariosPanel
         source="deck"
         output={run?.output ?? null}

@@ -2,7 +2,7 @@
 -- authenticated by default (local stacks do), so every grant must be explicit.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(47);
+select plan(51);
 
 -- Public reference data: readable by everyone
 select table_privs_are('public', t, 'anon', array['SELECT'], 'anon can only read ' || t)
@@ -29,6 +29,13 @@ select table_privs_are('public', t, 'anon', array['SELECT'], 'anon can only read
   from unnest(array['community_synergies', 'community_synergy_feedback']) t;
 select table_privs_are('public', t, 'authenticated', array['SELECT'], 'signed-in users can only read ' || t)
   from unnest(array['community_synergies', 'community_synergy_feedback']) t;
+
+-- Saved scenarios (phase two): signed-in users manage their own (row level security); shared
+-- ones are read through shared_scenario(), so anon has no table access.
+select table_privs_are('public', t, 'anon', array[]::text[], 'anon has no access to ' || t)
+  from unnest(array['scenarios', 'scenario_results']) t;
+select table_privs_are('public', 'scenarios', 'authenticated', array['SELECT', 'INSERT', 'UPDATE', 'DELETE'], 'signed-in users manage their own scenarios');
+select table_privs_are('public', 'scenario_results', 'authenticated', array['SELECT', 'INSERT', 'UPDATE', 'DELETE'], 'signed-in users manage their own scenario_results');
 
 -- Private tables: nothing for anon
 select table_privs_are('public', t, 'anon', array[]::text[], 'anon has no access to ' || t)
