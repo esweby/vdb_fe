@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { CardRepository, CardSummary } from "./cardRepository.ts";
+import { redFirst } from "./pitch.ts";
 
 export interface CardsState {
   status: "idle" | "loading" | "loaded" | "failed";
@@ -31,7 +32,11 @@ const cardsSlice = createSlice({
       })
       .addCase(loadCards.fulfilled, (state, action) => {
         state.status = "loaded";
-        state.items = action.payload;
+        // Every screen takes a card's first version as the one to show: make that red.
+        state.items = action.payload.map((c) => ({
+          ...c,
+          variants: redFirst(c.variants),
+        }));
       })
       .addCase(loadCards.rejected, (state, action) => {
         state.status = "failed";
