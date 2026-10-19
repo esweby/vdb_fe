@@ -146,12 +146,15 @@ describe("synergy explorer", () => {
     await waitFor(() => expect(graph()).toEqual([]));
   });
 
-  it("starts from your core, marking its cards", async () => {
-    const core = encodeURIComponent(JSON.stringify({ hp3: 3 }));
-    await open(`/synergies?start=core&core=${core}`);
-    await waitFor(() =>
-      expect(graph()).toEqual(["Hocus Pocus (core)", "Become the Shadow Lord"]),
-    );
+  // Maintainer, 19 Oct 2026: the core and deck views belong in Build a core and the deck page.
+  it("offers a card or everything, not your core", async () => {
+    await open();
+    const show = panel().getByRole("combobox", { name: "Show" });
+    expect(
+      within(show)
+        .getAllByRole("option")
+        .map((o) => o.textContent),
+    ).toEqual(["Everything", "The selected card and its neighbours"]);
   });
 
   it("shows the scoring group's own links", async () => {

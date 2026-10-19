@@ -672,13 +672,6 @@ export function RankingPage() {
                     ))}
                   </div>
                 </div>
-                <Link
-                  to="/synergies"
-                  search={{ start: "core", core: settings.core } as never}
-                  className={styles.explore}
-                >
-                  Explore your core&apos;s synergies
-                </Link>
                 <span className={styles.boardCount}>
                   {deckCards.length.toLocaleString("en-GB")} ranked
                 </span>

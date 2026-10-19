@@ -342,15 +342,11 @@ describe("tabs", () => {
 // The synergy explorer replaced the chord diagram (maintainer, 19 Oct 2026): the board links to
 // it, starting from the core.
 describe("synergy explorer link", () => {
-  it("opens the explorer on your core from the board", async () => {
+  it("doesn't link to the explorer from the board (a Synergies tab comes next)", async () => {
     await open(`/ranking?${core({ hp3: 3 })}`);
-    const link = screen.getByRole("link", {
-      name: "Explore your core's synergies",
-    });
-    const url = new URL(link.getAttribute("href")!, "http://x");
-    expect(url.pathname).toBe("/synergies");
-    expect(url.searchParams.get("start")).toBe("core");
-    expect(JSON.parse(url.searchParams.get("core")!)).toEqual({ hp3: 3 });
+    expect(
+      screen.queryByRole("link", { name: "Explore your core's synergies" }),
+    ).toBeNull();
   });
 
   it("has no Graph tab any more", async () => {

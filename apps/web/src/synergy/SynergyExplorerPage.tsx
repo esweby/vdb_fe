@@ -53,16 +53,6 @@ const ENGINE_LABEL: Record<string, string> = {
   usurp: "Usurp",
 };
 
-/** The core as the ranking keeps it in the URL: variant id → copies. */
-function readCore(v: unknown): Record<string, number> {
-  if (!v || typeof v !== "object" || Array.isArray(v)) return {};
-  return Object.fromEntries(
-    Object.entries(v).filter(
-      (e): e is [string, number] => typeof e[1] === "number" && e[1] > 0,
-    ),
-  );
-}
-
 /**
  * The synergy explorer (maintainer, 19 Oct 2026): a graph of how cards work together, with a
  * side panel to choose where to start, refine what's drawn, and walk from card to card.
@@ -73,8 +63,11 @@ export function SynergyExplorerPage() {
   const search = route.useSearch() as Record<string, unknown>;
   const navigate = useNavigate();
   const router = useRouter();
-  const settings = readExplorerSearch(search);
-  const core = readCore(search.core);
+  // This page explores the whole pool; a core or deck view lives in Build a core and the deck
+  // page (maintainer, 19 Oct 2026), so a core start here falls back to everything.
+  const read = readExplorerSearch(search);
+  const settings: ExplorerSettings =
+    read.start === "core" ? { ...read, start: "all" } : read;
   const [data, setData] = useState<{
     weights: Record<string, number>;
     edges: CommunityEdgeRow[];
@@ -130,17 +123,10 @@ export function SynergyExplorerPage() {
       community: data.edges,
     });
   }, [items, data]);
-  const coreIds = useMemo(
-    () =>
-      items.filter((c) => c.variants.some((v) => core[v.id])).map((c) => c.id),
-    // The core object is new on every render; its contents are what matter.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [items, JSON.stringify(core)],
-  );
   const view = useMemo(
-    () => explorerView({ cards, edges, settings, coreIds }),
+    () => explorerView({ cards, edges, settings, coreIds: [] }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [cards, edges, JSON.stringify(settings), coreIds],
+    [cards, edges, JSON.stringify(settings)],
   );
 
   if (status === "failed")
@@ -153,10 +139,7 @@ export function SynergyExplorerPage() {
     void navigate({
       to: ".",
       replace: !push,
-      search: {
-        ...writeExplorerSearch({ ...settings, ...patch }),
-        ...(Object.keys(core).length ? { core } : {}),
-      } as never,
+      search: writeExplorerSearch({ ...settings, ...patch }) as never,
     });
   // Selecting a card is a step you can go Back from.
   const select = (id: string) => go({ card: id, start: "card" }, true);
@@ -320,9 +303,6 @@ export function SynergyExplorerPage() {
                 <option value="all">Everything</option>
                 <option value="card" disabled={!settings.card}>
                   The selected card and its neighbours
-                </option>
-                <option value="core" disabled={coreIds.length === 0}>
-                  Your core and what links to it
                 </option>
               </select>
             </label>
