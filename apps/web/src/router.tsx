@@ -6,7 +6,11 @@ import {
   type RouterHistory,
 } from "@tanstack/react-router";
 import { authSettled } from "./auth/listenToAuth.ts";
-import { selectCanScore, selectIsSignedIn } from "./auth/authSlice.ts";
+import {
+  selectCanScore,
+  selectIsSignedIn,
+  selectRole,
+} from "./auth/authSlice.ts";
 import { SignInPage } from "./auth/SignInPage.tsx";
 import { CardScoringPage } from "./scoring/CardScoringPage.tsx";
 import { QuickReviewPage } from "./scoring/QuickReviewPage.tsx";
@@ -17,6 +21,7 @@ import { RankingPage } from "./ranking/RankingPage.tsx";
 import { CardsPage } from "./cards/CardsPage.tsx";
 import { DeckPage } from "./decks/DeckPage.tsx";
 import { DecksPage } from "./decks/DecksPage.tsx";
+import { SynergyWeightsPage } from "./synergy/SynergyWeightsPage.tsx";
 import { Layout } from "./Layout.tsx";
 import { validateListSearch } from "./filters/useUrlFilters.ts";
 import { PlaceholderPage } from "./pages/PlaceholderPage.tsx";
@@ -42,6 +47,14 @@ async function requireSignedIn({ context }: { context: RouterContext }) {
 async function requireScorer(args: { context: RouterContext }) {
   await requireSignedIn(args);
   if (!selectCanScore(args.context.store.getState())) {
+    throw redirect({ to: "/" });
+  }
+}
+
+/** Anyone but an admin goes home. */
+async function requireAdmin(args: { context: RouterContext }) {
+  await requireSignedIn(args);
+  if (selectRole(args.context.store.getState()) !== "admin") {
     throw redirect({ to: "/" });
   }
 }
@@ -115,6 +128,12 @@ const routeTree = rootRoute.addChildren([
     }),
     // A public deck opens signed out, read only; a private one is "not found" to anyone else.
     component: DeckPage,
+  }),
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/synergy",
+    beforeLoad: requireAdmin,
+    component: SynergyWeightsPage,
   }),
   createRoute({
     getParentRoute: () => rootRoute,
