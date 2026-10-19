@@ -15,6 +15,7 @@ vi.mock("./GraphCanvas.tsx", () => ({
     nodes: ExplorerNode[];
     onSelect: (id: string) => void;
     onHover: (id: string | null) => void;
+    line?: string[];
   }) => (
     <ul aria-label="Graph">
       {props.nodes.map((n) => (
@@ -27,6 +28,7 @@ vi.mock("./GraphCanvas.tsx", () => ({
           >
             {n.name}
             {n.inCore ? " (core)" : ""}
+            {props.line?.includes(n.id) ? " (line)" : ""}
           </button>
         </li>
       ))}
@@ -249,5 +251,65 @@ describe("synergy explorer", () => {
         },
       ),
     ).toHaveAttribute("src", "https://img.test/hp1.webp");
+  });
+
+  // Lines (maintainer, 19 Oct 2026): three-card chains where each card helps the next.
+  describe("lines", () => {
+    // The scoring group links Hocus Pocus → Nebula Blade, so Become the Shadow Lord →
+    // Hocus Pocus → Nebula Blade is a line.
+    const withLine = () =>
+      fakeSynergyRepository(
+        {},
+        {
+          edges: [
+            {
+              fromCardId: HOCUS,
+              toCardId: "card-nebula-blade",
+              weight: 0.6,
+              ratingCount: 2,
+              totalWeight: 2,
+            },
+          ],
+          feedback: [],
+        },
+      );
+
+    it("lists the lines through the selected card, weakest link and traverse shown", async () => {
+      await open(`/synergies?card=${HOCUS}`, withLine());
+      const selected = within(
+        await panel().findByRole("region", { name: "Hocus Pocus" }),
+      );
+      const lines = within(
+        await selected.findByRole("list", { name: "Lines through this card" }),
+      );
+      expect(lines.getByRole("listitem")).toHaveTextContent(
+        /Become the Shadow Lord → Hocus Pocus → Nebula Blade.*weakest link 0\.6.*enables traverse/,
+      );
+    });
+
+    it("highlights a line in the graph, and hides it again", async () => {
+      const { user } = await open(`/synergies?card=${HOCUS}`, withLine());
+      const selected = within(
+        await panel().findByRole("region", { name: "Hocus Pocus" }),
+      );
+      await user.click(
+        await selected.findByRole("button", { name: "Show in graph" }),
+      );
+      await waitFor(() =>
+        expect(graph()).toContain("Become the Shadow Lord (line)"),
+      );
+      await user.click(selected.getByRole("button", { name: "Hide" }));
+      await waitFor(() => expect(graph()).toContain("Become the Shadow Lord"));
+    });
+
+    it("says when there are no lines yet", async () => {
+      await open(`/synergies?card=${HOCUS}`);
+      const selected = within(
+        await panel().findByRole("region", { name: "Hocus Pocus" }),
+      );
+      expect(
+        selected.getByText("No lines through this card yet."),
+      ).toBeInTheDocument();
+    });
   });
 });

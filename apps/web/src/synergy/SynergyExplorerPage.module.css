@@ -179,6 +179,10 @@
   cursor: pointer;
 }
 
+.step {
+  display: block;
+}
+
 .reasons,
 .muted {
   color: var(--muted);

@@ -242,3 +242,74 @@ export function bestNextCards(
     .sort((a, b) => b.strength - a.strength || b.links - a.links)
     .slice(0, limit);
 }
+
+export interface Line {
+  /** Three card ids: each helps the next. */
+  cards: [string, string, string];
+  steps: [WeightedEdge, WeightedEdge];
+  /** A chain is only as strong as its weakest link. */
+  weakest: number;
+  total: number;
+  traverse: boolean;
+  /** Its two steps are in different engines: the less obvious idea. */
+  crosses: boolean;
+  /** How many weaker lines share this one's card next to the selected card. */
+  alike: number;
+}
+
+/**
+ * Three-card chains through a card, at any position (maintainer, 19 Oct 2026): A helps B,
+ * which helps C. The middle card is the glue a plain list of links doesn't show. Strongest
+ * weakest link first, then lines crossing from one engine into another, then the strongest
+ * overall. Loops back to the first card are left out.
+ */
+export function linesThrough(
+  cardId: string,
+  edges: WeightedEdge[],
+  limit = 5,
+): Line[] {
+  const out = new Map<string, WeightedEdge[]>();
+  const into = new Map<string, WeightedEdge[]>();
+  for (const e of edges) {
+    out.set(e.from, [...(out.get(e.from) ?? []), e]);
+    into.set(e.to, [...(into.get(e.to) ?? []), e]);
+  }
+  const found = new Map<string, Line>();
+  const add = (a: WeightedEdge, b: WeightedEdge) => {
+    if (a.from === b.to || a.from === a.to || b.from === b.to) return;
+    const key = `${a.from}\u0000${a.to}\u0000${b.to}`;
+    if (found.has(key)) return;
+    found.set(key, {
+      cards: [a.from, a.to, b.to],
+      steps: [a, b],
+      weakest: Math.min(a.weight, b.weight),
+      total: Math.round((a.weight + b.weight) * 100) / 100,
+      traverse: a.traverse || b.traverse,
+      crosses: a.bucket !== b.bucket,
+      alike: 0,
+    });
+  };
+  // The card first, in the middle, or last.
+  for (const a of out.get(cardId) ?? [])
+    for (const b of out.get(a.to) ?? []) add(a, b);
+  for (const a of into.get(cardId) ?? [])
+    for (const b of out.get(cardId) ?? []) add(a, b);
+  for (const b of into.get(cardId) ?? [])
+    for (const a of into.get(b.from) ?? []) add(a, b);
+  // Lines sharing the card next to this one say the same thing (Cull's top five were all
+  // "X → Breach Flesh → Cull"), so keep the strongest of each and count the rest.
+  const groups = new Map<string, Line>();
+  for (const l of [...found.values()].sort(
+    (x, y) =>
+      y.weakest - x.weakest ||
+      Number(y.crosses) - Number(x.crosses) ||
+      y.total - x.total,
+  )) {
+    const key =
+      l.cards[1] === cardId ? `before:${l.cards[0]}` : `middle:${l.cards[1]}`;
+    const kept = groups.get(key);
+    if (kept) kept.alike += 1;
+    else groups.set(key, l);
+  }
+  return [...groups.values()].slice(0, limit);
+}

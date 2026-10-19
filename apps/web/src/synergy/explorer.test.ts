@@ -6,6 +6,7 @@ import {
   bestNextCards,
   cardLinks,
   isolatedCards,
+  linesThrough,
   explorerView,
   primaryEngine,
   readExplorerSearch,
@@ -240,5 +241,63 @@ describe("bestNextCards", () => {
 
   it("stops at the limit", () => {
     expect(bestNextCards(["a", "c"], edges, 1).map((c) => c.id)).toEqual(["b"]);
+  });
+});
+
+// Lines (maintainer, 19 Oct 2026): three-card chains where each card helps the next.
+describe("linesThrough", () => {
+  const line = (l: ReturnType<typeof linesThrough>[number]) =>
+    `${l.cards.join("→")} ${l.weakest}`;
+
+  it("finds the chains through a card, at any position, strongest weakest link first", () => {
+    // Through b: a→b→e (0.7), b→c→d (0.6, total 1.5), a→b→c (0.6, total 1.4),
+    // e→a→b (0.4, total 1.2), b→e→a (0.4, total 1.1). a→b→c joins a→b→e (below).
+    expect(linesThrough("b", edges).map(line)).toEqual([
+      "a→b→e 0.7",
+      "b→c→d 0.6",
+      "e→a→b 0.4",
+      "b→e→a 0.4",
+    ]);
+  });
+
+  // In the browser, Cull's top five were all "X → Breach Flesh → Cull" (19 Oct 2026).
+  it("groups lines that share the card next to this one, keeping the strongest and a count", () => {
+    const [first] = linesThrough("b", edges);
+    // a→b→e and a→b→c both come into b from a.
+    expect(first).toMatchObject({ cards: ["a", "b", "e"], alike: 1 });
+  });
+
+  // Discovery: a line from one engine into another is the less obvious idea.
+  it("puts lines that cross engines first when their weakest links are equal", () => {
+    const mixed = [
+      edge("p", "y", 0.8),
+      edge("y", "q", 0.8),
+      edge("x", "y", 0.8, { bucket: "banish" }),
+    ];
+    expect(linesThrough("y", mixed).map((l) => l.cards.join("→"))).toEqual([
+      "x→y→q",
+      "p→y→q",
+    ]);
+  });
+
+  it("leaves out loops back to the first card", () => {
+    // a→b→e→a would be a loop; as three cards a→b→e is fine, e→a and a→b→a aren't.
+    expect(
+      linesThrough("a", edges).every((l) => l.cards[0] !== l.cards[2]),
+    ).toBe(true);
+  });
+
+  it("keeps each step, and says when a line enables traverse", () => {
+    const withTraverse = [
+      edge("x", "y", 0.8),
+      edge("y", "z", 0.8, { traverse: true }),
+    ];
+    const [only] = linesThrough("y", withTraverse);
+    expect(only).toMatchObject({ cards: ["x", "y", "z"], traverse: true });
+    expect(only!.steps.map((e) => `${e.from}→${e.to}`)).toEqual(["x→y", "y→z"]);
+  });
+
+  it("stops at the limit", () => {
+    expect(linesThrough("b", edges, 2)).toHaveLength(2);
   });
 });
