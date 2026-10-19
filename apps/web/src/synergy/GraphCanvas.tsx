@@ -20,12 +20,16 @@ export function GraphCanvas(props: {
   /** Move to the selected card: for the bigger views, where it may be off-screen. */
   follow: boolean;
   onSelect: (id: string) => void;
+  /** The card being pointed at, or null when the pointer leaves it. */
+  onHover: (id: string | null) => void;
 }) {
   const container = useRef<HTMLDivElement>(null);
   const sigma = useRef<Sigma | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
   const onSelect = useRef(props.onSelect);
   onSelect.current = props.onSelect;
+  const onHover = useRef(props.onHover);
+  onHover.current = props.onHover;
 
   // Rebuild the graph and its layout when what's shown changes.
   useEffect(() => {
@@ -79,8 +83,14 @@ export function GraphCanvas(props: {
       zIndex: true,
     });
     renderer.on("clickNode", ({ node }) => onSelect.current(node));
-    renderer.on("enterNode", ({ node }) => setHovered(node));
-    renderer.on("leaveNode", () => setHovered(null));
+    renderer.on("enterNode", ({ node }) => {
+      setHovered(node);
+      onHover.current(node);
+    });
+    renderer.on("leaveNode", () => {
+      setHovered(null);
+      onHover.current(null);
+    });
     // Draw once now, so positions are known before the camera moves to the selected card.
     renderer.refresh();
     sigma.current = renderer;

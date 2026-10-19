@@ -5,6 +5,7 @@ import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { fakeAuthService } from "../test/fakeAuthService.ts";
+import { fakeCardRepository, sampleCards } from "../test/fakeCardRepository.ts";
 import { fakeSynergyRepository } from "../test/fakeSynergyRepository.ts";
 import { renderApp } from "../test/renderApp.tsx";
 import type { ExplorerNode } from "./explorer.ts";
@@ -13,11 +14,17 @@ vi.mock("./GraphCanvas.tsx", () => ({
   GraphCanvas: (props: {
     nodes: ExplorerNode[];
     onSelect: (id: string) => void;
+    onHover: (id: string | null) => void;
   }) => (
     <ul aria-label="Graph">
       {props.nodes.map((n) => (
         <li key={n.id}>
-          <button type="button" onClick={() => props.onSelect(n.id)}>
+          <button
+            type="button"
+            onClick={() => props.onSelect(n.id)}
+            onMouseEnter={() => props.onHover(n.id)}
+            onMouseLeave={() => props.onHover(null)}
+          >
             {n.name}
             {n.inCore ? " (core)" : ""}
           </button>
@@ -165,5 +172,68 @@ describe("synergy explorer", () => {
         /Fate Foreseen.*0\.6.*scoring group/,
       ),
     );
+  });
+
+  // Maintainer, 19 Oct 2026: preview the card being pointed at.
+  it("previews the card you point at in the graph, and hides it when you move off", async () => {
+    const { user } = await open();
+    const node = await within(
+      screen.getByRole("list", { name: "Graph" }),
+    ).findByRole("button", { name: "Hocus Pocus" });
+    await user.hover(node);
+    expect(
+      within(screen.getByRole("figure", { name: "Card preview" })).getByText(
+        "Hocus Pocus",
+      ),
+    ).toBeInTheDocument();
+    await user.unhover(node);
+    expect(screen.queryByRole("figure", { name: "Card preview" })).toBeNull();
+  });
+
+  it("previews a partner you point at in the panel", async () => {
+    const { user } = await open(`/synergies?card=${HOCUS}`);
+    const selected = within(
+      await panel().findByRole("region", { name: "Hocus Pocus" }),
+    );
+    await user.hover(
+      selected.getByRole("button", { name: "Become the Shadow Lord" }),
+    );
+    expect(
+      within(screen.getByRole("figure", { name: "Card preview" })).getByText(
+        "Become the Shadow Lord",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the card's red version when it has an image", async () => {
+    const [hocus, ...rest] = sampleCards;
+    const withArt = {
+      ...hocus!,
+      variants: hocus!.variants.map((v) => ({
+        ...v,
+        imageUrl: `https://img.test/${v.id}.webp`,
+      })),
+    };
+    await renderApp({
+      path: "/synergies",
+      auth: fakeAuthService().service,
+      cards: fakeCardRepository([withArt, ...rest]),
+    });
+    const user = userEvent.setup();
+    await user.hover(
+      await within(
+        await screen.findByRole("list", { name: "Graph" }),
+      ).findByRole("button", {
+        name: "Hocus Pocus",
+      }),
+    );
+    expect(
+      within(screen.getByRole("figure", { name: "Card preview" })).getByRole(
+        "img",
+        {
+          name: "Hocus Pocus",
+        },
+      ),
+    ).toHaveAttribute("src", "https://img.test/hp1.webp");
   });
 });

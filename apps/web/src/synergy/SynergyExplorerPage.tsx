@@ -76,6 +76,8 @@ export function SynergyExplorerPage() {
     feedback: CommunityFeedbackRow[];
   } | null>(null);
   const [query, setQuery] = useState("");
+  // The card being pointed at, in the graph or the panel, for the preview.
+  const [preview, setPreview] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
   const listId = useId();
 
@@ -191,6 +193,9 @@ export function SynergyExplorerPage() {
     ? items.find((c) => c.id === settings.card)
     : undefined;
   const links = selected ? cardLinks(selected.id, edges) : null;
+  const previewCard = preview ? items.find((c) => c.id === preview) : undefined;
+  // Variants come red first (cards/pitch.ts), so this is the red version's art where it has one.
+  const previewImage = previewCard?.variants.find((v) => v.imageUrl)?.imageUrl;
   const linkList = (
     label: string,
     list: WeightedEdge[],
@@ -209,6 +214,10 @@ export function SynergyExplorerPage() {
                 type="button"
                 className={styles.walk}
                 onClick={() => select(other(e))}
+                onMouseEnter={() => setPreview(other(e))}
+                onMouseLeave={() => setPreview(null)}
+                onFocus={() => setPreview(other(e))}
+                onBlur={() => setPreview(null)}
               >
                 {nameOf(other(e))}
               </button>{" "}
@@ -231,16 +240,28 @@ export function SynergyExplorerPage() {
     <div className={styles.page}>
       <h1 className={styles.title}>Synergies</h1>
       <div className={styles.layout}>
-        <Suspense fallback={<Loading label="Drawing the graph" />}>
-          <GraphCanvas
-            nodes={view.nodes}
-            edges={view.edges}
-            selected={settings.card}
-            // A card's own view is already framed around it.
-            follow={settings.start !== "card"}
-            onSelect={select}
-          />
-        </Suspense>
+        <div className={styles.canvasWrap}>
+          <Suspense fallback={<Loading label="Drawing the graph" />}>
+            <GraphCanvas
+              nodes={view.nodes}
+              edges={view.edges}
+              selected={settings.card}
+              // A card's own view is already framed around it.
+              follow={settings.start !== "card"}
+              onSelect={select}
+              onHover={setPreview}
+            />
+          </Suspense>
+          {previewCard && (
+            <figure aria-label="Card preview" className={styles.preview}>
+              {previewImage ? (
+                <img src={previewImage} alt={previewCard.name} />
+              ) : (
+                <span className={styles.standIn}>{previewCard.name}</span>
+              )}
+            </figure>
+          )}
+        </div>
         <aside aria-label="Explore" className={styles.panel}>
           <p className={styles.count}>
             {view.nodes.length} {view.nodes.length === 1 ? "card" : "cards"} ·{" "}
