@@ -79,6 +79,8 @@ export function explorerView(input: {
   edges: WeightedEdge[];
   settings: ExplorerSettings;
   coreIds: string[];
+  /** In the core view, how many cards outside the core to show: those linking to it most. */
+  near?: number;
 }): { nodes: ExplorerNode[]; edges: WeightedEdge[] } {
   const s = input.settings;
   const links = refine(input.edges, s);
@@ -112,9 +114,10 @@ export function explorerView(input: {
     }
     shown = new Set(distance.keys());
   } else if (s.start === "core") {
+    // A real core links to well over a hundred cards, so only those linking to it most.
     shown = new Set(core);
-    for (const id of core)
-      for (const n of neighbours.get(id) ?? []) shown.add(n);
+    for (const c of bestNextCards([...core], links, input.near ?? 10))
+      shown.add(c.id);
   } else {
     shown = new Set(neighbours.keys());
   }
@@ -195,4 +198,47 @@ export function writeExplorerSearch(s: ExplorerSettings): ExplorerSearch {
     ...(s.source !== "both" ? { src: s.source } : {}),
     ...(s.min !== DEFAULT_MIN ? { min: Math.round(s.min * 100) } : {}),
   };
+}
+
+/** Cards in a core or deck that link to nothing else in it, in the order given. */
+export function isolatedCards(
+  scopeIds: string[],
+  edges: WeightedEdge[],
+): string[] {
+  const scope = new Set(scopeIds);
+  const linked = new Set<string>();
+  for (const e of edges) {
+    if (e.from === e.to || !scope.has(e.from) || !scope.has(e.to)) continue;
+    linked.add(e.from);
+    linked.add(e.to);
+  }
+  return [...scope].filter((id) => !linked.has(id));
+}
+
+/**
+ * Cards outside a core or deck, by how strongly they link to it, either way round: the sum
+ * of their links' weights, then how many. A suggestion of what to look at, not a ranking of
+ * how good the card is.
+ */
+export function bestNextCards(
+  scopeIds: string[],
+  edges: WeightedEdge[],
+  limit = 5,
+): { id: string; links: number; strength: number }[] {
+  const scope = new Set(scopeIds);
+  const pull = new Map<string, { links: number; strength: number }>();
+  for (const e of edges) {
+    const outside = scope.has(e.from) ? e.to : scope.has(e.to) ? e.from : null;
+    if (!outside || scope.has(outside)) continue;
+    const p = pull.get(outside) ?? { links: 0, strength: 0 };
+    pull.set(outside, { links: p.links + 1, strength: p.strength + e.weight });
+  }
+  return [...pull]
+    .map(([id, p]) => ({
+      id,
+      links: p.links,
+      strength: Math.round(p.strength * 100) / 100,
+    }))
+    .sort((a, b) => b.strength - a.strength || b.links - a.links)
+    .slice(0, limit);
 }

@@ -10,6 +10,7 @@ import { CardFinder } from "./CardFinder.tsx";
 import { CardTile } from "./CardTile.tsx";
 import { DeckAnalysisPanel } from "./DeckAnalysisPanel.tsx";
 import { DeckScenarios } from "./DeckScenarios.tsx";
+import { ScopedSynergies } from "../synergy/SynergyExplorer.tsx";
 import type { Deck, DeckCard, PitchTargets } from "./deckRepository.ts";
 import {
   deckCounts,
@@ -27,11 +28,12 @@ import styles from "./Decks.module.css";
 
 const route = getRouteApi("/decks/$deckId");
 
-type Tab = "cards" | "stats" | "scenarios";
+type Tab = "cards" | "stats" | "synergies" | "scenarios";
 type View = "tiles" | "list";
 const TABS: { id: Tab; label: string }[] = [
   { id: "cards", label: "Cards" },
   { id: "stats", label: "Stats" },
+  { id: "synergies", label: "Synergies" },
   { id: "scenarios", label: "Scenarios" },
 ];
 
@@ -251,7 +253,15 @@ export function DeckPage() {
         id={`deck-panel-${tab}`}
         aria-labelledby={`deck-tab-${tab}`}
       >
-        {tab === "scenarios" ? (
+        {tab === "synergies" ? (
+          <ScopedSynergies
+            scope={{
+              cardIds: [...new Set(entries.map((e) => e.card.id))],
+              label: "this deck",
+            }}
+            empty="Add cards to the deck to see how they link."
+          />
+        ) : tab === "scenarios" ? (
           <DeckScenarios entries={entries} deckSize={rules?.deckMin ?? 60} />
         ) : tab === "stats" ? (
           <DeckAnalysisPanel

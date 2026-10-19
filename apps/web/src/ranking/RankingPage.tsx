@@ -42,6 +42,7 @@ import {
 } from "./rankingSearch.ts";
 import { preferenceBoost } from "./preferences.ts";
 import { suggestCore } from "./suggestCore.ts";
+import { ScopedSynergies } from "../synergy/SynergyExplorer.tsx";
 import {
   buildSynergyGraph,
   fillWithSynergy,
@@ -65,10 +66,11 @@ interface Data {
   };
 }
 
-type Tab = "setup" | "board" | "readings";
+type Tab = "setup" | "board" | "synergies" | "readings";
 const TABS: { id: Tab; label: string }[] = [
   { id: "setup", label: "Set up" },
   { id: "board", label: "Board" },
+  { id: "synergies", label: "Synergies" },
   { id: "readings", label: "Readings" },
 ];
 
@@ -625,6 +627,18 @@ export function RankingPage() {
             signedIn={!!user}
             onAnswer={(key, n) => void answer(key, n)}
             onSkip={() => setTab("board")}
+          />
+        )}
+        {tab === "synergies" && (
+          <ScopedSynergies
+            scope={{
+              // Straight from the core, ranked or not.
+              cardIds: items
+                .filter((c) => c.variants.some((v) => settings.core[v.id]))
+                .map((c) => c.id),
+              label: "your core",
+            }}
+            empty="Add cards to your core to see how they link."
           />
         )}
         {tab === "readings" && (

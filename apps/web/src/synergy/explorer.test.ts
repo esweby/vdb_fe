@@ -3,7 +3,9 @@
 import { describe, expect, it } from "vitest";
 import type { WeightedEdge } from "../ranking/synergyCore.ts";
 import {
+  bestNextCards,
   cardLinks,
+  isolatedCards,
   explorerView,
   primaryEngine,
   readExplorerSearch,
@@ -82,6 +84,19 @@ describe("explorerView: where it starts", () => {
     });
     expect(ids(view)).toEqual(["c", "d"]);
     expect(view.nodes.find((n) => n.id === "d")?.inCore).toBe(true);
+  });
+
+  // A real core links to well over a hundred cards; show the ones that link to it most.
+  it("your core: only the cards that link to it most, up to a limit", () => {
+    const view = explorerView({
+      cards,
+      edges,
+      settings: settings({ start: "core" }),
+      coreIds: ["a", "c"],
+      near: 1,
+    });
+    // b links to both a and c (1.4); d (0.9) and e (0.4) are left out.
+    expect(ids(view)).toEqual(["a", "b", "c"]);
   });
 
   it("draws only the links between the cards shown", () => {
@@ -198,5 +213,32 @@ describe("explorer URL state", () => {
       source: "both",
       min: 0.5,
     });
+  });
+});
+
+// The Synergies tabs in Build a core and the deck page (maintainer, 19 Oct 2026).
+describe("isolatedCards", () => {
+  it("lists the cards that link to nothing else in the core or deck", () => {
+    // a ↔ b link; d links only to c, which isn't in this scope.
+    expect(isolatedCards(["a", "b", "d"], edges)).toEqual(["d"]);
+  });
+
+  it("is empty when every card links to another", () => {
+    expect(isolatedCards(["a", "b"], edges)).toEqual([]);
+  });
+});
+
+describe("bestNextCards", () => {
+  it("ranks cards outside the core by how strongly they link to it, either way round", () => {
+    // Core a, c: b links to both (0.8 + 0.6), d to c (0.9), e to a (0.4).
+    expect(bestNextCards(["a", "c"], edges)).toEqual([
+      { id: "b", links: 2, strength: 1.4 },
+      { id: "d", links: 1, strength: 0.9 },
+      { id: "e", links: 1, strength: 0.4 },
+    ]);
+  });
+
+  it("stops at the limit", () => {
+    expect(bestNextCards(["a", "c"], edges, 1).map((c) => c.id)).toEqual(["b"]);
   });
 });
