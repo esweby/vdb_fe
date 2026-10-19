@@ -217,6 +217,14 @@
 }
 .dimensions {
   overflow-x: auto;
+  /* In the analysis grid, scroll inside rather than widen the page. */
+  min-width: 0;
+}
+@media (max-width: 40rem) {
+  .dimensions th,
+  .dimensions td {
+    padding: 0.25rem 0.3rem;
+  }
 }
 .dimensions table {
   border-collapse: collapse;
@@ -315,6 +323,25 @@
 .tab:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
+}
+/* Phone width: the tabs wrap rather than push the page wide, and the selected tab is
+   underlined, since a boxed tab reads oddly on a second row. */
+@media (max-width: 40rem) {
+  .tabs {
+    flex-wrap: wrap;
+    gap: 0 0.25rem;
+  }
+  .tab {
+    padding: 0.45rem 0.6rem;
+    border: none;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    white-space: nowrap;
+  }
+  .tab[aria-selected="true"] {
+    background: none;
+    border-bottom-color: var(--accent);
+  }
 }
 
 .columns {

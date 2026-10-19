@@ -2,6 +2,8 @@
 .builder {
   display: grid;
   gap: 1rem;
+  /* As a grid or flex item, shrink to the page rather than grow to its widest table. */
+  min-width: 0;
   padding: 1rem 1.2rem;
   border: 1px solid var(--border);
   border-radius: 0.75rem;
@@ -231,4 +233,15 @@
   overflow: hidden;
   clip: rect(0 0 0 0);
   white-space: nowrap;
+}
+
+@media (max-width: 40rem) {
+  .builder {
+    padding: 0.75rem;
+  }
+  .table th,
+  .table td {
+    padding: 0.4rem 0.3rem;
+    overflow-wrap: anywhere;
+  }
 }
