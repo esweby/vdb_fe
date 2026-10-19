@@ -1,4 +1,5 @@
-import { rolesOf, type RoleId } from "@vdb/cards";
+import { deriveSynergies, rolesOf, type RoleId } from "@vdb/cards";
+import type { CommunityEdgeRow, CommunityFeedbackRow } from "@vdb/scoring";
 import { copyLimitFor } from "../decks/deckRules.ts";
 import { getRouteApi, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
@@ -41,6 +42,11 @@ import {
 } from "./rankingSearch.ts";
 import { preferenceBoost } from "./preferences.ts";
 import { suggestCore } from "./suggestCore.ts";
+import {
+  buildSynergyGraph,
+  fillWithSynergy,
+  synergyBonus,
+} from "./synergyCore.ts";
 import { LoadError, Loading } from "../ui/index.ts";
 import styles from "./RankingPage.module.css";
 
@@ -82,11 +88,17 @@ const roleCard = (c: CardSummary) => ({
  */
 export function RankingPage() {
   const { status, items, retry } = useCards();
-  const { scores, decks, strategy } = useServices();
+  const { scores, decks, strategy, synergy } = useServices();
   const user = useAppSelector((s) => s.auth.user);
   const search = route.useSearch();
   const navigate = useNavigate();
   const [data, setData] = useState<Data | null>(null);
+  // Rule weights and the scoring group's links, loaded once synergy strength is turned up.
+  const [synergyData, setSynergyData] = useState<{
+    weights: Record<string, number>;
+    edges: CommunityEdgeRow[];
+    feedback: CommunityFeedbackRow[];
+  } | null>(null);
   const [scoresFailed, setScoresFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const deckId = typeof search.deck === "string" ? search.deck : undefined;
@@ -200,6 +212,23 @@ export function RankingPage() {
   }, [scores, user, attempt]);
 
   const settings = readRankingSearch(search);
+  const synergyOn = settings.synergy > 0;
+  useEffect(() => {
+    if (!synergyOn || synergyData) return;
+    let live = true;
+    Promise.all([
+      synergy.listRuleWeights(),
+      synergy.listCommunitySynergies(),
+    ]).then(
+      ([weights, community]) =>
+        live && setSynergyData({ weights, ...community }),
+      // Synergy only adds to the ranking: without it, rules use their defaults.
+      () => live && setSynergyData({ weights: {}, edges: [], feedback: [] }),
+    );
+    return () => {
+      live = false;
+    };
+  }, [synergy, synergyOn, synergyData]);
   // Set up is step 1, so it's where the page opens; the other tabs are kept in the URL.
   const tab: Tab = TABS.some((t) => t.id === search.tab)
     ? (search.tab as Tab)
@@ -243,6 +272,20 @@ export function RankingPage() {
       new Map<string, RoleId[]>(items.map((c) => [c.id, rolesOf(roleCard(c))])),
     [items],
   );
+
+  const synergyGraph = useMemo(() => {
+    if (!synergyOn) return null;
+    const weights = synergyData?.weights ?? {};
+    return buildSynergyGraph({
+      derived: deriveSynergies(
+        items.map((c) => ({ ...roleCard(c), id: c.id, name: c.name })),
+        weights,
+      ),
+      ruleWeights: weights,
+      feedback: synergyData?.feedback ?? [],
+      community: synergyData?.edges ?? [],
+    });
+  }, [items, synergyOn, synergyData]);
 
   const ranked = useMemo((): BoardCard[] => {
     if (!data) return [];
@@ -393,14 +436,25 @@ export function RankingPage() {
           ? b.fits - a.fits || b.key - a.key
           : b.key - a.key,
       )
-      .map(({ r }) => ({ ...r, limit: limitOf(r.variantId) }));
-    const s = suggestCore(candidates, {
+      .map(({ r, key }) => ({ ...r, key, limit: limitOf(r.variantId) }));
+    const constraints = {
       targets,
       copiesEach: copyLimit,
       copyLimit,
       locked: new Map(core.map((c) => [c.variantId, c.quantity])),
-      removed: new Set(),
-    });
+      removed: new Set<string>(),
+    };
+    // With synergy on, pick one card at a time by value, preferences and synergy with the
+    // cards already picked (docs/synergy-rules.md "Synergy in the ranking").
+    const graph = synergyGraph;
+    const s = graph
+      ? fillWithSynergy(
+          candidates.map((c) => ({ ...c, value: c.key })),
+          constraints,
+          (cardId, picked) =>
+            synergyBonus(cardId, picked, graph, settings.synergy / 10),
+        )
+      : suggestCore(candidates, constraints);
     return Object.fromEntries(s.picks.map((p) => [p.variantId, p.quantity]));
   }
 

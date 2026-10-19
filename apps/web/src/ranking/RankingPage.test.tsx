@@ -8,6 +8,7 @@ import {
 } from "../test/fakeDeckRepository.ts";
 import { fakeScoreRepository } from "../test/fakeScoreRepository.ts";
 import { fakeStrategyRepository } from "../test/fakeStrategyRepository.ts";
+import { fakeSynergyRepository } from "../test/fakeSynergyRepository.ts";
 import { renderApp } from "../test/renderApp.tsx";
 import { sampleCommunity } from "../test/sampleCommunity.ts";
 
@@ -42,6 +43,7 @@ async function open(
     scores?: ReturnType<typeof scores>;
     /** Open exactly this path; otherwise a path without a tab opens the Board. */
     asIs?: boolean;
+    synergy?: ReturnType<typeof fakeSynergyRepository>;
   } = {},
 ) {
   const fake = fakeDeckRepository(opts.decks ?? [gateTempo()]);
@@ -59,6 +61,7 @@ async function open(
     scores: opts.scores ?? scores(),
     decks: fake.repository,
     strategy: strategy.repository,
+    synergy: opts.synergy?.repository,
   });
   await screen.findByRole("tablist", { name: "Build steps" });
   const user = userEvent.setup();
@@ -438,6 +441,33 @@ describe("the core", () => {
       "3 × Hocus Pocus (red)",
       "3 × Become the Shadow Lord",
     ]);
+  });
+
+  // docs/synergy-rules.md "Synergy in the ranking": off until the scoring group agrees a default.
+  it("sets synergy strength in Set up, off by default", async () => {
+    const { user, router } = await open();
+    await goTab("Set up");
+    const slider = panel().getByRole("slider", { name: "Synergy strength" });
+    expect(slider).toHaveAttribute("aria-valuetext", "0");
+    slider.focus();
+    await user.keyboard("{End}");
+    expect(router.state.location.search).toMatchObject({ syn: 100 });
+  });
+
+  it("with synergy on, building uses the scoring group's links and still fills to the targets", async () => {
+    const synergy = fakeSynergyRepository();
+    const { user } = await open("/ranking?tab=setup&syn=100", { synergy });
+    await setTargets(user, [
+      ["Red target", "3"],
+      ["Yellow target", "0"],
+      ["Blue target", "3"],
+    ]);
+    await user.click(panel().getByRole("button", { name: "Build the core →" }));
+    expect(trayCards()).toEqual([
+      "3 × Hocus Pocus (red)",
+      "3 × Become the Shadow Lord",
+    ]);
+    expect(synergy.loads).toBeGreaterThan(0);
   });
 
   it("keeps the cards already in the core when building", async () => {
