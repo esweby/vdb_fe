@@ -40,8 +40,11 @@ export function GraphCanvas(props: {
   onSelect: (id: string) => void;
   /** The card being pointed at, or null when the pointer leaves it. */
   onHover: (id: string | null) => void;
-  /** A line to pick out (card ids, each helping the next), instead of a card's links. */
-  line?: string[];
+  /**
+   * Cards to pick out instead of a card's links: a line (with `steps`, each card to the next)
+   * or a package (no steps: every link among them).
+   */
+  highlight?: { cards: string[]; steps?: [string, string][] };
 }) {
   const container = useRef<HTMLDivElement>(null);
   const sigma = useRef<Sigma | null>(null);
@@ -99,6 +102,8 @@ export function GraphCanvas(props: {
     const renderer = new Sigma(graph, container.current, {
       defaultEdgeType: "arrow",
       defaultNodeType: "ring",
+      // Room round the edge, so the outermost cards and their labels aren't cut off.
+      stagePadding: 60,
       nodeProgramClasses: { ring: RingProgram },
       labelColor: { color: theme.fg },
       labelRenderedSizeThreshold: 7,
@@ -128,17 +133,20 @@ export function GraphCanvas(props: {
     const renderer = sigma.current;
     if (!renderer) return;
     const graph = renderer.getGraph();
-    const line = props.line && props.line.length > 1 ? props.line : null;
-    const focus = line ? null : (hovered ?? props.selected);
-    const near = line
-      ? new Set(line)
+    const picked =
+      props.highlight && props.highlight.cards.length > 1
+        ? props.highlight
+        : null;
+    const focus = picked ? null : (hovered ?? props.selected);
+    const near = picked
+      ? new Set(picked.cards)
       : focus && graph.hasNode(focus)
         ? new Set([focus, ...graph.neighbors(focus)])
         : null;
-    // A line's own steps: each card to the next.
-    const steps = new Set(
-      line ? line.slice(1).map((to, i) => `${line[i]}\u0000${to}`) : [],
-    );
+    // A line's own steps; with none, every link among the picked cards.
+    const steps = picked?.steps
+      ? new Set(picked.steps.map(([a, b]) => `${a}\u0000${b}`))
+      : null;
     renderer.setSetting("nodeReducer", (id, attrs) => {
       const out = { ...attrs };
       if (near && !near.has(id)) {
@@ -153,12 +161,14 @@ export function GraphCanvas(props: {
     renderer.setSetting("edgeReducer", (id, attrs) => {
       if (!near) return attrs;
       const [from, to] = graph.extremities(id);
-      const shown = line
-        ? steps.has(`${from}\u0000${to}`)
+      const shown = picked
+        ? steps
+          ? steps.has(`${from}\u0000${to}`)
+          : near.has(from) && near.has(to)
         : from === focus || to === focus;
       return shown ? { ...attrs, zIndex: 1 } : { ...attrs, hidden: true };
     });
-  }, [hovered, props.selected, props.nodes, props.line]);
+  }, [hovered, props.selected, props.nodes, props.highlight]);
 
   // Move to the selected card.
   useEffect(() => {
@@ -174,6 +184,15 @@ export function GraphCanvas(props: {
       .getCamera()
       .animate({ ...framed, ratio: 1 }, { duration: 400 });
   }, [props.selected, props.nodes, props.follow]);
+
+  // A picked line or package is drawn on its own, so show the whole of what's drawn.
+  useEffect(() => {
+    const renderer = sigma.current;
+    if (!renderer || !props.highlight) return;
+    void renderer
+      .getCamera()
+      .animate({ x: 0.5, y: 0.5, ratio: 1 }, { duration: 300 });
+  }, [props.highlight, props.nodes]);
 
   return (
     <div

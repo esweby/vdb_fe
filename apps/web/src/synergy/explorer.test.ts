@@ -100,6 +100,19 @@ describe("explorerView: where it starts", () => {
     expect(ids(view)).toEqual(["a", "b", "c"]);
   });
 
+  // A package picked out in the graph stays visible whatever the view.
+  it("also shows any cards asked for, with their links to what's shown", () => {
+    const view = explorerView({
+      cards,
+      edges,
+      settings: settings({ start: "core" }),
+      coreIds: ["d"],
+      include: ["b"],
+    });
+    expect(ids(view)).toEqual(["b", "c", "d"]);
+    expect(view.edges.map((e) => `${e.from}→${e.to}`)).toEqual(["b→c", "c→d"]);
+  });
+
   it("draws only the links between the cards shown", () => {
     const view = explorerView({
       cards,
