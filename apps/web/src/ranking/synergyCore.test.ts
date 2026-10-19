@@ -7,6 +7,7 @@ import {
   buildSynergyGraph,
   fillWithSynergy,
   synergyBonus,
+  weightedEdges,
 } from "./synergyCore.ts";
 
 const derived = (
@@ -162,5 +163,23 @@ describe("fillWithSynergy", () => {
       (cardId, picked) => synergyBonus(cardId, picked, graph, 20),
     );
     expect(s.byPitch).toEqual([{ pitch: 1, target: 4, filled: 4 }]);
+  });
+});
+
+describe("weightedEdges", () => {
+  it("says which links come from the rules, the scoring group, or both", () => {
+    const list = weightedEdges({
+      derived: [derived("a", "b", 0.8, ["gate-feeds-gate-target"])],
+      ruleWeights: {},
+      feedback: [],
+      community: [
+        { fromCardId: "a", toCardId: "b", weight: 0.9 },
+        { fromCardId: "c", toCardId: "d", weight: 0.4 },
+      ],
+    });
+    expect(list.map((e) => [e.from, e.to, e.weight, e.kind])).toEqual([
+      ["a", "b", 0.9, "both"],
+      ["c", "d", 0.4, "community"],
+    ]);
   });
 });

@@ -46,11 +46,8 @@ import {
   buildSynergyGraph,
   fillWithSynergy,
   synergyBonus,
-  weightedEdges,
   type SynergyInput,
 } from "./synergyCore.ts";
-import { graphView } from "./graphView.ts";
-import { GraphTab } from "./GraphTab.tsx";
 import { LoadError, Loading } from "../ui/index.ts";
 import styles from "./RankingPage.module.css";
 
@@ -68,11 +65,10 @@ interface Data {
   };
 }
 
-type Tab = "setup" | "board" | "graph" | "readings";
+type Tab = "setup" | "board" | "readings";
 const TABS: { id: Tab; label: string }[] = [
   { id: "setup", label: "Set up" },
   { id: "board", label: "Board" },
-  { id: "graph", label: "Graph" },
   { id: "readings", label: "Readings" },
 ];
 
@@ -218,10 +214,8 @@ export function RankingPage() {
 
   const settings = readRankingSearch(search);
   const synergyOn = settings.synergy > 0;
-  // The Graph tab needs the links too, whatever the strength.
-  const wantsSynergy = synergyOn || search.tab === "graph";
   useEffect(() => {
-    if (!wantsSynergy || synergyData) return;
+    if (!synergyOn || synergyData) return;
     let live = true;
     Promise.all([
       synergy.listRuleWeights(),
@@ -235,7 +229,7 @@ export function RankingPage() {
     return () => {
       live = false;
     };
-  }, [synergy, wantsSynergy, synergyData]);
+  }, [synergy, synergyOn, synergyData]);
   // Set up is step 1, so it's where the page opens; the other tabs are kept in the URL.
   const tab: Tab = TABS.some((t) => t.id === search.tab)
     ? (search.tab as Tab)
@@ -281,7 +275,7 @@ export function RankingPage() {
   );
 
   const synergyInput = useMemo((): SynergyInput | null => {
-    if (!wantsSynergy) return null;
+    if (!synergyOn) return null;
     const weights = synergyData?.weights ?? {};
     return {
       derived: deriveSynergies(
@@ -292,14 +286,10 @@ export function RankingPage() {
       feedback: synergyData?.feedback ?? [],
       community: synergyData?.edges ?? [],
     };
-  }, [items, wantsSynergy, synergyData]);
+  }, [items, synergyOn, synergyData]);
   const synergyGraph = useMemo(
     () => (synergyOn && synergyInput ? buildSynergyGraph(synergyInput) : null),
     [synergyOn, synergyInput],
-  );
-  const allEdges = useMemo(
-    () => (synergyInput ? weightedEdges(synergyInput) : []),
-    [synergyInput],
   );
 
   const ranked = useMemo((): BoardCard[] => {
@@ -637,18 +627,6 @@ export function RankingPage() {
             onSkip={() => setTab("board")}
           />
         )}
-        {tab === "graph" && (
-          <GraphTab
-            {...graphView({
-              coreCardIds: core.flatMap((c) => {
-                const cardId = byVariant.get(c.variantId)?.cardId;
-                return cardId ? [cardId] : [];
-              }),
-              edges: allEdges,
-              names: new Map(items.map((c) => [c.id, c.name])),
-            })}
-          />
-        )}
         {tab === "readings" && (
           <ReadingsTab
             cards={core}
@@ -694,6 +672,13 @@ export function RankingPage() {
                     ))}
                   </div>
                 </div>
+                <Link
+                  to="/synergies"
+                  search={{ start: "core", core: settings.core } as never}
+                  className={styles.explore}
+                >
+                  Explore your core&apos;s synergies
+                </Link>
                 <span className={styles.boardCount}>
                   {deckCards.length.toLocaleString("en-GB")} ranked
                 </span>

@@ -1,0 +1,164 @@
+.page {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.title {
+  margin: 0;
+}
+
+/* Desktop first: the graph takes the room, the panel sits beside it. */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 22rem;
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.canvas {
+  height: calc(100vh - 11rem);
+  min-height: 28rem;
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  background: var(--surface);
+}
+
+.panel {
+  display: grid;
+  gap: 0.75rem;
+  max-height: calc(100vh - 11rem);
+  overflow-y: auto;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  background: var(--surface);
+}
+
+.count {
+  margin: 0;
+  font-weight: 600;
+}
+
+.group {
+  display: grid;
+  gap: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.group h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.group h3 {
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+}
+
+.find {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.find input,
+.field select {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.field {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.engines {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.9rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  font-size: 0.9rem;
+}
+
+.engines legend {
+  margin-bottom: 0.25rem;
+  color: var(--muted);
+}
+
+.engines label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.swatch {
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+}
+
+.selectedHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.links {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding-left: 1rem;
+  font-size: 0.88rem;
+}
+
+.walk {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.reasons,
+.muted {
+  color: var(--muted);
+}
+
+.muted {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.error {
+  margin: 0;
+  color: var(--danger);
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

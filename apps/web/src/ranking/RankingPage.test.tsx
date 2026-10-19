@@ -339,52 +339,23 @@ describe("tabs", () => {
   });
 });
 
-// README "Phase Two" step 2: the core and the cards nearest it, rules' and scoring group's
-// links drawn differently. The sample's only rule link is Become the Shadow Lord → Hocus Pocus.
-describe("synergy graph", () => {
-  const items = (name: string) =>
-    within(panel().getByRole("list", { name }))
-      .getAllByRole("listitem")
-      .map((li) => li.textContent);
-
-  it("asks for a core first", async () => {
-    await open("/ranking?tab=graph");
-    expect(
-      panel().getByText("Add cards to your core to see how they link."),
-    ).toBeInTheDocument();
+// The synergy explorer replaced the chord diagram (maintainer, 19 Oct 2026): the board links to
+// it, starting from the core.
+describe("synergy explorer link", () => {
+  it("opens the explorer on your core from the board", async () => {
+    await open(`/ranking?${core({ hp3: 3 })}`);
+    const link = screen.getByRole("link", {
+      name: "Explore your core's synergies",
+    });
+    const url = new URL(link.getAttribute("href")!, "http://x");
+    expect(url.pathname).toBe("/synergies");
+    expect(url.searchParams.get("start")).toBe("core");
+    expect(JSON.parse(url.searchParams.get("core")!)).toEqual({ hp3: 3 });
   });
 
-  it("shows the core and the cards linked to it, with each link and where it comes from", async () => {
-    const synergy = fakeSynergyRepository(
-      {},
-      {
-        edges: [
-          {
-            fromCardId: "card-fate-foreseen",
-            toCardId: "card-hocus-pocus",
-            weight: 0.4,
-            ratingCount: 2,
-            totalWeight: 2,
-          },
-        ],
-        feedback: [],
-      },
-    );
-    await open(`/ranking?tab=graph&${core({ hp3: 3 })}`, { synergy });
-    expect(
-      await panel().findByRole("img", { name: "Synergy graph" }),
-    ).toBeInTheDocument();
-    await waitFor(() =>
-      expect(items("Cards shown")).toEqual([
-        "Hocus Pocus (in your core)",
-        "Become the Shadow Lord",
-        "Fate Foreseen",
-      ]),
-    );
-    expect(items("Links shown")).toEqual([
-      "Become the Shadow Lord helps Hocus Pocus · rules · 0.8 · enables traverse",
-      "Fate Foreseen helps Hocus Pocus · scoring group · 0.4",
-    ]);
+  it("has no Graph tab any more", async () => {
+    await open();
+    expect(screen.queryByRole("tab", { name: /Graph/ })).toBeNull();
   });
 });
 
