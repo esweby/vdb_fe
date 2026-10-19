@@ -5,7 +5,7 @@ The design is in [README.md](README.md), and the current plan is in [docs/phase-
 ## Git
 
 - Never commit or push to `main`. Work on a branch and merge through a pull request once CI passes.
-- Claude merges its own PRs without asking once every CI check passes (`gh pr merge --merge`). If a check fails, fix it or report it, and don't merge. Repo auto-merge is off, so wait for the checks to finish (`gh pr checks --watch`) and then merge.
+- When every CI check passes on a PR Claude opened, Claude asks the maintainer whether to merge it. It merges only after they confirm.
 
 ## Test first
 
