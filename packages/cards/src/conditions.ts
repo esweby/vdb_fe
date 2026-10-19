@@ -3,7 +3,12 @@
 // hit (a blocked attack doesn't get it). Effects given to a later card without a condition
 // don't count. Cards without authored attributes have none, so they're asked overall only;
 // scorers can still choose to rate floor and ceiling.
-import type { AuthoredCardAttributes, CardAttributes } from "./attributes.ts";
+import {
+  CONDITIONS,
+  type AuthoredCardAttributes,
+  type CardAttributes,
+  type Condition,
+} from "./attributes.ts";
 
 const HIT_TRIGGERS = new Set(["on_hit", "your_attack_action_hits"]);
 
@@ -41,4 +46,17 @@ export function hasConditions(
   return [card, ...variantAttributes].some((a) =>
     effectsOf(a).some(conditional),
   );
+}
+
+/** Every condition the card's effects record, across its pitches, each once (vocabulary order). */
+export function conditionsOf(
+  card: CardAttributes | Partial<AuthoredCardAttributes>,
+  variantAttributes: Partial<AuthoredCardAttributes>[] = [],
+): Condition[] {
+  const found = new Set(
+    [card, ...variantAttributes].flatMap((a) =>
+      effectsOf(a).flatMap((e) => e?.conditions ?? []),
+    ),
+  );
+  return CONDITIONS.filter((c) => found.has(c));
 }

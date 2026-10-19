@@ -2,7 +2,7 @@
 // A card has conditions when any recorded effect has a condition, or happens on a hit.
 import { describe, expect, it } from "vitest";
 import type { CardAttributes } from "../src/attributes.ts";
-import { hasConditions } from "../src/conditions.ts";
+import { conditionsOf, hasConditions } from "../src/conditions.ts";
 
 const generated: CardAttributes = {
   hasGoAgain: false,
@@ -83,5 +83,52 @@ describe("hasConditions", () => {
         { arcaneDamage: [{ amount: 1, trigger: "on_hit" }] },
       ]),
     ).toBe(true);
+  });
+});
+
+// Phase two step 7 (README "Condition availability"): each recorded condition, once.
+describe("conditionsOf", () => {
+  it("lists every condition a card's effects record, each once, across its pitches", () => {
+    expect(
+      conditionsOf(
+        {
+          ...generated,
+          tokens: [
+            {
+              token: "runechant",
+              amount: 1,
+              trigger: "on_play",
+              conditions: ["banished_card_is_runeblade"],
+            },
+            {
+              token: "gate",
+              amount: 1,
+              trigger: "on_play",
+              conditions: ["banished_card_is_shadow"],
+            },
+          ],
+          goAgain: { conditions: ["banished_card_is_shadow"] },
+        },
+        [
+          {
+            arcaneDamage: [
+              {
+                amount: 1,
+                trigger: "on_play",
+                conditions: ["pitched_attack_action"],
+              },
+            ],
+          },
+        ],
+      ),
+    ).toEqual([
+      "banished_card_is_runeblade",
+      "banished_card_is_shadow",
+      "pitched_attack_action",
+    ]);
+  });
+
+  it("is empty for a card whose effects have no conditions", () => {
+    expect(conditionsOf(generated)).toEqual([]);
   });
 });

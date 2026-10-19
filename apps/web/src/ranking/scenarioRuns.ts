@@ -155,3 +155,14 @@ export function runOne(input: OneInput): OneOutput {
     throw e;
   }
 }
+
+/** Several scenarios on one deck, in one go (condition availability). */
+export interface ManyInput extends Omit<OneInput, "definition"> {
+  definitions: ScenarioDefinition[];
+}
+
+export function runMany(input: ManyInput): OneOutput[] {
+  return input.definitions.map((definition) =>
+    runOne({ ...input, definition }),
+  );
+}

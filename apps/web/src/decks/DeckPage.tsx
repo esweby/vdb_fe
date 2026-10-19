@@ -9,6 +9,7 @@ import { analyseDeck } from "./deckAnalysis.ts";
 import { CardFinder } from "./CardFinder.tsx";
 import { CardTile } from "./CardTile.tsx";
 import { DeckAnalysisPanel } from "./DeckAnalysisPanel.tsx";
+import { ConditionAvailabilityPanel } from "./ConditionAvailabilityPanel.tsx";
 import { DeckScenarios } from "./DeckScenarios.tsx";
 import { Goldfish } from "./Goldfish.tsx";
 import { ScopedSynergies } from "../synergy/SynergyExplorer.tsx";
@@ -272,20 +273,26 @@ export function DeckPage() {
             deckSize={rules?.deckMin ?? 60}
           />
         ) : tab === "stats" ? (
-          <DeckAnalysisPanel
-            entries={entries}
-            pitchTargets={deck.pitchTargets ?? {}}
-            onTargetsChange={
-              canEdit ? (t) => void setPitchTargets(t) : undefined
-            }
-            pool={cards}
-            onAdd={
-              canEdit
-                ? (variantId) =>
-                    void setCard({ variantId, quantity: 1, sideboard: false })
-                : undefined
-            }
-          />
+          <>
+            <DeckAnalysisPanel
+              entries={entries}
+              pitchTargets={deck.pitchTargets ?? {}}
+              onTargetsChange={
+                canEdit ? (t) => void setPitchTargets(t) : undefined
+              }
+              pool={cards}
+              onAdd={
+                canEdit
+                  ? (variantId) =>
+                      void setCard({ variantId, quantity: 1, sideboard: false })
+                  : undefined
+              }
+            />
+            <ConditionAvailabilityPanel
+              entries={entries}
+              deckSize={rules?.deckMin ?? 60}
+            />
+          </>
         ) : (
           <div className={canEdit ? styles.editor : undefined}>
             {canEdit && (
