@@ -1,5 +1,6 @@
 // Card details, score dimensions and the signed-in user's scores.
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { redFirst } from "../cards/pitch.ts";
 import type { AuthoredCardAttributes, CardAttributes } from "@vdb/cards";
 import type { Side } from "@vdb/scoring";
 import type { CommunityRow } from "../ranking/rank.ts";
@@ -111,7 +112,9 @@ export function supabaseScoreRepository(
         .maybeSingle();
       if (error) throw error;
       if (!data) return null;
-      const { attributes_verified, variants, ...card } = data;
+      const { attributes_verified, ...card } = data;
+      // The pitch buttons follow this order: red, yellow, blue.
+      const variants = redFirst(data.variants);
       return {
         ...card,
         attributesVerified: attributes_verified,

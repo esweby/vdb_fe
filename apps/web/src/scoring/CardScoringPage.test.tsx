@@ -408,4 +408,20 @@ describe("card page", () => {
       within(keywords.nextElementSibling as HTMLElement).getByText("Go again."),
     ).toBeInTheDocument();
   });
+
+  // Maintainer, 19 Oct 2026: open on the red version, so scorers don't rate the blue one.
+  it("opens on the red version when no pitch is chosen", async () => {
+    const [hocus, ...rest] = sampleCards;
+    const blueFirst = { ...hocus!, variants: [...hocus!.variants].reverse() };
+    await renderApp({
+      path: "/cards/card-hocus-pocus",
+      auth: fakeAuthService().service,
+      cards: fakeCardRepository([blueFirst, ...rest]),
+    });
+    const pitch = within(await screen.findByRole("group", { name: "Pitch" }));
+    expect(pitch.getByRole("button", { name: /Red/ })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+  });
 });
