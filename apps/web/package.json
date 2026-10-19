@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.13.0",
+    "@sigma/node-border": "^3.0.0",
     "@supabase/supabase-js": "^2.117.3",
     "@tanstack/react-router": "^1.170.44",
     "@vdb/cards": "*",

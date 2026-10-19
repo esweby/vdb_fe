@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { pitchName } from "../cards/pitch.ts";
 import type { PitchTargets } from "../decks/deckRepository.ts";
 import type {
@@ -263,7 +264,12 @@ export function SetupTab(props: {
             average shows beside it.
           </p>
         </header>
-        {!props.signedIn && <p className={styles.hint}>Sign in to answer.</p>}
+        {!props.signedIn && (
+          <p className={styles.signInPrompt}>
+            Answers are saved to your account.{" "}
+            <Link to="/sign-in">Sign in to answer</Link>
+          </p>
+        )}
         {props.questions.map((q) => (
           <Question
             key={q.key}

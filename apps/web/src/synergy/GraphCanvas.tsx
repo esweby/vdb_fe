@@ -1,6 +1,7 @@
 // The explorer's graph, drawn with sigma.js (WebGL) from a graphology graph. Cards that work
 // together are pulled into clusters by a ForceAtlas2 layout. Pointing at a card picks out its
 // links; clicking one selects it. Tests swap this for a plain list (no WebGL in jsdom).
+import { createNodeBorderProgram } from "@sigma/node-border";
 import Graph from "graphology";
 import { circular } from "graphology-layout";
 import forceAtlas2 from "graphology-layout-forceatlas2";
@@ -8,10 +9,27 @@ import { useEffect, useRef, useState } from "react";
 import Sigma from "sigma";
 import type { WeightedEdge } from "../ranking/synergyCore.ts";
 import type { ExplorerNode } from "./explorer.ts";
-import { ENGINE_COLOURS, KIND_COLOURS } from "./colours.ts";
+import { KIND_COLOURS } from "./colours.ts";
+import { nodeStyle } from "./nodeStyle.ts";
 import styles from "./SynergyExplorerPage.module.css";
 
 const FADED = "#d4d4d880";
+
+/** A ring around a filled centre: the ring and centre colours come from nodeStyle. */
+const RingProgram = createNodeBorderProgram({
+  borders: [
+    {
+      size: { attribute: "ringSize", defaultValue: 0.3 },
+      color: { attribute: "ringColor" },
+    },
+    { size: { fill: true }, color: { attribute: "color" } },
+  ],
+});
+
+/** The page's colours, read when the graph is drawn (WebGL can't use CSS variables). */
+const themeColour = (name: string, fallback: string) =>
+  getComputedStyle(document.documentElement).getPropertyValue(name).trim() ||
+  fallback;
 
 export function GraphCanvas(props: {
   nodes: ExplorerNode[];
@@ -35,10 +53,14 @@ export function GraphCanvas(props: {
   useEffect(() => {
     if (!container.current) return;
     const graph = new Graph({ type: "directed", multi: false });
+    const theme = {
+      surface: themeColour("--surface", "#ffffff"),
+      fg: themeColour("--fg", "#111111"),
+    };
     for (const n of props.nodes) {
       graph.addNode(n.id, {
         label: n.name,
-        color: ENGINE_COLOURS[n.engine ?? "none"],
+        ...nodeStyle(n, theme),
         inCore: n.inCore,
         selected: n.selected,
         size: 4,
@@ -72,12 +94,11 @@ export function GraphCanvas(props: {
       });
     }
 
-    const fg =
-      getComputedStyle(document.documentElement).getPropertyValue("--fg") ||
-      "#111";
     const renderer = new Sigma(graph, container.current, {
       defaultEdgeType: "arrow",
-      labelColor: { color: fg.trim() },
+      defaultNodeType: "ring",
+      nodeProgramClasses: { ring: RingProgram },
+      labelColor: { color: theme.fg },
       labelRenderedSizeThreshold: 7,
       labelDensity: 0.5,
       zIndex: true,
@@ -112,9 +133,9 @@ export function GraphCanvas(props: {
         : null;
     renderer.setSetting("nodeReducer", (id, attrs) => {
       const out = { ...attrs };
-      if (attrs.inCore) out.borderColor = fg();
       if (near && !near.has(id)) {
         out.color = FADED;
+        out.ringColor = FADED;
         out.label = "";
       }
       if (near?.has(id)) out.forceLabel = true;
@@ -154,6 +175,3 @@ export function GraphCanvas(props: {
     />
   );
 }
-
-const fg = () =>
-  getComputedStyle(document.documentElement).getPropertyValue("--fg").trim();

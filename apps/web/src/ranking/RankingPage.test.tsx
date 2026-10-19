@@ -416,7 +416,10 @@ describe("strategy questions", () => {
       }),
     );
     expect(question.getByRole("button", { name: "8" })).toBeDisabled();
-    expect(panel().getAllByText("Sign in to answer.")[0]).toBeInTheDocument();
+    // Maintainer, 19 Oct 2026: plain text was easy to miss; it's a link to sign in.
+    expect(
+      panel().getByRole("link", { name: "Sign in to answer" }),
+    ).toHaveAttribute("href", "/sign-in");
   });
 });
 
