@@ -135,13 +135,24 @@ const routeTree = rootRoute.addChildren([
     path: "/decks/$deckId",
     validateSearch: (
       search: Record<string, unknown>,
-    ): { tab?: "stats" | "synergies" | "scenarios"; view?: "list" } => ({
+    ): {
+      tab?: "stats" | "synergies" | "scenarios" | "goldfish";
+      view?: "list";
+      /** Goldfish: the shuffle to start from. */
+      seed?: number;
+    } => ({
       ...(search.tab === "stats" ||
       search.tab === "synergies" ||
-      search.tab === "scenarios"
-        ? { tab: search.tab as "stats" | "synergies" | "scenarios" }
+      search.tab === "scenarios" ||
+      search.tab === "goldfish"
+        ? {
+            tab: search.tab as "stats" | "synergies" | "scenarios" | "goldfish",
+          }
         : {}),
       ...(search.view === "list" ? { view: "list" as const } : {}),
+      ...(Number.isInteger(Number(search.seed)) && search.seed !== ""
+        ? { seed: Number(search.seed) }
+        : {}),
     }),
     // A public deck opens signed out, read only; a private one is "not found" to anyone else.
     component: DeckPage,

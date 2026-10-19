@@ -1,0 +1,165 @@
+.goldfish {
+  display: grid;
+  gap: 1rem;
+}
+
+.bar,
+.counters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.side {
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.restart {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.restart input {
+  width: 7rem;
+}
+
+.startSide {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+}
+
+.startSide select,
+.card select {
+  font: inherit;
+  padding: 0.25rem 0.35rem;
+  border: 1px solid var(--border);
+  border-radius: 0.35rem;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.counter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--surface);
+  font-variant-numeric: tabular-nums;
+}
+
+.counter button {
+  width: 1.6rem;
+  height: 1.6rem;
+  border: 1px solid var(--border);
+  border-radius: 0.3rem;
+  background: var(--bg);
+  color: var(--fg);
+  cursor: pointer;
+}
+
+/* Desktop first: zones in a grid of columns, hand and arena wider. */
+.table {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 0.75rem;
+}
+
+.zone {
+  padding: 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  background: var(--surface);
+}
+
+.zone[data-zone="hand"],
+.zone[data-zone="arena"] {
+  grid-column: span 2;
+}
+
+.zone h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+}
+
+.cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  display: grid;
+  gap: 0.25rem;
+  width: 7.5rem;
+}
+
+.card img,
+.standIn,
+.deckBack {
+  width: 100%;
+  aspect-ratio: 5 / 7;
+  border-radius: 0.4rem;
+}
+
+.standIn {
+  display: grid;
+  place-items: center;
+  padding: 0.4rem;
+  text-align: center;
+  font-size: 0.8rem;
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.deckBack {
+  width: 6rem;
+  background: repeating-linear-gradient(
+    45deg,
+    var(--accent),
+    var(--accent) 6px,
+    color-mix(in srgb, var(--accent) 70%, black) 6px,
+    color-mix(in srgb, var(--accent) 70%, black) 12px
+  );
+}
+
+.deckActions {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+
+.logBox h3 {
+  margin: 0 0 0.25rem;
+  font-size: 0.9rem;
+}
+
+.log {
+  margin: 0;
+  padding-left: 1.4rem;
+  max-height: 12rem;
+  overflow-y: auto;
+  font-size: 0.85rem;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+@media (max-width: 40rem) {
+  .zone[data-zone="hand"],
+  .zone[data-zone="arena"] {
+    grid-column: auto;
+  }
+}
