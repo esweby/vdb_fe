@@ -80,6 +80,65 @@ const trayCards = () =>
     .queryAllByRole("listitem")
     .map((li) => li.getAttribute("aria-label"));
 
+// Maintainer, 19 Oct 2026: the board didn't say how cards work together.
+describe("engine board explains itself", () => {
+  it("says what the core has in each engine, and what's missing", async () => {
+    await open(`/ranking?${core({ hp3: 3 })}`);
+    expect(
+      within(screen.getByRole("region", { name: "Gate engine" })).getByText(
+        "Your core: 3 in Gate targets, but nothing in Make Gates yet.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("shows an engine running from makers to users", async () => {
+    await open(`/ranking?${core({ hp3: 3, bsl3: 3 })}`);
+    expect(
+      within(screen.getByRole("region", { name: "Gate engine" })).getByText(
+        "Your core: 3 in Make Gates → 3 in Gate targets.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("says plainly how many core cards a card works with, and copies in the core", async () => {
+    await open(`/ranking?${core({ hp3: 3 })}`);
+    expect(lane("Make Gates")[0]).toHaveTextContent("works with 1");
+    const hocusBlue = lane("Gate targets").find(
+      (li) => li.getAttribute("aria-label") === "Hocus Pocus (blue)",
+    )!;
+    expect(hocusBlue).toHaveTextContent("3 in core");
+  });
+
+  it("explains a card's links in words when you point at it", async () => {
+    const { user } = await open(`/ranking?${core({ hp3: 3 })}`);
+    await user.hover(lane("Make Gates")[0]!);
+    expect(
+      screen.getByRole("status", { name: "About this card" }),
+    ).toHaveTextContent(
+      "Become the Shadow Lord works with 1 card in your core: Hocus Pocus.",
+    );
+    await user.hover(lane("Gate targets")[0]!);
+    expect(
+      screen.getByRole("status", { name: "About this card" }),
+    ).toHaveTextContent(
+      "Hocus Pocus (red) doesn't work with anything in your core yet.",
+    );
+  });
+
+  it("has a key to the badges, the score and the range bar", async () => {
+    await open();
+    const key = within(screen.getByRole("list", { name: "Key" }));
+    for (const text of [
+      /in core/,
+      /works with/,
+      /preferred/,
+      /floor to ceiling/,
+    ]) {
+      expect(key.getByText(text)).toBeInTheDocument();
+    }
+  });
+});
+
 describe("engine board", () => {
   it("lays the ranked cards out by engine, makers beside what uses them", async () => {
     await open();
@@ -401,7 +460,7 @@ describe("the core", () => {
     expect(trayCards()).toEqual(["3 × Become the Shadow Lord"]);
     expect(router.state.location.search).toMatchObject({ core: { bsl3: 3 } });
     for (const li of lane("Gate targets")) {
-      expect(li).toHaveTextContent("fits 1");
+      expect(li).toHaveTextContent("works with 1");
     }
   });
 
@@ -425,7 +484,7 @@ describe("the core", () => {
       }),
     );
     expect(router.state.location.search).toMatchObject({ order: "fits" });
-    expect(lane("Make Gates")[0]).toHaveTextContent("fits 1");
+    expect(lane("Make Gates")[0]).toHaveTextContent("works with 1");
   });
 
   it("weighs each engine in Readings and says what's missing", async () => {

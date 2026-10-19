@@ -339,6 +339,48 @@
   font-size: 0.86rem;
   max-width: 60ch;
 }
+.engineHead .engineSummary {
+  flex-basis: 100%;
+  max-width: none;
+  color: var(--fg);
+  font-weight: 600;
+}
+/* The key to the board's badges, and the sentence about the card being pointed at. */
+.explain {
+  display: grid;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  background: var(--surface);
+}
+.key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+.key li > span {
+  margin-right: 0.3rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+}
+.key strong {
+  color: var(--fg);
+  margin-right: 0.3rem;
+}
+.about {
+  margin: 0;
+  min-height: 1.4em;
+  font-size: 0.9rem;
+}
 .pair {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 1.75rem minmax(0, 1fr);
@@ -653,6 +695,9 @@
 }
 .traySection {
   display: grid;
+  /* One column no wider than the rail: long card names shorten with "…" rather than pushing
+     the copies buttons off the edge. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.45rem;
   padding: 0.85rem 0;
   border-bottom: 1px solid var(--border);

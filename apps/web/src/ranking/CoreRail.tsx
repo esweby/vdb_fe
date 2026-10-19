@@ -89,7 +89,9 @@ export function CoreRail(props: {
                 }}
               >
                 <span className={styles.pitchDot} aria-hidden="true" />
-                <span className={styles.coreName}>{c.label}</span>
+                <span className={styles.coreName} title={c.label}>
+                  {c.label}
+                </span>
                 <span className={styles.stepper}>
                   <button
                     type="button"

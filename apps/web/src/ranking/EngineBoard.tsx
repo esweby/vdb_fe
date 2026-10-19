@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { RankedVariant } from "./rank.ts";
 import { preferenceBoost } from "./preferences.ts";
 import {
+  balance,
   inLane,
   partners,
   sortLane,
@@ -26,6 +27,31 @@ export interface GearSlot {
 }
 
 const LANE_SIZE = 6;
+
+/** What the core has in an engine, in words, and what it's missing (maintainer, 19 Oct 2026). */
+export function engineSummary(
+  e: EngineDef,
+  b: { generators: number; payoffs: number },
+): string {
+  if (e.payoffs === null)
+    return b.generators > 0
+      ? `Your core: ${b.generators} in ${e.generators}.`
+      : "Nothing from your core here yet.";
+  if (b.generators > 0 && b.payoffs > 0)
+    return `Your core: ${b.generators} in ${e.generators} → ${b.payoffs} in ${e.payoffs}.`;
+  if (b.payoffs > 0)
+    return `Your core: ${b.payoffs} in ${e.payoffs}, but nothing in ${e.generators} yet.`;
+  if (b.generators > 0)
+    return `Your core: ${b.generators} in ${e.generators}, but nothing in ${e.payoffs} yet.`;
+  return "Nothing from your core here yet.";
+}
+
+/** One card's links to the core, in a sentence. */
+function about(label: string, names: string[]): string {
+  if (names.length === 0)
+    return `${label} doesn't work with anything in your core yet.`;
+  return `${label} works with ${names.length} ${names.length === 1 ? "card" : "cards"} in your core: ${names.join(", ")}.`;
+}
 
 /** Floor to ceiling as a track, overall as a tick, and the value ranked on as a dot. */
 export function RangeBar(props: { card: BoardCard }) {
@@ -75,7 +101,12 @@ export function EngineBoard(props: {
   onOpen: (card: BoardCard) => void;
 }) {
   const [open, setOpen] = useState(new Set<string>());
-  const [focus, setFocus] = useState<RoleId[] | null>(null);
+  // The card being pointed at, and what it works with in the core.
+  const [focus, setFocus] = useState<{
+    label: string;
+    roles: RoleId[];
+    partners: string[];
+  } | null>(null);
   const quantity = new Map(props.core.map((c) => [c.variantId, c.quantity]));
 
   const withFits = (cards: BoardCard[]) =>
@@ -99,7 +130,7 @@ export function EngineBoard(props: {
     const c = x.card;
     const q = quantity.get(c.variantId);
     const deckCopies = props.inDeck.get(c.variantId);
-    const partner = focus && fits(focus, c.roles);
+    const partner = focus && fits(focus.roles, c.roles);
     return (
       <li
         key={c.variantId}
@@ -107,7 +138,9 @@ export function EngineBoard(props: {
         className={styles.tile}
         data-core={q ? "" : undefined}
         data-partner={partner ? "" : undefined}
-        onMouseEnter={() => setFocus(c.roles)}
+        onMouseEnter={() =>
+          setFocus({ label: c.label, roles: c.roles, partners: x.partners })
+        }
       >
         <button
           type="button"
@@ -119,13 +152,13 @@ export function EngineBoard(props: {
           <Art card={c} />
         </button>
         <span className={styles.badges}>
-          {q ? <span className={styles.inCore}>✓ {q}</span> : null}
+          {q ? <span className={styles.inCore}>{q} in core</span> : null}
           {!q && x.fits > 0 && (
             <span
               className={styles.fits}
-              title={`Fits with ${x.partners.join(", ")}`}
+              title={`Works with ${x.partners.join(", ")}`}
             >
-              fits {x.fits}
+              works with {x.fits}
             </span>
           )}
           {x.boost > 0 && <span className={styles.preferred}>preferred</span>}
@@ -201,6 +234,30 @@ export function EngineBoard(props: {
       data-focus={focus ? "" : undefined}
       onMouseLeave={() => setFocus(null)}
     >
+      <div className={styles.explain}>
+        <ul aria-label="Key" className={styles.key}>
+          <li>
+            <span className={styles.inCore}>3 in core</span> copies in your core
+          </li>
+          <li>
+            <span className={styles.fits}>works with 2</span> links to 2 cards
+            in your core: makers feed users
+          </li>
+          <li>
+            <span className={styles.preferred}>preferred</span> matches your
+            preferences
+          </li>
+          <li>
+            <strong>8.5</strong> its score, then a bar from floor to ceiling
+            with overall marked
+          </li>
+        </ul>
+        <p role="status" aria-label="About this card" className={styles.about}>
+          {focus
+            ? about(focus.label, focus.partners)
+            : "Point at a card to see what it works with in your core."}
+        </p>
+      </div>
       {props.engines.map((e) => {
         const gens = props.cards.filter((c) =>
           inLane(c.roles, e.id, "generator"),
@@ -212,6 +269,9 @@ export function EngineBoard(props: {
             <header className={styles.engineHead}>
               <h2>{e.name}</h2>
               <p>{e.note}</p>
+              <p className={styles.engineSummary}>
+                {engineSummary(e, balance(props.core, e.id))}
+              </p>
             </header>
             {e.payoffs === null ? (
               lane(`${e.id}-g`, e.generators, gens)
