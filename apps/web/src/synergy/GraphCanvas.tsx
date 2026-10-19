@@ -40,6 +40,8 @@ export function GraphCanvas(props: {
   onSelect: (id: string) => void;
   /** The card being pointed at, or null when the pointer leaves it. */
   onHover: (id: string | null) => void;
+  /** A line to pick out (card ids, each helping the next), instead of a card's links. */
+  line?: string[];
 }) {
   const container = useRef<HTMLDivElement>(null);
   const sigma = useRef<Sigma | null>(null);
@@ -126,11 +128,17 @@ export function GraphCanvas(props: {
     const renderer = sigma.current;
     if (!renderer) return;
     const graph = renderer.getGraph();
-    const focus = hovered ?? props.selected;
-    const near =
-      focus && graph.hasNode(focus)
+    const line = props.line && props.line.length > 1 ? props.line : null;
+    const focus = line ? null : (hovered ?? props.selected);
+    const near = line
+      ? new Set(line)
+      : focus && graph.hasNode(focus)
         ? new Set([focus, ...graph.neighbors(focus)])
         : null;
+    // A line's own steps: each card to the next.
+    const steps = new Set(
+      line ? line.slice(1).map((to, i) => `${line[i]}\u0000${to}`) : [],
+    );
     renderer.setSetting("nodeReducer", (id, attrs) => {
       const out = { ...attrs };
       if (near && !near.has(id)) {
@@ -145,11 +153,12 @@ export function GraphCanvas(props: {
     renderer.setSetting("edgeReducer", (id, attrs) => {
       if (!near) return attrs;
       const [from, to] = graph.extremities(id);
-      return from === focus || to === focus
-        ? { ...attrs, zIndex: 1 }
-        : { ...attrs, hidden: true };
+      const shown = line
+        ? steps.has(`${from}\u0000${to}`)
+        : from === focus || to === focus;
+      return shown ? { ...attrs, zIndex: 1 } : { ...attrs, hidden: true };
     });
-  }, [hovered, props.selected, props.nodes]);
+  }, [hovered, props.selected, props.nodes, props.line]);
 
   // Move to the selected card.
   useEffect(() => {

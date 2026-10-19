@@ -21,6 +21,7 @@ import {
   ENGINE_IDS,
   explorerView,
   isolatedCards,
+  linesThrough,
   type ExplorerSettings,
   type Source,
   type Start,
@@ -76,6 +77,11 @@ export function SynergyExplorer(props: {
   const [query, setQuery] = useState("");
   // The card being pointed at, in the graph or the panel, for the preview.
   const [preview, setPreview] = useState<string | null>(null);
+  // The line picked out in the graph, for the card it was shown from.
+  const [shownLine, setShownLine] = useState<{
+    card: string;
+    cards: string[];
+  } | null>(null);
   const [notFound, setNotFound] = useState(false);
   const listId = useId();
 
@@ -176,6 +182,9 @@ export function SynergyExplorer(props: {
     ? items.find((c) => c.id === settings.card)
     : undefined;
   const links = selected ? cardLinks(selected.id, edges) : null;
+  const lines = selected ? linesThrough(selected.id, edges) : [];
+  const line =
+    shownLine && shownLine.card === settings.card ? shownLine.cards : undefined;
   const previewCard = preview ? items.find((c) => c.id === preview) : undefined;
   // Variants come red first (cards/pitch.ts), so this is the red version's art where it has one.
   const previewImage = previewCard?.variants.find((v) => v.imageUrl)?.imageUrl;
@@ -239,6 +248,7 @@ export function SynergyExplorer(props: {
             follow={settings.start !== "card"}
             onSelect={select}
             onHover={setPreview}
+            line={line}
           />
         </Suspense>
         {previewCard && (
@@ -408,6 +418,52 @@ export function SynergyExplorer(props: {
               links.helpedBy,
               (e) => e.from,
               "Nothing helps it yet.",
+            )}
+            <h3>Lines through this card</h3>
+            {lines.length === 0 ? (
+              <p className={styles.muted}>No lines through this card yet.</p>
+            ) : (
+              <ul aria-label="Lines through this card" className={styles.links}>
+                {lines.map((l) => {
+                  const key = l.cards.join("→");
+                  const shown = line?.join("→") === key;
+                  return (
+                    <li key={key}>
+                      <strong>{l.cards.map(nameOf).join(" → ")}</strong> ·
+                      weakest link {l.weakest}
+                      {l.traverse && " · enables traverse"}
+                      {l.alike > 0 &&
+                        ` · and ${l.alike} more ${l.cards[1] === selected.id ? `from ${nameOf(l.cards[0])}` : `through ${nameOf(l.cards[1])}`}`}
+                      <span className={styles.reasons}>
+                        {l.steps.map((e) => (
+                          <span
+                            key={`${e.from}→${e.to}`}
+                            className={styles.step}
+                          >
+                            {nameOf(e.from)} → {nameOf(e.to)}:{" "}
+                            {e.reasons.length > 0
+                              ? e.reasons
+                                  .map((r) => DESCRIPTIONS.get(r) ?? r)
+                                  .join("; ")
+                              : KIND_LABEL[e.kind]}
+                          </span>
+                        ))}
+                      </span>
+                      <Button
+                        onClick={() =>
+                          setShownLine(
+                            shown
+                              ? null
+                              : { card: selected.id, cards: [...l.cards] },
+                          )
+                        }
+                      >
+                        {shown ? "Hide" : "Show in graph"}
+                      </Button>
+                    </li>
+                  );
+                })}
+              </ul>
             )}
           </section>
         )}
