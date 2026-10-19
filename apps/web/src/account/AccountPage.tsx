@@ -67,8 +67,12 @@ export function AccountPage() {
   }, [scores, user]);
 
   async function setSidesTogether(value: boolean) {
+    await setPreference({ scoreSidesTogether: value });
+  }
+
+  async function setPreference(change: Partial<Preferences>) {
     if (!user || !preferences) return;
-    const next = { ...preferences, scoreSidesTogether: value };
+    const next = { ...preferences, ...change };
     setPreferences(next);
     try {
       await scores.savePreferences(user.id, next);
@@ -122,6 +126,24 @@ export function AccountPage() {
           Score both sides together by default
         </label>
       )}
+      <h2>Goldfish</h2>
+      {preferences && (
+        <label>
+          <input
+            type="checkbox"
+            checked={preferences.heroPrompts ?? false}
+            onChange={(e) =>
+              void setPreference({ heroPrompts: e.target.checked })
+            }
+          />
+          Hero prompts in goldfish
+        </label>
+      )}
+      <p>
+        When a hero ability or token might trigger, goldfish asks, for example
+        "Attack played. Destroy 3 Runechants and deal 3 arcane damage?". Nothing
+        happens unless you say yes.
+      </p>
       {error && <p role="alert">{error}</p>}
     </>
   );

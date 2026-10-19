@@ -1,6 +1,7 @@
 import type { CommunityRow } from "../ranking/rank.ts";
 import { sampleCards } from "./fakeCardRepository.ts";
 import type {
+  Preferences,
   CardDetail,
   Dimension,
   ScoreKey,
@@ -66,7 +67,7 @@ export function fakeScoreRepository(
   options: {
     reviewedAt?: string | null;
     reviewedCardIds?: string[];
-    preferences?: { scoreSidesTogether?: boolean };
+    preferences?: Preferences;
     community?: CommunityRow[];
     allMyScores?: (ScoreRow & { cardId: string })[];
     minRatingCount?: number;

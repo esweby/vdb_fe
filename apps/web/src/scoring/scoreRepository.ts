@@ -72,6 +72,8 @@ export interface ScoreRepository {
 export interface Preferences {
   /** Default for "Same score for both sides" on card pages. Defaults to true. */
   scoreSidesTogether?: boolean;
+  /** Hero prompts in goldfish (README "Hero prompts"). Off by default. */
+  heroPrompts?: boolean;
 }
 
 const COMMUNITY_COLUMNS =

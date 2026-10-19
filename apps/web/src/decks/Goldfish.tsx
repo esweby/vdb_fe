@@ -12,12 +12,22 @@ import {
   type HeroSide,
   type Zone,
 } from "@vdb/engine";
-import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
+import { Link } from "@tanstack/react-router";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from "react";
+import { useAppSelector } from "../hooks.ts";
+import { useServices } from "../servicesContext.ts";
 import { engineCardOf } from "../ranking/scenarios.ts";
 import { Button, TextField } from "../ui/index.ts";
 import { sectionOf, variantName, type DeckEntry } from "./deckRules.ts";
 import { decodeFixed, encodeFixed } from "./goldfishLink.ts";
 import { turnRecaps } from "./goldfishRecap.ts";
+import { promptsAfter, type Prompt } from "./heroPrompts.ts";
 import styles from "./Goldfish.module.css";
 
 /** Card zones shown as lists; the deck is face down and only counted. */
@@ -195,7 +205,51 @@ export function Goldfish(props: {
   const [dragging, setDragging] = useState<string | null>(null);
   const [shareLink, setShareLink] = useState<string | null>(null);
   const g = history.present;
-  const doAction = (action: GameAction) => setHistory((h) => act(h, action));
+
+  // Hero prompts (README "Hero prompts"): off unless the user turned them on in Account.
+  const { scores } = useServices();
+  const user = useAppSelector((s) => s.auth.user);
+  const [heroPrompts, setHeroPrompts] = useState(false);
+  const [prompts, setPrompts] = useState<Prompt[]>([]);
+  useEffect(() => {
+    if (!user) return;
+    let live = true;
+    scores.getPreferences(user.id).then(
+      (p) => live && setHeroPrompts(p.heroPrompts ?? false),
+      () => {},
+    );
+    return () => {
+      live = false;
+    };
+  }, [scores, user]);
+
+  // The latest history, so actions from keys and prompts build on it.
+  const latest = useRef(history);
+  latest.current = history;
+  const apply = (action: GameAction) => {
+    const before = latest.current;
+    const next = act(before, action);
+    latest.current = next;
+    setHistory(next);
+    return { before: before.present, after: next.present };
+  };
+  const doAction = (action: GameAction) => {
+    const { before, after } = apply(action);
+    if (heroPrompts)
+      setPrompts((ps) => [...ps, ...promptsAfter(before, action, after)]);
+  };
+  const doActionRef = useRef(doAction);
+  doActionRef.current = doAction;
+  /** Undo, redo or restart: earlier prompts no longer fit the table. */
+  const rewind = (change: (h: GameHistory) => GameHistory) => {
+    setPrompts([]);
+    setHistory(change);
+  };
+  function answer(p: Prompt, yes: boolean) {
+    if (yes)
+      for (const action of p.actions(latest.current.present)) apply(action);
+    setPrompts((ps) => ps.filter((x) => x.id !== p.id));
+  }
   const sideName = (side: string) =>
     side === "usurper" ? "Usurper" : "Forsaken";
   const startedOn = history.past[0]?.side ?? g.side;
@@ -213,7 +267,7 @@ export function Goldfish(props: {
     setSeed(nextSeed);
     setSeedInput(String(nextSeed));
     setShareLink(null);
-    setHistory(start({ ...setup, seed: nextSeed, side: startSide }));
+    rewind(() => start({ ...setup, seed: nextSeed, side: startSide }));
   }
 
   // Keys for the table: D draw, E end turn, Ctrl/⌘+Z undo, with Shift redo.
@@ -223,10 +277,11 @@ export function Goldfish(props: {
       const key = e.key.toLowerCase();
       if ((e.ctrlKey || e.metaKey) && key === "z") {
         e.preventDefault();
+        setPrompts([]);
         setHistory(e.shiftKey ? redo : undo);
       } else if (e.ctrlKey || e.metaKey) return;
-      else if (key === "d") setHistory((h) => act(h, { type: "draw" }));
-      else if (key === "e") setHistory((h) => act(h, { type: "endTurn" }));
+      else if (key === "d") doActionRef.current({ type: "draw" });
+      else if (key === "e") doActionRef.current({ type: "endTurn" });
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -380,13 +435,13 @@ export function Goldfish(props: {
           End turn
         </Button>
         <Button
-          onClick={() => setHistory(undo)}
+          onClick={() => rewind(undo)}
           disabled={history.past.length === 0}
         >
           Undo
         </Button>
         <Button
-          onClick={() => setHistory(redo)}
+          onClick={() => rewind(redo)}
           disabled={history.future.length === 0}
         >
           Redo
@@ -421,6 +476,30 @@ export function Goldfish(props: {
           <Button onClick={() => restart(randomSeed())}>New shuffle</Button>
         </form>
       </header>
+
+      {prompts.length > 0 && (
+        <section aria-label="Hero prompts" className={styles.prompts}>
+          <h3>Hero prompts</h3>
+          <ul>
+            {prompts.map((p) => (
+              <li key={p.id}>
+                <span>{p.text}</span>
+                <Button variant="primary" onClick={() => answer(p, true)}>
+                  Yes
+                </Button>
+                <Button onClick={() => answer(p, false)}>No</Button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {!heroPrompts && (
+        <p className={styles.muted}>
+          Hero prompts are off. Turn them on in{" "}
+          <Link to="/account">Account</Link> to be asked when a hero ability or
+          token might trigger.
+        </p>
+      )}
 
       <div className={styles.counters}>
         <Counter
