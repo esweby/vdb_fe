@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { fakeAuthService } from "../test/fakeAuthService.ts";
 import { fakeDeckRepository } from "../test/fakeDeckRepository.ts";
+import { fakeScoreRepository } from "../test/fakeScoreRepository.ts";
 import { renderApp } from "../test/renderApp.tsx";
 import type { DeckCard } from "./deckRepository.ts";
 
@@ -16,7 +17,10 @@ const card = (variantId: string, quantity: number): DeckCard => ({
 // 10 deck cards and a weapon.
 const deck = [card("hp1", 3), card("bsl3", 3), card("ff1", 4), card("nb", 1)];
 
-async function open(path = "/decks/deck-1?tab=goldfish&seed=7") {
+async function open(
+  path = "/decks/deck-1?tab=goldfish&seed=7",
+  options: { heroPrompts?: boolean } = {},
+) {
   await renderApp({
     path,
     auth: fakeAuthService({
@@ -32,6 +36,9 @@ async function open(path = "/decks/deck-1?tab=goldfish&seed=7") {
         pitchTargets: {},
       },
     ]).repository,
+    scores: fakeScoreRepository([], {
+      preferences: { heroPrompts: options.heroPrompts },
+    }).repository,
   });
   // The latest render: one test opens the page twice.
   const table = within(
@@ -295,5 +302,79 @@ describe("goldfish", () => {
       await user.keyboard("{Control>}z{/Control}");
       expect(zoneCards(table, "Hand")).toHaveLength(3);
     });
+  });
+});
+
+// Phase two step 10 (README "Hero prompts"): optional, off by default, and nothing happens
+// unless the user says yes. The rules are UNVERIFIED.
+describe("hero prompts", () => {
+  const promptsOn = () =>
+    open("/decks/deck-1?tab=goldfish&seed=7", { heroPrompts: true });
+
+  it("are off by default, with a pointer to turn them on", async () => {
+    const { table, user } = await open();
+    await user.click(table.getByRole("button", { name: "More Runechants" }));
+    expect(table.queryByRole("region", { name: "Hero prompts" })).toBeNull();
+    expect(table.getByText(/Hero prompts are off/)).toBeInTheDocument();
+  });
+
+  it("ask, and do it only on Yes, as an action that can be undone", async () => {
+    const { table, user } = await promptsOn();
+    await user.click(table.getByRole("button", { name: "More Runechants" }));
+    const prompts = within(
+      await table.findByRole("region", { name: "Hero prompts" }),
+    );
+    const prompt = prompts.getByRole("listitem");
+    expect(prompt).toHaveTextContent(
+      "You created a Runechant. Banish the top card of your deck?",
+    );
+    expect(
+      table.getByRole("heading", { name: "Deck · 6" }),
+    ).toBeInTheDocument();
+    await user.click(within(prompt).getByRole("button", { name: "Yes" }));
+    expect(zoneCards(table, "Banished")).toHaveLength(1);
+    expect(
+      table.getByRole("heading", { name: "Deck · 5" }),
+    ).toBeInTheDocument();
+    expect(table.queryByRole("region", { name: "Hero prompts" })).toBeNull();
+    await user.click(table.getByRole("button", { name: "Undo" }));
+    expect(zoneCards(table, "Banished")).toHaveLength(0);
+  });
+
+  it("work out what a yes does when it's answered, so two banishes take two cards", async () => {
+    const { table, user } = await promptsOn();
+    await user.click(table.getByRole("button", { name: "More Runechants" }));
+    await user.click(table.getByRole("button", { name: "More Runechants" }));
+    const yes = () =>
+      within(table.getByRole("region", { name: "Hero prompts" })).getAllByRole(
+        "button",
+        { name: "Yes" },
+      )[0]!;
+    await user.click(yes());
+    await user.click(yes());
+    expect(zoneCards(table, "Banished")).toHaveLength(2);
+  });
+
+  it("do nothing on No", async () => {
+    const { table, user } = await promptsOn();
+    await user.click(table.getByRole("button", { name: "More Runechants" }));
+    const prompt = within(
+      await table.findByRole("region", { name: "Hero prompts" }),
+    ).getByRole("listitem");
+    await user.click(within(prompt).getByRole("button", { name: "No" }));
+    expect(zoneCards(table, "Banished")).toHaveLength(0);
+    expect(table.queryByRole("region", { name: "Hero prompts" })).toBeNull();
+  });
+
+  it("ask after the D and E keys too", async () => {
+    const { table, user } = await promptsOn();
+    await user.click(table.getByRole("button", { name: "Traverse" }));
+    await user.click(table.getByRole("button", { name: "More Gates" }));
+    await user.keyboard("e");
+    expect(
+      await table.findByText(
+        "You created a Gate this turn. Traverse back to Forsaken?",
+      ),
+    ).toBeInTheDocument();
   });
 });
