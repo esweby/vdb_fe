@@ -1,6 +1,11 @@
 import { deriveSynergies, rolesOf, SYNERGY_RULES } from "@vdb/cards";
 import type { CommunityEdgeRow, CommunityFeedbackRow } from "@vdb/scoring";
-import { getRouteApi, useNavigate, useRouter } from "@tanstack/react-router";
+import {
+  getRouteApi,
+  Link,
+  useNavigate,
+  useRouter,
+} from "@tanstack/react-router";
 import {
   Suspense,
   lazy,
@@ -239,6 +244,14 @@ export function SynergyExplorerPage() {
   return (
     <div className={styles.page}>
       <h1 className={styles.title}>Synergies</h1>
+      {/* Maintainer, 19 Oct 2026: say plainly what the links are, and aren't. */}
+      <p className={styles.intro}>
+        These links come from rules that read each card&apos;s text, so they
+        show cards that can work together, not how well. Most haven&apos;t been
+        checked by players yet: treat them as ideas to test, not advice. Scorers
+        can confirm or correct them in{" "}
+        <Link to="/needs-review/synergies">Confirm synergies</Link>.
+      </p>
       <div className={styles.layout}>
         <div className={styles.canvasWrap}>
           <Suspense fallback={<Loading label="Drawing the graph" />}>

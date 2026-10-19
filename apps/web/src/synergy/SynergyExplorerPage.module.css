@@ -7,6 +7,12 @@
   margin: 0;
 }
 
+.intro {
+  margin: 0;
+  max-width: 70ch;
+  color: var(--muted);
+}
+
 /* Desktop first: the graph takes the room, the panel sits beside it. */
 .layout {
   display: grid;

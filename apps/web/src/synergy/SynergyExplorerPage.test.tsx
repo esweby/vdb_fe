@@ -61,6 +61,17 @@ describe("synergy explorer", () => {
     ).toHaveAttribute("href", "/synergies");
   });
 
+  // Maintainer, 19 Oct 2026: say plainly what the links are, and aren't.
+  it("explains at the top that links are unchecked suggestions from the rules", async () => {
+    await open();
+    expect(
+      screen.getByText(/show cards that can work together, not how well/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Confirm synergies" }),
+    ).toHaveAttribute("href", "/needs-review/synergies");
+  });
+
   it("starts from every card with a link, and says how much it shows", async () => {
     await open();
     await waitFor(() =>
