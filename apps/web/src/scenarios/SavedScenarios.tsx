@@ -1,9 +1,12 @@
 // The builder with the person's saved scenarios and the library (README "Saved scenarios"):
 // save, edit, share, delete, and run them all against this deck with each result's inputs
-// recorded, so a later run can say what changed.
+// recorded, so a later run can say what changed. Compare decks (README "Saved scenarios",
+// phase two step 8): run them on another of your decks too, side by side, with the same seed.
 import { ENGINE_VERSION, type ScenarioDefinition } from "@vdb/engine";
 import { useCallback, useEffect, useState } from "react";
 import { selectRole } from "../auth/authSlice.ts";
+import { useCards } from "../cards/useCards.ts";
+import type { DeckSummary } from "../decks/deckRepository.ts";
 import type { DeckEntry } from "../decks/deckRules.ts";
 import { useAppSelector } from "../hooks.ts";
 import { runScenario } from "../ranking/runScenarios.ts";
@@ -11,6 +14,7 @@ import { RUNS } from "../ranking/scenarioRuns.ts";
 import { useServices } from "../servicesContext.ts";
 import { Button } from "../ui/index.ts";
 import { deckSnapshot, differences } from "./results.ts";
+import { entriesOf, scenarioDeck } from "./scenarioDeck.ts";
 import {
   ScenarioBuilder,
   VISIBILITY,
@@ -32,8 +36,17 @@ export function SavedScenarios(props: {
   deckId: string;
   entries: DeckEntry[];
   deck: DeckForScenarios;
+  /** The format's deck size, for padding a compared deck the same way. */
+  deckMin: number;
 }) {
-  const { scenarios: repo } = useServices();
+  const { scenarios: repo, decks } = useServices();
+  const { items: pool } = useCards();
+  const [myDecks, setMyDecks] = useState<DeckSummary[]>([]);
+  const [other, setOther] = useState<{
+    id: string;
+    name: string;
+    entries: DeckEntry[];
+  } | null>(null);
   const user = useAppSelector((s) => s.auth.user);
   const role = useAppSelector(selectRole);
   const canUseLibrary = role === "curator" || role === "admin";
@@ -57,10 +70,38 @@ export function SavedScenarios(props: {
   useEffect(() => {
     load().catch(() => setError("Couldn't load your saved scenarios."));
   }, [load]);
+  useEffect(() => {
+    if (!userId) return;
+    decks.listMyDecks(userId).then(setMyDecks, () => setMyDecks([]));
+  }, [decks, userId]);
 
-  const snapshot = deckSnapshot(props.entries);
-  const inputsNow = (definition: ScenarioDefinition): ResultInputs => ({
-    deckSnapshot: snapshot,
+  async function compareWith(id: string) {
+    if (!userId || !id) return setOther(null);
+    try {
+      const [deck, theirResults] = await Promise.all([
+        decks.getDeck(id),
+        repo.listResults(userId, id),
+      ]);
+      if (!deck) return setOther(null);
+      setOther({ id, name: deck.name, entries: entriesOf(deck.cards, pool) });
+      setResults((rs) => [
+        ...rs.filter((r) => r.deckId !== id),
+        ...theirResults,
+      ]);
+    } catch {
+      setError("Couldn't load that deck.");
+    }
+  }
+
+  const snapshots: Record<string, string[]> = {
+    [props.deckId]: deckSnapshot(props.entries),
+    ...(other ? { [other.id]: deckSnapshot(other.entries) } : {}),
+  };
+  const inputsNow = (
+    definition: ScenarioDefinition,
+    deckId = props.deckId,
+  ): ResultInputs => ({
+    deckSnapshot: snapshots[deckId] ?? [],
     definition,
     definitionVersion: definition.version,
     runs: RUNS,
@@ -118,30 +159,44 @@ export function SavedScenarios(props: {
     if (!userId) return;
     setRunningAll(true);
     setError(null);
+    const targets = [
+      { deckId: props.deckId, deck: props.deck },
+      ...(other
+        ? [
+            {
+              deckId: other.id,
+              deck: scenarioDeck(other.entries, props.deckMin),
+            },
+          ]
+        : []),
+    ];
     try {
-      for (const s of list) {
-        const output = await runScenario({
-          definition: s.definition,
-          ...props.deck,
-          runs: RUNS,
-          seed: SEED,
-        });
-        const result: SavedResult = {
-          ...inputsNow(s.definition),
-          scenarioId: s.id,
-          deckId: props.deckId,
-          seed: SEED,
-          outcome: output.result
-            ? { successRate: output.result.successRate }
-            : { error: output.error ?? "It couldn't run." },
-          runAt: new Date().toISOString(),
-        };
-        await repo.saveResult(userId, result);
-        setResults((rs) => [
-          result,
-          ...rs.filter((r) => r.scenarioId !== s.id),
-        ]);
-      }
+      for (const s of list)
+        for (const { deckId, deck } of targets) {
+          const output = await runScenario({
+            definition: s.definition,
+            ...deck,
+            runs: RUNS,
+            seed: SEED,
+          });
+          const result: SavedResult = {
+            ...inputsNow(s.definition, deckId),
+            scenarioId: s.id,
+            deckId,
+            seed: SEED,
+            outcome: output.result
+              ? { successRate: output.result.successRate }
+              : { error: output.error ?? "It couldn't run." },
+            runAt: new Date().toISOString(),
+          };
+          await repo.saveResult(userId, result);
+          setResults((rs) => [
+            result,
+            ...rs.filter(
+              (r) => !(r.scenarioId === s.id && r.deckId === deckId),
+            ),
+          ]);
+        }
     } catch {
       setError("Couldn't run or record every scenario.");
     } finally {
@@ -149,10 +204,41 @@ export function SavedScenarios(props: {
     }
   }
 
-  function resultCell(s: SavedScenario) {
-    const r = results.find((x) => x.scenarioId === s.id);
-    if (!r) return <span className={styles.hint}>Not run on this deck</span>;
-    const changed = differences(r, inputsNow(s.definition));
+  const resultOf = (s: SavedScenario, deckId: string) =>
+    results.find((x) => x.scenarioId === s.id && x.deckId === deckId);
+  const rateOf = (s: SavedScenario, deckId: string) => {
+    const o = resultOf(s, deckId)?.outcome;
+    return o && "successRate" in o ? o.successRate : null;
+  };
+
+  /** The compared deck's columns: its result, and how far it is from this deck's. */
+  function compareCells(s: SavedScenario) {
+    if (!other) return null;
+    const here = rateOf(s, props.deckId);
+    const there = rateOf(s, other.id);
+    const diff = here !== null && there !== null ? (there - here) * 100 : null;
+    return (
+      <>
+        <td>{resultCell(s, other.id)}</td>
+        <td className={styles.cellRate}>
+          {diff === null
+            ? "–"
+            : `${diff >= 0 ? "+" : "−"}${Math.abs(diff).toFixed(1)} pts`}
+        </td>
+      </>
+    );
+  }
+  const compareHeads = other && (
+    <>
+      <th scope="col">{`On ${other.name}`}</th>
+      <th scope="col">Difference</th>
+    </>
+  );
+
+  function resultCell(s: SavedScenario, deckId = props.deckId) {
+    const r = resultOf(s, deckId);
+    if (!r) return <span className={styles.hint}>Not run yet</span>;
+    const changed = differences(r, inputsNow(s.definition, deckId));
     return (
       <>
         {"successRate" in r.outcome ? (
@@ -177,6 +263,7 @@ export function SavedScenarios(props: {
       <ScenarioBuilder
         key={builderKey}
         deck={props.deck}
+        deckId={props.deckId}
         editing={editing}
         onSave={userId ? save : undefined}
         canUseLibrary={canUseLibrary}
@@ -207,6 +294,22 @@ export function SavedScenarios(props: {
                     New scenario
                   </Button>
                 )}
+                <label className={styles.select}>
+                  <span>Compare with</span>
+                  <select
+                    value={other?.id ?? ""}
+                    onChange={(e) => void compareWith(e.target.value)}
+                  >
+                    <option value="">No other deck</option>
+                    {myDecks
+                      .filter((d) => d.id !== props.deckId)
+                      .map((d) => (
+                        <option key={d.id} value={d.id}>
+                          {d.name}
+                        </option>
+                      ))}
+                  </select>
+                </label>
                 <Button
                   variant="primary"
                   disabled={runningAll || list.length === 0}
@@ -227,6 +330,7 @@ export function SavedScenarios(props: {
                     <th scope="col">Scenario</th>
                     <th scope="col">Who can see it</th>
                     <th scope="col">On this deck</th>
+                    {compareHeads}
                     <th scope="col">
                       <span className={styles.visuallyHidden}>Actions</span>
                     </th>
@@ -238,6 +342,7 @@ export function SavedScenarios(props: {
                       <th scope="row">{s.definition.name}</th>
                       <td>{VISIBILITY[s.visibility]}</td>
                       <td>{resultCell(s)}</td>
+                      {compareCells(s)}
                       <td className={styles.actions}>
                         <Button
                           variant="ghost"
@@ -273,6 +378,7 @@ export function SavedScenarios(props: {
                   <tr>
                     <th scope="col">Scenario</th>
                     <th scope="col">On this deck</th>
+                    {compareHeads}
                     <th scope="col">
                       <span className={styles.visuallyHidden}>Actions</span>
                     </th>
@@ -283,6 +389,7 @@ export function SavedScenarios(props: {
                     <tr key={s.id}>
                       <th scope="row">{s.definition.name}</th>
                       <td>{resultCell(s)}</td>
+                      {compareCells(s)}
                       <td className={styles.actions}>
                         <Button
                           variant="ghost"

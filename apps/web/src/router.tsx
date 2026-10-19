@@ -144,6 +144,8 @@ const routeTree = rootRoute.addChildren([
       /** Goldfish: the starting side and a shared session's log. */
       side?: "usurper";
       log?: string;
+      /** Goldfish: cards a scenario fixed in hand or arsenal (base64url JSON). */
+      fixed?: string;
     } => ({
       ...(search.tab === "stats" ||
       search.tab === "synergies" ||
@@ -158,6 +160,9 @@ const routeTree = rootRoute.addChildren([
         ? { seed: Number(search.seed) }
         : {}),
       ...(search.side === "usurper" ? { side: "usurper" as const } : {}),
+      ...(typeof search.fixed === "string" && search.fixed
+        ? { fixed: search.fixed }
+        : {}),
       ...(typeof search.log === "string" && search.log
         ? { log: search.log }
         : {}),

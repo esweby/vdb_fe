@@ -7,6 +7,7 @@ import {
   TraverseTimeline,
 } from "../ranking/ScenariosPanel.tsx";
 import { SavedScenarios } from "../scenarios/SavedScenarios.tsx";
+import { scenarioDeck } from "../scenarios/scenarioDeck.ts";
 import { sectionOf, type DeckEntry } from "./deckRules.ts";
 import styles from "./Decks.module.css";
 
@@ -26,32 +27,20 @@ export function DeckScenarios(props: {
   const signature = JSON.stringify(
     drawn.map((e) => [e.variant.id, e.quantity]).sort(),
   );
-  const gear = props.entries.filter(
-    (e) => !e.sideboard && sectionOf(e.card) !== "deck",
-  );
   const deckSize = Math.max(
     props.deckSize,
     drawn.reduce((n, e) => n + e.quantity, 0),
   );
   const forBuilder = useMemo(
-    () => ({
-      core: drawn.map((e) => ({
-        card: engineCardOf(e.card, e.variant),
-        copies: e.quantity,
-      })),
-      gear: gear.flatMap((e) =>
-        Array.from({ length: e.quantity }, () =>
-          engineCardOf(e.card, e.variant),
-        ),
-      ),
-      deckSize,
-    }),
-    // The signature covers what's drawn; gear changes rarely and is cheap to redo.
+    () => scenarioDeck(props.entries, props.deckSize),
+    // The signature covers what's drawn; the weapons and equipment are cheap to redo.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       signature,
-      JSON.stringify(gear.map((e) => [e.variant.id, e.quantity])),
-      deckSize,
+      JSON.stringify(
+        props.entries.map((e) => [e.variant.id, e.quantity, e.sideboard]),
+      ),
+      props.deckSize,
     ],
   );
   const [run, setRun] = useState<{
@@ -90,6 +79,7 @@ export function DeckScenarios(props: {
         deckId={props.deckId}
         entries={props.entries}
         deck={forBuilder}
+        deckMin={props.deckSize}
       />
       <ScenariosPanel
         source="deck"

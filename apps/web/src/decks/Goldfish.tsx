@@ -2,10 +2,12 @@ import {
   act,
   newGame,
   redo,
+  ScenarioCannotRun,
   replay,
   undo,
   type CardInstance,
   type GameAction,
+  type GameSetup,
   type GameHistory,
   type HeroSide,
   type Zone,
@@ -14,6 +16,7 @@ import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import { engineCardOf } from "../ranking/scenarios.ts";
 import { Button, TextField } from "../ui/index.ts";
 import { sectionOf, variantName, type DeckEntry } from "./deckRules.ts";
+import { decodeFixed, encodeFixed } from "./goldfishLink.ts";
 import { turnRecaps } from "./goldfishRecap.ts";
 import styles from "./Goldfish.module.css";
 
@@ -117,6 +120,16 @@ function decodeLog(text: string): GameAction[] | null {
   }
 }
 
+/** A new game; fixed cards the deck no longer has are left out rather than failing. */
+function start(setup: GameSetup) {
+  try {
+    return newGame(setup);
+  } catch (e) {
+    if (e instanceof ScenarioCannotRun) return newGame({ ...setup, fixed: [] });
+    throw e;
+  }
+}
+
 const typing = (target: EventTarget | null) =>
   !!(target as HTMLElement | null)?.closest?.("input, select, textarea");
 
@@ -131,6 +144,8 @@ export function Goldfish(props: {
   side?: HeroSide;
   /** A shared session's log, from its link. */
   log?: string;
+  /** Cards a scenario fixed in hand or arsenal, from a failed run's link. */
+  fixed?: string;
 }) {
   // Each copy, by section: the main deck, then the weapons and equipment in play.
   const { setup, names, images } = useMemo(() => {
@@ -148,13 +163,14 @@ export function Goldfish(props: {
         deck: copies("deck"),
         weapons: copies("weapon"),
         equipment: copies("equipment"),
+        fixed: props.fixed ? decodeFixed(props.fixed) : [],
       },
       names: new Map(
         main.map((e) => [e.variant.id, variantName(e.card, e.variant)]),
       ),
       images: new Map(main.map((e) => [e.variant.id, e.variant.imageUrl])),
     };
-  }, [props.entries]);
+  }, [props.entries, props.fixed]);
 
   const [seed, setSeed] = useState(() => props.seed ?? randomSeed());
   const [seedInput, setSeedInput] = useState(String(seed));
@@ -171,7 +187,7 @@ export function Goldfish(props: {
         // A link for a deck that has changed since: start fresh.
       }
     }
-    return newGame(game);
+    return start(game);
   });
   const [lookAt, setLookAt] = useState(3);
   const [looking, setLooking] = useState(false);
@@ -197,7 +213,7 @@ export function Goldfish(props: {
     setSeed(nextSeed);
     setSeedInput(String(nextSeed));
     setShareLink(null);
-    setHistory(newGame({ ...setup, seed: nextSeed, side: startSide }));
+    setHistory(start({ ...setup, seed: nextSeed, side: startSide }));
   }
 
   // Keys for the table: D draw, E end turn, Ctrl/⌘+Z undo, with Shift redo.
@@ -563,6 +579,9 @@ export function Goldfish(props: {
                 seed: String(seed),
                 ...(startedOn === "usurper" ? { side: "usurper" } : {}),
                 log: encodeLog(g.log),
+                ...(setup.fixed.length
+                  ? { fixed: encodeFixed(setup.fixed) }
+                  : {}),
               }).toString();
               setShareLink(url.toString());
               void navigator.clipboard
