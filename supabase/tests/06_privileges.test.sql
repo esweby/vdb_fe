@@ -2,7 +2,7 @@
 -- authenticated by default (local stacks do), so every grant must be explicit.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(43);
+select plan(47);
 
 -- Public reference data: readable by everyone
 select table_privs_are('public', t, 'anon', array['SELECT'], 'anon can only read ' || t)
@@ -23,6 +23,12 @@ select table_privs_are('public', t, 'anon', array[]::text[], 'anon has no access
   from unnest(array['card_synergies', 'synergy_feedback']) t;
 select table_privs_are('public', t, 'authenticated', array['SELECT', 'INSERT', 'UPDATE', 'DELETE'], 'signed-in users manage their own ' || t)
   from unnest(array['card_synergies', 'synergy_feedback']) t;
+
+-- Community synergy results: written by the job (service role), readable by everyone.
+select table_privs_are('public', t, 'anon', array['SELECT'], 'anon can only read ' || t)
+  from unnest(array['community_synergies', 'community_synergy_feedback']) t;
+select table_privs_are('public', t, 'authenticated', array['SELECT'], 'signed-in users can only read ' || t)
+  from unnest(array['community_synergies', 'community_synergy_feedback']) t;
 
 -- Private tables: nothing for anon
 select table_privs_are('public', t, 'anon', array[]::text[], 'anon has no access to ' || t)

@@ -2,7 +2,12 @@
 // Runs on the server because it needs the hidden rating weights (README "Backend").
 // The logic lives in @vdb/scoring; this function only fetches, computes and saves.
 import { createClient } from "npm:@supabase/supabase-js@2.117.3";
-import { buildScoringInput, computeCommunityScores } from "@vdb/scoring";
+import {
+  buildScoringInput,
+  buildSynergyInput,
+  computeCommunityScores,
+  computeCommunitySynergies,
+} from "@vdb/scoring";
 import { authorizeJobCaller } from "./auth.ts";
 
 const PAGE = 1000;
@@ -53,12 +58,14 @@ Deno.serve(async (request) => {
     }
   };
 
+  const profiles = (await all("profiles", "id, role")) as never;
+  const raterWeights = (await all(
+    "rater_weights",
+    "user_id, rating_weight",
+  )) as never;
   const input = buildScoringInput({
-    profiles: (await all("profiles", "id, role")) as never,
-    raterWeights: (await all(
-      "rater_weights",
-      "user_id, rating_weight",
-    )) as never,
+    profiles,
+    raterWeights,
     cardReviews: (await all("card_reviews", "user_id, card_id")) as never,
     cardScores: (await all(
       "card_scores",
@@ -75,5 +82,33 @@ Deno.serve(async (request) => {
   const { error } = await db.rpc("replace_community_scores", { rows, version });
   if (error) return Response.json({ error: error.message }, { status: 500 });
 
-  return Response.json({ rows: rows.length, version });
+  // The scoring group's synergy edges and feedback on derived edges (docs/synergy-rules.md).
+  const synergies = computeCommunitySynergies(
+    buildSynergyInput({
+      profiles,
+      raterWeights,
+      cardSynergies: (await all(
+        "card_synergies",
+        "user_id, from_card_id, to_card_id, weight",
+      )) as never,
+      synergyFeedback: (await all(
+        "synergy_feedback",
+        "user_id, rule_id, from_card_id, to_card_id, verdict, weight",
+      )) as never,
+    }),
+  );
+  const { error: synergyError } = await db.rpc("replace_community_synergies", {
+    edges: synergies.edges,
+    feedback: synergies.feedback,
+    version,
+  });
+  if (synergyError)
+    return Response.json({ error: synergyError.message }, { status: 500 });
+
+  return Response.json({
+    rows: rows.length,
+    synergies: synergies.edges.length,
+    synergyFeedback: synergies.feedback.length,
+    version,
+  });
 });

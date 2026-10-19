@@ -11,3 +11,4 @@ export * from "./community.ts";
 export * from "./compute.ts";
 export * from "./resolve.ts";
 export * from "./input.ts";
+export * from "./synergy.ts";
