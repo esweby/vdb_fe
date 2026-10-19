@@ -327,9 +327,12 @@ export function linesThrough(
 
 /**
  * "Best with" (maintainer, 19 Oct 2026): a card's partners, either way round, by link strength
- * times the partner's rating (0–100; an unrated partner counts as 50). Disputed links are left
- * out. Each partner comes with its strongest link to the card.
+ * times the partner's rating (0–100; an unrated partner counts as 50), with a confirmed link
+ * counting a quarter more. Disputed links are left out. Each partner comes with its strongest link to the card.
  */
+/** A link the scoring group confirmed counts for a quarter more (maintainer, 19 Oct 2026). */
+const CONFIRMED_BOOST = 1.25;
+
 export function bestWith(
   cardId: string,
   edges: WeightedEdge[],
@@ -344,7 +347,10 @@ export function bestWith(
     if (e.status === "disputed") continue;
     const other = e.from === cardId ? e.to : e.to === cardId ? e.from : null;
     if (!other || other === cardId) continue;
-    const score = e.weight * ((ratings.get(other) ?? 50) / 100);
+    const score =
+      e.weight *
+      ((ratings.get(other) ?? 50) / 100) *
+      (e.status === "confirmed" ? CONFIRMED_BOOST : 1);
     const kept = best.get(other);
     if (!kept || score > kept.score)
       best.set(other, { id: other, edge: e, score });

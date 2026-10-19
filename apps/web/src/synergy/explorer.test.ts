@@ -359,6 +359,25 @@ describe("bestWith", () => {
     ]);
   });
 
+  // Maintainer, 19 Oct 2026: a link the scoring group confirmed counts for a quarter more.
+  it("gives confirmed links a ×1.25 boost", () => {
+    const ratings = new Map([
+      ["a", 90],
+      ["c", 50],
+    ]);
+    // b→c confirmed: 0.6 × 0.5 × 1.25 = 0.375, ahead of e at 0.7 × 0.5 = 0.35.
+    const confirmed = edges.map((e) =>
+      e.from === "b" && e.to === "c"
+        ? { ...e, status: "confirmed" as const }
+        : e,
+    );
+    expect(bestWith("b", confirmed, ratings).map((p) => p.id)).toEqual([
+      "a",
+      "c",
+      "e",
+    ]);
+  });
+
   it("leaves out disputed links, and stops at the limit", () => {
     const withDisputed = [edge("z", "b", 1, { status: "disputed" }), ...edges];
     const best = bestWith("b", withDisputed, new Map(), 2);
