@@ -42,3 +42,23 @@ describe("blockLabel", () => {
     ).toBe("at least 1 Gate made by Shadow cards");
   });
 });
+
+describe("stepLabel", () => {
+  it("reads each step in plain words", async () => {
+    const { stepLabel } = await import("./blocks.ts");
+    expect(
+      stepLabel({
+        turn: "each",
+        do: "arsenal",
+        filter: { trait: "blood_debt" },
+      }),
+    ).toBe("Each turn, put the lowest-pitch Blood debt card in arsenal");
+    expect(stepLabel({ turn: 2, do: "draw", count: 2 })).toBe("Turn 2, draw 2");
+    expect(stepLabel({ turn: 1, do: "block", count: 1 })).toBe(
+      "Turn 1, block with 1 card",
+    );
+    expect(stepLabel({ turn: 1, do: "pitch", filter: { pitch: 3 } })).toBe(
+      "Turn 1, pitch the lowest-pitch blue card",
+    );
+  });
+});

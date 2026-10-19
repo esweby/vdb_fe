@@ -246,6 +246,31 @@ describe("a shared scenario's page", () => {
     expect(await screen.findByText(/Copied/)).toBeInTheDocument();
   });
 
+  it("lists its steps", async () => {
+    await open(
+      fakeScenarioRepository({
+        scenarios: [
+          {
+            id: "s8",
+            userId: "u9",
+            definition: {
+              ...blue("With steps"),
+              horizon: 2,
+              steps: [{ turn: "each", do: "arsenal", filter: { pitch: 3 } }],
+            },
+            visibility: "link",
+          },
+        ],
+      }),
+      "/scenarios/s8",
+    );
+    expect(
+      await screen.findByText(
+        "Each turn, put the lowest-pitch blue card in arsenal",
+      ),
+    ).toBeInTheDocument();
+  });
+
   it("lets a curator add it to the library", async () => {
     const { user, scenarios } = await open(
       shared(),

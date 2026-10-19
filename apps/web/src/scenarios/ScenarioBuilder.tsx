@@ -18,6 +18,7 @@ import {
   newBlock,
   newDraft,
   newGroup,
+  newStep,
   numbering,
   toDefinition,
   updateAt,
@@ -25,17 +26,19 @@ import {
   type Draft,
   type GroupDraft,
   type Path,
+  type StepDraft,
 } from "./draft.ts";
 import styles from "./ScenarioBuilder.module.css";
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 const rate = (x: number) => `${(x * 100).toFixed(1)}%`;
 const n = (x: number) => x.toLocaleString("en-GB");
-const HORIZONS = [0, 2, 3, 4, 5, 6];
+const HORIZONS = [0, 1, 2, 3, 4, 5, 6];
 const ZONES = [
   { zone: "hand", label: "Hand" },
   { zone: "arsenal", label: "Arsenal" },
   { zone: "topOfDeck", label: "Top card of the deck" },
+  { zone: "banished", label: "Banished zone" },
 ] as const;
 
 export interface DeckForScenarios {
@@ -150,6 +153,139 @@ export function ScenarioBuilder(props: {
     );
   }
 
+  /** Card, card fact, class, type and pitch: a filter for a block or a step. */
+  function filterFields(
+    filter: BlockDraft["filter"],
+    set: (field: keyof BlockDraft["filter"], value: string) => void,
+  ) {
+    return (
+      <>
+        <Select
+          label="Card"
+          value={filter.name ?? ""}
+          options={[
+            ["", "Any card"],
+            ...names.map((x): [string, string] => [x, x]),
+          ]}
+          onChange={(v) => set("name", v)}
+        />
+        <Select
+          label="Card fact"
+          value={filter.role ?? ""}
+          options={[
+            ["", "Any"],
+            ...ROLES.map((r): [string, string] => [r.id, r.name]),
+          ]}
+          onChange={(v) => set("role", v)}
+        />
+        <Select
+          label="Class, talent or trait"
+          value={filter.trait ?? ""}
+          options={[["", "Any"], ...Object.entries(TRAITS)]}
+          onChange={(v) => set("trait", v)}
+        />
+        <Select
+          label="Type"
+          value={filter.type ?? ""}
+          options={[["", "Any"], ...Object.entries(TYPE_LABELS)]}
+          onChange={(v) => set("type", v)}
+        />
+        <Select
+          label="Pitch"
+          value={filter.pitch === undefined ? "" : String(filter.pitch)}
+          options={[
+            ["", "Any"],
+            ["1", "Red"],
+            ["2", "Yellow"],
+            ["3", "Blue"],
+          ]}
+          onChange={(v) => set("pitch", v)}
+        />
+      </>
+    );
+  }
+
+  const setStep = (i: number, change: Partial<StepDraft>) =>
+    set({
+      steps: draft.steps.map((x, j) => (j === i ? { ...x, ...change } : x)),
+    });
+
+  function renderStep(step: StepDraft, i: number) {
+    const counted = step.do === "draw" || step.do === "block";
+    return (
+      <div
+        key={i}
+        role="group"
+        aria-label={`Step ${i + 1}`}
+        className={styles.block}
+      >
+        <div className={styles.row}>
+          <Select
+            label="When"
+            value={String(step.turn)}
+            options={[
+              ["each", "Each turn"],
+              ...HORIZONS.filter((h) => h > 0).map((h): [string, string] => [
+                String(h),
+                `Turn ${h}`,
+              ]),
+            ]}
+            onChange={(v) =>
+              setStep(i, { turn: v === "each" ? "each" : Number(v) })
+            }
+          />
+          <Select
+            label="Do"
+            value={step.do}
+            options={[
+              ["arsenal", "Put a card in arsenal"],
+              ["pitch", "Pitch a card"],
+              ["banish", "Banish a card from hand"],
+              ["draw", "Draw"],
+              ["block", "Block with"],
+            ]}
+            onChange={(v) => setStep(i, { do: v as StepDraft["do"] })}
+          />
+          {counted && (
+            <TextField
+              label="How many"
+              className={styles.amount}
+              inputMode="numeric"
+              value={step.count}
+              onChange={(e) => setStep(i, { count: e.target.value })}
+            />
+          )}
+          <Button
+            className={styles.remove}
+            onClick={() =>
+              set({ steps: draft.steps.filter((_, j) => j !== i) })
+            }
+          >
+            Remove step
+          </Button>
+        </div>
+        {!counted && (
+          <div className={styles.row}>
+            <span className={styles.from}>the lowest-pitch card matching</span>
+            {filterFields(step.filter, (field, value) =>
+              setStep(i, {
+                filter: {
+                  ...step.filter,
+                  [field]:
+                    value === ""
+                      ? undefined
+                      : field === "pitch"
+                        ? Number(value)
+                        : value,
+                },
+              }),
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   function renderBlock(block: BlockDraft, path: Path) {
     const number = blocks.get(path.join("."));
     const setBlock = (change: Partial<BlockDraft>) =>
@@ -210,49 +346,7 @@ export function ScenarioBuilder(props: {
         </div>
         <div className={styles.row}>
           <span className={styles.from}>from cards matching</span>
-          <Select
-            label="Card"
-            value={block.filter.name ?? ""}
-            options={[
-              ["", "Any card"],
-              ...names.map((x): [string, string] => [x, x]),
-            ]}
-            onChange={(v) => setFilter("name", v)}
-          />
-          <Select
-            label="Card fact"
-            value={block.filter.role ?? ""}
-            options={[
-              ["", "Any"],
-              ...ROLES.map((r): [string, string] => [r.id, r.name]),
-            ]}
-            onChange={(v) => setFilter("role", v)}
-          />
-          <Select
-            label="Class, talent or trait"
-            value={block.filter.trait ?? ""}
-            options={[["", "Any"], ...Object.entries(TRAITS)]}
-            onChange={(v) => setFilter("trait", v)}
-          />
-          <Select
-            label="Type"
-            value={block.filter.type ?? ""}
-            options={[["", "Any"], ...Object.entries(TYPE_LABELS)]}
-            onChange={(v) => setFilter("type", v)}
-          />
-          <Select
-            label="Pitch"
-            value={
-              block.filter.pitch === undefined ? "" : String(block.filter.pitch)
-            }
-            options={[
-              ["", "Any"],
-              ["1", "Red"],
-              ["2", "Yellow"],
-              ["3", "Blue"],
-            ]}
-            onChange={(v) => setFilter("pitch", v)}
-          />
+          {filterFields(block.filter, setFilter)}
         </div>
       </fieldset>
     );
@@ -367,7 +461,11 @@ export function ScenarioBuilder(props: {
           value={String(draft.horizon)}
           options={HORIZONS.map((h) => [
             String(h),
-            h === 0 ? "Opening hand" : `By turn ${h}`,
+            h === 0
+              ? "Opening hand"
+              : h === 1
+                ? "Turn 1, after its steps"
+                : `By turn ${h}`,
           ])}
           onChange={(v) => set({ horizon: Number(v) })}
         />
@@ -473,6 +571,25 @@ export function ScenarioBuilder(props: {
           }}
         >
           Add a fixed card
+        </Button>
+      </fieldset>
+
+      <fieldset className={styles.fixed}>
+        <legend>Steps</legend>
+        <p className={styles.hint}>
+          Scripted actions each turn, after the draw and before the check. A
+          step that chooses a card takes the lowest pitch, then the first in
+          hand: a fixed rule, never a judgement.
+        </p>
+        {draft.steps.map(renderStep)}
+        {draft.steps.length > 0 && draft.horizon === 0 && (
+          <p className={styles.problem}>
+            The opening hand is checked before any steps. Choose a turn under
+            Check for them to run.
+          </p>
+        )}
+        <Button onClick={() => set({ steps: [...draft.steps, newStep()] })}>
+          Add a step
         </Button>
       </fieldset>
 

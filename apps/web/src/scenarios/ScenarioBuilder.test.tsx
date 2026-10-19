@@ -187,3 +187,72 @@ describe("building a scenario", () => {
     expect(block(builder, 1).getByLabelText("Pitch")).toHaveValue("3");
   });
 });
+
+// Scenarios stage 2 (README "Steps (the flow)", phase two step 9).
+describe("scripted steps", () => {
+  it("puts a card in arsenal on turn 1, checked after the turn's steps", async () => {
+    const { builder, user } = await open();
+    await user.click(builder.getByRole("button", { name: "Add a fixed card" }));
+    await user.selectOptions(
+      within(
+        builder.getByRole("group", { name: "Fixed card 1" }),
+      ).getByLabelText("Card"),
+      "Become the Shadow Lord (blue)",
+    );
+    await user.click(builder.getByRole("button", { name: "Add a step" }));
+    const step = within(builder.getByRole("group", { name: "Step 1" }));
+    await user.selectOptions(step.getByLabelText("When"), "1");
+    await user.selectOptions(step.getByLabelText("Do"), "arsenal");
+    await user.selectOptions(
+      step.getByLabelText("Card"),
+      "Become the Shadow Lord",
+    );
+    await user.selectOptions(builder.getByLabelText("Check"), "1");
+    await user.click(builder.getByRole("checkbox", { name: "Hand" }));
+    await user.click(builder.getByRole("checkbox", { name: "Arsenal" }));
+    await user.selectOptions(
+      block(builder, 1).getByLabelText("Card"),
+      "Become the Shadow Lord",
+    );
+    await user.click(
+      builder.getByRole("button", { name: "Run this scenario" }),
+    );
+    expect(await result().findByText(/^100\.0%/)).toBeInTheDocument();
+  });
+
+  it("draws extra cards with a count", async () => {
+    const { builder, user } = await open();
+    await user.click(builder.getByRole("button", { name: "Add a step" }));
+    const step = within(builder.getByRole("group", { name: "Step 1" }));
+    await user.selectOptions(step.getByLabelText("Do"), "draw");
+    const count = step.getByRole("textbox", { name: "How many" });
+    await user.clear(count);
+    await user.type(count, "x");
+    expect(
+      builder.getByText("Step counts are whole numbers, 1 or more."),
+    ).toBeInTheDocument();
+    await user.clear(count);
+    await user.type(count, "2");
+    expect(builder.queryByText(/Step counts/)).toBeNull();
+  });
+
+  it("can see the banished zone, and says steps don't run for the opening hand", async () => {
+    const { builder, user } = await open();
+    expect(
+      builder.getByRole("checkbox", { name: "Banished zone" }),
+    ).toBeInTheDocument();
+    await user.click(builder.getByRole("button", { name: "Add a step" }));
+    expect(
+      builder.getByText(/The opening hand is checked before any steps/),
+    ).toBeInTheDocument();
+    await user.click(
+      within(builder.getByRole("group", { name: "Step 1" })).getByRole(
+        "button",
+        {
+          name: "Remove step",
+        },
+      ),
+    );
+    expect(builder.queryByRole("group", { name: "Step 1" })).toBeNull();
+  });
+});
