@@ -81,6 +81,8 @@ export function explorerView(input: {
   coreIds: string[];
   /** In the core view, how many cards outside the core to show: those linking to it most. */
   near?: number;
+  /** Cards to show whatever the view, e.g. a package picked out in the graph. */
+  include?: string[];
 }): { nodes: ExplorerNode[]; edges: WeightedEdge[] } {
   const s = input.settings;
   const links = refine(input.edges, s);
@@ -121,6 +123,8 @@ export function explorerView(input: {
   } else {
     shown = new Set(neighbours.keys());
   }
+
+  for (const id of input.include ?? []) shown.add(id);
 
   return {
     nodes: input.cards

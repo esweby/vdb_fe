@@ -26,6 +26,8 @@ import {
   type Source,
   type Start,
 } from "./explorer.ts";
+import { cardScores, hiddenGems, packages } from "./discover.ts";
+import { formatScore } from "../scoring/scoreFormat.ts";
 import styles from "./SynergyExplorerPage.module.css";
 
 // sigma.js (WebGL) loads only when an explorer opens, not with the rest of the app.
@@ -37,6 +39,13 @@ const KIND_LABEL: Record<WeightedEdge["kind"], string> = {
   rule: "rules",
   community: "scoring group",
   both: "rules and scoring group",
+};
+/** How a package's card names the others. */
+const RULE_VERB: Record<string, string> = {
+  "tutor-finds": "searches for them",
+  "enables-play-from-banish": "lets them be played from banish",
+  supports: "works with them",
+  community: "the scoring group links them",
 };
 const ENGINE_LABEL: Record<string, string> = {
   gate: "Gate",
@@ -67,7 +76,7 @@ export function SynergyExplorer(props: {
   scope?: ExplorerScope;
 }) {
   const { settings, onChange: go, scope } = props;
-  const { synergy } = useServices();
+  const { synergy, scores } = useServices();
   const { status, items, retry } = useCards();
   const [data, setData] = useState<{
     weights: Record<string, number>;
@@ -77,13 +86,36 @@ export function SynergyExplorer(props: {
   const [query, setQuery] = useState("");
   // The card being pointed at, in the graph or the panel, for the preview.
   const [preview, setPreview] = useState<string | null>(null);
-  // The line picked out in the graph, for the card it was shown from.
-  const [shownLine, setShownLine] = useState<{
-    card: string;
+  // A line or package picked out in the graph. A line belongs to the card it was shown from.
+  const [picked, setPicked] = useState<{
+    key: string;
+    card?: string;
     cards: string[];
+    steps?: [string, string][];
   } | null>(null);
+  // The scoring group's ratings, for hidden gems; none if they can't be loaded.
+  const [ratings, setRatings] = useState<Map<string, number> | null>(null);
   const [notFound, setNotFound] = useState(false);
   const listId = useId();
+
+  useEffect(() => {
+    let live = true;
+    Promise.all([
+      scores.listDimensions(),
+      scores.listCommunityScores(),
+      scores.getMinRatingCount(),
+    ]).then(
+      ([dimensions, rows, min]) => {
+        const overall = dimensions.find((d) => d.key === "overall");
+        if (live)
+          setRatings(overall ? cardScores(rows, overall.id, min) : new Map());
+      },
+      () => live && setRatings(new Map()),
+    );
+    return () => {
+      live = false;
+    };
+  }, [scores]);
 
   useEffect(() => {
     let live = true;
@@ -130,10 +162,44 @@ export function SynergyExplorer(props: {
     });
   }, [items, data]);
   const scopeIds = scope?.cardIds ?? [];
+  const shownPick =
+    picked && (!picked.card || picked.card === settings.card)
+      ? picked
+      : undefined;
   const view = useMemo(
-    () => explorerView({ cards, edges, settings, coreIds: scopeIds }),
+    () =>
+      explorerView({
+        cards,
+        edges,
+        settings,
+        coreIds: scopeIds,
+        include: shownPick?.cards,
+      }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [cards, edges, JSON.stringify(settings), scopeIds.join()],
+    [cards, edges, JSON.stringify(settings), scopeIds.join(), shownPick?.key],
+  );
+  // A picked line or package is drawn on its own, laid out for just its cards: in the whole
+  // pool's layout a package's cards sit on top of each other.
+  const drawn = useMemo(() => {
+    if (!shownPick) return view;
+    const cardsIn = new Set(shownPick.cards);
+    const steps = shownPick.steps
+      ? new Set(shownPick.steps.map(([a, b]) => `${a}\u0000${b}`))
+      : null;
+    return {
+      nodes: view.nodes.filter((n) => cardsIn.has(n.id)),
+      // All of its own links, whatever the refine settings hide elsewhere.
+      edges: edges.filter((e) =>
+        steps
+          ? steps.has(`${e.from}\u0000${e.to}`)
+          : cardsIn.has(e.from) && cardsIn.has(e.to),
+      ),
+    };
+  }, [view, edges, shownPick]);
+  const packageList = useMemo(() => packages(edges), [edges]);
+  const gems = useMemo(
+    () => (ratings ? hiddenGems(edges, ratings) : []),
+    [edges, ratings],
   );
 
   if (status === "failed")
@@ -183,8 +249,7 @@ export function SynergyExplorer(props: {
     : undefined;
   const links = selected ? cardLinks(selected.id, edges) : null;
   const lines = selected ? linesThrough(selected.id, edges) : [];
-  const line =
-    shownLine && shownLine.card === settings.card ? shownLine.cards : undefined;
+
   const previewCard = preview ? items.find((c) => c.id === preview) : undefined;
   // Variants come red first (cards/pitch.ts), so this is the red version's art where it has one.
   const previewImage = previewCard?.variants.find((v) => v.imageUrl)?.imageUrl;
@@ -241,14 +306,14 @@ export function SynergyExplorer(props: {
       <div className={styles.canvasWrap}>
         <Suspense fallback={<Loading label="Drawing the graph" />}>
           <GraphCanvas
-            nodes={view.nodes}
-            edges={view.edges}
+            nodes={drawn.nodes}
+            edges={drawn.edges}
             selected={settings.card}
             // A card's own view is already framed around it.
             follow={settings.start !== "card"}
             onSelect={select}
             onHover={setPreview}
-            line={line}
+            highlight={shownPick}
           />
         </Suspense>
         {previewCard && (
@@ -351,6 +416,78 @@ export function SynergyExplorer(props: {
         )}
 
         <section className={styles.group}>
+          <h2>Discover</h2>
+          <h3>Packages</h3>
+          {packageList.length === 0 ? (
+            <p className={styles.muted}>
+              No packages yet: they come from cards that name others, and links
+              the scoring group adds.
+            </p>
+          ) : (
+            <ul aria-label="Packages" className={styles.links}>
+              {packageList.slice(0, 8).map((p) => {
+                const members = [...p.referrers, ...p.targets];
+                const key = `package:${p.id}`;
+                const shown = shownPick?.key === key;
+                const inScope = scope
+                  ? members.filter((id) => scope.cardIds.includes(id)).length
+                  : 0;
+                return (
+                  <li key={key}>
+                    <strong>{p.referrers.map(nameOf).join(" + ")}</strong> ·{" "}
+                    {members.length} cards
+                    {scope && ` · ${inScope} in ${scope.label}`}
+                    <span className={styles.reasons}>
+                      {p.why.map((w) => (
+                        <span
+                          key={`${w.card}:${w.rule}`}
+                          className={styles.step}
+                        >
+                          {nameOf(w.card)}: {RULE_VERB[w.rule] ?? w.rule}
+                        </span>
+                      ))}
+                      <span className={styles.step}>
+                        {p.targets.map(nameOf).join(", ")}
+                      </span>
+                    </span>
+                    <Button
+                      onClick={() =>
+                        setPicked(shown ? null : { key, cards: members })
+                      }
+                    >
+                      {shown ? "Hide" : "Show in graph"}
+                    </Button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          <h3>Hidden gems</h3>
+          {gems.length === 0 ? (
+            <p className={styles.muted}>
+              No hidden gems yet: they need cards the scoring group has rated.
+            </p>
+          ) : (
+            <ul aria-label="Hidden gems" className={styles.links}>
+              {gems.map((g) => (
+                <li key={g.id}>
+                  {walk(g.id)} · rated {formatScore(g.score)} · works with{" "}
+                  {g.partners.length}{" "}
+                  {g.partners.length === 1 ? "card" : "cards"} rated 7 or more:{" "}
+                  {g.partners.slice(0, 3).map(nameOf).join(", ")}
+                  {g.partners.length > 3 &&
+                    ` and ${g.partners.length - 3} more`}
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className={styles.muted}>
+            Low-rated cards linked strongly to high-rated ones: underrated, or a
+            link worth a second look. Thresholds are unverified.
+          </p>
+        </section>
+
+        <section className={styles.group}>
           <h2>Refine</h2>
           <label className={styles.field}>
             <span>Links from</span>
@@ -425,8 +562,8 @@ export function SynergyExplorer(props: {
             ) : (
               <ul aria-label="Lines through this card" className={styles.links}>
                 {lines.map((l) => {
-                  const key = l.cards.join("→");
-                  const shown = line?.join("→") === key;
+                  const key = `line:${l.cards.join("→")}`;
+                  const shown = shownPick?.key === key;
                   return (
                     <li key={key}>
                       <strong>{l.cards.map(nameOf).join(" → ")}</strong> ·
@@ -451,10 +588,18 @@ export function SynergyExplorer(props: {
                       </span>
                       <Button
                         onClick={() =>
-                          setShownLine(
+                          setPicked(
                             shown
                               ? null
-                              : { card: selected.id, cards: [...l.cards] },
+                              : {
+                                  key,
+                                  card: selected.id,
+                                  cards: [...l.cards],
+                                  steps: [
+                                    [l.cards[0], l.cards[1]],
+                                    [l.cards[1], l.cards[2]],
+                                  ],
+                                },
                           )
                         }
                       >

@@ -6,7 +6,9 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { fakeAuthService } from "../test/fakeAuthService.ts";
 import { fakeCardRepository, sampleCards } from "../test/fakeCardRepository.ts";
+import { fakeScoreRepository } from "../test/fakeScoreRepository.ts";
 import { fakeSynergyRepository } from "../test/fakeSynergyRepository.ts";
+import { sampleCommunity } from "../test/sampleCommunity.ts";
 import { renderApp } from "../test/renderApp.tsx";
 import type { ExplorerNode } from "./explorer.ts";
 
@@ -15,7 +17,7 @@ vi.mock("./GraphCanvas.tsx", () => ({
     nodes: ExplorerNode[];
     onSelect: (id: string) => void;
     onHover: (id: string | null) => void;
-    line?: string[];
+    highlight?: { cards: string[] };
   }) => (
     <ul aria-label="Graph">
       {props.nodes.map((n) => (
@@ -28,7 +30,7 @@ vi.mock("./GraphCanvas.tsx", () => ({
           >
             {n.name}
             {n.inCore ? " (core)" : ""}
-            {props.line?.includes(n.id) ? " (line)" : ""}
+            {props.highlight?.cards.includes(n.id) ? " (picked)" : ""}
           </button>
         </li>
       ))}
@@ -39,11 +41,16 @@ vi.mock("./GraphCanvas.tsx", () => ({
 const BTSL = "card-become-the-shadow-lord";
 const HOCUS = "card-hocus-pocus";
 
-async function open(path = "/synergies", synergy = fakeSynergyRepository()) {
+async function open(
+  path = "/synergies",
+  synergy = fakeSynergyRepository(),
+  scores?: ReturnType<typeof fakeScoreRepository>["repository"],
+) {
   const app = await renderApp({
     path,
     auth: fakeAuthService().service,
     synergy: synergy.repository,
+    scores,
   });
   await screen.findByRole("heading", { name: "Synergies" });
   return { ...app, user: userEvent.setup() };
@@ -296,7 +303,7 @@ describe("synergy explorer", () => {
         await selected.findByRole("button", { name: "Show in graph" }),
       );
       await waitFor(() =>
-        expect(graph()).toContain("Become the Shadow Lord (line)"),
+        expect(graph()).toContain("Become the Shadow Lord (picked)"),
       );
       await user.click(selected.getByRole("button", { name: "Hide" }));
       await waitFor(() => expect(graph()).toContain("Become the Shadow Lord"));
@@ -309,6 +316,77 @@ describe("synergy explorer", () => {
       );
       expect(
         selected.getByText("No lines through this card yet."),
+      ).toBeInTheDocument();
+    });
+  });
+
+  // Explorer feature 2 (maintainer, 19 Oct 2026).
+  describe("packages", () => {
+    it("lists cards that work as a unit, why, and picks them out in the graph", async () => {
+      const { user } = await open(
+        "/synergies",
+        fakeSynergyRepository(
+          {},
+          {
+            edges: [
+              {
+                fromCardId: "card-fate-foreseen",
+                toCardId: HOCUS,
+                weight: 0.6,
+                ratingCount: 2,
+                totalWeight: 2,
+              },
+            ],
+            feedback: [],
+          },
+        ),
+      );
+      const list = within(
+        await panel().findByRole("list", { name: "Packages" }),
+      );
+      const item = list.getByRole("listitem");
+      expect(item).toHaveTextContent(
+        /Fate Foreseen.*2 cards.*Fate Foreseen: the scoring group links them/,
+      );
+      await user.click(
+        within(item).getByRole("button", { name: "Show in graph" }),
+      );
+      await waitFor(() =>
+        expect(graph()).toEqual(
+          expect.arrayContaining([
+            "Hocus Pocus (picked)",
+            "Fate Foreseen (picked)",
+          ]),
+        ),
+      );
+    });
+
+    it("says when there are none yet", async () => {
+      await open();
+      expect(await panel().findByText(/No packages yet/)).toBeInTheDocument();
+    });
+  });
+
+  describe("hidden gems", () => {
+    it("lists low-rated cards linked strongly to high-rated ones", async () => {
+      await open(
+        "/synergies",
+        undefined,
+        fakeScoreRepository([], { community: sampleCommunity() }).repository,
+      );
+      const gems = within(
+        await panel().findByRole("list", { name: "Hidden gems" }),
+      );
+      // Hocus Pocus is rated 5; Become the Shadow Lord, rated 7, helps it (0.8).
+      expect(gems.getByRole("listitem")).toHaveTextContent(
+        /Hocus Pocus.*rated 5.*works with 1 card rated 7 or more: Become the Shadow Lord/,
+      );
+    });
+
+    it("says when there are none yet", async () => {
+      await open();
+      expect(
+        await panel().findByText(/No hidden gems yet/),
       ).toBeInTheDocument();
     });
   });
