@@ -1,0 +1,282 @@
+// Effect drafts from a card's recorded facts (docs/rules-engine.md, step 9). A draft is a
+// starting point, never the oracle: it's UNVERIFIED until a player checks it against the
+// printed text. What the facts record but the engine can't run is listed in notDrafted rather
+// than guessed at.
+import type { AuthoredCardAttributes, Condition } from "@vdb/cards";
+import {
+  describeEffects,
+  type Check,
+  type Effect,
+  type Trigger,
+} from "@vdb/engine/rules";
+import type { CardSummary, VariantSummary } from "../cards/cardRepository.ts";
+import { CONDITION_PLAIN } from "../decks/conditionAvailability.ts";
+
+export interface DraftRules {
+  effects: Effect[];
+  triggers?: Trigger[];
+  usurp?: boolean;
+  playableFromBanish?: boolean;
+}
+
+export interface EffectDraft {
+  cardName: string;
+  pitch: number | null;
+  rules: DraftRules;
+  /** The draft in plain words, to check against the printed text. */
+  description: string[];
+  /** What the facts record that the draft leaves out, and why. */
+  notDrafted: string[];
+  /** Nothing was left out. Still unverified until a player checks it. */
+  complete: boolean;
+}
+
+const TOKEN_LABEL: Record<string, string> = {
+  runechant: "Runechants",
+  gate: "Gates",
+  eloquence: "Eloquence",
+};
+
+const TRIGGER_PLAIN: Record<string, string> = {
+  on_defend: "when it defends",
+  on_pitch: "when it's pitched",
+  on_banished: "when it's banished",
+  on_leave_arena: "when it leaves the arena",
+  on_destroyed: "when it's destroyed",
+  on_usurped: "when it's usurped",
+  would_go_to_graveyard: "instead of going to the graveyard",
+  would_be_dealt_damage: "when you would be dealt damage",
+  your_end_phase: "in your end phase",
+  start_of_turn: "at the start of your turn",
+  start_of_action_phase: "at the start of your action phase",
+  combat_chain_closes: "when the combat chain closes",
+  activated: "when it's activated",
+};
+
+const slug = (name: string) =>
+  name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+
+/** A condition the engine can check, given what the draft has bound so far. */
+function conditionCheck(
+  condition: Condition,
+  bound: Set<string>,
+): Check | null {
+  if (condition === "banished_card_is_runeblade" && bound.has("banished"))
+    return { has: "runeblade", target: "banished" };
+  if (condition === "banished_card_is_shadow" && bound.has("banished"))
+    return { has: "shadow", target: "banished" };
+  return null;
+}
+
+/** One check for several conditions, or the first condition it can't check. */
+function checksFor(
+  conditions: readonly Condition[] | undefined,
+  bound: Set<string>,
+): { check?: Check; missing?: Condition } {
+  const checks: Check[] = [];
+  for (const c of conditions ?? []) {
+    const check = conditionCheck(c, bound);
+    if (!check) return { missing: c };
+    checks.push(check);
+  }
+  if (checks.length === 0) return {};
+  return { check: checks.length === 1 ? checks[0] : { all: checks } };
+}
+
+const guarded = (check: Check | undefined, effects: Effect[]): Effect[] =>
+  check ? [{ op: "if", check, then: effects }] : effects;
+
+/** A draft of a card's rules from its recorded facts (its pitch's facts over the card's). */
+export function draftEffects(
+  card: CardSummary,
+  variant: VariantSummary,
+): EffectDraft {
+  const a = {
+    ...card.attributes,
+    ...variant.attributes,
+  } as CardSummary["attributes"] & Partial<AuthoredCardAttributes>;
+  const effects: Effect[] = [];
+  const triggers: Trigger[] = [];
+  const notDrafted: string[] = [];
+  const bound = new Set<string>();
+  const note = (line: string) => {
+    if (!notDrafted.includes(line)) notDrafted.push(line);
+  };
+
+  // Banishing your own cards, as the card is played.
+  for (const b of a.banishesOwn ?? []) {
+    if (b.trigger !== "on_play") {
+      note(
+        `Banishing ${TRIGGER_PLAIN[b.trigger] ?? b.trigger}: not drafted yet`,
+      );
+      continue;
+    }
+    if (b.from === "defending_cards") {
+      note("Banishing defending cards: combat is out of scope");
+      continue;
+    }
+    const amount = b.amount ?? 1;
+    if (amount === "any" || amount === "X") {
+      note(
+        `Banishing ${amount === "any" ? "any number of" : "X"} cards: the engine needs a number`,
+      );
+      continue;
+    }
+    if (b.which) {
+      note("Banishing only action cards: the engine can't filter that yet");
+      continue;
+    }
+    if (b.temporary) {
+      note("Banishing cards that then move on: not drafted yet");
+      continue;
+    }
+    if ((b.conditions?.length ?? 0) > 0) {
+      note(
+        `Banishing if ${CONDITION_PLAIN[b.conditions![0]!]}: the engine can't check that yet`,
+      );
+      continue;
+    }
+    const from =
+      b.from === "hand"
+        ? "hand"
+        : b.from === "deck_top"
+          ? "deckTop"
+          : "graveyard";
+    const storeAs =
+      from === "hand" && !bound.has("banished") ? "banished" : undefined;
+    effects.push({
+      op: "banish",
+      from,
+      amount,
+      ...(b.optional ? { optional: true } : {}),
+      ...(storeAs ? { storeAs } : {}),
+    });
+    if (storeAs) bound.add(storeAs);
+  }
+
+  // Tokens.
+  const attackTriggerEffects: Effect[] = [];
+  const attackPlayedEffects: Effect[] = [];
+  for (const t of a.tokens ?? []) {
+    const label = TOKEN_LABEL[t.token] ?? t.token;
+    if (t.grantedTo) {
+      note(`${label} given to a later card`);
+      continue;
+    }
+    const amount = t.amount;
+    if (amount === "X") {
+      note(`X ${label}: the engine needs a number`);
+      continue;
+    }
+    if (t.trigger === "on_hit" || t.trigger === "your_attack_action_hits") {
+      note(`${label} on hit: combat is out of scope`);
+      continue;
+    }
+    const { check, missing } = checksFor(t.conditions, bound);
+    if (missing) {
+      note(
+        `${label} if ${CONDITION_PLAIN[missing]}: the engine can't check that yet`,
+      );
+      continue;
+    }
+    const make = guarded(check, [
+      { op: "createToken", token: t.token, amount },
+    ]);
+    if (t.trigger === "on_play") effects.push(...make);
+    else if (t.trigger === "on_attack") attackTriggerEffects.push(...make);
+    else if (t.trigger === "your_attack_action_played")
+      attackPlayedEffects.push(...make);
+    else
+      note(
+        `${label} ${TRIGGER_PLAIN[t.trigger] ?? t.trigger}: not drafted yet`,
+      );
+  }
+  if (attackTriggerEffects.length)
+    triggers.push({
+      id: `${slug(card.name)}-attacks`,
+      on: { event: "attacking", self: true },
+      effects: attackTriggerEffects,
+    });
+  if (attackPlayedEffects.length)
+    triggers.push({
+      id: `${slug(card.name)}-attack-played`,
+      on: { event: "played" },
+      condition: { cardIs: { type: "attack_action" }, target: "event" },
+      effects: attackPlayedEffects,
+    });
+
+  // Conditional go again.
+  if (a.goAgain) {
+    const { check, missing } = checksFor(a.goAgain.conditions, bound);
+    if (missing || !check)
+      note(
+        `Go again if ${CONDITION_PLAIN[missing ?? a.goAgain.conditions[0]!]}: the engine can't check that yet`,
+      );
+    else effects.push({ op: "if", check, then: [{ op: "gainActionPoint" }] });
+  }
+
+  // Everything else the facts record, noted rather than guessed.
+  if (a.arcaneDamage?.length)
+    note("Arcane damage: damage to an opponent is out of scope");
+  for (const d of a.disrupts ?? [])
+    note(
+      d.target === "each_hero"
+        ? `Each hero ${d.action === "discard" ? "discards" : `${d.action}s`}: not drafted yet`
+        : "Disrupting an opponent: out of scope",
+    );
+  if (a.banishesSelf?.length) note("Banishing itself: not drafted yet");
+  for (const bonus of a.conditionalBonuses ?? [])
+    note(
+      bonus.effect === "draw"
+        ? "Drawing cards: not drafted yet"
+        : "Bonuses to power or defence: combat is out of scope",
+    );
+  if (a.costReductions?.length || a.costReducedPerRunechant)
+    note("Cost reductions: not drafted yet");
+  if (a.tutors?.length) note("Searching the deck: not drafted yet");
+  if (a.enablesPlayFromBanish?.length)
+    note(
+      "Letting other cards be played from the banished zone: not drafted yet",
+    );
+  if (a.turnsBanishedFaceDown?.length)
+    note("Turning banished cards face down: not drafted yet");
+  if (a.instantSpeed) note("Playing it as an instant: not drafted yet");
+  if (a.grantsGoAgain) note("Go again given to a later card: not drafted yet");
+  const playableFromBanish =
+    !!a.playableFromBanish &&
+    (a.playableFromBanish.conditions?.length ?? 0) === 0;
+  if (a.playableFromBanish && !playableFromBanish)
+    note(
+      "Playing it from the banished zone under a condition: not drafted yet",
+    );
+
+  const rules: DraftRules = {
+    effects,
+    ...(triggers.length ? { triggers } : {}),
+    ...(a.hasUsurp ? { usurp: true } : {}),
+    ...(playableFromBanish ? { playableFromBanish: true } : {}),
+  };
+  return {
+    cardName: card.name,
+    pitch: variant.pitch,
+    rules,
+    description: [
+      ...describeEffects(effects),
+      ...triggers.flatMap((t) =>
+        describeEffects(t.effects).map(
+          (line) =>
+            `${t.on.event === "attacking" ? "When this attacks" : "When you play an attack action card"}: ${line[0]!.toLowerCase()}${line.slice(1)}`,
+        ),
+      ),
+      ...(rules.usurp ? ["Usurp."] : []),
+      ...(rules.playableFromBanish
+        ? ["It can be played from the banished zone."]
+        : []),
+    ],
+    notDrafted,
+    complete: notDrafted.length === 0,
+  };
+}
