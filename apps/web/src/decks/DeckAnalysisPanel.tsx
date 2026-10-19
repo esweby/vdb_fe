@@ -5,8 +5,11 @@ import { rankVariants, type CommunityRow } from "../ranking/rank.ts";
 import type { Dimension, ScoreRow } from "../scoring/scoreRepository.ts";
 import { useServices } from "../servicesContext.ts";
 import { analyseDeck } from "./deckAnalysis.ts";
+import type { CardSummary } from "../cards/cardRepository.ts";
+import { Button } from "../ui/index.ts";
+import { fillersFor, findGaps } from "./gaps.ts";
 import type { PitchTargets } from "./deckRepository.ts";
-import { PITCH_NAMES, type DeckEntry } from "./deckRules.ts";
+import { PITCH_NAMES, variantName, type DeckEntry } from "./deckRules.ts";
 import styles from "./Decks.module.css";
 
 interface ScoreData {
@@ -32,6 +35,10 @@ export function DeckAnalysisPanel(props: {
   pitchTargets: PitchTargets;
   /** Without it (someone else's deck) the targets show but can't be changed. */
   onTargetsChange?: (targets: PitchTargets) => void;
+  /** Every card, for what would fill a gap. */
+  pool: CardSummary[];
+  /** Adds one copy of a card; without it (someone else's deck) fillers can't be added. */
+  onAdd?: (variantId: string) => void;
 }) {
   const { entries, pitchTargets, onTargetsChange } = props;
   const { scores } = useServices();
@@ -88,6 +95,32 @@ export function DeckAnalysisPanel(props: {
       scores: new Map(scored.map((r) => [r.variantId, r.parts])),
     });
   }, [entries, data]);
+
+  // Gaps, and the best-rated cards in the pool that would fill each (phase two step 3).
+  const gaps = useMemo(() => findGaps(entries), [entries]);
+  const poolValues = useMemo(() => {
+    if (!data || gaps.length === 0) return new Map<string, number>();
+    return new Map(
+      rankVariants({
+        variants: props.pool.flatMap((c) =>
+          c.variants.map((v) => ({
+            cardId: c.id,
+            variantId: v.id,
+            name: c.name,
+            pitch: v.pitch,
+          })),
+        ),
+        dimensions: data.dimensions,
+        community: data.community,
+        mine: data.mine,
+        risk: 0,
+        sourceBlend: 100,
+        sideFocus: 50,
+        minRatingCount: data.minRatingCount,
+      }).map((r) => [r.variantId, r.value]),
+    );
+  }, [data, gaps.length, props.pool]);
+  const inDeck = new Set(entries.map((e) => e.variant.id));
 
   const o = analysis.overview;
   const percent = (n: number) =>
@@ -210,6 +243,60 @@ export function DeckAnalysisPanel(props: {
             </p>
           </section>
         )}
+        <section aria-label="Gaps" className={styles.gaps}>
+          <h2>Gaps</h2>
+          {gaps.length === 0 ? (
+            <p className={styles.muted}>
+              No gaps: every pitch you play has the makers your deck relies on.
+            </p>
+          ) : (
+            <ul className={styles.gapList}>
+              {gaps.map((g) => {
+                const pitch = PITCH_NAMES[g.pitch]!;
+                const fillers = fillersFor(g, props.pool, poolValues, inDeck);
+                return (
+                  <li key={`${g.role.id}-${g.pitch}`}>
+                    <p>
+                      No {pitch} {g.role.label}: you play {g.pitchCopies}{" "}
+                      {pitch} cards and {g.roleCopies} {g.role.label}.
+                    </p>
+                    {fillers.length === 0 ? (
+                      <p className={styles.muted}>
+                        Nothing in the card pool fills this yet.
+                      </p>
+                    ) : (
+                      <ul className={styles.fillers}>
+                        {fillers.map((f) => {
+                          const label = variantName(f.card, f.variant);
+                          return (
+                            <li key={f.variant.id}>
+                              {label}
+                              {f.value !== undefined &&
+                                ` · ${formatScore(f.value)}`}
+                              {props.onAdd && (
+                                <Button
+                                  aria-label={`Add ${label}`}
+                                  onClick={() => props.onAdd!(f.variant.id)}
+                                >
+                                  Add
+                                </Button>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          <p className={styles.muted}>
+            A gap is a kind of maker your deck relies on (3 or more copies)
+            missing from a pitch you play (5 or more cards). Unverified: a first
+            pass to tune.
+          </p>
+        </section>
       </div>
     </>
   );
