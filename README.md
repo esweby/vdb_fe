@@ -335,11 +335,13 @@ The default depends on what the engine can do:
 
 Goldfishing and Scenarios share one engine: a plain TypeScript module with no React and no network calls. It holds the game state, which is the zones, weapon and equipment slots, token counts, hero side, turn number and a seeded shuffle, and it applies actions to that state. The seed means any shuffle can be reproduced exactly, which is how the two tools link together (see below).
 
-**The engine only moves cards and counts things. It doesn't know any card rules.** Game logic lives in separate rule sets that are switched on explicitly and checked by a player:
+**Phases one and two: the engine only moves cards and counts things. It doesn't know any card rules.** Game logic lives in separate rule sets that are switched on explicitly and checked by a player:
 
 - **Synergy rules**: card A helps card B (see Synergy graph).
 - **Hero prompts**: suggestions in goldfishing (see below).
 - **Condition definitions**: the conditions recorded in card facts, used for condition availability.
+
+**Phase three: a rules engine.** Counting can't check a condition when it resolves, so Runechant totals and condition availability are estimates. The plan is a small rules engine that executes hand-verified card effects and triggers, built beside the counting engine and switched in card by card: see [docs/rules-engine.md](docs/rules-engine.md).
 
 ### Goldfishing
 
@@ -492,7 +494,7 @@ Ideally, decks created here can be played on Talishar, with match data collected
 The repo is a workspace (monorepo) so logic is written once:
 
 - `packages/scoring`: score resolution (review and blank rules, fringe default). Used by the frontend for personal scores and by the community score Edge Function.
-- `packages/engine`: the game engine and scenario runner (phase two).
+- `packages/engine`: the game engine and scenario runner (phase two), and the rules engine in `src/rules` (phase three).
 - `packages/cards`: card types and attribute types, shared by everything.
 
 Edge Functions run on Deno, so how they import a workspace package (bundling, an import map or a relative import) needs to be confirmed during setup, before any scoring code is written.
@@ -646,6 +648,7 @@ Build in this order, because each step uses the one before it:
 
 ## Phase Three
 
+- The rules engine, in the order set out in [docs/rules-engine.md](docs/rules-engine.md)
 - Go on AWS Lambda for Talishar integration
 - Weekly stats update from match data
 
