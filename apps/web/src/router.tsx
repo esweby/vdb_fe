@@ -135,9 +135,11 @@ const routeTree = rootRoute.addChildren([
     path: "/decks/$deckId",
     validateSearch: (
       search: Record<string, unknown>,
-    ): { tab?: "stats" | "scenarios"; view?: "list" } => ({
-      ...(search.tab === "stats" || search.tab === "scenarios"
-        ? { tab: search.tab as "stats" | "scenarios" }
+    ): { tab?: "stats" | "synergies" | "scenarios"; view?: "list" } => ({
+      ...(search.tab === "stats" ||
+      search.tab === "synergies" ||
+      search.tab === "scenarios"
+        ? { tab: search.tab as "stats" | "synergies" | "scenarios" }
         : {}),
       ...(search.view === "list" ? { view: "list" as const } : {}),
     }),
