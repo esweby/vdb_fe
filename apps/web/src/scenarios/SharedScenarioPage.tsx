@@ -6,7 +6,7 @@ import { selectRole } from "../auth/authSlice.ts";
 import { useAppSelector } from "../hooks.ts";
 import { useServices } from "../servicesContext.ts";
 import { Button, Loading } from "../ui/index.ts";
-import { labelsOf } from "./blocks.ts";
+import { labelsOf, stepLabel } from "./blocks.ts";
 import type { SavedScenario } from "./scenarioRepository.ts";
 import styles from "./ScenarioBuilder.module.css";
 
@@ -89,6 +89,16 @@ export function SharedScenarioPage() {
             : ""}
         </p>
       </header>
+      {d.steps?.length ? (
+        <>
+          <h2 id="steps">Steps</h2>
+          <ul aria-labelledby="steps">
+            {d.steps.map((step, n) => (
+              <li key={n}>{stepLabel(step)}</li>
+            ))}
+          </ul>
+        </>
+      ) : null}
       <h2 id="checks">
         What it checks ({"all" in d.condition ? "all" : "any"} of)
       </h2>

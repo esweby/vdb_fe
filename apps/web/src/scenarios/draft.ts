@@ -6,6 +6,7 @@ import {
   type Block,
   type ConditionGroup,
   type ScenarioDefinition,
+  type Step,
 } from "@vdb/engine";
 import { blockLabel } from "./blocks.ts";
 
@@ -26,12 +27,29 @@ export interface GroupDraft {
   match: "all" | "any";
   items: (GroupDraft | BlockDraft)[];
 }
+export interface StepDraft {
+  turn: Step["turn"];
+  do: Step["do"];
+  /** As typed, for draw and block. */
+  count: string;
+  /** For pitch, arsenal and banish. */
+  filter: Filter;
+}
+
+export const newStep = (): StepDraft => ({
+  turn: "each",
+  do: "arsenal",
+  count: "1",
+  filter: {},
+});
+
 export interface Draft {
   name: string;
   horizon: number;
   turnModel: ScenarioDefinition["turnModel"];
   access: ScenarioDefinition["access"];
   fixed: NonNullable<ScenarioDefinition["fixed"]>;
+  steps: StepDraft[];
   condition: GroupDraft;
 }
 
@@ -53,6 +71,7 @@ export const newDraft = (): Draft => ({
   turnModel: "fresh",
   access: ["hand"],
   fixed: [],
+  steps: [],
   condition: { ...newGroup() },
 });
 
@@ -139,6 +158,9 @@ export function toDefinition(
     return { problem: "Add a block to check." };
   if (blocksOf(draft.condition).some((b) => !/^\d+$/.test(b.amount.trim())))
     return { problem: "Amounts are whole numbers, 0 or more." };
+  const counted = (s: StepDraft) => s.do === "draw" || s.do === "block";
+  if (draft.steps.some((s) => counted(s) && !/^[1-9]\d*$/.test(s.count.trim())))
+    return { problem: "Step counts are whole numbers, 1 or more." };
   const parsed = scenarioSchema.safeParse({
     version: 1,
     name: draft.name.trim() || "Untitled scenario",
@@ -146,6 +168,7 @@ export function toDefinition(
     turnModel: draft.turnModel,
     access: draft.access,
     ...(draft.fixed.length ? { fixed: draft.fixed } : {}),
+    ...(draft.steps.length ? { steps: draft.steps.map(toStep) } : {}),
     condition: toGroup(draft.condition),
   });
   if (parsed.success) return { definition: parsed.data };
@@ -156,6 +179,17 @@ export function toDefinition(
         ? "Choose at least one zone for conditions to see."
         : issue.message,
   };
+}
+
+const cleanFilter = (f: Filter): Filter =>
+  Object.fromEntries(
+    Object.entries(f).filter(([, v]) => v !== undefined && v !== ""),
+  );
+
+function toStep(s: StepDraft): Step {
+  return s.do === "draw" || s.do === "block"
+    ? { turn: s.turn, do: s.do, count: Number(s.count) }
+    : { turn: s.turn, do: s.do, filter: cleanFilter(s.filter) };
 }
 
 function fromGroup(g: ConditionGroup): GroupDraft {
@@ -199,6 +233,12 @@ export function fromDefinition(def: ScenarioDefinition): Draft {
     turnModel: def.turnModel,
     access: [...def.access],
     fixed: [...(def.fixed ?? [])],
+    steps: (def.steps ?? []).map((s) => ({
+      turn: s.turn,
+      do: s.do,
+      count: "count" in s ? String(s.count) : "1",
+      filter: "filter" in s ? { ...s.filter } : {},
+    })),
     condition: fromGroup(def.condition),
   };
 }
