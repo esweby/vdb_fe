@@ -14,9 +14,10 @@ import { useCards } from "../cards/useCards.ts";
 import { weightedEdges, type WeightedEdge } from "../ranking/synergyCore.ts";
 import { useServices } from "../servicesContext.ts";
 import { Button, LoadError, Loading } from "../ui/index.ts";
-import { ENGINE_COLOURS, KIND_COLOURS } from "./colours.ts";
+import { ENGINE_COLOURS, STATUS_COLOURS } from "./colours.ts";
 import {
   bestNextCards,
+  bestWith,
   cardLinks,
   ENGINE_IDS,
   explorerView,
@@ -40,6 +41,16 @@ const KIND_LABEL: Record<WeightedEdge["kind"], string> = {
   community: "scoring group",
   both: "rules and scoring group",
 };
+/** How sure we are of a link, in words (maintainer, 19 Oct 2026). */
+const statusLabel = (e: WeightedEdge) =>
+  e.status === "suggested"
+    ? "suggested"
+    : e.status === "confirmed"
+      ? `confirmed by ${e.raters}`
+      : e.status === "disputed"
+        ? `disputed by ${e.raters}`
+        : `added by the scoring group (${e.raters})`;
+
 /** How a package's card names the others. */
 const RULE_VERB: Record<string, string> = {
   "tutor-finds": "searches for them",
@@ -248,6 +259,10 @@ export function SynergyExplorer(props: {
     ? items.find((c) => c.id === settings.card)
     : undefined;
   const links = selected ? cardLinks(selected.id, edges) : null;
+  // Ranked by link strength × the partner's rating (unrated counts as middling).
+  const best = selected
+    ? bestWith(selected.id, edges, ratings ?? new Map())
+    : [];
   const lines = selected ? linesThrough(selected.id, edges) : [];
 
   const previewCard = preview ? items.find((c) => c.id === preview) : undefined;
@@ -282,7 +297,7 @@ export function SynergyExplorer(props: {
         <ul aria-label={label} className={styles.links}>
           {list.map((e) => (
             <li key={`${e.from}→${e.to}`}>
-              {walk(other(e))} · {e.weight} · {KIND_LABEL[e.kind]}
+              {walk(other(e))} · {e.weight} · {statusLabel(e)}
               {e.reasons.length > 0 && (
                 <span className={styles.reasons}>
                   {" "}
@@ -532,11 +547,22 @@ export function SynergyExplorer(props: {
               </label>
             ))}
           </fieldset>
+          <label className={styles.check}>
+            <input
+              type="checkbox"
+              checked={settings.disputed}
+              onChange={(e) => go({ disputed: e.target.checked })}
+            />
+            Show disputed links
+          </label>
           <p className={styles.muted}>
-            Links: <span style={{ color: KIND_COLOURS.rule }}>■</span> rules{" "}
-            <span style={{ color: KIND_COLOURS.community }}>■</span> scoring
-            group <span style={{ color: KIND_COLOURS.both }}>■</span> both.
-            Thicker is stronger; arrows point at the card helped.
+            Links: <span style={{ color: STATUS_COLOURS.suggested }}>■</span>{" "}
+            suggested by the rules{" "}
+            <span style={{ color: STATUS_COLOURS.confirmed }}>■</span> confirmed
+            by scorers{" "}
+            <span style={{ color: STATUS_COLOURS.community }}>■</span> added by
+            scorers <span style={{ color: STATUS_COLOURS.disputed }}>■</span>{" "}
+            disputed. Thicker is stronger; arrows point at the card helped.
           </p>
         </section>
 
@@ -549,6 +575,21 @@ export function SynergyExplorer(props: {
               <h2 id={`${listId}-selected`}>{selected.name}</h2>
               <Button onClick={props.onBack}>Back</Button>
             </div>
+            <p className={styles.bestWith}>
+              {best.length === 0
+                ? "Best with: nothing yet."
+                : `Best with: ${best
+                    .map(
+                      (b) =>
+                        `${nameOf(b.id)} (${
+                          b.edge.reasons.length > 0
+                            ? (DESCRIPTIONS.get(b.edge.reasons[0]!) ??
+                              b.edge.reasons[0])
+                            : "a link the scoring group added"
+                        } · ${statusLabel(b.edge)})`,
+                    )
+                    .join(", ")}.`}
+            </p>
             {linkList("Helps", links.helps, (e) => e.to, "Helps nothing yet.")}
             {linkList(
               "Helped by",
@@ -629,6 +670,7 @@ export function useLocalExplorer() {
     engines: [],
     source: "both",
     min: 0.5,
+    disputed: false,
   });
   return {
     settings,

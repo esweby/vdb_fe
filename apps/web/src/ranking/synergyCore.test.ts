@@ -183,3 +183,63 @@ describe("weightedEdges", () => {
     ]);
   });
 });
+
+// Feature 3 (maintainer, 19 Oct 2026): how sure we are of each link.
+describe("weightedEdges: status", () => {
+  const rule = derived("gen", "target", 0.8, ["gate-feeds-gate-target"]);
+  const fb = (confirmShare: number, fixedPart: number, ratingCount = 3) => ({
+    ruleId: "gate-feeds-gate-target",
+    fromCardId: "gen",
+    toCardId: "target",
+    confirmShare,
+    fixedPart,
+    ratingCount,
+  });
+  const status = (input: Partial<Parameters<typeof weightedEdges>[0]>) =>
+    weightedEdges({
+      derived: [rule],
+      ruleWeights: {},
+      feedback: [],
+      community: [],
+      ...input,
+    }).map((e) => [e.status, e.raters]);
+
+  it("is suggested when only the rules make the link", () => {
+    expect(status({})).toEqual([["suggested", 0]]);
+  });
+
+  it("is confirmed when the scoring group keeps at least half the rule's weight", () => {
+    expect(status({ feedback: [fb(1, 0)] })).toEqual([["confirmed", 3]]);
+  });
+
+  it("is disputed when their feedback cuts it below half", () => {
+    // 0.2 × 0.8 = 0.16, under 0.4.
+    expect(status({ feedback: [fb(0.2, 0)] })).toEqual([["disputed", 3]]);
+  });
+
+  it("is confirmed when they add the same link themselves", () => {
+    expect(
+      status({
+        community: [
+          {
+            fromCardId: "gen",
+            toCardId: "target",
+            weight: 0.7,
+            ratingCount: 2,
+          },
+        ],
+      }),
+    ).toEqual([["confirmed", 2]]);
+  });
+
+  it("is the scoring group's own when no rule makes it", () => {
+    expect(
+      status({
+        derived: [],
+        community: [
+          { fromCardId: "a", toCardId: "b", weight: 0.5, ratingCount: 4 },
+        ],
+      }),
+    ).toEqual([["community", 4]]);
+  });
+});

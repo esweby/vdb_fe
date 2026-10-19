@@ -17,6 +17,8 @@ const edge = (
   kind,
   traverse: false,
   reasons,
+  status: kind === "community" ? "community" : "suggested",
+  raters: 0,
 });
 const sins = ["lust", "envy", "greed"];
 

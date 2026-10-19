@@ -5,6 +5,7 @@ import type { WeightedEdge } from "../ranking/synergyCore.ts";
 import {
   bestNextCards,
   cardLinks,
+  bestWith,
   isolatedCards,
   linesThrough,
   explorerView,
@@ -27,6 +28,8 @@ const edge = (
   kind: "rule",
   traverse: false,
   reasons: ["gate-feeds-gate-target"],
+  status: "suggested",
+  raters: 0,
   ...over,
 });
 const cards = ["a", "b", "c", "d", "e", "lonely"].map((id) => ({
@@ -48,6 +51,7 @@ const settings = (over: Partial<ExplorerSettings> = {}): ExplorerSettings => ({
   engines: [],
   source: "both",
   min: 0,
+  disputed: false,
   ...over,
 });
 const ids = (v: ReturnType<typeof explorerView>) =>
@@ -156,6 +160,28 @@ describe("explorerView: refining", () => {
     expect(group.edges.map((e) => `${e.from}→${e.to}`)).toEqual(["b→e"]);
   });
 
+  // Feature 3: links the scoring group disputes are hidden unless asked for.
+  it("hides disputed links unless asked for", () => {
+    const withDisputed = [
+      ...edges,
+      edge("a", "d", 0.2, { status: "disputed", raters: 3 }),
+    ];
+    const hidden = explorerView({
+      cards,
+      edges: withDisputed,
+      settings: settings(),
+      coreIds: [],
+    });
+    expect(hidden.edges.some((e) => e.status === "disputed")).toBe(false);
+    const shown = explorerView({
+      cards,
+      edges: withDisputed,
+      settings: settings({ disputed: true }),
+      coreIds: [],
+    });
+    expect(shown.edges.some((e) => e.status === "disputed")).toBe(true);
+  });
+
   it("keeps only the chosen engines' links, plus the scoring group's own", () => {
     const view = explorerView({
       cards,
@@ -197,6 +223,7 @@ describe("explorer URL state", () => {
       engines: [],
       source: "both",
       min: 0.5,
+      disputed: false,
     });
     expect(readExplorerSearch({ card: "x" }).start).toBe("card");
   });
@@ -207,6 +234,7 @@ describe("explorer URL state", () => {
       engines: ["gate", "banish"],
       source: "rule",
       min: 0.3,
+      disputed: true,
     });
     expect(readExplorerSearch(writeExplorerSearch(s))).toEqual(s);
     expect(writeExplorerSearch(readExplorerSearch({}))).toEqual({});
@@ -226,6 +254,7 @@ describe("explorer URL state", () => {
       engines: ["gate"],
       source: "both",
       min: 0.5,
+      disputed: false,
     });
   });
 });
@@ -312,5 +341,28 @@ describe("linesThrough", () => {
 
   it("stops at the limit", () => {
     expect(linesThrough("b", edges, 2)).toHaveLength(2);
+  });
+});
+
+// Feature 3: "Best with", the selected card's top partners.
+describe("bestWith", () => {
+  it("ranks a card's partners by link strength times their rating, either way round", () => {
+    // b's partners: a (0.8, rated 90), c (0.6, rated 50), e (0.7, unrated: counts as 50).
+    const ratings = new Map([
+      ["a", 90],
+      ["c", 50],
+    ]);
+    expect(bestWith("b", edges, ratings).map((p) => p.id)).toEqual([
+      "a",
+      "e",
+      "c",
+    ]);
+  });
+
+  it("leaves out disputed links, and stops at the limit", () => {
+    const withDisputed = [edge("z", "b", 1, { status: "disputed" }), ...edges];
+    const best = bestWith("b", withDisputed, new Map(), 2);
+    expect(best.map((p) => p.id)).toEqual(["a", "e"]);
+    expect(best[0]!.edge).toMatchObject({ from: "a", to: "b" });
   });
 });
