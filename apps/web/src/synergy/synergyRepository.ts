@@ -3,12 +3,30 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { CommunityEdgeRow, CommunityFeedbackRow } from "@vdb/scoring";
 
+/** One person's verdict on one rule's link (synergy_feedback). */
+export interface FeedbackRow {
+  ruleId: string;
+  fromCardId: string;
+  toCardId: string;
+  verdict: "confirm" | "reject" | "reweight";
+  /** Only for a reweight. */
+  weight: number | null;
+}
+
 export interface SynergyRepository {
   /** Admin-set weights by rule id. A rule with no entry uses its default in code. */
   listRuleWeights(): Promise<Record<string, number>>;
   setRuleWeight(ruleId: string, weight: number): Promise<void>;
   /** Back to the rule's default. */
   resetRuleWeight(ruleId: string): Promise<void>;
+  listMyFeedback(userId: string): Promise<FeedbackRow[]>;
+  saveFeedback(userId: string, rows: FeedbackRow[]): Promise<void>;
+  /** Takes back every verdict on one link (Undo in the queue). */
+  clearFeedback(
+    userId: string,
+    fromCardId: string,
+    toCardId: string,
+  ): Promise<void>;
   /** The scoring group's own links and their feedback on derived links (community-scores job). */
   listCommunitySynergies(): Promise<{
     edges: CommunityEdgeRow[];
@@ -40,6 +58,50 @@ export function supabaseSynergyRepository(
         .from("synergy_rule_weights")
         .delete()
         .eq("rule_id", ruleId);
+      if (error) throw error;
+    },
+    async listMyFeedback(userId) {
+      const rows: FeedbackRow[] = [];
+      // PostgREST returns at most 1,000 rows per request.
+      for (let from = 0; ; from += 1000) {
+        const { data, error } = await client
+          .from("synergy_feedback")
+          .select(
+            "ruleId:rule_id, fromCardId:from_card_id, toCardId:to_card_id, verdict, weight",
+          )
+          .eq("user_id", userId)
+          .range(from, from + 999);
+        if (error) throw error;
+        rows.push(
+          ...(data.map((r) => ({
+            ...r,
+            weight: r.weight === null ? null : Number(r.weight),
+          })) as FeedbackRow[]),
+        );
+        if (data.length < 1000) return rows;
+      }
+    },
+    async saveFeedback(userId, rows) {
+      const { error } = await client.from("synergy_feedback").upsert(
+        rows.map((r) => ({
+          user_id: userId,
+          rule_id: r.ruleId,
+          from_card_id: r.fromCardId,
+          to_card_id: r.toCardId,
+          verdict: r.verdict,
+          weight: r.weight,
+          updated_at: new Date().toISOString(),
+        })),
+      );
+      if (error) throw error;
+    },
+    async clearFeedback(userId, fromCardId, toCardId) {
+      const { error } = await client
+        .from("synergy_feedback")
+        .delete()
+        .eq("user_id", userId)
+        .eq("from_card_id", fromCardId)
+        .eq("to_card_id", toCardId);
       if (error) throw error;
     },
     async listCommunitySynergies() {

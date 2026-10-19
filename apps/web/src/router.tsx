@@ -22,6 +22,7 @@ import { CardsPage } from "./cards/CardsPage.tsx";
 import { DeckPage } from "./decks/DeckPage.tsx";
 import { DecksPage } from "./decks/DecksPage.tsx";
 import { SynergyWeightsPage } from "./synergy/SynergyWeightsPage.tsx";
+import { SynergyQueuePage } from "./synergy/SynergyQueuePage.tsx";
 import { Layout } from "./Layout.tsx";
 import { validateListSearch } from "./filters/useUrlFilters.ts";
 import { PlaceholderPage } from "./pages/PlaceholderPage.tsx";
@@ -106,6 +107,12 @@ const routeTree = rootRoute.addChildren([
     path: "/needs-review/quick",
     beforeLoad: requireScorer,
     component: QuickReviewPage,
+  }),
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/needs-review/synergies",
+    beforeLoad: requireScorer,
+    component: SynergyQueuePage,
   }),
   createRoute({
     getParentRoute: () => rootRoute,
