@@ -171,7 +171,9 @@ export function toEngineCard(
       ...(card.attributes.hasBloodDebt ? ["blood_debt"] : []),
       ...(card.talents.includes("Shadow") ? ["shadow"] : []),
       ...(card.classes.includes("Runeblade") ? ["runeblade"] : []),
+      ...(card.classes.includes("Generic") ? ["generic"] : []),
     ],
+    type: card.type,
     amounts: {
       runechants: made("runechant", false),
       runechantsUnconditional: made("runechant", true),
