@@ -16,6 +16,8 @@ export interface ExplorerSettings {
   source: Source;
   /** Minimum link strength, 0–1. */
   min: number;
+  /** Show links the scoring group disputes (hidden by default). */
+  disputed: boolean;
 }
 
 export interface ExplorerCard {
@@ -65,6 +67,7 @@ export function primaryEngine(roles: RoleId[]): Engine | null {
 function refine(edges: WeightedEdge[], s: ExplorerSettings): WeightedEdge[] {
   return edges.filter(
     (e) =>
+      (s.disputed || e.status !== "disputed") &&
       e.weight >= s.min &&
       (s.source === "both" || e.kind === "both" || e.kind === s.source) &&
       (s.engines.length === 0 ||
@@ -158,6 +161,8 @@ export interface ExplorerSearch {
   src?: Exclude<Source, "both">;
   /** Minimum strength as a percentage. */
   min?: number;
+  /** 1: show disputed links. */
+  disp?: number;
 }
 
 const DEFAULT_MIN = 0.5;
@@ -189,6 +194,7 @@ export function readExplorerSearch(
       search.min !== undefined && search.min !== "" && Number.isFinite(min)
         ? Math.min(100, Math.max(0, Math.round(min))) / 100
         : DEFAULT_MIN,
+    disputed: search.disp === 1 || search.disp === "1",
   };
 }
 
@@ -201,6 +207,7 @@ export function writeExplorerSearch(s: ExplorerSettings): ExplorerSearch {
     ...(s.engines.length ? { eng: s.engines.join(",") } : {}),
     ...(s.source !== "both" ? { src: s.source } : {}),
     ...(s.min !== DEFAULT_MIN ? { min: Math.round(s.min * 100) } : {}),
+    ...(s.disputed ? { disp: 1 } : {}),
   };
 }
 
@@ -316,4 +323,37 @@ export function linesThrough(
     else groups.set(key, l);
   }
   return [...groups.values()].slice(0, limit);
+}
+
+/**
+ * "Best with" (maintainer, 19 Oct 2026): a card's partners, either way round, by link strength
+ * times the partner's rating (0–100; an unrated partner counts as 50), with a confirmed link
+ * counting a quarter more. Disputed links are left out. Each partner comes with its strongest link to the card.
+ */
+/** A link the scoring group confirmed counts for a quarter more (maintainer, 19 Oct 2026). */
+const CONFIRMED_BOOST = 1.25;
+
+export function bestWith(
+  cardId: string,
+  edges: WeightedEdge[],
+  ratings: Map<string, number>,
+  limit = 3,
+): { id: string; edge: WeightedEdge; score: number }[] {
+  const best = new Map<
+    string,
+    { id: string; edge: WeightedEdge; score: number }
+  >();
+  for (const e of edges) {
+    if (e.status === "disputed") continue;
+    const other = e.from === cardId ? e.to : e.to === cardId ? e.from : null;
+    if (!other || other === cardId) continue;
+    const score =
+      e.weight *
+      ((ratings.get(other) ?? 50) / 100) *
+      (e.status === "confirmed" ? CONFIRMED_BOOST : 1);
+    const kept = best.get(other);
+    if (!kept || score > kept.score)
+      best.set(other, { id: other, edge: e, score });
+  }
+  return [...best.values()].sort((a, b) => b.score - a.score).slice(0, limit);
 }

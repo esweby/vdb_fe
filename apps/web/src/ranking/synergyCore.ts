@@ -25,12 +25,23 @@ export interface SynergyInput {
   derived: SynergyEdge[];
   /** Admin-set weights by rule id; a rule without one uses its default. */
   ruleWeights: Record<string, number>;
-  feedback: Pick<
+  feedback: (Pick<
     CommunityFeedbackRow,
     "ruleId" | "fromCardId" | "toCardId" | "confirmShare" | "fixedPart"
-  >[];
-  community: { fromCardId: string; toCardId: string; weight: number }[];
+  > & { ratingCount?: number })[];
+  community: {
+    fromCardId: string;
+    toCardId: string;
+    weight: number;
+    ratingCount?: number;
+  }[];
 }
+
+/**
+ * How sure we are of a link (maintainer, 19 Oct 2026): suggested by the rules alone, confirmed
+ * or disputed by the scoring group's feedback, or the scoring group's own.
+ */
+export type LinkStatus = "suggested" | "confirmed" | "disputed" | "community";
 
 /** A directed link at its final weight, and where it comes from. */
 export interface WeightedEdge {
@@ -43,6 +54,9 @@ export interface WeightedEdge {
   kind: "rule" | "community" | "both";
   traverse: boolean;
   reasons: string[];
+  status: LinkStatus;
+  /** People in the scoring group behind the status; 0 for a suggestion. */
+  raters: number;
 }
 
 /**
@@ -62,14 +76,23 @@ export function weightedEdges(input: SynergyInput): WeightedEdge[] {
 
   const edges = new Map<string, WeightedEdge>();
   for (const e of input.derived) {
-    const weight = Math.max(
-      ...e.reasons.map((id) => {
-        const ruleWeight =
-          input.ruleWeights[id] ?? defaults.get(id) ?? e.weight;
-        const f = feedback.get(`${id}\u0000${key(e.from, e.to)}`);
-        return f ? feedbackWeight(f, ruleWeight) : ruleWeight;
-      }),
-    );
+    let ruleWeight = 0;
+    let weight = 0;
+    let raters = 0;
+    for (const id of e.reasons) {
+      const w = input.ruleWeights[id] ?? defaults.get(id) ?? e.weight;
+      const f = feedback.get(`${id}\u0000${key(e.from, e.to)}`);
+      ruleWeight = Math.max(ruleWeight, w);
+      weight = Math.max(weight, f ? feedbackWeight(f, w) : w);
+      if (f) raters = Math.max(raters, f.ratingCount ?? 1);
+    }
+    // With feedback, it's confirmed while they keep at least half the rule's weight.
+    const status: LinkStatus =
+      raters === 0
+        ? "suggested"
+        : weight >= ruleWeight / 2
+          ? "confirmed"
+          : "disputed";
     edges.set(key(e.from, e.to), {
       from: e.from,
       to: e.to,
@@ -78,6 +101,8 @@ export function weightedEdges(input: SynergyInput): WeightedEdge[] {
       kind: "rule",
       traverse: e.traverse,
       reasons: e.reasons,
+      status,
+      raters,
     });
   }
   for (const c of input.community) {
@@ -90,6 +115,9 @@ export function weightedEdges(input: SynergyInput): WeightedEdge[] {
             ...existing,
             weight: Math.max(existing.weight, c.weight),
             kind: "both",
+            // The scoring group added it too: confirmed.
+            status: "confirmed",
+            raters: Math.max(existing.raters, c.ratingCount ?? 1),
           }
         : {
             from: c.fromCardId,
@@ -99,6 +127,8 @@ export function weightedEdges(input: SynergyInput): WeightedEdge[] {
             kind: "community",
             traverse: false,
             reasons: [],
+            status: "community",
+            raters: c.ratingCount ?? 1,
           },
     );
   }

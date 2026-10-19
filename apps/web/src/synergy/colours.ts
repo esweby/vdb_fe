@@ -11,6 +11,17 @@ export const ENGINE_COLOURS: Record<string, string> = {
   usurp: "#be185d",
   none: "#6b7280",
 };
+/**
+ * Link colours by how sure we are (maintainer, 19 Oct 2026): suggestions pale, confirmed
+ * dark, the scoring group's own orange, disputed grey.
+ */
+export const STATUS_COLOURS: Record<WeightedEdge["status"], string> = {
+  suggested: "#c4b5fd",
+  confirmed: "#5b21b6",
+  community: "#f59e0b",
+  disputed: "#9ca3af",
+};
+
 export const KIND_COLOURS: Record<WeightedEdge["kind"], string> = {
   rule: "#a78bfa",
   community: "#f59e0b",

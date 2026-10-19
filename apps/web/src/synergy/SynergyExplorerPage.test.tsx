@@ -102,7 +102,7 @@ describe("synergy explorer", () => {
     );
     const helpedBy = within(selected.getByRole("list", { name: "Helped by" }));
     expect(helpedBy.getByRole("listitem")).toHaveTextContent(
-      /Become the Shadow Lord.*0\.8.*rules.*Creates a Gate, which plays this blood debt card from banish.*enables traverse/,
+      /Become the Shadow Lord.*0\.8.*suggested.*Creates a Gate, which plays this blood debt card from banish.*enables traverse/,
     );
     expect(selected.getByText("Helps nothing yet.")).toBeInTheDocument();
   });
@@ -388,6 +388,60 @@ describe("synergy explorer", () => {
       expect(
         await panel().findByText(/No hidden gems yet/),
       ).toBeInTheDocument();
+    });
+  });
+
+  // Feature 3 (maintainer, 19 Oct 2026): how sure we are, and the best partners.
+  describe("how sure we are", () => {
+    const confirmed = () =>
+      fakeSynergyRepository(
+        {},
+        {
+          edges: [],
+          feedback: [
+            {
+              ruleId: "gate-feeds-gate-target",
+              fromCardId: BTSL,
+              toCardId: HOCUS,
+              confirmShare: 1,
+              fixedPart: 0,
+              ratingCount: 3,
+              totalWeight: 3,
+            },
+          ],
+        },
+      );
+
+    it("marks a link the scoring group has confirmed", async () => {
+      await open(`/synergies?card=${HOCUS}`, confirmed());
+      const helpedBy = within(
+        within(
+          await panel().findByRole("region", { name: "Hocus Pocus" }),
+        ).getByRole("list", { name: "Helped by" }),
+      );
+      await waitFor(() =>
+        expect(helpedBy.getByRole("listitem")).toHaveTextContent(
+          /confirmed by 3/,
+        ),
+      );
+    });
+
+    it("opens a card with its best partners in a sentence", async () => {
+      await open(`/synergies?card=${HOCUS}`);
+      const selected = within(
+        await panel().findByRole("region", { name: "Hocus Pocus" }),
+      );
+      expect(selected.getByText(/^Best with:/)).toHaveTextContent(
+        "Best with: Become the Shadow Lord (Creates a Gate, which plays this blood debt card from banish · suggested).",
+      );
+    });
+
+    it("can show disputed links, kept in the URL", async () => {
+      const { router, user } = await open();
+      await user.click(
+        panel().getByRole("checkbox", { name: "Show disputed links" }),
+      );
+      expect(router.state.location.search).toMatchObject({ disp: 1 });
     });
   });
 });

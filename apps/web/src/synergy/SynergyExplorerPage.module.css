@@ -206,3 +206,18 @@
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+}
+
+.bestWith {
+  margin: 0;
+  padding: 0.5rem 0.65rem;
+  border-radius: 0.4rem;
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  font-size: 0.9rem;
+}

@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import Sigma from "sigma";
 import type { WeightedEdge } from "../ranking/synergyCore.ts";
 import type { ExplorerNode } from "./explorer.ts";
-import { KIND_COLOURS } from "./colours.ts";
+import { STATUS_COLOURS } from "./colours.ts";
 import { nodeStyle } from "./nodeStyle.ts";
 import styles from "./SynergyExplorerPage.module.css";
 
@@ -74,7 +74,7 @@ export function GraphCanvas(props: {
     for (const e of props.edges) {
       if (!graph.hasNode(e.from) || !graph.hasNode(e.to)) continue;
       graph.addDirectedEdge(e.from, e.to, {
-        color: KIND_COLOURS[e.kind],
+        color: STATUS_COLOURS[e.status],
         size: 0.5 + e.weight * 2.5,
         type: "arrow",
       });
