@@ -1,6 +1,6 @@
 // The goldfish tool (README "Goldfishing", phase two step 5): a sandbox for playing a deck's
 // turns alone. The user moves every card; the tool keeps count and enforces no game rules.
-import { screen, within } from "@testing-library/react";
+import { fireEvent, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { fakeAuthService } from "../test/fakeAuthService.ts";
@@ -150,5 +150,150 @@ describe("goldfish", () => {
     await user.click(table.getByRole("button", { name: "Restart" }));
     expect(table.getByText("Seed 99")).toBeInTheDocument();
     expect(table.getByText("Turn 1")).toBeInTheDocument();
+  });
+
+  // Part 2 (README "Goldfishing").
+  describe("the deck", () => {
+    it("looks at the top cards, and moves one to the bottom", async () => {
+      const { table, user } = await open();
+      await user.click(table.getByRole("button", { name: "Look at top 3" }));
+      const top = () =>
+        within(table.getByRole("list", { name: "Top of deck" })).getAllByRole(
+          "listitem",
+        );
+      const [first, second] = top();
+      const name = first!.getAttribute("aria-label")!;
+      const next = second!.getAttribute("aria-label");
+      await user.selectOptions(
+        within(first!).getByRole("combobox", { name: `Action for ${name}` }),
+        "Bottom of deck",
+      );
+      expect(top()[0]!.getAttribute("aria-label")).toBe(next);
+    });
+
+    it("searches the deck for a card, then shuffles", async () => {
+      const { table, user } = await open();
+      await user.click(table.getByRole("button", { name: "Search the deck" }));
+      const found = within(
+        table.getByRole("list", { name: "Cards in the deck" }),
+      ).getAllByRole("listitem")[0]!;
+      await user.selectOptions(
+        within(found).getByRole("combobox", {
+          name: `Action for ${found.getAttribute("aria-label")}`,
+        }),
+        "Hand",
+      );
+      expect(zoneCards(table, "Hand")).toHaveLength(5);
+      await user.click(
+        table.getByRole("button", { name: "Shuffle and close" }),
+      );
+      expect(
+        within(table.getByRole("list", { name: "Action log" }))
+          .getAllByRole("listitem")
+          .at(-1),
+      ).toHaveTextContent("Shuffle the deck");
+    });
+  });
+
+  describe("gear, life and damage", () => {
+    it("attacks with the weapon, marked used until the end of the turn", async () => {
+      const { table, user } = await open();
+      const weapons = zone(table, "Weapons");
+      await user.click(
+        weapons.getByRole("button", { name: "Attack with Nebula Blade" }),
+      );
+      expect(weapons.getByText("Used this turn")).toBeInTheDocument();
+      expect(
+        weapons.getByRole("button", { name: "Attack with Nebula Blade" }),
+      ).toBeDisabled();
+      await user.click(table.getByRole("button", { name: "End turn" }));
+      expect(weapons.queryByText("Used this turn")).toBeNull();
+    });
+
+    it("keeps counters on gear", async () => {
+      const { table, user } = await open();
+      const weapons = zone(table, "Weapons");
+      await user.click(
+        weapons.getByRole("button", { name: "More counters on Nebula Blade" }),
+      );
+      expect(weapons.getByText("Counters 1")).toBeInTheDocument();
+    });
+
+    it("counts life and damage", async () => {
+      const { table, user } = await open();
+      await user.click(table.getByRole("button", { name: "Fewer life" }));
+      await user.click(table.getByRole("button", { name: "More damage" }));
+      expect(table.getByText("Life 39")).toBeInTheDocument();
+      expect(table.getByText("Damage 1 · 1 in total")).toBeInTheDocument();
+    });
+
+    it("banishes face down", async () => {
+      const { table, user } = await open();
+      const [first] = zoneCards(table, "Hand");
+      const name = first!.getAttribute("aria-label")!;
+      await user.selectOptions(
+        within(first!).getByRole("combobox", { name: `Action for ${name}` }),
+        "Banish face down",
+      );
+      expect(zoneCards(table, "Banished")[0]).toHaveAccessibleName(
+        `${name} (face down)`,
+      );
+    });
+  });
+
+  it("recaps each turn", async () => {
+    const { table, user } = await open();
+    const [first] = zoneCards(table, "Hand");
+    const name = first!.getAttribute("aria-label")!;
+    await user.selectOptions(
+      within(first!).getByRole("combobox", { name: `Action for ${name}` }),
+      "Pitch",
+    );
+    await user.click(table.getByRole("button", { name: "More Runechants" }));
+    await user.click(
+      table.getByRole("button", { name: "Attack with Nebula Blade" }),
+    );
+    await user.click(table.getByRole("button", { name: "Traverse" }));
+    await user.click(table.getByRole("button", { name: "End turn" }));
+    expect(
+      within(table.getByRole("list", { name: "Turn recaps" })).getByRole(
+        "listitem",
+      ),
+    ).toHaveTextContent(
+      `Turn 1: pitched ${name}; attacked with Nebula Blade; made 1 Runechant; traversed to Usurper.`,
+    );
+  });
+
+  it("replays a shared session from its link", async () => {
+    const { table, user } = await open();
+    await user.click(table.getByRole("button", { name: "Traverse" }));
+    await user.click(table.getByRole("button", { name: "Share this session" }));
+    const link = (
+      table.getByRole("textbox", { name: "Share link" }) as HTMLInputElement
+    ).value;
+    const url = new URL(link);
+    const { table: shared } = await open(`${url.pathname}${url.search}`);
+    expect(shared.getByText("On Usurper")).toBeInTheDocument();
+  });
+
+  describe("faster play", () => {
+    it("drags a card to another zone", async () => {
+      const { table } = await open();
+      const [first] = zoneCards(table, "Hand");
+      fireEvent.dragStart(first!);
+      fireEvent.drop(table.getByRole("region", { name: "Graveyard" }));
+      expect(zoneCards(table, "Graveyard")).toHaveLength(1);
+    });
+
+    it("has keys for a focused card, and for the table", async () => {
+      const { table, user } = await open();
+      zoneCards(table, "Hand")[0]!.focus();
+      await user.keyboard("i");
+      expect(zoneCards(table, "Pitch")).toHaveLength(1);
+      await user.keyboard("d");
+      expect(zoneCards(table, "Hand")).toHaveLength(4);
+      await user.keyboard("{Control>}z{/Control}");
+      expect(zoneCards(table, "Hand")).toHaveLength(3);
+    });
   });
 });

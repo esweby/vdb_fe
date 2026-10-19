@@ -41,7 +41,7 @@ const TABS: { id: Tab; label: string }[] = [
 
 export function DeckPage() {
   const { deckId } = route.useParams();
-  const { tab = "cards", view = "tiles", seed } = route.useSearch();
+  const { tab = "cards", view = "tiles", seed, side, log } = route.useSearch();
   const navigate = useNavigate();
   const { decks } = useServices();
   const { items: cards, status: cardsStatus, retry } = useCards();
@@ -256,7 +256,7 @@ export function DeckPage() {
         aria-labelledby={`deck-tab-${tab}`}
       >
         {tab === "goldfish" ? (
-          <Goldfish entries={entries} seed={seed} />
+          <Goldfish entries={entries} seed={seed} side={side} log={log} />
         ) : tab === "synergies" ? (
           <ScopedSynergies
             scope={{

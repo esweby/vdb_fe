@@ -140,6 +140,9 @@ const routeTree = rootRoute.addChildren([
       view?: "list";
       /** Goldfish: the shuffle to start from. */
       seed?: number;
+      /** Goldfish: the starting side and a shared session's log. */
+      side?: "usurper";
+      log?: string;
     } => ({
       ...(search.tab === "stats" ||
       search.tab === "synergies" ||
@@ -152,6 +155,10 @@ const routeTree = rootRoute.addChildren([
       ...(search.view === "list" ? { view: "list" as const } : {}),
       ...(Number.isInteger(Number(search.seed)) && search.seed !== ""
         ? { seed: Number(search.seed) }
+        : {}),
+      ...(search.side === "usurper" ? { side: "usurper" as const } : {}),
+      ...(typeof search.log === "string" && search.log
+        ? { log: search.log }
         : {}),
     }),
     // A public deck opens signed out, read only; a private one is "not found" to anyone else.
