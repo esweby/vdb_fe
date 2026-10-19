@@ -14,13 +14,10 @@ import styles from "./Decks.module.css";
 
 /**
  * Scenarios on a deck: build your own (phase two step 6), and the Ranking page's built-ins run
- * against the main deck. Weapons and equipment aren't drawn; the sideboard isn't used.
+ * against the main deck as built (no blanks). Weapons and equipment aren't drawn; the sideboard
+ * isn't used.
  */
-export function DeckScenarios(props: {
-  deckId: string;
-  entries: DeckEntry[];
-  deckSize: number;
-}) {
+export function DeckScenarios(props: { deckId: string; entries: DeckEntry[] }) {
   const drawn = props.entries.filter(
     (e) => !e.sideboard && sectionOf(e.card) === "deck",
   );
@@ -28,12 +25,9 @@ export function DeckScenarios(props: {
   const signature = JSON.stringify(
     drawn.map((e) => [e.variant.id, e.quantity]).sort(),
   );
-  const deckSize = Math.max(
-    props.deckSize,
-    drawn.reduce((n, e) => n + e.quantity, 0),
-  );
+  const deckSize = drawn.reduce((n, e) => n + e.quantity, 0);
   const forBuilder = useMemo(
-    () => scenarioDeck(props.entries, props.deckSize),
+    () => scenarioDeck(props.entries),
     // The signature covers what's drawn; the weapons and equipment are cheap to redo.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
@@ -41,7 +35,6 @@ export function DeckScenarios(props: {
       JSON.stringify(
         props.entries.map((e) => [e.variant.id, e.quantity, e.sideboard]),
       ),
-      props.deckSize,
     ],
   );
   const [run, setRun] = useState<{
@@ -74,13 +67,12 @@ export function DeckScenarios(props: {
     <div className={styles.scenarios}>
       <p className={styles.preview}>
         Build a scenario of your own, or run the built-in ones from Build a
-        core. Scripted steps are still to come.
+        core. Runs use the main deck as built.
       </p>
       <SavedScenarios
         deckId={props.deckId}
         entries={props.entries}
         deck={forBuilder}
-        deckMin={props.deckSize}
       />
       <RulesPanel entries={props.entries} />
       <ScenariosPanel

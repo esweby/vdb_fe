@@ -167,8 +167,10 @@ describe("loading and load errors", () => {
       cards: flakyCards(),
     });
     await retries("the cards");
-    expect(screen.queryByText(/The deck has 0 cards/)).toBeNull();
-    expect(await screen.findByText(/The deck has 3 cards/)).toBeInTheDocument();
+    expect(screen.queryByText(/^0 deck cards/)).toBeNull();
+    expect(
+      await screen.findByText("3 deck cards · 0 sideboard · 3 in the pool"),
+    ).toBeInTheDocument();
   });
 
   it("shows a deck as loading until the cards are in", async () => {

@@ -84,13 +84,15 @@ describe("deckProblems", () => {
     expect(deckProblems([...filler(20), entry(sword, 1)], rules)).toEqual([]);
   });
 
-  it("needs a minimum number of deck cards, not counting the sideboard or gear", () => {
+  // Maintainer, 19 Oct 2026: many players run a 48–56 card main deck and keep the rest in the
+  // sideboard, so the main deck is taken as built; only the pool is capped.
+  it("accepts a main deck of any size, with the rest in the sideboard", () => {
     expect(
       deckProblems(
-        [...filler(19), entry(card("Side"), 3, true), entry(helm, 1)],
+        [...filler(16), entry(card("Side"), 3, true), entry(helm, 1)],
         rules,
       ),
-    ).toEqual(["The deck has 57 cards; it needs at least 60."]);
+    ).toEqual([]);
   });
 
   it("caps the whole pool, including the sideboard and gear", () => {

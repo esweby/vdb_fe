@@ -11,10 +11,7 @@ import { sectionOf, type DeckEntry } from "./deckRules.ts";
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 
-export function ConditionAvailabilityPanel(props: {
-  entries: DeckEntry[];
-  deckSize: number;
-}) {
+export function ConditionAvailabilityPanel(props: { entries: DeckEntry[] }) {
   const drawn = props.entries.filter(
     (e) => !e.sideboard && sectionOf(e.card) === "deck",
   );
@@ -43,10 +40,7 @@ export function ConditionAvailabilityPanel(props: {
         copies: e.quantity,
       })),
       gear: [],
-      deckSize: Math.max(
-        props.deckSize,
-        drawn.reduce((n, e) => n + e.quantity, 0),
-      ),
+      deckSize: drawn.reduce((n, e) => n + e.quantity, 0),
       runs: RUNS,
       seed: 1,
     }).then(

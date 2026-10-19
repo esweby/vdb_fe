@@ -36,8 +36,6 @@ export function SavedScenarios(props: {
   deckId: string;
   entries: DeckEntry[];
   deck: DeckForScenarios;
-  /** The format's deck size, for padding a compared deck the same way. */
-  deckMin: number;
 }) {
   const { scenarios: repo, decks } = useServices();
   const { items: pool } = useCards();
@@ -165,7 +163,7 @@ export function SavedScenarios(props: {
         ? [
             {
               deckId: other.id,
-              deck: scenarioDeck(other.entries, props.deckMin),
+              deck: scenarioDeck(other.entries),
             },
           ]
         : []),

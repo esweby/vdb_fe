@@ -99,14 +99,13 @@ describe("failed hands", () => {
     ).toHaveLength(4);
   });
 
-  it("says to fill the deck when runs are padded with blanks", async () => {
+  it("opens failed hands for a main deck of any size: runs use the deck as built", async () => {
     const { user } = await open(SMALL);
     await runFailing(user);
     expect(
-      await result().findByText(
-        /Fill the deck to 60 cards to open failed hands in goldfish/,
-      ),
+      await result().findByRole("list", { name: "Failed hands" }),
     ).toBeInTheDocument();
+    expect(result().queryByText(/Fill the deck/)).toBeNull();
   });
 });
 
