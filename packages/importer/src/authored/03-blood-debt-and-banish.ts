@@ -191,8 +191,13 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Dimenxxional Crossroads": {
-    verified: true,
+    // Back to unverified: the role and destroyedOnLifeLoss below wait for the maintainer.
+    verified: false,
     card: {
+      // Pays off cards played from the banished zone; destroyed by losing life on your turn, so
+      // blood debt kills it in your end phase (20 Oct 2026).
+      roles: { add: ["banish_play_payoff"] },
+      destroyedOnLifeLoss: true,
       notes:
         "Deals 1 arcane damage the first time each turn you play an attack action card, and the first time a non-attack action card, from the banished zone. Destroyed if you lose life on your turn.",
     },

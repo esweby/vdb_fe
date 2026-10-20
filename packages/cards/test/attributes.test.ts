@@ -278,6 +278,9 @@ describe("authoredAttributesSchema", () => {
       authoredAttributesSchema.safeParse({ rewardsPlayFromBanish: true })
         .success,
     ).toBe(true);
+    expect(
+      authoredAttributesSchema.safeParse({ destroyedOnLifeLoss: true }).success,
+    ).toBe(true);
   });
 
   it.each([

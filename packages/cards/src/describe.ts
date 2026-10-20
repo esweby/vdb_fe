@@ -368,6 +368,13 @@ function describedItems(attributes: CardAttributes): Item[] {
   if (attributes.rewardsPlayFromBanish) {
     add("works", undefined, "Is better when played from your banished zone.");
   }
+  if (attributes.destroyedOnLifeLoss) {
+    add(
+      "works",
+      undefined,
+      "Destroyed when you lose life on your turn, as blood debt does.",
+    );
+  }
   if (attributes.instantSpeed) {
     add(
       "playing",

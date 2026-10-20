@@ -329,6 +329,23 @@ describe("draftEffects", () => {
     );
   });
 
+  // Dimenxxional Crossroads: "If you lose {h} during your turn, destroy Dimenxxional Crossroads."
+  it("drafts a card destroyed when you lose life", () => {
+    const draft = draftEffects(
+      withAttributes({ destroyedOnLifeLoss: true }),
+      byName("Become the Shadow Lord").variants[0]!,
+    );
+    expect(draft.rules.triggers).toEqual([
+      {
+        id: "test-card-life-lost",
+        on: { event: "lifeLost" },
+        effects: [{ op: "destroySelf" }],
+      },
+    ]);
+    expect(draft.description).toContain("When you lose life: destroy this.");
+    expect(draft.notDrafted).toEqual([]);
+  });
+
   it("carries Usurp and an unconditional play from the banished zone", () => {
     const card = withAttributes(
       { hasUsurp: true, playableFromBanish: {} },

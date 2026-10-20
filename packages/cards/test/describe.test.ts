@@ -226,6 +226,16 @@ describe("describeAttributes", () => {
     ).toEqual(["Is better when played from your banished zone."]);
   });
 
+  // Dimenxxional Crossroads (the maintainer, 20 Oct 2026): blood debt costs life in your end
+  // phase, which destroys it, so saying so matters when building.
+  it("describes a card destroyed when you lose life", () => {
+    expect(
+      describeAttributes({ ...generated, destroyedOnLifeLoss: true }),
+    ).toEqual([
+      "Destroyed when you lose life on your turn, as blood debt does.",
+    ]);
+  });
+
   it("describes the new go again conditions", () => {
     expect(
       describeAttributes({
