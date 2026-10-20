@@ -137,7 +137,8 @@ const routeTree = rootRoute.addChildren([
     validateSearch: (
       search: Record<string, unknown>,
     ): {
-      tab?: "stats" | "gaps" | "synergies" | "scenarios" | "goldfish";
+      tab?:
+        "stats" | "gaps" | "synergies" | "scenarios" | "matchups" | "goldfish";
       view?: "list";
       /** Goldfish: the shuffle to start from. */
       seed?: number;
@@ -151,6 +152,7 @@ const routeTree = rootRoute.addChildren([
       search.tab === "gaps" ||
       search.tab === "synergies" ||
       search.tab === "scenarios" ||
+      search.tab === "matchups" ||
       search.tab === "goldfish"
         ? {
             tab: search.tab as

@@ -12,6 +12,7 @@ import { DeckAnalysisPanel } from "./DeckAnalysisPanel.tsx";
 import { ConditionAvailabilityPanel } from "./ConditionAvailabilityPanel.tsx";
 import { DeckGapsPanel } from "./DeckGapsPanel.tsx";
 import { DeckScenarios } from "./DeckScenarios.tsx";
+import { MatchupsPanel } from "./MatchupsPanel.tsx";
 import { Goldfish } from "./Goldfish.tsx";
 import { ScopedSynergies } from "../synergy/SynergyExplorer.tsx";
 import type { Deck, DeckCard, PitchTargets } from "./deckRepository.ts";
@@ -31,7 +32,14 @@ import styles from "./Decks.module.css";
 
 const route = getRouteApi("/decks/$deckId");
 
-type Tab = "cards" | "stats" | "gaps" | "synergies" | "scenarios" | "goldfish";
+type Tab =
+  | "cards"
+  | "stats"
+  | "gaps"
+  | "synergies"
+  | "scenarios"
+  | "matchups"
+  | "goldfish";
 type View = "tiles" | "list";
 const TABS: { id: Tab; label: string }[] = [
   { id: "cards", label: "Cards" },
@@ -39,6 +47,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "gaps", label: "Gaps" },
   { id: "synergies", label: "Synergies" },
   { id: "scenarios", label: "Scenarios" },
+  { id: "matchups", label: "Matchups" },
   { id: "goldfish", label: "Goldfish" },
 ];
 
@@ -283,6 +292,8 @@ export function DeckPage() {
           />
         ) : tab === "scenarios" ? (
           <DeckScenarios deckId={deckId} entries={entries} />
+        ) : tab === "matchups" ? (
+          <MatchupsPanel deckId={deckId} entries={entries} canEdit={canEdit} />
         ) : tab === "gaps" ? (
           <DeckGapsPanel
             entries={entries}

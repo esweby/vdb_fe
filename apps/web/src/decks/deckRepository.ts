@@ -28,6 +28,23 @@ export interface Deck extends DeckSummary {
   pitchTargets: PitchTargets;
 }
 
+/** An opposing hero for matchups (every adult hero playable in Classic Constructed). */
+export interface Hero {
+  id: string;
+  name: string;
+  classes: string[];
+  talents: string[];
+  imageUrl: string | null;
+}
+
+/** A deck's plan against a hero: the cards it plays in that matchup (a loadout). */
+export interface Matchup {
+  id: string;
+  deckId: string;
+  heroId: string;
+  cards: { variantId: string; quantity: number }[];
+}
+
 export interface DeckRepository {
   /** The user's own decks, public and private, most recently changed first. */
   listMyDecks(userId: string): Promise<DeckSummary[]>;
@@ -43,6 +60,17 @@ export interface DeckRepository {
   setCard(deckId: string, card: DeckCard): Promise<void>;
   setPitchTargets(deckId: string, targets: PitchTargets): Promise<void>;
   getFormatRules(): Promise<FormatRules>;
+  /** Heroes a deck can face, by name. */
+  listHeroes(): Promise<Hero[]>;
+  /** The deck's matchup plans (its owner's only). */
+  listMatchups(deckId: string): Promise<Matchup[]>;
+  /** Creates or replaces the deck's plan against a hero. */
+  saveMatchup(
+    deckId: string,
+    heroId: string,
+    cards: Matchup["cards"],
+  ): Promise<Matchup>;
+  deleteMatchup(id: string): Promise<void>;
 }
 
 const INVALID_UUID = "22P02";
@@ -145,6 +173,73 @@ export function supabaseDeckRepository(client: SupabaseClient): DeckRepository {
           updated_at: new Date().toISOString(),
         })
         .eq("id", deckId);
+      if (error) throw error;
+    },
+    async listHeroes() {
+      const { data, error } = await client
+        .from("heroes")
+        .select("id, name, classes, talents, imageUrl:image_url")
+        .eq("legal", true)
+        .order("name");
+      if (error) throw error;
+      return data as Hero[];
+    },
+    async listMatchups(deckId) {
+      const { data, error } = await client
+        .from("deck_loadouts")
+        .select(
+          "id, deckId:deck_id, heroId:opponent_hero_id, cards:loadout_cards(variantId:variant_id, quantity)",
+        )
+        .eq("deck_id", deckId)
+        .not("opponent_hero_id", "is", null);
+      if (error) throw error;
+      return data as Matchup[];
+    },
+    async saveMatchup(deckId, heroId, cards) {
+      const { data: found, error: findError } = await client
+        .from("deck_loadouts")
+        .select("id")
+        .eq("deck_id", deckId)
+        .eq("opponent_hero_id", heroId)
+        .maybeSingle();
+      if (findError) throw findError;
+      let id = found?.id as string | undefined;
+      if (!id) {
+        const { data, error } = await client
+          .from("deck_loadouts")
+          .insert({
+            deck_id: deckId,
+            name: "Matchup",
+            opponent_hero_id: heroId,
+          })
+          .select("id")
+          .single();
+        if (error) throw error;
+        id = data.id as string;
+      }
+      const { error: clearError } = await client
+        .from("loadout_cards")
+        .delete()
+        .eq("loadout_id", id);
+      if (clearError) throw clearError;
+      const rows = cards
+        .filter((c) => c.quantity > 0)
+        .map((c) => ({
+          loadout_id: id,
+          variant_id: c.variantId,
+          quantity: c.quantity,
+        }));
+      if (rows.length) {
+        const { error } = await client.from("loadout_cards").insert(rows);
+        if (error) throw error;
+      }
+      return { id, deckId, heroId, cards: cards.filter((c) => c.quantity > 0) };
+    },
+    async deleteMatchup(id) {
+      const { error } = await client
+        .from("deck_loadouts")
+        .delete()
+        .eq("id", id);
       if (error) throw error;
     },
     async getFormatRules() {

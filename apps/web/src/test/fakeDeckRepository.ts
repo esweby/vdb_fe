@@ -1,4 +1,9 @@
-import type { Deck, DeckRepository } from "../decks/deckRepository.ts";
+import type {
+  Deck,
+  DeckRepository,
+  Hero,
+  Matchup,
+} from "../decks/deckRepository.ts";
 import type { FormatRules } from "../decks/deckRules.ts";
 
 export const sampleRules: FormatRules = {
@@ -15,8 +20,10 @@ export type DeckFixture = Omit<Deck, "isPublic" | "ownerId"> &
 /** An in-memory DeckRepository; `saved` records every write. New decks belong to `userId`. */
 export function fakeDeckRepository(
   initial: DeckFixture[] = [],
-  options: { userId?: string } = {},
+  options: { userId?: string; heroes?: Hero[]; matchups?: Matchup[] } = {},
 ) {
+  let matchups = [...(options.matchups ?? [])];
+  let nextMatchup = 0;
   let decks: Deck[] = initial.map((d) => ({
     isPublic: false,
     ownerId: "u1",
@@ -76,6 +83,32 @@ export function fakeDeckRepository(
       );
     },
     getFormatRules: async () => sampleRules,
+    listHeroes: async () => [...(options.heroes ?? [])],
+    listMatchups: async (deckId) => matchups.filter((m) => m.deckId === deckId),
+    async saveMatchup(deckId, heroId, cards) {
+      const kept = cards.filter((c) => c.quantity > 0);
+      saved.push(
+        `matchup ${deckId} ${heroId} ${[...kept]
+          .sort((a, b) => a.variantId.localeCompare(b.variantId))
+          .map((c) => `${c.variantId}:${c.quantity}`)
+          .join(",")}`,
+      );
+      const existing = matchups.find(
+        (m) => m.deckId === deckId && m.heroId === heroId,
+      );
+      const matchup: Matchup = {
+        id: existing?.id ?? `matchup-${++nextMatchup}`,
+        deckId,
+        heroId,
+        cards: kept,
+      };
+      matchups = [...matchups.filter((m) => m.id !== matchup.id), matchup];
+      return matchup;
+    },
+    async deleteMatchup(id) {
+      saved.push(`delete matchup ${id}`);
+      matchups = matchups.filter((m) => m.id !== id);
+    },
   };
   return { repository, saved };
 }
