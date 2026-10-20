@@ -168,13 +168,26 @@ describe("draftEffects", () => {
     ]);
   });
 
-  it("isn't complete while the card's facts have a note to check by hand", () => {
+  // The maintainer, 20 Oct 2026: a card whose only leftover is its note goes in Ready to check,
+  // with the note to read first. The note still counts in the hash, so verdicts carry over.
+  it("is complete when only the card's note is left, with the note to read first", () => {
     const card = withAttributes({ notes: "Something the facts can't say." });
     const draft = draftEffects(card, card.variants[0]!);
-    expect(draft.complete).toBe(false);
-    expect(draft.notDrafted).toContain(
+    expect(draft.complete).toBe(true);
+    expect(draft.notDrafted).toEqual([]);
+    expect(draft.factsNote).toBe("Something the facts can't say.");
+    expect(draft.leftOut).toContain(
       "A note on the card's facts, to check by hand: Something the facts can't say.",
     );
+  });
+
+  it("isn't complete when something besides the note isn't drafted", () => {
+    const card = withAttributes({
+      notes: "Something the facts can't say.",
+      instantSpeed: { conditions: ["played_from_banish"] },
+    });
+    const draft = draftEffects(card, card.variants[0]!);
+    expect(draft.complete).toBe(false);
   });
 
   // Cards that banish themselves (20 Oct 2026): "instead of going to the graveyard" is drafted;
