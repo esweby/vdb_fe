@@ -422,6 +422,8 @@ export function Goldfish(props: {
           return `${a.delta > 0 ? "+" : ""}${a.delta} ${a.token}`;
         case "resources":
           return `${a.delta > 0 ? "+" : ""}${a.delta} resources`;
+        case "actionPoints":
+          return `${a.delta > 0 ? "+" : ""}${a.delta} action point${Math.abs(a.delta) === 1 ? "" : "s"}`;
         case "use":
           return `Use ${nameOf(a.uid)}`;
         case "counter":
@@ -827,6 +829,12 @@ export function Goldfish(props: {
           label="Resources"
           text={`Resources ${g.resources}`}
           onChange={(delta) => perform({ type: "resources", delta })}
+        />
+        {/* A go again the engine misses can be given by hand (the maintainer, 20 Oct 2026). */}
+        <Counter
+          label="action points"
+          text={`Action points ${g.actionPoints}`}
+          onChange={(delta) => perform({ type: "actionPoints", delta })}
         />
         {TOKENS.filter(
           (t) => tokensMade.has(t.token) || (g.tokens[t.token] ?? 0) > 0,
