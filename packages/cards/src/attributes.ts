@@ -71,6 +71,8 @@ export const GRANTED_TO = [
   "next_attack_action",
   "next_runeblade_attack_action",
   "next_shadow_attack",
+  /** "Your next Runeblade or Shadow attack" (Otherworldly Sins). */
+  "next_runeblade_or_shadow_attack",
   "banished_card",
   "card_in_banished_zone_matching_pitch",
   "next_action_card_matching_pitch",

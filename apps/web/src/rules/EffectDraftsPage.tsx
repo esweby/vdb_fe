@@ -220,9 +220,22 @@ function DraftCard(props: { entry: DraftEntry; actions?: Actions }) {
             ) : (
               <p className={styles.muted}>Nothing drafted.</p>
             )}
+            {d.draft.outOfScope.length > 0 && (
+              <>
+                <p className={styles.muted}>
+                  Left out on purpose (the engine doesn&apos;t model combat or
+                  opponents):
+                </p>
+                <ul className={styles.muted}>
+                  {d.draft.outOfScope.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+              </>
+            )}
             {d.draft.notDrafted.length > 0 && (
               <>
-                <p className={styles.muted}>Not drafted:</p>
+                <p className={styles.muted}>Not drafted yet:</p>
                 <ul className={styles.muted}>
                   {d.draft.notDrafted.map((line) => (
                     <li key={line}>{line}</li>

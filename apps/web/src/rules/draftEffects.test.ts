@@ -74,11 +74,34 @@ describe("draftEffects", () => {
     expect(draft.rules.effects).toEqual([]);
     expect(draft.notDrafted).toEqual([
       "X Runechants: the engine needs a number",
-      "Runechants on hit: combat is out of scope",
       "Runechants given to a later card",
+    ]);
+    expect(draft.outOfScope).toEqual([
+      "Runechants on hit: combat is out of scope",
       "Arcane damage: damage to an opponent is out of scope",
       "Disrupting an opponent: out of scope",
     ]);
+  });
+
+  // The maintainer, 20 Oct 2026: Otherworldly Sins wasn't ready to check because of its power
+  // bonus. Combat and opponents are out of the engine's scope, so they don't hold a draft back.
+  it("is complete when all it leaves out is out of scope", () => {
+    const card = withAttributes({
+      tokens: [{ token: "runechant", amount: 1, trigger: "on_play" }],
+      conditionalBonuses: [
+        {
+          effect: "plus_power",
+          amount: 3,
+          grantedTo: "next_runeblade_or_shadow_attack",
+        },
+      ],
+    });
+    const draft = draftEffects(card, card.variants[0]!);
+    expect(draft.notDrafted).toEqual([]);
+    expect(draft.outOfScope).toEqual([
+      "Bonuses to power or defence: combat is out of scope",
+    ]);
+    expect(draft.complete).toBe(true);
   });
 
   // The maintainer, 20 Oct 2026: Blood Tribute's draft must record Opt.
@@ -136,8 +159,10 @@ describe("draftEffects", () => {
         effects: [{ op: "opt", amount: 1 }],
       },
     ]);
-    expect(draft.notDrafted).toEqual([
+    expect(draft.outOfScope).toEqual([
       "Opt when it hits: combat is out of scope",
+    ]);
+    expect(draft.notDrafted).toEqual([
       "Opt when it's pitched: not drafted yet",
       "Opt if it was played from arsenal: the engine can't check that yet",
     ]);

@@ -345,10 +345,39 @@ export const runechantCreators: AuthoredAttributes = {
   },
   "Otherworldly Sins": {
     verified: true,
+    // The +3/+2/+1 power was a note; now a fact, so its draft can be ready to check (the
+    // maintainer, 20 Oct 2026).
     card: {
       tokens: [{ token: "runechant", amount: 1, trigger: "on_play" }],
-      notes:
-        "Also gives your next Runeblade or Shadow attack +3/+2/+1 power (red/yellow/blue).",
+    },
+    variants: {
+      1: {
+        conditionalBonuses: [
+          {
+            effect: "plus_power",
+            amount: 3,
+            grantedTo: "next_runeblade_or_shadow_attack",
+          },
+        ],
+      },
+      2: {
+        conditionalBonuses: [
+          {
+            effect: "plus_power",
+            amount: 2,
+            grantedTo: "next_runeblade_or_shadow_attack",
+          },
+        ],
+      },
+      3: {
+        conditionalBonuses: [
+          {
+            effect: "plus_power",
+            amount: 1,
+            grantedTo: "next_runeblade_or_shadow_attack",
+          },
+        ],
+      },
     },
   },
   "Promise of Power": {

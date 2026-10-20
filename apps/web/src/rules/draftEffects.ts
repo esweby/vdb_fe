@@ -25,9 +25,16 @@ export interface EffectDraft {
   rules: DraftRules;
   /** The draft in plain words, to check against the printed text. */
   description: string[];
-  /** What the facts record that the draft leaves out, and why. */
+  /** What the facts record that the draft leaves out for now, and why. */
   notDrafted: string[];
-  /** Nothing was left out. Still unverified until a player checks it. */
+  /**
+   * What the engine never models (combat, effects on opponents), shown as a reminder. It doesn't
+   * hold a draft back (the maintainer, 20 Oct 2026).
+   */
+  outOfScope: string[];
+  /** Both, in the order noted: what a draft's hash covers, so verdicts carry over. */
+  leftOut: string[];
+  /** Nothing was left out but what's out of scope. Still unverified until a player checks it. */
   complete: boolean;
 }
 
@@ -101,9 +108,13 @@ export function draftEffects(
   const effects: Effect[] = [];
   const triggers: Trigger[] = [];
   const notDrafted: string[] = [];
+  const outOfScope: string[] = [];
+  const leftOut: string[] = [];
   const bound = new Set<string>();
   const note = (line: string) => {
-    if (!notDrafted.includes(line)) notDrafted.push(line);
+    if (leftOut.includes(line)) return;
+    leftOut.push(line);
+    (line.endsWith("out of scope") ? outOfScope : notDrafted).push(line);
   };
 
   const attackTriggerEffects: Effect[] = [];
@@ -309,6 +320,8 @@ export function draftEffects(
         : []),
     ],
     notDrafted,
+    outOfScope,
+    leftOut,
     complete: notDrafted.length === 0,
   };
 }

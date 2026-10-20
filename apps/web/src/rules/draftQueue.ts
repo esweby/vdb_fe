@@ -66,9 +66,10 @@ export function draftQueue(
     const byKey = new Map<string, QueuedDraft>();
     for (const variant of card.variants) {
       const draft = draftEffects(card, variant);
-      if (draft.description.length === 0 && draft.notDrafted.length === 0)
+      if (draft.description.length === 0 && draft.leftOut.length === 0)
         continue;
-      const key = JSON.stringify([draft.rules, draft.notDrafted]);
+      // Everything left out, in order, as before the out-of-scope split: verdicts carry over.
+      const key = JSON.stringify([draft.rules, draft.leftOut]);
       const same = byKey.get(key);
       if (same) same.pitches.push(variant.pitch);
       else {
