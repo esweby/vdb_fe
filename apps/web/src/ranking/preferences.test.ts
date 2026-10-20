@@ -36,3 +36,18 @@ describe("preferenceBoost", () => {
     expect(preferenceBoost(["usurp", "disruption"], prefs)).toBe(50);
   });
 });
+
+// The maintainer, 20 Oct 2026: an option to favour cards that make Runechants turn after turn.
+it("has a Runechants every turn preference for those cards", () => {
+  const everyTurn = PREFERENCES.find((p) => p.id === "everyTurn")!;
+  expect(everyTurn.label).toBe("Runechants every turn");
+  expect(
+    preferenceBoost(["runechant_generator", "runechant_every_turn"], {
+      ...neutral,
+      everyTurn: 100,
+    }),
+  ).toBe(25);
+  expect(
+    preferenceBoost(["runechant_generator"], { ...neutral, everyTurn: 100 }),
+  ).toBe(0);
+});

@@ -282,6 +282,18 @@ export function SetupTab(props: {
         ))}
       </section>
 
+      {/* Equipment, as an option (the maintainer, 20 Oct 2026). */}
+      <label className={styles.suggestGear}>
+        <input
+          type="checkbox"
+          checked={props.settings.suggestGear}
+          onChange={(e) => props.onSettings({ suggestGear: e.target.checked })}
+        />
+        <span>
+          Suggest equipment: the best-rated weapon and a piece for each slot,
+          kept apart from the deck cards.
+        </span>
+      </label>
       <div className={styles.setupNext}>
         <Button variant="ghost" onClick={props.onSkip}>
           Go to the board without adding cards

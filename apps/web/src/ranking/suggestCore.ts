@@ -117,3 +117,21 @@ export function alternatives<T extends CoreCandidate>(
     )
     .slice(0, n);
 }
+
+/**
+ * Equipment for the core (the maintainer, 20 Oct 2026): the best card of each gear slot (a
+ * weapon, then each equipment slot), added to the core, one copy each. A slot the core already
+ * has a piece for is left alone. Slots' cards come best first.
+ */
+export function suggestGear(
+  slots: { title: string; cards: { variantId: string }[] }[],
+  core: Record<string, number>,
+): Record<string, number> {
+  const next = { ...core };
+  for (const slot of slots) {
+    if (slot.cards.some((c) => next[c.variantId])) continue;
+    const best = slot.cards[0];
+    if (best) next[best.variantId] = 1;
+  }
+  return next;
+}

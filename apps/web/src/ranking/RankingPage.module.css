@@ -206,6 +206,14 @@
   border-radius: 2px;
   background: var(--brand);
 }
+.suggestGear {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
 .setupNext {
   grid-column: 1 / -1;
   display: flex;

@@ -41,7 +41,7 @@ import {
   type RankingSettings,
 } from "./rankingSearch.ts";
 import { preferenceBoost } from "./preferences.ts";
-import { offPitchReactions, suggestCore } from "./suggestCore.ts";
+import { offPitchReactions, suggestCore, suggestGear } from "./suggestCore.ts";
 import { ScopedSynergies } from "../synergy/SynergyExplorer.tsx";
 import {
   buildSynergyGraph,
@@ -392,7 +392,10 @@ export function RankingPage() {
       settings.core[c.variantId] ? 0 : limitOf(c.variantId),
     );
 
-  const coreTotal = core.reduce((n, c) => n + c.quantity, 0);
+  // Deck cards only: weapons and equipment aren't among the 60.
+  const coreTotal = core
+    .filter((c) => !gearCards.some((g) => g.variantId === c.variantId))
+    .reduce((n, c) => n + c.quantity, 0);
   // What a scenario run used, so a later change to the core can be spotted.
   const coreSignature = JSON.stringify(
     core.map((c) => [c.variantId, c.quantity]).sort(),
@@ -469,7 +472,14 @@ export function RankingPage() {
             synergyBonus(cardId, picked, graph, settings.synergy / 10),
         )
       : suggestCore(candidates, constraints);
-    return Object.fromEntries(s.picks.map((p) => [p.variantId, p.quantity]));
+    // Gear already in the core stays; with Suggest equipment on, empty slots get their best card.
+    const picks = Object.fromEntries([
+      ...s.picks.map((p) => [p.variantId, p.quantity] as const),
+      ...Object.entries(settings.core).filter(([id]) =>
+        gearCards.some((g) => g.variantId === id),
+      ),
+    ]);
+    return settings.suggestGear ? suggestGear(gear, picks) : picks;
   }
 
   async function addCore(id: string, start: Deck["cards"]) {

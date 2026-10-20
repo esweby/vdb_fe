@@ -43,6 +43,40 @@ describe("rolesOf: Runechant engine", () => {
     expect(rolesOf(card(runechants(1)))).toContain("runechant_generator");
   });
 
+  // The maintainer, 20 Oct 2026: cards that make Runechants turn after turn, for the core builder.
+  it("an aura or start-of-turn card making Runechants again and again makes them every turn", () => {
+    const malefic = card(
+      {
+        tokens: [
+          {
+            token: "runechant",
+            amount: 3,
+            trigger: "your_attack_action_played",
+          },
+        ],
+      },
+      "action",
+      [],
+      ["Aura"],
+    );
+    const blessing = card({
+      tokens: [{ token: "runechant", amount: 1, trigger: "start_of_turn" }],
+    });
+    // Promise of Power: the same trigger, but only this turn; not an aura.
+    const promise = card({
+      tokens: [
+        { token: "runechant", amount: 2, trigger: "your_attack_action_played" },
+      ],
+    });
+    const onPlay = card({
+      tokens: [{ token: "runechant", amount: 1, trigger: "on_play" }],
+    });
+    expect(rolesOf(malefic)).toContain("runechant_every_turn");
+    expect(rolesOf(blessing)).toContain("runechant_every_turn");
+    expect(rolesOf(promise)).not.toContain("runechant_every_turn");
+    expect(rolesOf(onPlay)).not.toContain("runechant_every_turn");
+  });
+
   it("creating X or 3 or more at once is also a burst", () => {
     expect(rolesOf(card(runechants("X")))).toEqual(
       expect.arrayContaining(["runechant_generator", "runechant_burst"]),
