@@ -147,6 +147,8 @@ const routeTree = rootRoute.addChildren([
       log?: string;
       /** Goldfish: cards a scenario fixed in hand or arsenal (base64url JSON). */
       fixed?: string;
+      /** Goldfish and scenarios: play the deck's plan against this hero (matchups). */
+      vs?: string;
     } => ({
       ...(search.tab === "stats" ||
       search.tab === "gaps" ||
@@ -167,6 +169,7 @@ const routeTree = rootRoute.addChildren([
       ...(typeof search.fixed === "string" && search.fixed
         ? { fixed: search.fixed }
         : {}),
+      ...(typeof search.vs === "string" && search.vs ? { vs: search.vs } : {}),
       ...(typeof search.log === "string" && search.log
         ? { log: search.log }
         : {}),
