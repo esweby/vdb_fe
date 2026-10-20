@@ -4,6 +4,7 @@ import type {
   AuthoredCardAttributes,
   CardAttributes,
 } from "../src/attributes.ts";
+import { attributeGroups } from "../src/groups.ts";
 import { fits, ROLES, rolesOf, type RoleCard } from "../src/roles.ts";
 
 const generated: CardAttributes = {
@@ -174,6 +175,21 @@ describe("rolesOf: Banish engine", () => {
     ).toEqual(["deck_banisher"]);
     expect(
       rolesOf(card({ banishesSelf: [{ trigger: "would_go_to_graveyard" }] })),
+    ).toEqual(["self_banisher"]);
+    // Fallen Herald: "Banish this from your hand" banishes itself, not other cards (20 Oct 2026).
+    const herald = card({
+      banishesSelf: [{ from: "hand", trigger: "activated" }],
+    });
+    expect(
+      rolesOf({
+        ...herald,
+        attributes: {
+          ...herald.attributes,
+          groups: attributeGroups({
+            banishesSelf: [{ from: "hand", trigger: "activated" }],
+          }),
+        },
+      }),
     ).toEqual(["self_banisher"]);
   });
 
