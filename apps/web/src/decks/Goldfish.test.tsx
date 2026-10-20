@@ -6,6 +6,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { fakeAuthService } from "../test/fakeAuthService.ts";
 import { fakeDeckRepository } from "../test/fakeDeckRepository.ts";
+import { fakeCardRepository, sampleCards } from "../test/fakeCardRepository.ts";
 import { renderApp } from "../test/renderApp.tsx";
 import type { DeckCard, Hero } from "./deckRepository.ts";
 import { encodeFixed } from "./goldfishLink.ts";
@@ -17,13 +18,26 @@ const card = (variantId: string, quantity: number): DeckCard => ({
 });
 // 10 deck cards and a weapon.
 const deck = [card("hp1", 3), card("bsl3", 3), card("ff1", 4), card("nb", 1)];
+/** Equipment with energy counters, for its button (the maintainer, 20 Oct 2026). */
+const FYENDAL = {
+  ...sampleCards[3]!,
+  id: "card-fyendal",
+  name: "Fyendal's Spring Tunic",
+  type: "equipment",
+  subtypes: ["Chest"],
+  classes: ["Generic"],
+  attributes: { ...sampleCards[3]!.attributes, canAttack: false },
+  variants: [{ ...sampleCards[3]!.variants[0]!, id: "fst" }],
+};
 
 async function open(
   path = "/decks/deck-1?tab=goldfish&seed=7",
   heroes: Hero[] = [],
+  cards: DeckCard[] = deck,
 ) {
   await renderApp({
     path,
+    cards: fakeCardRepository([...sampleCards, FYENDAL]),
     auth: fakeAuthService({
       users: { "u@test.local": { id: "u1", password: "pw", role: "user" } },
       signedIn: { id: "u1", email: "u@test.local" },
@@ -34,7 +48,7 @@ async function open(
           id: "deck-1",
           name: "Gate tempo",
           updatedAt: "2026-10-14T10:00:00Z",
-          cards: deck,
+          cards,
           pitchTargets: {},
         },
       ],
@@ -580,5 +594,73 @@ describe("closer to the playmat", () => {
     expect(table.getByText(/^Resources \d$/)).not.toHaveTextContent(
       "Resources 0",
     );
+  });
+});
+
+// The maintainer, 20 Oct 2026, after playing a matchup.
+describe("quicker turns", () => {
+  it("banishes the top card of the deck from the bar", async () => {
+    const { table, user } = await open();
+    await user.click(table.getByRole("button", { name: "Banish top" }));
+    expect(zone(table, "Banished").getByTestId("count")).toHaveTextContent("1");
+    expect(zone(table, "Deck").getByTestId("count")).toHaveTextContent("5");
+  });
+
+  it("plays a banished card with its Play button, other moves in its menu", async () => {
+    const { table, user } = await open();
+    const [first] = zoneCards(table, "Hand");
+    const name = first!.getAttribute("aria-label")!;
+    await act(user, first!, "Banish");
+    await user.click(
+      table.getByRole("button", { name: "Open the banished zone" }),
+    );
+    const list = within(table.getByRole("dialog", { name: "Banished" }));
+    const banished = list.getByRole("listitem", { name });
+    expect(
+      within(banished).getByRole("combobox", { name: `Action for ${name}` }),
+    ).toBeInTheDocument();
+    await user.click(
+      within(banished).getByRole("button", { name: `Play ${name}` }),
+    );
+    expect(zoneCards(table, "Banished")).toHaveLength(0);
+  });
+
+  it("clears the arena to the graveyard when the turn ends", async () => {
+    const { table, user } = await open();
+    await act(user, zoneCards(table, "Hand")[0]!, "To arena (by hand)");
+    await user.click(table.getByRole("button", { name: "End turn" }));
+    expect(zoneCards(table, "Arena")).toHaveLength(0);
+    expect(zone(table, "Graveyard").getByTestId("count")).toHaveTextContent(
+      "1",
+    );
+  });
+
+  // UNVERIFIED: "Instant – Remove 3 energy counters from this: Gain {r}".
+  it("spends Fyendal's Spring Tunic's 3 counters for a resource", async () => {
+    const { table, user } = await open(
+      undefined,
+      [],
+      [...deck, card("fst", 1)],
+    );
+    const tunic = () =>
+      zone(table, "Equipment").getByRole("listitem", {
+        name: "Fyendal's Spring Tunic",
+      });
+    expect(
+      within(tunic()).queryByRole("button", { name: /Gain a resource/ }),
+    ).toBeNull();
+    await act(user, tunic(), "Add a counter");
+    const more = within(tunic()).getByRole("button", {
+      name: "More counters on Fyendal's Spring Tunic",
+    });
+    await user.click(more);
+    await user.click(more);
+    await user.click(
+      within(tunic()).getByRole("button", {
+        name: "Remove 3 counters: Gain a resource",
+      }),
+    );
+    expect(table.getByText("Resources 1")).toBeInTheDocument();
+    expect(within(tunic()).queryByLabelText(/counter/)).toBeNull();
   });
 });

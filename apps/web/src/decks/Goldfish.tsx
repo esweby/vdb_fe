@@ -528,6 +528,15 @@ export function Goldfish(props: {
         ) : (
           <span className={styles.standIn}>{name}</span>
         )}
+        {zone === "banished" && !faceDown && (
+          <Button
+            className={styles.playButton}
+            aria-label={`Play ${name}`}
+            onClick={() => perform(CARD_ACTIONS[0]!.action(c, zone))}
+          >
+            Play
+          </Button>
+        )}
         <select
           className={styles.cardMenu}
           aria-label={`Action for ${label}`}
@@ -554,6 +563,19 @@ export function Goldfish(props: {
           ))}
         </select>
         {used && <span className={styles.used}>Used this turn</span>}
+        {/* Fyendal's Spring Tunic: "Instant – Remove 3 energy counters from this: Gain {r}"
+            (the maintainer, 20 Oct 2026; UNVERIFIED). */}
+        {counters >= 3 && c.card.name === "Fyendal's Spring Tunic" && (
+          <Button
+            className={styles.gearAbility}
+            onClick={() => {
+              perform({ type: "counter", uid: c.uid, delta: -3 });
+              perform({ type: "resources", delta: 1 });
+            }}
+          >
+            Remove 3 counters: Gain a resource
+          </Button>
+        )}
         {gear && counters > 0 && (
           <>
             {/* A counter on the card itself, with − and + underneath (the maintainer, 20 Oct). */}
@@ -672,6 +694,19 @@ export function Goldfish(props: {
           disabled={g.zones.deck.length === 0}
         >
           Draw
+        </Button>
+        <Button
+          onClick={() => {
+            // The latest top card, so quick clicks banish one card each.
+            const h = latest.current;
+            const top = (
+              h.cursor > 0 ? h.steps[h.cursor - 1]!.state : h.initial
+            ).zones.deck[0];
+            if (top) perform({ type: "move", uid: top.uid, to: "banished" });
+          }}
+          disabled={g.zones.deck.length === 0}
+        >
+          Banish top
         </Button>
         <Button onClick={() => perform({ type: "traverse" })}>Traverse</Button>
         <Button variant="primary" onClick={() => perform({ type: "endTurn" })}>

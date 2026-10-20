@@ -146,6 +146,9 @@ const X_AS = 2;
  * A card as the engine sees it: its roles, a few traits, and how many Runechants and Gates it
  * makes, with and without its conditions (an on-hit effect counts as conditional).
  */
+/** Subtypes that stay in the arena when the turn ends (UNVERIFIED). */
+const PERMANENT_SUBTYPES = ["Aura", "Item", "Ally", "Landmark"];
+
 export function toEngineCard(
   card: CardSummary,
   variant: VariantSummary,
@@ -172,6 +175,10 @@ export function toEngineCard(
       ...(card.talents.includes("Shadow") ? ["shadow"] : []),
       ...(card.classes.includes("Runeblade") ? ["runeblade"] : []),
       ...(card.classes.includes("Generic") ? ["generic"] : []),
+      // Auras, items, allies and landmarks stay in the arena when the turn ends (UNVERIFIED).
+      ...card.subtypes
+        .filter((t) => PERMANENT_SUBTYPES.includes(t))
+        .map((t) => t.toLowerCase()),
       ...(card.subtypes.includes("Aura") ? ["aura"] : []),
     ],
     type: card.type,
