@@ -5,9 +5,9 @@
 import postgres from "postgres";
 import { allAuthored } from "./authored/index.ts";
 import { loadDataset, loadSets } from "./dataset.ts";
-import { hideRetired, upsertCards } from "./db.ts";
+import { hideRetired, upsertCards, upsertHeroes } from "./db.ts";
 import { retiredNames } from "./classify.ts";
-import { toImportCards } from "./map.ts";
+import { toHeroes, toImportCards } from "./map.ts";
 import { setReleases } from "./releases.ts";
 
 const LOCAL_DB = "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
@@ -44,6 +44,9 @@ async function main() {
     const hidden = await hideRetired(sql, retiredNames(dataset));
     if (hidden > 0)
       console.log(`Hid ${hidden} retired cards (no longer playable).`);
+    const heroes = toHeroes(dataset);
+    await upsertHeroes(sql, heroes);
+    console.log(`Heroes for matchups: ${heroes.length}.`);
   } finally {
     await sql.end();
   }

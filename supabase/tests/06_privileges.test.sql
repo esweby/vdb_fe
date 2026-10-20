@@ -2,7 +2,7 @@
 -- authenticated by default (local stacks do), so every grant must be explicit.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(51);
+select plan(53);
 
 -- Public reference data: readable by everyone
 select table_privs_are('public', t, 'anon', array['SELECT'], 'anon can only read ' || t)
@@ -36,6 +36,10 @@ select table_privs_are('public', t, 'anon', array[]::text[], 'anon has no access
   from unnest(array['scenarios', 'scenario_results']) t;
 select table_privs_are('public', 'scenarios', 'authenticated', array['SELECT', 'INSERT', 'UPDATE', 'DELETE'], 'signed-in users manage their own scenarios');
 select table_privs_are('public', 'scenario_results', 'authenticated', array['SELECT', 'INSERT', 'UPDATE', 'DELETE'], 'signed-in users manage their own scenario_results');
+
+-- Heroes (matchups): reference data the importer writes; everyone reads.
+select table_privs_are('public', 'heroes', 'anon', array['SELECT'], 'anon can only read heroes');
+select table_privs_are('public', 'heroes', 'authenticated', array['SELECT'], 'signed-in users can only read heroes');
 
 -- Private tables: nothing for anon
 select table_privs_are('public', t, 'anon', array[]::text[], 'anon has no access to ' || t)
