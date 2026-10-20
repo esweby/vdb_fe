@@ -88,11 +88,8 @@ export function deckProblems(
 ): string[] {
   const problems: string[] = [];
   const counts = deckCounts(entries);
-  if (counts.deck < rules.deckMin) {
-    problems.push(
-      `The deck has ${cards(counts.deck)}; it needs at least ${rules.deckMin}.`,
-    );
-  }
+  // No minimum for the main deck (maintainer, 19 Oct 2026): many players run 48–56 and keep the
+  // rest in the sideboard. Only the pool is capped.
   if (counts.pool > rules.poolMax) {
     problems.push(
       `The card pool has ${cards(counts.pool)}; at most ${rules.poolMax} are allowed.`,

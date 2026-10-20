@@ -51,9 +51,7 @@ describe("building a scenario", () => {
       builder.getByRole("button", { name: "Run this scenario" }),
     );
     expect(
-      await result().findByText(
-        /of 10,000 runs · seed 1 · 5 deck cards \+ 55 blanks \(60\)$/,
-      ),
+      await result().findByText(/of 10,000 runs · seed 1 · 5 deck cards$/),
     ).toBeInTheDocument();
     expect(result().getByText("at least 1 blue card")).toBeInTheDocument();
   });
@@ -143,7 +141,8 @@ describe("building a scenario", () => {
     expect(await result().findByText(/^0\.0%/)).toBeInTheDocument();
     await user.selectOptions(builder.getByLabelText("Match"), "any");
     await run();
-    expect(await result().findByText(/^[1-9]\d?\.\d%/)).toBeInTheDocument();
+    // 5 cards, no blanks: any hand of 4 holds a blue card.
+    expect(await result().findByText(/^100\.0%/)).toBeInTheDocument();
 
     await user.click(builder.getByRole("button", { name: "Add a group" }));
     const group = within(builder.getByRole("group", { name: "Group 2" }));

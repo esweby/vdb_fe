@@ -681,7 +681,7 @@ export function ScenarioBuilder(props: {
             result && (
               <>
                 <p className={styles.rate}>
-                  {`${rate(result.successRate)} of ${n(output.runs)} runs · seed ${output.seed} · ${output.deck.coreCards} deck cards + ${output.deck.blanks} blanks (${output.deck.deckSize})`}
+                  {`${rate(result.successRate)} of ${n(output.runs)} runs · seed ${output.seed} · ${output.deck.coreCards} deck cards${output.deck.blanks > 0 ? ` + ${output.deck.blanks} blanks (${output.deck.deckSize})` : ""}`}
                 </p>
                 <h3 id="checks">What it checks</h3>
                 <ul aria-labelledby="checks">

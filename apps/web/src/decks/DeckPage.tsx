@@ -280,11 +280,7 @@ export function DeckPage() {
             empty="Add cards to the deck to see how they link."
           />
         ) : tab === "scenarios" ? (
-          <DeckScenarios
-            deckId={deckId}
-            entries={entries}
-            deckSize={rules?.deckMin ?? 60}
-          />
+          <DeckScenarios deckId={deckId} entries={entries} />
         ) : tab === "stats" ? (
           <>
             <DeckAnalysisPanel
@@ -301,10 +297,7 @@ export function DeckPage() {
                   : undefined
               }
             />
-            <ConditionAvailabilityPanel
-              entries={entries}
-              deckSize={rules?.deckMin ?? 60}
-            />
+            <ConditionAvailabilityPanel entries={entries} />
           </>
         ) : (
           <div className={canEdit ? styles.editor : undefined}>
@@ -354,7 +347,7 @@ export function DeckPage() {
                 />
                 <PoolSection
                   title="Deck"
-                  heading={`Deck ${counts.deck}${rules ? ` / ${rules.deckMin}` : ""}`}
+                  heading={`Deck ${counts.deck}`}
                   entries={ofSection("deck")}
                   limitOf={limitOf}
                   view={view}

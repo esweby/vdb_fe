@@ -74,7 +74,7 @@ describe("decks list", () => {
     ).toHaveAttribute("aria-selected", "true");
     const gate = tile("Gate tempo");
     // The sideboard card isn't counted
-    expect(gate.getByText("5 of 60 cards")).toBeInTheDocument();
+    expect(gate.getByText("5 cards")).toBeInTheDocument();
     expect(
       gate.getByRole("img", { name: "Pitch mix: 3 red, 0 yellow, 2 blue" }),
     ).toBeInTheDocument();
@@ -579,9 +579,8 @@ describe("deck page", () => {
     expect(
       screen.getByText("3 deck cards · 0 sideboard · 4 in the pool"),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText("The deck has 3 cards; it needs at least 60."),
-    ).toBeInTheDocument();
+    // The main deck is taken as built (maintainer, 19 Oct 2026): no minimum.
+    expect(screen.queryByText(/needs at least/)).toBeNull();
   });
 
   it("shows each card as a card-shaped tile with its basic details", async () => {
@@ -1020,9 +1019,7 @@ describe("deck scenarios", () => {
     expect(panel.getByText(/Build a scenario of your own/)).toBeInTheDocument();
     await user.click(panel.getByRole("button", { name: "Run scenarios" }));
     expect(
-      await panel.findByText(
-        "10,000 runs each · seed 1 · 5 deck cards + 55 blanks (60)",
-      ),
+      await panel.findByText("10,000 runs each · seed 1 · 5 deck cards"),
     ).toBeInTheDocument();
     expect(
       panel.getByRole("region", { name: "Traverse timeline" }),
