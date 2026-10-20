@@ -1,0 +1,131 @@
+// Matchups (the maintainer, 19 Oct 2026): per-hero board plans. Pick an opposing hero; the plan
+// starts as the main deck; board cards in from the sideboard and out of the main deck.
+import { screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { describe, expect, it } from "vitest";
+import { fakeAuthService } from "../test/fakeAuthService.ts";
+import { fakeDeckRepository } from "../test/fakeDeckRepository.ts";
+import { renderApp } from "../test/renderApp.tsx";
+import type { DeckCard, Matchup } from "./deckRepository.ts";
+
+const card = (
+  variantId: string,
+  quantity: number,
+  sideboard = false,
+): DeckCard => ({
+  variantId,
+  quantity,
+  sideboard,
+});
+// Main: Hocus Pocus (red) ×3, Become the Shadow Lord ×2. Sideboard: Fate Foreseen (red) ×2.
+const CARDS = [card("hp1", 3), card("bsl3", 2), card("ff1", 2, true)];
+const HEROES = [
+  {
+    id: "h1",
+    name: "Example Hero",
+    classes: ["Warrior"],
+    talents: [],
+    imageUrl: null,
+  },
+  {
+    id: "h2",
+    name: "Other Hero",
+    classes: ["Wizard"],
+    talents: [],
+    imageUrl: null,
+  },
+];
+
+async function open(matchups: Matchup[] = []) {
+  const fake = fakeDeckRepository(
+    [
+      {
+        id: "deck-1",
+        name: "Gate tempo",
+        updatedAt: "2026-10-14T10:00:00Z",
+        cards: CARDS,
+        pitchTargets: {},
+      },
+    ],
+    { heroes: HEROES, matchups },
+  );
+  await renderApp({
+    path: "/decks/deck-1?tab=matchups",
+    auth: fakeAuthService({
+      users: { "u@test.local": { id: "u1", password: "pw", role: "user" } },
+      signedIn: { id: "u1", email: "u@test.local" },
+    }).service,
+    decks: fake.repository,
+  });
+  const panel = within(await screen.findByRole("region", { name: "Matchups" }));
+  return { panel, fake, user: userEvent.setup() };
+}
+const row = (scope: ReturnType<typeof within>, name: string) =>
+  within(scope.getByRole("row", { name: new RegExp(`^${name}`) }));
+
+describe("matchups", () => {
+  it("plans a matchup: starts as the main deck, boards in and out, and saves", async () => {
+    const { panel, fake, user } = await open();
+    await user.selectOptions(panel.getByLabelText("Plan against"), "h1");
+    const plan = within(panel.getByRole("region", { name: "vs Example Hero" }));
+    expect(
+      plan.getByRole("row", { name: /^Hocus Pocus \(red\)/ }),
+    ).toHaveTextContent("3");
+    await user.click(
+      row(plan, "Hocus Pocus \\(red\\)").getByRole("button", {
+        name: "Fewer Hocus Pocus (red)",
+      }),
+    );
+    await user.click(
+      row(plan, "Fate Foreseen \\(red\\)").getByRole("button", {
+        name: "More Fate Foreseen (red)",
+      }),
+    );
+    expect(
+      plan.getByText("In: Fate Foreseen (red) ×1 · Out: Hocus Pocus (red) ×1"),
+    ).toBeInTheDocument();
+    expect(
+      plan.getByText("5 cards in the main deck for this matchup"),
+    ).toBeInTheDocument();
+    await user.click(plan.getByRole("button", { name: "Save plan" }));
+    await waitFor(() =>
+      expect(fake.saved).toContain("matchup deck-1 h1 bsl3:2,ff1:1,hp1:2"),
+    );
+  });
+
+  it("never boards in more copies than the pool has", async () => {
+    const { panel, user } = await open();
+    await user.selectOptions(panel.getByLabelText("Plan against"), "h1");
+    const plan = within(panel.getByRole("region", { name: "vs Example Hero" }));
+    const more = row(plan, "Fate Foreseen \\(red\\)").getByRole("button", {
+      name: "More Fate Foreseen (red)",
+    });
+    await user.click(more);
+    await user.click(more);
+    expect(more).toBeDisabled();
+  });
+
+  it("lists saved plans with what goes in and out, and deletes one", async () => {
+    const { panel, fake, user } = await open([
+      {
+        id: "m1",
+        deckId: "deck-1",
+        heroId: "h2",
+        cards: [
+          { variantId: "hp1", quantity: 3 },
+          { variantId: "bsl3", quantity: 1 },
+          { variantId: "ff1", quantity: 1 },
+        ],
+      },
+    ]);
+    const saved = within(panel.getByRole("list", { name: "Planned matchups" }));
+    expect(saved.getByRole("listitem")).toHaveTextContent(
+      "vs Other Hero · in 1 · out 1",
+    );
+    await user.click(saved.getByRole("button", { name: "Open vs Other Hero" }));
+    const plan = within(panel.getByRole("region", { name: "vs Other Hero" }));
+    await user.click(plan.getByRole("button", { name: "Delete plan" }));
+    await waitFor(() => expect(fake.saved).toContain("delete matchup m1"));
+    expect(panel.queryByRole("list", { name: "Planned matchups" })).toBeNull();
+  });
+});

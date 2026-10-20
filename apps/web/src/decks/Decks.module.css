@@ -685,3 +685,93 @@
 .fillerName {
   font-weight: 600;
 }
+
+/* Matchups: per-hero board plans. */
+.matchups {
+  display: grid;
+  gap: 1rem;
+  max-width: 56rem;
+}
+.matchups header h2,
+.matchups header p {
+  margin: 0 0 0.25rem;
+}
+.matchupList {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.matchupList li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--surface);
+}
+.matchupPick {
+  display: grid;
+  gap: 0.25rem;
+  max-width: 20rem;
+}
+.matchupPick select {
+  font: inherit;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  background: var(--bg);
+  color: var(--fg);
+}
+.matchupPlan {
+  display: grid;
+  gap: 0.6rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  background: var(--surface);
+}
+.matchupPlan h3,
+.matchupPlan p {
+  margin: 0;
+}
+.matchupTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+.matchupTable th,
+.matchupTable td {
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+.matchupTable thead th {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-variant-numeric: tabular-nums;
+}
+.stepper button {
+  width: 1.7rem;
+  height: 1.7rem;
+  border: 1px solid var(--border);
+  border-radius: 0.3rem;
+  background: var(--bg);
+  color: var(--fg);
+  cursor: pointer;
+}
+.stepper button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.matchupActions {
+  display: flex;
+  gap: 0.5rem;
+}
