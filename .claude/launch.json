@@ -15,6 +15,74 @@
         "--strictPort"
       ],
       "port": 5173
+    },
+    {
+      "name": "web-worktree",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "../vdb_fe-ranking",
+        "run",
+        "dev",
+        "-w",
+        "@vdb/web",
+        "--",
+        "--port",
+        "5175",
+        "--strictPort"
+      ],
+      "port": 5175
+    },
+    {
+      "name": "web-hero-prompts",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "../vdb_fe-hero-prompts",
+        "run",
+        "dev",
+        "-w",
+        "@vdb/web",
+        "--",
+        "--port",
+        "5176",
+        "--strictPort"
+      ],
+      "port": 5176
+    },
+    {
+      "name": "web-goldfish",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "../vdb_fe-goldfish",
+        "run",
+        "dev",
+        "-w",
+        "@vdb/web",
+        "--",
+        "--port",
+        "5177",
+        "--strictPort"
+      ],
+      "port": 5177
+    },
+    {
+      "name": "web-synergy-question",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "../vdb_fe-synergy-question",
+        "run",
+        "dev",
+        "-w",
+        "@vdb/web",
+        "--",
+        "--port",
+        "5178",
+        "--strictPort"
+      ],
+      "port": 5178
     }
   ]
 }
