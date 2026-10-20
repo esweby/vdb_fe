@@ -72,6 +72,7 @@ create trigger deck_cards_sync_loadouts
   for each row execute function public.sync_loadouts_to_pool();
 
 -- A loadout can't hold a card the pool doesn't have, or more copies than both rows together.
+-- The default loadout counts the deck row only: it never holds sideboard copies.
 create or replace function public.check_loadout_within_pool()
 returns trigger
 language plpgsql
@@ -84,7 +85,7 @@ begin
   select sum(dc.quantity) into pool_quantity
     from public.deck_loadouts dl
     join public.deck_cards dc on dc.deck_id = dl.deck_id and dc.variant_id = new.variant_id
-   where dl.id = new.loadout_id;
+   where dl.id = new.loadout_id and not (dl.is_default and dc.sideboard);
 
   if pool_quantity is null or new.quantity > pool_quantity then
     raise exception 'loadout quantity % exceeds pool quantity % for variant %',
