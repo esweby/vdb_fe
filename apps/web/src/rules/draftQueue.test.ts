@@ -71,7 +71,7 @@ describe("draftQueue", () => {
           attributes: {
             ...hp.variants[0]!.attributes,
             // Not drafted yet (arcane damage, being out of scope, wouldn't hold it back).
-            costReducedPerRunechant: true,
+            instantSpeed: { conditions: ["played_from_banish"] },
           },
         },
       ],

@@ -6,6 +6,7 @@ import type { AuthoredCardAttributes, Condition } from "@vdb/cards";
 import {
   describeEffects,
   type Check,
+  type CostReduction,
   type Effect,
   type Trigger,
 } from "@vdb/engine/rules";
@@ -19,6 +20,8 @@ export interface DraftRules {
   playableFromBanish?: boolean;
   /** "If this would be put into your graveyard from anywhere, instead banish it." */
   graveyardToBanish?: boolean;
+  /** What makes it cost less (docs/phase-two.md, engine features, 2). */
+  costReductions?: CostReduction[];
   /** An activated ability: how it's paid, and what it does (20 Oct 2026). */
   activate?: {
     speed: "instant" | "action";
@@ -327,8 +330,25 @@ export function draftEffects(
         ? "Drawing cards: not drafted yet"
         : "Bonuses to power or defence: combat is out of scope",
     );
-  if (a.costReductions?.length || a.costReducedPerRunechant)
-    note("Cost reductions: not drafted yet");
+  // Cost reductions: per Runechant, or a fixed amount from the banished zone or after a usurp.
+  const costReductions: CostReduction[] = [];
+  if (a.costReducedPerRunechant)
+    costReductions.push({ amount: "perRunechant" });
+  for (const r of a.costReductions ?? []) {
+    if (r.grantedTo) {
+      note("Cost reductions given to a later card: not drafted yet");
+      continue;
+    }
+    const when = (r.conditions ?? []).map((c) => COST_WHEN[c]);
+    if (r.amount === "per_runechant" && when.length === 0)
+      costReductions.push({ amount: "perRunechant" });
+    else if (typeof r.amount === "number" && when.length === 1 && when[0])
+      costReductions.push({ amount: r.amount, when: when[0] });
+    else
+      note(
+        `Cost reductions if ${CONDITION_PLAIN[r.conditions?.[0] as Condition] ?? "something else"}: not drafted yet`,
+      );
+  }
   if (a.tutors?.length) note("Searching the deck: not drafted yet");
   if (a.enablesPlayFromBanish?.length)
     note(
@@ -368,6 +388,7 @@ export function draftEffects(
     ...(a.hasUsurp ? { usurp: true } : {}),
     ...(playableFromBanish ? { playableFromBanish: true } : {}),
     ...(graveyardToBanish ? { graveyardToBanish: true } : {}),
+    ...(costReductions.length ? { costReductions } : {}),
   };
   return {
     cardName: card.name,
@@ -388,6 +409,7 @@ export function draftEffects(
       ...(rules.graveyardToBanish
         ? ["If it would go to the graveyard, it's banished instead."]
         : []),
+      ...(rules.costReductions ?? []).map(describeCostReduction),
       ...(rules.activate ? [describeActivation(rules.activate)] : []),
     ],
     notDrafted,
@@ -395,6 +417,25 @@ export function draftEffects(
     leftOut,
     complete: notDrafted.length === 0,
   };
+}
+
+/** The conditions a fixed cost reduction can be drafted for. */
+const COST_WHEN: Partial<
+  Record<string, Extract<CostReduction, { when: string }>["when"]>
+> = {
+  played_from_banish: "playedFromBanish",
+  usurped_this_turn: "usurpedThisTurn",
+};
+
+/** "It costs 2 less if it's played from the banished zone." */
+function describeCostReduction(r: CostReduction): string {
+  if (r.amount === "perRunechant")
+    return "It costs 1 less for each Runechant you have.";
+  return `It costs ${r.amount} less if ${
+    r.when === "playedFromBanish"
+      ? "it's played from the banished zone"
+      : "you've usurped this turn"
+  }.`;
 }
 
 /** "Activate (instant, 1 resource, destroy this): create 1 Runechant." */

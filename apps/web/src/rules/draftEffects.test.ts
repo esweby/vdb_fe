@@ -275,6 +275,60 @@ describe("draftEffects", () => {
     ]);
   });
 
+  // docs/phase-two.md, engine features, 2: cost reductions.
+  it("drafts a cost of 1 less for each Runechant", () => {
+    const draft = draftEffects(
+      withAttributes({ costReducedPerRunechant: true }),
+      byName("Become the Shadow Lord").variants[0]!,
+    );
+    expect(draft.rules.costReductions).toEqual([{ amount: "perRunechant" }]);
+    expect(draft.description).toContain(
+      "It costs 1 less for each Runechant you have.",
+    );
+    expect(draft.notDrafted).toEqual([]);
+  });
+
+  it("drafts a fixed reduction from the banished zone or after a usurp", () => {
+    const draft = draftEffects(
+      withAttributes({
+        costReductions: [
+          { amount: 2, conditions: ["played_from_banish"] },
+          { amount: 6, conditions: ["usurped_this_turn"] },
+        ],
+      }),
+      byName("Become the Shadow Lord").variants[0]!,
+    );
+    expect(draft.rules.costReductions).toEqual([
+      { amount: 2, when: "playedFromBanish" },
+      { amount: 6, when: "usurpedThisTurn" },
+    ]);
+    expect(draft.description).toEqual(
+      expect.arrayContaining([
+        "It costs 2 less if it's played from the banished zone.",
+        "It costs 6 less if you've usurped this turn.",
+      ]),
+    );
+    expect(draft.notDrafted).toEqual([]);
+  });
+
+  it("still lists a reduction given to a later card", () => {
+    const draft = draftEffects(
+      withAttributes({
+        costReductions: [
+          {
+            amount: "per_runechant",
+            grantedTo: "next_runeblade_attack_action",
+          },
+        ],
+      }),
+      byName("Become the Shadow Lord").variants[0]!,
+    );
+    expect(draft.rules.costReductions).toBeUndefined();
+    expect(draft.notDrafted).toContain(
+      "Cost reductions given to a later card: not drafted yet",
+    );
+  });
+
   it("carries Usurp and an unconditional play from the banished zone", () => {
     const card = withAttributes(
       { hasUsurp: true, playableFromBanish: {} },
