@@ -48,9 +48,9 @@ describe("deriveSynergies: role fits", () => {
     expect(edge("Abyssal Bite", "Become the Shadow Lord")).toBeUndefined();
   });
 
-  it("banishers help cards that play from banish, self-banishers less", () => {
+  it("banishers help cards that play from banish; self-banishers don't (20 Oct 2026)", () => {
     expect(edge("Blood Tribute", "Abyssal Bite")?.weight).toBe(0.7);
-    expect(edge("Carrion Husk", "Abyssal Bite")?.weight).toBe(0.4);
+    expect(edge("Carrion Husk", "Abyssal Bite")).toBeUndefined();
   });
 
   it("a hand banisher lets you choose the banished card's type; a deck banisher doesn't", () => {
@@ -169,5 +169,44 @@ describe("deriveSynergies: weights set by admins", () => {
     expect(
       edge("Murmuring Gloomblade", "Runechant of Lust", off),
     ).toBeUndefined();
+  });
+});
+
+// The maintainer, 20 Oct 2026: "Fallen Herald banishes itself, not other cards - which is skewing
+// the synergy questions." A card that banishes only itself puts nothing else in the banished zone:
+// it fills the zone (for cards better played from a full one), and that's all.
+describe("deriveSynergies: cards that banish only themselves", () => {
+  it("only feed rules about how full the banished zone is", () => {
+    expect(
+      SYNERGY_RULES.filter(
+        (r) => "from" in r && r.from.includes("self_banisher"),
+      ).map((r) => r.id),
+    ).toEqual(["banish-feeds-banish-play-payoff"]);
+  });
+
+  it("aren't linked to cards played from banish just for banishing themselves", () => {
+    const herald: SynergyCard = {
+      ...cards[0]!,
+      id: "Herald",
+      name: "Herald",
+      type: "attack_action",
+      subtypes: [],
+      attributes: {
+        ...cards[0]!.attributes,
+        groups: [],
+        banishesSelf: [{ from: "hand", trigger: "activated" }],
+        tokens: [],
+        banishesOwn: [],
+      },
+      variantAttributes: [],
+    };
+    const fromHerald = deriveSynergies([...cards, herald]).filter(
+      (e) => e.from === "Herald",
+    );
+    expect(
+      fromHerald
+        .flatMap((e) => e.reasons)
+        .filter((id) => id !== "banish-feeds-banish-play-payoff"),
+    ).toEqual([]);
   });
 });

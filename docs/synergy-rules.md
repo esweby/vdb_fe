@@ -23,11 +23,10 @@ Beyond these, a few attributes name another card or group directly. They become 
 | Gate   | Gate generator                            | Gate target        |            0.8 | A Gate plays a blood debt card out of banish, and lets Usurper traverse                    |
 | Gate   | Gate generator                            | Banish-play payoff |            0.7 | The payoff gets better when the Gate plays it from banish                                  |
 | Banish | Hand banisher, Deck or graveyard banisher | Plays from banish  |            0.7 | Each card in banish is like an extra playable card in hand                                 |
-| Banish | Self-banisher                             | Plays from banish  |            0.4 | Fills the banished zone, but only with itself                                              |
 | Banish | Any banisher                              | Banish-play payoff |            0.6 | Fills the zone it plays from                                                               |
 | Banish | Hand banisher                             | Banish-type payoff |            0.6 | Lets you choose a Shadow or Runeblade card to banish                                       |
-| Banish | Deck or graveyard banisher, Self-banisher | Banish-type payoff |            0.3 | The banished card's type is down to luck, or fixed                                         |
-| Banish | Any banisher                              | Banish trigger     |            0.7 | Fires its "when banished" effect                                                           |
+| Banish | Deck or graveyard banisher                | Banish-type payoff |            0.3 | The banished card's type is down to luck, or fixed                                         |
+| Banish | Hand banisher, Deck or graveyard banisher | Banish trigger     |            0.7 | Fires its "when banished" effect                                                           |
 | Aura   | Aura generator, Sinchant                  | Aura payoff        |            0.5 | Counts auras played or created this turn                                                   |
 | Tempo  | Go again granter, Eloquence               | Tempo payoff       |            0.5 | More actions in a turn                                                                     |
 | Usurp  | Usurp                                     | Usurp payoff       |            0.8 | Triggers on usurp, or needs a usurp this turn (Runechant of Lust, Usurp the Shadow Throne) |
@@ -137,3 +136,5 @@ synergy(card, picked) = λ × Σ over engines  min(1, Σ weight of edges between
 6. **Banish-play payoff:** filling the banished zone is like 2–3 extra playable cards in hand, which is very strong. Banish weights raised, and banish-play payoffs linked from both the Gate and banish engines.
 
 Still open: whether side focus scales synergy (3), and the default λ (scoring group).
+
+**Self-banishers (the maintainer, 20 Oct 2026):** a card that banishes only itself (Fallen Herald) puts nothing else in the banished zone. It no longer links to cards played from banish, to banish-type payoffs or to "when banished" triggers; it still fills the zone for banish-play payoffs.
