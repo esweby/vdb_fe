@@ -215,50 +215,74 @@ export function MatchupsPanel(props: {
           <p className={styles.muted}>
             {`${mainCount} cards in the main deck for this matchup`}
           </p>
-          <table className={styles.matchupTable}>
-            <thead>
-              <tr>
-                <th scope="col">Card</th>
-                <th scope="col">Main deck</th>
-                <th scope="col">This matchup</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((e) => {
-                const name = variantName(e.card, e.variant);
-                const n = plan.get(e.variant.id) ?? 0;
-                const set = (q: number) =>
-                  setPlan((p) => new Map(p).set(e.variant.id, q));
-                return (
-                  <tr key={e.variant.id}>
-                    <th scope="row">{name}</th>
-                    <td>{e.sideboard ? "Sideboard" : e.quantity}</td>
-                    <td>
-                      <span className={styles.stepper}>
-                        <button
-                          type="button"
-                          aria-label={`Fewer ${name}`}
-                          disabled={n === 0}
-                          onClick={() => set(n - 1)}
-                        >
-                          −
-                        </button>
-                        <span>{n}</span>
-                        <button
-                          type="button"
-                          aria-label={`More ${name}`}
-                          disabled={n >= e.quantity}
-                          onClick={() => set(n + 1)}
-                        >
-                          +
-                        </button>
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div className={styles.matchupBoard}>
+            {(["deck", "sideboard"] as const).map((side) => {
+              const label =
+                side === "deck" ? "Deck for this matchup" : "Sideboard";
+              const shown = rows
+                .map((e) => {
+                  const n = plan.get(e.variant.id) ?? 0;
+                  return { e, copies: side === "deck" ? n : e.quantity - n };
+                })
+                .filter((r) => r.copies > 0);
+              const total = shown.reduce((n, r) => n + r.copies, 0);
+              return (
+                <section key={side} className={styles.matchupSide}>
+                  <h4>{`${label} · ${total}`}</h4>
+                  <ul aria-label={label} className={styles.matchupCards}>
+                    {shown.map(({ e, copies }) => {
+                      const name = variantName(e.card, e.variant);
+                      const n = plan.get(e.variant.id) ?? 0;
+                      const set = (q: number) =>
+                        setPlan((p) => new Map(p).set(e.variant.id, q));
+                      return (
+                        <li key={e.variant.id} aria-label={name}>
+                          {e.variant.imageUrl ? (
+                            <img
+                              src={e.variant.imageUrl}
+                              alt=""
+                              loading="lazy"
+                            />
+                          ) : (
+                            <span className={styles.matchupStandIn}>
+                              {name}
+                            </span>
+                          )}
+                          <span
+                            className={styles.matchupCount}
+                          >{`×${copies}`}</span>
+                          {side === "deck" ? (
+                            <button
+                              type="button"
+                              className={styles.matchupMove}
+                              aria-label={`Board out a ${name}`}
+                              title="Board out one copy"
+                              onClick={() => set(n - 1)}
+                            >
+                              →
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              className={styles.matchupMove}
+                              aria-label={`Board in a ${name}`}
+                              title="Board in one copy"
+                              onClick={() => set(n + 1)}
+                            >
+                              ←
+                            </button>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  {shown.length === 0 && (
+                    <p className={styles.muted}>Nothing here.</p>
+                  )}
+                </section>
+              );
+            })}
+          </div>
           <div className={styles.matchupActions}>
             <Button variant="primary" onClick={() => void save()}>
               Save plan
