@@ -62,6 +62,21 @@ describe("describeAttributes", () => {
     ]);
   });
 
+  it("describes Opt, and when it needs the arsenal", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        opt: [
+          { amount: 3, trigger: "on_play" },
+          { amount: 2, trigger: "on_play", fromArsenal: true },
+        ],
+      }),
+    ).toEqual([
+      "Opt 3 when played.",
+      "Opt 2 when played, if it was played from arsenal.",
+    ]);
+  });
+
   it("joins several conditions with 'and'", () => {
     expect(
       describeAttributes({

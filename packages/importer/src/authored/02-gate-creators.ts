@@ -78,7 +78,6 @@ export const gateCreators: AuthoredAttributes = {
           conditions: ["top_card_matches_pitch"],
         },
       ],
-      notes: "Opt 2 before banishing, so you can set up the top card.",
     },
   },
   "Rites of Nightfall": {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { DatasetCard } from "../src/classify.ts";
 import {
+  optsFromText,
   parseStat,
   toImportCards,
   type AuthoredAttributes,
@@ -283,5 +284,65 @@ describe("authored attributes", () => {
         },
       }),
     ).toThrow(/Become the Shadow Lord/);
+  });
+});
+
+// The maintainer, 20 Oct 2026: Opt is very important, and lived only in a note. It's read from
+// each pitch's text, with when it happens.
+describe("optsFromText", () => {
+  it.each([
+    [
+      "Opt 3, then banish the top card of your deck.",
+      [{ amount: 3, trigger: "on_play" }],
+    ],
+    [
+      "Opt 2 Banish the top card of your deck. Go again",
+      [{ amount: 2, trigger: "on_play" }],
+    ],
+    ["When this attacks, opt 1.", [{ amount: 1, trigger: "on_attack" }]],
+    [
+      "When this hits, opt 2. If this was played from arsenal, it gets go again.",
+      [{ amount: 2, trigger: "on_hit" }],
+    ],
+    ["When this defends, opt 1.", [{ amount: 1, trigger: "on_defend" }]],
+    [
+      "Legendary When this is pitched, opt 2.",
+      [{ amount: 2, trigger: "on_pitch" }],
+    ],
+    [
+      "The next attack action card you play this turn gets +3{p}. If this was played from arsenal, opt 2. Go again",
+      [{ amount: 2, trigger: "on_play", fromArsenal: true }],
+    ],
+    ["Instant - Destroy this: Opt 2.", [{ amount: 2, trigger: "activated" }]],
+    [
+      "Action - {r}, destroy this: Opt 1, then create a Runechant token. Go again",
+      [{ amount: 1, trigger: "activated" }],
+    ],
+    [
+      "Instant - {r}, destroy this: Prevent the next 1 damage that would be dealt to you this turn. Opt 1",
+      [{ amount: 1, trigger: "activated" }],
+    ],
+    ["Create a Runechant token.", []],
+  ])("reads %j", (text, expected) => {
+    expect(optsFromText(text)).toEqual(expected);
+  });
+
+  it("records Opt on each pitch's attributes when importing", () => {
+    const entry = entries.find((e) => e.name === "Become the Shadow Lord")!;
+    const [imported] = toImportCards(
+      [
+        {
+          ...entry,
+          name: "Opt test",
+          unique_id: "opt-test",
+          functional_text_plain:
+            "Opt 3, then banish the top card of your deck.",
+        },
+      ],
+      {},
+    );
+    expect(imported!.variants[0]!.attributes.opt).toEqual([
+      { amount: 3, trigger: "on_play" },
+    ]);
   });
 });

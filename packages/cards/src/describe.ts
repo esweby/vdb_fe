@@ -227,6 +227,14 @@ function describedItems(attributes: CardAttributes): Item[] {
     );
   }
 
+  for (const o of attributes.opt ?? []) {
+    add(
+      "resolves",
+      o.trigger,
+      `Opt ${o.amount} ${TRIGGER_TEXT[o.trigger]}${o.fromArsenal ? ", if it was played from arsenal" : ""}.`,
+    );
+  }
+
   for (const b of attributes.banishesSelf ?? []) {
     const verb = b.optional ? "May banish" : "Banishes";
     add(

@@ -36,8 +36,8 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
   "Blood Tribute": {
     verified: true,
     card: {
+      // Opt 3/2/1 comes from each pitch's text (optsFromText).
       banishesOwn: [{ from: "deck_top", trigger: "on_play" }],
-      notes: "Opt 3/2/1 (red/yellow/blue) first.",
     },
   },
   "Bloodfrenzy Gloomblade": {

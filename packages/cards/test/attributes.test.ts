@@ -23,6 +23,23 @@ describe("authoredAttributesSchema", () => {
     expect(result.success).toBe(true);
   });
 
+  // The maintainer, 20 Oct 2026: Opt matters (Blood Tribute and the like).
+  it("accepts Opt, with when it happens and whether it needs the arsenal", () => {
+    expect(() =>
+      authoredAttributesSchema.parse({
+        opt: [
+          { amount: 3, trigger: "on_play" },
+          { amount: 2, trigger: "on_play", fromArsenal: true },
+        ],
+      }),
+    ).not.toThrow();
+    expect(() =>
+      authoredAttributesSchema.parse({
+        opt: [{ amount: 0, trigger: "on_play" }],
+      }),
+    ).toThrow();
+  });
+
   it("accepts a variable amount", () => {
     expect(
       authoredAttributesSchema.safeParse({
