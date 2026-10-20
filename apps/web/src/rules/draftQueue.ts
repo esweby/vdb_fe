@@ -7,7 +7,8 @@ import type { CardSummary } from "../cards/cardRepository.ts";
 import { draftEffects, type EffectDraft } from "./draftEffects.ts";
 import type { DraftReview } from "./draftReviewRepository.ts";
 
-export type DraftStatus = "complete" | "partial" | "reviewed" | "verified";
+export type DraftStatus =
+  "complete" | "partial" | "reviewed" | "verified" | "undraftable";
 
 export interface QueuedDraft {
   pitches: (number | null)[];
@@ -27,12 +28,19 @@ export interface DraftEntry {
   staleReview: boolean;
   /**
    * Complete: nothing left out. Partial: some facts not drafted. Reviewed: every draft has a
-   * verdict. Verified: rules signed off in code. All but verified are still unverified.
+   * verdict. Verified: rules signed off in code. Undraftable: nothing could be drafted, only
+   * what's missing. All but verified are still unverified.
    */
   status: DraftStatus;
 }
 
-const ORDER: DraftStatus[] = ["complete", "partial", "reviewed", "verified"];
+const ORDER: DraftStatus[] = [
+  "complete",
+  "partial",
+  "reviewed",
+  "verified",
+  "undraftable",
+];
 
 /** FNV-1a over the draft's rules and what it leaves out, as 8 hex digits. */
 function hashOf(text: string): string {
@@ -86,9 +94,11 @@ export function draftQueue(
       ? "verified"
       : drafts.every((d) => d.review)
         ? "reviewed"
-        : drafts.every((d) => d.draft.complete)
-          ? "complete"
-          : "partial";
+        : drafts.every((d) => d.draft.description.length === 0)
+          ? "undraftable"
+          : drafts.every((d) => d.draft.complete)
+            ? "complete"
+            : "partial";
     entries.push({ card, drafts, verified, staleReview, status });
   }
   return entries.sort(
@@ -96,4 +106,26 @@ export function draftQueue(
       ORDER.indexOf(a.status) - ORDER.indexOf(b.status) ||
       a.card.name.localeCompare(b.card.name),
   );
+}
+
+/**
+ * What the engine would need to draft the cards it can't, with how many cards each would help:
+ * the part of each "not drafted" line before its reason, most common first.
+ */
+export function missingFeatures(
+  entries: readonly DraftEntry[],
+): { what: string; cards: number }[] {
+  const counts = new Map<string, number>();
+  for (const e of entries) {
+    if (e.status !== "undraftable") continue;
+    const gaps = new Set(
+      e.drafts.flatMap((d) =>
+        d.draft.notDrafted.map((line) => line.split(":")[0]!.trim()),
+      ),
+    );
+    for (const gap of gaps) counts.set(gap, (counts.get(gap) ?? 0) + 1);
+  }
+  return [...counts]
+    .map(([what, cards]) => ({ what, cards }))
+    .sort((a, b) => b.cards - a.cards || a.what.localeCompare(b.what));
 }

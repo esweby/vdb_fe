@@ -8,6 +8,7 @@ import { Button, LoadError, Loading, Tag, TextField } from "../ui/index.ts";
 import type { DraftReview } from "./draftReviewRepository.ts";
 import {
   draftQueue,
+  missingFeatures,
   type DraftEntry,
   type DraftStatus,
   type QueuedDraft,
@@ -15,7 +16,13 @@ import {
 import { Enlarge } from "../decks/Enlarge.tsx";
 import styles from "./EffectDraftsPage.module.css";
 
-const SECTIONS: { status: DraftStatus; title: string; note: string }[] = [
+/** Folded sections start shut: they aren't for accepting (the maintainer, 20 Oct 2026). */
+const SECTIONS: {
+  status: DraftStatus;
+  title: string;
+  note: string;
+  folded?: boolean;
+}[] = [
   {
     status: "complete",
     title: "Ready to check",
@@ -24,7 +31,8 @@ const SECTIONS: { status: DraftStatus; title: string; note: string }[] = [
   {
     status: "partial",
     title: "Partly drafted",
-    note: "Some of the card's facts aren't drafted; they're listed under each draft.",
+    note: "Part of the card isn't drafted; what's missing is listed under each draft. Only accept one if the drafted part is right and the missing part doesn't matter for now.",
+    folded: true,
   },
   {
     status: "reviewed",
@@ -35,6 +43,12 @@ const SECTIONS: { status: DraftStatus; title: string; note: string }[] = [
     status: "verified",
     title: "Verified",
     note: "These cards already have rules a player signed off. The draft is shown for comparison.",
+  },
+  {
+    status: "undraftable",
+    title: "Can't draft yet",
+    note: "The engine can't express anything these cards do yet, so there's nothing to accept. The counts say which engine features would unlock the most cards.",
+    folded: true,
   },
 ];
 
@@ -269,23 +283,67 @@ export function EffectDraftsPage() {
         A draft is unverified until its rules are added to the engine with
         signed-off tests.
       </p>
+      <section aria-label="What to do" className={styles.guide}>
+        <h2>What to do</h2>
+        <ol>
+          <li>
+            Go through <strong>Ready to check</strong>. Open each card with the
+            magnifying glass and compare it with the draft, pitch by pitch.
+          </li>
+          <li>
+            {isAdmin
+              ? "Accept a draft that does exactly what the card says. Reject one that doesn't, with a note saying what's wrong."
+              : "An admin accepts a draft that does exactly what the card says, or rejects it with a note."}
+          </li>
+          <li>
+            Accepting doesn't change the game yet: accepted cards are added to
+            the engine, with tests, before goldfish and scenarios play them.
+          </li>
+        </ol>
+      </section>
       {SECTIONS.map((s) => {
         const entries = queue.filter((e) => e.status === s.status);
-        return (
-          <section
-            key={s.status}
-            aria-label={s.title}
-            className={styles.section}
-          >
-            <h2>
-              {s.title} <span className={styles.muted}>({entries.length})</span>
-            </h2>
+        const heading = (
+          <h2>
+            {s.title} <span className={styles.muted}>({entries.length})</span>
+          </h2>
+        );
+        const body = (
+          <>
             <p className={styles.muted}>{s.note}</p>
+            {s.status === "undraftable" && entries.length > 0 && (
+              <ul aria-label="What's missing" className={styles.missing}>
+                {missingFeatures(entries).map((m) => (
+                  <li
+                    key={m.what}
+                  >{`${m.what}: ${m.cards} card${m.cards === 1 ? "" : "s"}`}</li>
+                ))}
+              </ul>
+            )}
             <div className={styles.grid}>
               {entries.map((e) => (
                 <DraftCard key={e.card.id} entry={e} actions={actions} />
               ))}
             </div>
+          </>
+        );
+        return s.folded ? (
+          <details
+            key={s.status}
+            aria-label={`${s.title} (${entries.length})`}
+            className={styles.section}
+          >
+            <summary>{heading}</summary>
+            {body}
+          </details>
+        ) : (
+          <section
+            key={s.status}
+            aria-label={s.title}
+            className={styles.section}
+          >
+            {heading}
+            {body}
           </section>
         );
       })}

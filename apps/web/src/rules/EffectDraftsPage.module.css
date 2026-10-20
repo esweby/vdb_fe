@@ -83,3 +83,35 @@
   margin: 0;
   color: var(--danger);
 }
+
+/* What to do, and the folded sections (the maintainer, 20 Oct 2026). */
+.guide {
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--accent);
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--accent) 6%, var(--bg));
+}
+.guide h2 {
+  margin: 0 0 0.4rem;
+  font-size: 1.05rem;
+}
+.guide ol {
+  margin: 0;
+  padding-left: 1.3rem;
+  display: grid;
+  gap: 0.3rem;
+}
+details.section > summary {
+  cursor: pointer;
+  list-style-position: inside;
+}
+details.section > summary h2 {
+  display: inline;
+}
+.missing {
+  columns: 2 16rem;
+  margin: 0 0 1rem;
+  padding-left: 1.2rem;
+  font-size: 0.9rem;
+}
