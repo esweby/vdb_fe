@@ -2,7 +2,12 @@
 // edges the derived rules propose; docs/synergy-rules.md "Community feedback").
 import type { SynergyEdge } from "@vdb/cards";
 import { describe, expect, it } from "vitest";
-import { feedbackRows, pairKey, synergyQueue } from "./synergyQueue.ts";
+import {
+  feedbackRows,
+  pairKey,
+  relevantLinks,
+  synergyQueue,
+} from "./synergyQueue.ts";
 
 const edge = (
   from: string,
@@ -89,5 +94,34 @@ describe("feedbackRows", () => {
       null,
       null,
     ]);
+  });
+});
+
+// The maintainer, 20 Oct 2026: about 6,000 links was "way too much". Only links that matter to
+// you: one of its cards is in your decks, or both are rated 7 or more.
+describe("relevantLinks", () => {
+  const links = [
+    edge("rb1", "rb2", 0.8),
+    edge("rb2", "rb3", 0.8),
+    edge("rb3", "gen", 0.8),
+  ];
+
+  it("keeps links with a card in your decks", () => {
+    expect(
+      relevantLinks(links, { myCards: new Set(["rb1"]), ratings: new Map() }),
+    ).toEqual([links[0]]);
+  });
+
+  it("keeps links between two cards rated 7 or more", () => {
+    expect(
+      relevantLinks(links, {
+        myCards: new Set(),
+        ratings: new Map([
+          ["rb2", 75],
+          ["rb3", 70],
+          ["gen", 69],
+        ]),
+      }),
+    ).toEqual([links[1]]);
   });
 });

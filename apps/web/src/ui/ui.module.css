@@ -372,3 +372,16 @@
     color: transparent;
   }
 }
+
+.crashed {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: start;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--surface, var(--bg));
+}
+.crashed code {
+  font-size: 0.85em;
+}

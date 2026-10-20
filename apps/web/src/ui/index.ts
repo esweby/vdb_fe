@@ -5,3 +5,4 @@ export { Table, type Column } from "./Table.tsx";
 export { Tag } from "./Tag.tsx";
 export { TextField } from "./TextField.tsx";
 export { Loading, LoadError } from "./States.tsx";
+export { ErrorBoundary } from "./ErrorBoundary.tsx";

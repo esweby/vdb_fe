@@ -7,13 +7,14 @@ import {
   useId,
   useMemo,
   useState,
+  type ComponentProps,
   type FormEvent,
   type KeyboardEvent,
 } from "react";
 import { useCards } from "../cards/useCards.ts";
 import { weightedEdges, type WeightedEdge } from "../ranking/synergyCore.ts";
 import { useServices } from "../servicesContext.ts";
-import { Button, LoadError, Loading } from "../ui/index.ts";
+import { Button, ErrorBoundary, LoadError, Loading } from "../ui/index.ts";
 import { ENGINE_COLOURS, STATUS_COLOURS } from "./colours.ts";
 import {
   bestNextCards,
@@ -79,7 +80,7 @@ export interface ExplorerScope {
  * side panel to choose where to start, refine what's drawn, and walk from card to card. Used
  * by the Synergies page (the whole pool) and the Synergies tabs (a core or a deck, as `scope`).
  */
-export function SynergyExplorer(props: {
+function ExplorerBody(props: {
   settings: ExplorerSettings;
   /** `push`: a step Back can return from (selecting a card). */
   onChange: (patch: Partial<ExplorerSettings>, push?: boolean) => void;
@@ -531,6 +532,7 @@ export function SynergyExplorer(props: {
                       </span>
                     </span>
                     <Button
+                      className={styles.inGraph}
                       onClick={() =>
                         setPicked(shown ? null : { key, cards: members })
                       }
@@ -573,6 +575,7 @@ export function SynergyExplorer(props: {
                     {g.partners.length > 3 &&
                       ` and ${g.partners.length - 3} more`}
                     <Button
+                      className={styles.inGraph}
                       onClick={() =>
                         setPicked(
                           shown ? null : { key, cards: [g.id, ...g.partners] },
@@ -664,6 +667,7 @@ export function SynergyExplorer(props: {
                         ))}
                       </span>
                       <Button
+                        className={styles.inGraph}
                         onClick={() =>
                           setPicked(
                             shown
@@ -733,4 +737,13 @@ export function ScopedSynergies(props: {
   if (props.scope.cardIds.length === 0)
     return <p className={styles.muted}>{props.empty}</p>;
   return <SynergyExplorer {...local} scope={props.scope} />;
+}
+
+/** The explorer, kept from blanking the page if it crashes. */
+export function SynergyExplorer(props: ComponentProps<typeof ExplorerBody>) {
+  return (
+    <ErrorBoundary what="The synergy graph">
+      <ExplorerBody {...props} />
+    </ErrorBoundary>
+  );
 }

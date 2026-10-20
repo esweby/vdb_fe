@@ -5,6 +5,7 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { fakeAuthService } from "../test/fakeAuthService.ts";
+import { fakeDeckRepository } from "../test/fakeDeckRepository.ts";
 import { fakeSynergyRepository } from "../test/fakeSynergyRepository.ts";
 import { renderApp } from "../test/renderApp.tsx";
 
@@ -18,11 +19,27 @@ const BTSL = "card-become-the-shadow-lord";
 const HOCUS = "card-hocus-pocus";
 const question = "Does Become the Shadow Lord help Hocus Pocus?";
 
-async function open(synergy = fakeSynergyRepository()) {
+/** The scorer's deck has Hocus Pocus, so its link is relevant to them. */
+const withDeck = (
+  cards = [{ variantId: "hp1", quantity: 3, sideboard: false }],
+) =>
+  fakeDeckRepository([
+    {
+      id: "deck-1",
+      name: "Gate tempo",
+      updatedAt: "2026-10-14T10:00:00Z",
+      ownerId: "s1",
+      cards,
+      pitchTargets: {},
+    },
+  ]).repository;
+
+async function open(synergy = fakeSynergyRepository(), decks = withDeck()) {
   const app = await renderApp({
     path: "/needs-review/synergies",
     auth: auth("s@test.local"),
     synergy: synergy.repository,
+    decks,
   });
   return { ...app, synergy, user: userEvent.setup() };
 }
@@ -54,7 +71,9 @@ describe("confirm synergies", () => {
       ),
     ).toBeInTheDocument();
     expect(screen.getByText("Rule weight 0.8")).toBeInTheDocument();
-    expect(screen.getByText("1 link left")).toBeInTheDocument();
+    expect(
+      screen.getByText("1 of 1 relevant link in this sitting"),
+    ).toBeInTheDocument();
   });
 
   it("Y confirms the link for every rule behind it", async () => {
@@ -143,6 +162,21 @@ describe("confirm synergies", () => {
     );
     expect(
       await screen.findByText("You've answered every suggestion."),
+    ).toBeInTheDocument();
+  });
+
+  // The maintainer, 20 Oct 2026: only links to cards in your decks, or between well rated cards.
+  it("asks only about links that matter to you", async () => {
+    await open(fakeSynergyRepository(), withDeck([]));
+    expect(
+      await screen.findByText(/No links to confirm for the cards you play/),
+    ).toBeInTheDocument();
+  });
+
+  it("says how many are in this sitting of 20", async () => {
+    await open();
+    expect(
+      await screen.findByText("1 of 1 relevant link in this sitting"),
     ).toBeInTheDocument();
   });
 });
