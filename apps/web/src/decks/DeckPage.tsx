@@ -13,9 +13,16 @@ import { ConditionAvailabilityPanel } from "./ConditionAvailabilityPanel.tsx";
 import { DeckGapsPanel } from "./DeckGapsPanel.tsx";
 import { DeckScenarios } from "./DeckScenarios.tsx";
 import { MatchupsPanel } from "./MatchupsPanel.tsx";
+import { entriesForMatchup } from "./matchupEntries.ts";
 import { Goldfish } from "./Goldfish.tsx";
 import { ScopedSynergies } from "../synergy/SynergyExplorer.tsx";
-import type { Deck, DeckCard, PitchTargets } from "./deckRepository.ts";
+import type {
+  Deck,
+  DeckCard,
+  Hero,
+  Matchup,
+  PitchTargets,
+} from "./deckRepository.ts";
 import {
   deckCounts,
   deckProblems,
@@ -60,6 +67,7 @@ export function DeckPage() {
     side,
     log,
     fixed,
+    vs,
   } = route.useSearch();
   const navigate = useNavigate();
   const { decks } = useServices();
@@ -68,6 +76,23 @@ export function DeckPage() {
   const [rules, setRules] = useState<FormatRules | null>(null);
   const [error, setError] = useState<string | null>(null);
   const user = useAppSelector((s) => s.auth.user);
+  // Matchup plans and their heroes, for "Playing" on goldfish and scenarios. Row level
+  // security returns only the owner's plans.
+  const [plans, setPlans] = useState<{ matchups: Matchup[]; heroes: Hero[] }>({
+    matchups: [],
+    heroes: [],
+  });
+  useEffect(() => {
+    if (!user) return;
+    let live = true;
+    Promise.all([decks.listMatchups(deckId), decks.listHeroes()]).then(
+      ([matchups, heroes]) => live && setPlans({ matchups, heroes }),
+      () => {},
+    );
+    return () => {
+      live = false;
+    };
+  }, [decks, deckId, user, tab]);
 
   const [loadFailed, setLoadFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -198,6 +223,11 @@ export function DeckPage() {
 
   // Only the owner changes a deck; anyone else sees a public one read only.
   const canEdit = user?.id === deck.ownerId;
+  // The plan being played, if any: its cards are the main deck for goldfish and scenarios.
+  const playing = vs ? plans.matchups.find((m) => m.heroId === vs) : undefined;
+  const playEntries = playing
+    ? entriesForMatchup(entries, playing.cards)
+    : entries;
   const onSet = canEdit ? (card: DeckCard) => void setCard(card) : undefined;
   const counts = deckCounts(entries);
   const problems = rules ? deckProblems(entries, rules) : [];
@@ -213,6 +243,10 @@ export function DeckPage() {
       search: {
         ...(next.tab !== "cards" ? { tab: next.tab } : {}),
         ...(next.view === "list" ? { view: "list" as const } : {}),
+        // The matchup being played carries between goldfish and scenarios.
+        ...(vs && (next.tab === "goldfish" || next.tab === "scenarios")
+          ? { vs }
+          : {}),
       },
     });
   const setTab = (next: Tab) => go({ tab: next, view });
@@ -252,6 +286,35 @@ export function DeckPage() {
           </ul>
         ))}
 
+      {(tab === "goldfish" || tab === "scenarios") &&
+        plans.matchups.length > 0 && (
+          <label className={styles.playing}>
+            <span>Playing</span>
+            <select
+              value={playing?.heroId ?? ""}
+              onChange={(e) =>
+                void navigate({
+                  to: ".",
+                  replace: true,
+                  resetScroll: false,
+                  search: {
+                    tab,
+                    // The same shuffle, with or without the plan, to compare.
+                    ...(seed !== undefined ? { seed } : {}),
+                    ...(e.target.value ? { vs: e.target.value } : {}),
+                  },
+                })
+              }
+            >
+              <option value="">Main deck</option>
+              {plans.matchups.map((m) => (
+                <option key={m.id} value={m.heroId}>
+                  {`vs ${plans.heroes.find((h) => h.id === m.heroId)?.name ?? "an unknown hero"}`}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
       <div role="tablist" aria-label="Deck views" className={styles.tabs}>
         {TABS.map((t) => (
           <button
@@ -276,7 +339,8 @@ export function DeckPage() {
       >
         {tab === "goldfish" ? (
           <Goldfish
-            entries={entries}
+            key={playing ? playing.id : "main"}
+            entries={playEntries}
             seed={seed}
             side={side}
             log={log}
@@ -291,7 +355,11 @@ export function DeckPage() {
             empty="Add cards to the deck to see how they link."
           />
         ) : tab === "scenarios" ? (
-          <DeckScenarios deckId={deckId} entries={entries} />
+          <DeckScenarios
+            key={playing ? playing.id : "main"}
+            deckId={deckId}
+            entries={playEntries}
+          />
         ) : tab === "matchups" ? (
           <MatchupsPanel deckId={deckId} entries={entries} canEdit={canEdit} />
         ) : tab === "gaps" ? (

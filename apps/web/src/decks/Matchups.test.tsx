@@ -129,3 +129,70 @@ describe("matchups", () => {
     expect(panel.queryByRole("list", { name: "Planned matchups" })).toBeNull();
   });
 });
+
+// Part 3: goldfish and scenarios play a plan.
+describe("playing a matchup", () => {
+  const plan: Matchup = {
+    id: "m1",
+    deckId: "deck-1",
+    heroId: "h1",
+    // Hocus Pocus 2 (one out), Become the Shadow Lord 2, Fate Foreseen 1 (in): 5 cards.
+    cards: [
+      { variantId: "hp1", quantity: 2 },
+      { variantId: "bsl3", quantity: 2 },
+      { variantId: "ff1", quantity: 1 },
+    ],
+  };
+  const openAt = async (path: string) => {
+    const fake = fakeDeckRepository(
+      [
+        {
+          id: "deck-1",
+          name: "Gate tempo",
+          updatedAt: "2026-10-14T10:00:00Z",
+          cards: CARDS,
+          pitchTargets: {},
+        },
+      ],
+      { heroes: HEROES, matchups: [plan] },
+    );
+    const { router } = await renderApp({
+      path,
+      auth: fakeAuthService({
+        users: { "u@test.local": { id: "u1", password: "pw", role: "user" } },
+        signedIn: { id: "u1", email: "u@test.local" },
+      }).service,
+      decks: fake.repository,
+    });
+    return { router, user: userEvent.setup() };
+  };
+
+  it("goldfish deals from the plan when one is chosen, and keeps it in the link", async () => {
+    const { router, user } = await openAt("/decks/deck-1?tab=goldfish&seed=7");
+    const playing = await screen.findByLabelText("Playing");
+    await user.selectOptions(playing, "h1");
+    expect(router.state.location.search).toMatchObject({ vs: "h1" });
+    const goldfish = within(
+      (await screen.findAllByRole("region", { name: "Goldfish" })).at(-1)!,
+    );
+    // 5 cards in the plan: 4 in hand, 1 left in the deck.
+    expect(
+      goldfish.getByRole("heading", { name: "Deck · 1" }),
+    ).toBeInTheDocument();
+  });
+
+  it("scenarios run on the plan's cards", async () => {
+    await openAt("/decks/deck-1?tab=scenarios&vs=h1");
+    expect(await screen.findByLabelText("Playing")).toHaveValue("h1");
+    const user = userEvent.setup();
+    const builder = within(
+      await screen.findByRole("region", { name: "Build a scenario" }),
+    );
+    await user.click(
+      builder.getByRole("button", { name: "Run this scenario" }),
+    );
+    expect(
+      await screen.findByText(/of 10,000 runs · seed 1 · 5 deck cards$/),
+    ).toBeInTheDocument();
+  });
+});
