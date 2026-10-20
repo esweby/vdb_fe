@@ -25,7 +25,7 @@ Phase two is largely built. What's left is less building than feeding the engine
 3. An admin accepts or rejects each draft, pitch by pitch. A verdict covers that draft only: when a card's facts change, its draft and hash change, and the verdict goes stale.
 4. Accepted drafts are added to the engine's verified rules (`CARD_RULES` in `packages/engine/src/rules/viserai.ts`), with tests. Only then do goldfish and scenarios play the card by the rules.
 
-The first batch (24 cards) went in on 20 Oct 2026, with the sinchants. The hosted cards need re-importing after any change to card facts: `npm run import -w @vdb/importer -- --yes-remote`, run from an up-to-date `main`.
+The first batch (24 cards) went in on 20 Oct 2026, with the sinchants. The second (62 cards, mostly equipment, potions and amulets whose activated ability is otherwise out of scope) went in the same evening; a played item now stays in the arena, so it can be activated. The hosted cards need re-importing after any change to card facts: `npm run import -w @vdb/importer -- --yes-remote`, run from an up-to-date `main`.
 
 ## Decisions (the maintainer)
 
@@ -39,6 +39,7 @@ Game logic decided by the maintainer, with where it lives. Anything not here is 
 
 **20 Oct 2026**
 
+- **Energy Potion** gains 2 resources.
 - **Gaps:** red first. Gate makers aren't needed in every colour, so they're never a gap by colour.
 - **Core builder:** defence reactions are suggested only at their best defence (red covers the 4 breakpoint). Equipment can be suggested, as an option. Cards that make Runechants every turn get their own preference.
 - **Synergy:** a card that banishes only itself, like Fallen Herald, isn't a hand banisher and doesn't feed other cards, except by filling the banished zone. A blood debt card that can already be played from banish, like Sinspeaker Gloomblade, isn't a Gate target.
@@ -53,7 +54,7 @@ Game logic decided by the maintainer, with where it lives. Anything not here is 
 
 **For the maintainer**
 
-- Review the cards in **Ready to check**, including Engulfing Shadows and Embraforged Gauntlet ("banished instead of the graveyard").
+- Review the cards in **Ready to check**. The rejected drafts' notes (gain a resource, like Fyendal's; draw a card; Hope Merchant's Hood's shuffle and draw) are features to add.
 - Details of number entry when scoring on a MacBook keyboard (carried from phase one).
 - A player check of the legality filter (carried from phase one).
 
