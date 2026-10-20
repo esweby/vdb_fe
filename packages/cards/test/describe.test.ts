@@ -651,6 +651,24 @@ describe("describeAttributes", () => {
     ]);
   });
 
+  // Otherworldly Sins (the maintainer, 20 Oct 2026): its bonus as a fact rather than a note.
+  it("describes power given to your next Runeblade or Shadow attack", () => {
+    expect(
+      describeAttributes({
+        ...generated,
+        conditionalBonuses: [
+          {
+            effect: "plus_power",
+            amount: 3,
+            grantedTo: "next_runeblade_or_shadow_attack",
+          },
+        ],
+      }),
+    ).toEqual([
+      "Your next Runeblade or Shadow attack this turn gets +3 power.",
+    ]);
+  });
+
   it("describes Swarming Gloomveil's aura thresholds", () => {
     expect(
       describeAttributes({

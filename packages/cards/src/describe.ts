@@ -89,6 +89,8 @@ const GRANTED_TEXT: Record<GrantedTo, string> = {
   next_runeblade_attack_action:
     "Your next Runeblade attack action card this turn gets",
   next_shadow_attack: "Your next Shadow attack this turn gets",
+  next_runeblade_or_shadow_attack:
+    "Your next Runeblade or Shadow attack this turn gets",
   banished_card: "The card banished this way gets",
   card_in_banished_zone_matching_pitch:
     "A card of this card's colour in your banished zone gets",

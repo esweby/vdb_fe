@@ -67,7 +67,8 @@ describe("draftQueue", () => {
           ...hp.variants[0]!,
           attributes: {
             ...hp.variants[0]!.attributes,
-            arcaneDamage: [{ amount: 1, trigger: "on_play" }],
+            // Not drafted yet (arcane damage, being out of scope, wouldn't hold it back).
+            costReducedPerRunechant: true,
           },
         },
       ],
