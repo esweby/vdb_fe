@@ -1,4 +1,5 @@
 import { getRouteApi, Link } from "@tanstack/react-router";
+import { SynergyNudge } from "../synergy/SynergyNudge.tsx";
 import { CardScoringView } from "./CardScoringView.tsx";
 
 const route = getRouteApi("/cards/$cardId");
@@ -10,6 +11,7 @@ export function CardScoringPage() {
     <>
       <Link to="/cards">← Cards</Link>
       <CardScoringView cardId={cardId} showTitle />
+      <SynergyNudge focus={cardId} />
     </>
   );
 }
