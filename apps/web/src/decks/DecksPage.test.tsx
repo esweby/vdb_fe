@@ -568,13 +568,11 @@ describe("deck page", () => {
     const red = within(
       await screen.findByRole("listitem", { name: "Hocus Pocus (red)" }),
     );
-    await userEvent
-      .setup()
-      .click(
-        red.getByRole("button", {
-          name: "Add Hocus Pocus (red) to the sideboard",
-        }),
-      );
+    await userEvent.setup().click(
+      red.getByRole("button", {
+        name: "Add Hocus Pocus (red) to the sideboard",
+      }),
+    );
     expect(fake.saved).toEqual(["set deck-1 hp1 1 side"]);
     await screen.findByText("1 deck cards · 1 sideboard · 2 in the pool");
   });
