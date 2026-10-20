@@ -12,6 +12,7 @@ import { DeckAnalysisPanel } from "./DeckAnalysisPanel.tsx";
 import { ConditionAvailabilityPanel } from "./ConditionAvailabilityPanel.tsx";
 import { DeckGapsPanel } from "./DeckGapsPanel.tsx";
 import { DeckScenarios } from "./DeckScenarios.tsx";
+import { DeckSettings } from "./DeckSettings.tsx";
 import { MatchupsPanel } from "./MatchupsPanel.tsx";
 import { entriesForMatchup } from "./matchupEntries.ts";
 import { Goldfish } from "./Goldfish.tsx";
@@ -273,6 +274,13 @@ export function DeckPage() {
       <header className={styles.deckHeader}>
         <div>
           <h1>{deck.name}</h1>
+          {canEdit && (
+            <DeckSettings
+              deck={deck}
+              onChange={(patch) => setDeck({ ...deck, ...patch })}
+              onDeleted={() => void navigate({ to: "/decks" })}
+            />
+          )}
           {!canEdit && (
             <p className={styles.byline}>
               <Tag>Read only</Tag>

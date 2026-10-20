@@ -55,6 +55,14 @@ export function fakeDeckRepository(
       saved.push(`${isPublic ? "public" : "private"} ${deckId}`);
       decks = decks.map((d) => (d.id === deckId ? { ...d, isPublic } : d));
     },
+    async renameDeck(deckId, name) {
+      saved.push(`rename ${deckId} ${name}`);
+      decks = decks.map((d) => (d.id === deckId ? { ...d, name } : d));
+    },
+    async deleteDeck(deckId) {
+      saved.push(`delete ${deckId}`);
+      decks = decks.filter((d) => d.id !== deckId);
+    },
     getDeck: async (id) => decks.find((d) => d.id === id) ?? null,
     async setCard(deckId, card) {
       saved.push(
