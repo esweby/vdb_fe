@@ -184,6 +184,10 @@ export function NeedsReviewPage() {
         Check the links the rules suggest between cards:{" "}
         <Link to="/needs-review/synergies">Confirm synergies</Link>
       </p>
+      <p className={styles.synergies}>
+        Check what the rules engine drafts from each card's facts:{" "}
+        <Link to="/needs-review/effects">Check effect drafts</Link>
+      </p>
       <FilteredLayout
         state={filters.state}
         facets={facets}
