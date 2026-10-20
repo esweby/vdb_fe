@@ -421,3 +421,39 @@ describe("the playmat", () => {
     ]);
   });
 });
+
+// The maintainer, 20 Oct 2026: closer to Fabrary's draw view, with small cards on the board,
+// piles with counts and a plain hand.
+describe("the compact board", () => {
+  it("says when nothing has been played this turn", async () => {
+    const { table, user } = await open();
+    expect(
+      zone(table, "Arena").getByText("No cards played this turn"),
+    ).toBeInTheDocument();
+    const [first] = zoneCards(table, "Hand");
+    await user.selectOptions(
+      within(first!).getByRole("combobox", {
+        name: `Action for ${first!.getAttribute("aria-label")}`,
+      }),
+      "To arena (by hand)",
+    );
+    expect(
+      zone(table, "Arena").queryByText("No cards played this turn"),
+    ).toBeNull();
+  });
+
+  it("shows each pile as a stack with its count", async () => {
+    const { table, user } = await open();
+    expect(zone(table, "Pitch").getByTestId("count")).toHaveTextContent("0");
+    expect(zone(table, "Deck").getByTestId("count")).toHaveTextContent("6");
+    await user.click(zoneCards(table, "Hand")[0]!);
+    await user.keyboard("i");
+    expect(zone(table, "Pitch").getByTestId("count")).toHaveTextContent("1");
+  });
+
+  it("names an empty zone in a card-sized space", async () => {
+    const { table } = await open();
+    expect(zone(table, "Banished").getByText("Banished")).toBeInTheDocument();
+    expect(zone(table, "Graveyard").getByText("Graveyard")).toBeInTheDocument();
+  });
+});
