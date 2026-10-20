@@ -56,6 +56,8 @@ export interface EffectDraft {
   leftOut: string[];
   /** Nothing was left out but what's out of scope. Still unverified until a player checks it. */
   complete: boolean;
+  /** The note on the card's facts, if any: read it before accepting. */
+  factsNote?: string;
 }
 
 const TOKEN_LABEL: Record<string, string> = {
@@ -372,8 +374,11 @@ export function draftEffects(
     note("Turning banished cards face down: not drafted yet");
   if (a.instantSpeed) note("Playing it as an instant: not drafted yet");
   if (a.grantsGoAgain) note("Go again given to a later card: not drafted yet");
-  // A note says what the facts couldn't, so the draft can't be complete without a look.
-  if (a.notes) note(`A note on the card's facts, to check by hand: ${a.notes}`);
+  // A note says what the facts couldn't: it's read before accepting, but doesn't hold the draft
+  // back (the maintainer, 20 Oct 2026). It stays among what's left out, so the hash, and the
+  // verdicts given on it, don't change.
+  if (a.notes)
+    leftOut.push(`A note on the card's facts, to check by hand: ${a.notes}`);
   const playableFromBanish =
     !!a.playableFromBanish &&
     (a.playableFromBanish.conditions?.length ?? 0) === 0;
@@ -430,6 +435,7 @@ export function draftEffects(
     outOfScope,
     leftOut,
     complete: notDrafted.length === 0,
+    ...(a.notes ? { factsNote: a.notes } : {}),
   };
 }
 

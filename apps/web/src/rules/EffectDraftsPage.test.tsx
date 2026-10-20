@@ -77,6 +77,32 @@ describe("effect drafts page", () => {
     expect(partly).not.toHaveAttribute("open");
   });
 
+  // The maintainer, 20 Oct 2026: Dimenxxional Crossroads was hidden under Partly drafted only for
+  // its note. A card whose only leftover is its note is ready, with the note shown to read first.
+  it("lists a card whose only leftover is its note as ready, with the note to read first", async () => {
+    const noted = {
+      ...TEST_POCUS,
+      id: "card-noted-pocus",
+      name: "Noted Pocus",
+      attributes: { ...TEST_POCUS.attributes, notes: "Mind the arcane ping." },
+      variants: TEST_POCUS.variants.map((v) => ({
+        ...v,
+        id: v.id.replace("tp", "np"),
+      })),
+    };
+    await renderApp({
+      path: "/needs-review/effects",
+      cards: fakeCardRepository([...POOL, noted]),
+      auth: signedInAs("a1", "a@test.local"),
+    });
+    const ready = await screen.findByRole("region", { name: "Ready to check" });
+    const card = within(ready).getByRole("article", { name: "Noted Pocus" });
+    expect(card).toHaveTextContent(
+      "Read the note first: Mind the arcane ping.",
+    );
+    expect(within(card).getByRole("button", { name: "Accept" })).toBeEnabled();
+  });
+
   it("shows cards with verified rules apart, so they aren't checked twice", async () => {
     await renderApp({
       path: "/needs-review/effects",

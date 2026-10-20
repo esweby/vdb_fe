@@ -220,6 +220,11 @@ function DraftCard(props: { entry: DraftEntry; actions?: Actions }) {
             ) : (
               <p className={styles.muted}>Nothing drafted.</p>
             )}
+            {d.draft.factsNote && (
+              <p>
+                <strong>Read the note first:</strong> {d.draft.factsNote}
+              </p>
+            )}
             {d.draft.outOfScope.length > 0 && (
               <>
                 <p className={styles.muted}>
