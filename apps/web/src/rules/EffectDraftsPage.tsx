@@ -146,11 +146,17 @@ function Verdict(props: {
 }
 
 function DraftCard(props: { entry: DraftEntry; actions?: Actions }) {
-  const { card, drafts, verified, staleReview } = props.entry;
+  const { card, drafts, verified, staleReview, status } = props.entry;
+  // Reviewed cards fold to the picture's height, opened by a chevron (the maintainer, 20 Oct 2026).
+  const foldable = status === "reviewed";
+  const [open, setOpen] = useState(false);
   const titleId = `draft-${card.id}`;
   const image = card.variants.find((v) => v.imageUrl)?.imageUrl;
   return (
-    <article aria-labelledby={titleId} className={styles.card}>
+    <article
+      aria-labelledby={titleId}
+      className={`${styles.card} ${foldable && !open ? styles.folded : ""}`}
+    >
       {image && (
         // A magnifying glass enlarges the card to read it (the maintainer, 20 Oct 2026).
         <div className={styles.imageWrap}>
@@ -171,6 +177,31 @@ function DraftCard(props: { entry: DraftEntry; actions?: Actions }) {
           <Tag tone={verified ? "accent" : "neutral"}>
             {verified ? "Verified" : "Unverified"}
           </Tag>
+          {foldable && (
+            <button
+              type="button"
+              className={styles.chevron}
+              aria-expanded={open}
+              aria-label={`Show all of ${card.name}`}
+              onClick={() => setOpen((o) => !o)}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="18"
+                height="18"
+                aria-hidden="true"
+              >
+                <path
+                  d="m6 9 6 6 6-6"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+          )}
         </div>
         {staleReview && (
           <p className={styles.muted}>
