@@ -54,7 +54,7 @@ export function ScenariosPanel(props: {
       </header>
       {output && (
         <p className={styles.runInfo}>
-          {`${n(output.runs)} runs each · seed ${output.seed} · ${output.deck.coreCards} ${source} cards + ${output.deck.blanks} blanks (${output.deck.deckSize})`}
+          {`${n(output.runs)} runs each · seed ${output.seed} · ${output.deck.coreCards} ${source} cards${output.deck.blanks > 0 ? ` + ${output.deck.blanks} blanks (${output.deck.deckSize})` : ""}`}
         </p>
       )}
       {props.stale && (
@@ -121,9 +121,10 @@ export function ScenariosPanel(props: {
         </div>
       )}
       <p className={styles.hint}>
-        A hand of 4 (Viserai's intellect), drawn from the {source} plus blanks
-        up to the deck size. Built-in scenarios are a first pass for the scoring
-        group to check.
+        {source === "core"
+          ? "A hand of 4 (Viserai's intellect), drawn from the core plus blanks up to the deck size."
+          : "A hand of 4 (Viserai's intellect), drawn from the main deck as built."}{" "}
+        Built-in scenarios are a first pass for the scoring group to check.
       </p>
     </section>
   );

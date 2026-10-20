@@ -31,7 +31,6 @@ type Lookup = Map<string, { card: CardSummary; variant: VariantSummary }>;
 function DeckTile(props: {
   deck: DeckSummary;
   lookup: Lookup;
-  deckMin?: number;
   yours: boolean;
   canChangeVisibility: boolean;
   onVisibility: (isPublic: boolean) => void;
@@ -75,11 +74,7 @@ function DeckTile(props: {
           </Link>
         </h2>
         <p className={styles.meta}>
-          <span>
-            {props.deckMin
-              ? `${count} of ${props.deckMin} cards`
-              : `${count} cards`}
-          </span>
+          <span>{`${count} cards`}</span>
           <span aria-hidden="true">·</span>
           <span>Updated {updatedAgo(deck.updatedAt)}</span>
           {!props.yours && deck.ownerName && (
@@ -372,7 +367,6 @@ export function DecksPage() {
                 key={deck.id}
                 deck={deck}
                 lookup={lookup}
-                deckMin={rules?.deckMin}
                 yours={deck.ownerId === user?.id}
                 canChangeVisibility={tab === "mine"}
                 onVisibility={(isPublic) => void setVisibility(deck, isPublic)}
