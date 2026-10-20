@@ -6,7 +6,11 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { fakeAuthService } from "../test/fakeAuthService.ts";
 import { fakeDeckRepository } from "../test/fakeDeckRepository.ts";
-import { fakeCardRepository, sampleCards } from "../test/fakeCardRepository.ts";
+import {
+  fakeCardRepository,
+  sampleCards,
+  TEST_POCUS,
+} from "../test/fakeCardRepository.ts";
 import { renderApp } from "../test/renderApp.tsx";
 import type { DeckCard, Hero } from "./deckRepository.ts";
 import { encodeFixed } from "./goldfishLink.ts";
@@ -37,7 +41,7 @@ async function open(
 ) {
   await renderApp({
     path,
-    cards: fakeCardRepository([...sampleCards, FYENDAL]),
+    cards: fakeCardRepository([...sampleCards, FYENDAL, TEST_POCUS]),
     auth: fakeAuthService({
       users: { "u@test.local": { id: "u1", password: "pw", role: "user" } },
       signedIn: { id: "u1", email: "u@test.local" },
@@ -607,7 +611,8 @@ describe("quicker turns", () => {
   });
 
   it("plays a banished card with its Play button, other moves in its menu", async () => {
-    const { table, user } = await open();
+    // Test Pocus has no verified rules, so Play moves it by hand (Hocus Pocus is verified now).
+    const { table, user } = await open(undefined, [], [card("tp1", 10)]);
     const [first] = zoneCards(table, "Hand");
     const name = first!.getAttribute("aria-label")!;
     await act(user, first!, "Banish");

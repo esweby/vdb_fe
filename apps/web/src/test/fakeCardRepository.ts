@@ -111,6 +111,20 @@ export const sampleCards: CardSummary[] = [
   },
 ];
 
+/**
+ * Hocus Pocus under another name, so it has no verified rules: for tests that need an unverified
+ * card now Hocus Pocus itself is verified (the maintainer's first accepted batch, 20 Oct 2026).
+ */
+export const TEST_POCUS: CardSummary = {
+  ...sampleCards[0]!,
+  id: "card-test-pocus",
+  name: "Test Pocus",
+  variants: sampleCards[0]!.variants.map((v) => ({
+    ...v,
+    id: v.id.replace("hp", "tp"),
+  })),
+};
+
 export function fakeCardRepository(
   cards: CardSummary[] = sampleCards,
 ): CardRepository {

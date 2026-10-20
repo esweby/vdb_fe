@@ -1,5 +1,10 @@
 // Step 7b (docs/rules-engine.md): the rules engine's reports on a deck's Scenarios tab, with
 // coverage beside them.
+import {
+  fakeCardRepository,
+  sampleCards,
+  TEST_POCUS,
+} from "../test/fakeCardRepository.ts";
 import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
@@ -26,10 +31,12 @@ async function open() {
         id: "deck-1",
         name: "Gate tempo",
         updatedAt: "2026-10-14T10:00:00Z",
-        cards: [card("bsl3", 3), card("hp1", 3), card("nb", 1)],
+        // Test Pocus: an unverified copy of Hocus Pocus, which is verified now (20 Oct 2026).
+        cards: [card("bsl3", 3), card("tp1", 3), card("nb", 1)],
         pitchTargets: {},
       },
     ]).repository,
+    cards: fakeCardRepository([...sampleCards, TEST_POCUS]),
   });
   return within(
     await screen.findByRole("region", { name: "Play by the rules" }),
@@ -42,9 +49,7 @@ describe("play by the rules", () => {
     expect(
       panel.getByText("3 of 6 deck cards modelled (50%)."),
     ).toBeInTheDocument();
-    expect(
-      panel.getByText(/Not modelled yet: Hocus Pocus/),
-    ).toBeInTheDocument();
+    expect(panel.getByText(/Not modelled yet: Test Pocus/)).toBeInTheDocument();
   });
 
   it("runs the baseline script and reports by turn, over completed runs", async () => {

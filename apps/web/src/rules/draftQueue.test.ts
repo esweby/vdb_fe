@@ -2,10 +2,12 @@
 // drafts match shown once. Cards with verified rules are marked, so they aren't checked twice.
 import { describe, expect, it } from "vitest";
 import type { CardSummary } from "../cards/cardRepository.ts";
-import { sampleCards } from "../test/fakeCardRepository.ts";
+import { sampleCards, TEST_POCUS } from "../test/fakeCardRepository.ts";
 import { draftQueue, missingFeatures } from "./draftQueue.ts";
 
 const byName = (name: string) => sampleCards.find((c) => c.name === name)!;
+/** The sample cards and an unverified one, as Hocus Pocus is now verified (20 Oct 2026). */
+const POOL = [...sampleCards, TEST_POCUS];
 
 describe("draftQueue", () => {
   it("leaves out cards whose facts give nothing to draft or note", () => {
@@ -49,11 +51,12 @@ describe("draftQueue", () => {
   });
 
   it("marks cards whose rules are already verified", () => {
-    const queue = draftQueue(sampleCards);
+    const queue = draftQueue(POOL);
     const verified = (name: string) =>
       queue.find((e) => e.card.name === name)!.verified;
     expect(verified("Become the Shadow Lord")).toBe(true);
-    expect(verified("Hocus Pocus")).toBe(false);
+    expect(verified("Hocus Pocus")).toBe(true);
+    expect(verified("Test Pocus")).toBe(false);
   });
 
   it("puts complete drafts first, then partial ones, then verified cards, each by name", () => {
@@ -74,11 +77,12 @@ describe("draftQueue", () => {
       ],
     };
     expect(
-      draftQueue([...sampleCards, partial]).map((e) => [e.card.name, e.status]),
+      draftQueue([...POOL, partial]).map((e) => [e.card.name, e.status]),
     ).toEqual([
-      ["Hocus Pocus", "complete"],
+      ["Test Pocus", "complete"],
       ["Arcane Test", "partial"],
       ["Become the Shadow Lord", "verified"],
+      ["Hocus Pocus", "verified"],
     ]);
   });
 });
@@ -102,10 +106,11 @@ describe("cards with nothing drafted", () => {
 
   it("are their own group, after the rest", () => {
     expect(
-      draftQueue([...sampleCards, nothing]).map((e) => [e.card.name, e.status]),
+      draftQueue([...POOL, nothing]).map((e) => [e.card.name, e.status]),
     ).toEqual([
-      ["Hocus Pocus", "complete"],
+      ["Test Pocus", "complete"],
       ["Become the Shadow Lord", "verified"],
+      ["Hocus Pocus", "verified"],
       ["Nothing Test", "undraftable"],
     ]);
   });
@@ -119,7 +124,7 @@ describe("cards with nothing drafted", () => {
 });
 
 describe("draftQueue with verdicts", () => {
-  const hocus = () => draftQueue([byName("Hocus Pocus")])[0]!;
+  const hocus = () => draftQueue([TEST_POCUS])[0]!;
 
   it("gives each draft a hash that changes with the card's facts", () => {
     const hp = byName("Hocus Pocus");
@@ -146,10 +151,10 @@ describe("draftQueue with verdicts", () => {
   it("attaches the verdict on the current draft, and moves the card to reviewed", () => {
     const hash = hocus().drafts[0]!.hash;
     const [entry] = draftQueue(
-      [byName("Hocus Pocus")],
+      [TEST_POCUS],
       [
         {
-          cardId: "card-hocus-pocus",
+          cardId: "card-test-pocus",
           draftHash: hash,
           verdict: "accepted",
           note: null,
@@ -162,10 +167,10 @@ describe("draftQueue with verdicts", () => {
 
   it("treats a verdict on an earlier draft as stale, not as a verdict", () => {
     const [entry] = draftQueue(
-      [byName("Hocus Pocus")],
+      [TEST_POCUS],
       [
         {
-          cardId: "card-hocus-pocus",
+          cardId: "card-test-pocus",
           draftHash: "00000000",
           verdict: "accepted",
           note: null,
