@@ -50,6 +50,8 @@ Game logic decided by the maintainer, with where it lives. Anything not here is 
 - **Even Bigger Than That!** needs damage dealt this turn, which is noted by hand.
 - **Usernames** can't be changed once set.
 - **Dimenxxional Crossroads** pays off cards played from the banished zone, and only the first card of each type played this turn, from anywhere, counts. Losing life on your turn destroys it, so blood debt kills it in your end phase. Its arcane damage isn't modelled.
+- **Viserai, the Usurper:** traversing to the Usurper gives the turn's first blood debt attack go again, if it doesn't have it already, whichever card made the third Runechant. That includes traversing by hand in goldfish.
+- **Cost reductions:** a cost never goes below 0; Runechants are counted as the card is played, before Usurp destroys one; and only a usurp earlier in the turn counts, not the card's own.
 
 ## Open
 
