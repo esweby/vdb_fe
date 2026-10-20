@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { sampleCards } from "../test/fakeCardRepository.ts";
 import {
   alternatives,
+  offPitchReactions,
   suggestCore,
   type CoreCandidate,
   type CoreConstraints,
@@ -118,5 +120,48 @@ describe("alternatives", () => {
     expect(alternatives(ranked, s, c, "r2").map((a) => a.variantId)).toEqual([
       "r4",
     ]);
+  });
+});
+
+// The maintainer, 20 Oct 2026: "Fate Foreseen blue should probably never be recommended: you'd
+// play the red defence reactions over yellow and blue because they cover the 4 breakpoint."
+describe("defence reactions", () => {
+  it("flags the pitches of a defence reaction below its best defence", () => {
+    const fate = sampleCards.find((c) => c.name === "Fate Foreseen")!;
+    const withDefences = {
+      ...fate,
+      variants: fate.variants.map((v, i) => ({ ...v, defense: 4 - i })),
+    };
+    const hocus = sampleCards.find((c) => c.name === "Hocus Pocus")!;
+    expect([...offPitchReactions([withDefences, hocus])].sort()).toEqual([
+      "ff2",
+      "ff3",
+    ]);
+  });
+
+  it("aren't suggested at those pitches; the next best card fills in", () => {
+    const withBlueReaction: CoreCandidate[] = [
+      {
+        variantId: "ff3",
+        cardId: "ff",
+        pitch: 3,
+        value: 99,
+        notSuggested: true,
+      },
+      ...ranked,
+    ];
+    const picks = suggestCore(withBlueReaction, constraints()).picks.map(
+      (p) => p.variantId,
+    );
+    expect(picks).not.toContain("ff3");
+    expect(picks).toContain("b1");
+    expect(
+      alternatives(
+        withBlueReaction,
+        suggestCore(withBlueReaction, constraints()),
+        constraints(),
+        "b1",
+      ).map((a) => a.variantId),
+    ).not.toContain("ff3");
   });
 });

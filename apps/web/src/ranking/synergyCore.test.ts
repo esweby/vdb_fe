@@ -166,6 +166,32 @@ describe("fillWithSynergy", () => {
   });
 });
 
+describe("fillWithSynergy and defence reactions", () => {
+  it("skips a pitch that isn't suggested", () => {
+    const s = fillWithSynergy(
+      [
+        {
+          variantId: "ff3",
+          cardId: "ff",
+          pitch: 3,
+          value: 99,
+          notSuggested: true,
+        },
+        { variantId: "b1", cardId: "b", pitch: 3, value: 50 },
+      ],
+      {
+        targets: { 3: 3 },
+        copiesEach: 3,
+        copyLimit: 3,
+        locked: new Map(),
+        removed: new Set(),
+      },
+      () => 0,
+    );
+    expect(s.picks.map((p) => p.variantId)).toEqual(["b1"]);
+  });
+});
+
 describe("weightedEdges", () => {
   it("says which links come from the rules, the scoring group, or both", () => {
     const list = weightedEdges({

@@ -1,3 +1,4 @@
+import type { CardSummary } from "../cards/cardRepository.ts";
 import type { PitchTargets } from "../decks/deckRepository.ts";
 
 export interface CoreCandidate {
@@ -7,6 +8,22 @@ export interface CoreCandidate {
   value: number;
   /** This card's own copy limit (e.g. 1 for a Legendary card); the general limit otherwise. */
   limit?: number;
+  /** Never suggested, though it can be added by hand (e.g. offPitchReactions). */
+  notSuggested?: boolean;
+}
+
+/**
+ * Defence reactions at a pitch below the card's best defence (the maintainer, 20 Oct 2026: you'd
+ * play the red ones, which cover the 4 breakpoint, over yellow and blue). Their variant ids.
+ */
+export function offPitchReactions(cards: readonly CardSummary[]): Set<string> {
+  const off = new Set<string>();
+  for (const card of cards) {
+    if (card.type !== "defense_reaction") continue;
+    const best = Math.max(...card.variants.map((v) => v.defense ?? 0));
+    for (const v of card.variants) if ((v.defense ?? 0) < best) off.add(v.id);
+  }
+  return off;
 }
 
 export interface CoreConstraints {
@@ -57,7 +74,7 @@ export function suggestCore(
     for (const r of ranked) {
       if (left <= 0) break;
       if (r.pitch !== pitch || quantity.has(r.variantId)) continue;
-      if (c.removed.has(r.variantId)) continue;
+      if (c.removed.has(r.variantId) || r.notSuggested) continue;
       const q = Math.min(each, r.limit ?? c.copyLimit, left);
       quantity.set(r.variantId, q);
       left -= q;
@@ -95,7 +112,8 @@ export function alternatives<T extends CoreCandidate>(
       (r) =>
         r.pitch === pitch &&
         !picked.has(r.variantId) &&
-        !c.removed.has(r.variantId),
+        !c.removed.has(r.variantId) &&
+        !r.notSuggested,
     )
     .slice(0, n);
 }
