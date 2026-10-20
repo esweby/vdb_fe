@@ -665,3 +665,18 @@ describe("quicker turns", () => {
     expect(within(tunic()).queryByLabelText(/counter/)).toBeNull();
   });
 });
+
+// The maintainer, 20 Oct 2026: a − and + beside the pitch pile, to put resources right when the
+// board and the count fall out of line (a card the engine doesn't model yet, say).
+describe("fixing the pitch by hand", () => {
+  it("adjusts resources from beside the pitch pile", async () => {
+    const { table, user } = await open();
+    const pitch = zone(table, "Pitch");
+    await user.click(pitch.getByRole("button", { name: "More resources" }));
+    await user.click(pitch.getByRole("button", { name: "More resources" }));
+    expect(table.getByText("Resources 2")).toBeInTheDocument();
+    await user.click(pitch.getByRole("button", { name: "Fewer resources" }));
+    expect(table.getByText("Resources 1")).toBeInTheDocument();
+    expect(pitch.getByLabelText("1 resource")).toBeInTheDocument();
+  });
+});
