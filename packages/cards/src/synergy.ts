@@ -258,8 +258,19 @@ export function deriveSynergies(
     }
   }
 
-  return [...matches.entries()].map(([key, found]) => {
+  return [...matches.entries()].map(([key, all]) => {
     const [from, to] = key.split("\u0000") as [string, string];
+    // A card that lets this one be played from banish already says why it helps: the banisher
+    // rules would repeat it (the maintainer, 20 Oct 2026: Rattle Bones and Usurp the Shadow
+    // Throne).
+    const enables = all.some((m) => m.rule.id === "enables-play-from-banish");
+    const found = enables
+      ? all.filter(
+          (m) =>
+            !isRoleRule(m.rule) ||
+            !m.rule.from.some((r) => banishers.includes(r)),
+        )
+      : all;
     const sorted = [...found].sort((a, b) => b.weight - a.weight);
     const top = sorted[0]!;
     return {

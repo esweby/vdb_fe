@@ -221,3 +221,51 @@ describe("deriveSynergies: cards that banish only themselves", () => {
     ).toEqual([]);
   });
 });
+
+// The maintainer, 20 Oct 2026: "Rattle Bones help Usurp the Shadow Throne" gave three reasons for
+// one thing. Rattle Bones banishes a Runeblade attack action from your graveyard and lets you play
+// it: when a card lets the other be played from banish, that's the link, not the banisher rules.
+describe("deriveSynergies: a card that lets the other be played from banish", () => {
+  const base = cards[0]!;
+  const rattle: SynergyCard = {
+    ...base,
+    id: "Rattle Bones",
+    name: "Rattle Bones",
+    type: "action",
+    subtypes: [],
+    attributes: {
+      ...base.attributes,
+      groups: ["runeblade_non_attack_action"],
+      tokens: [],
+      hasBloodDebt: false,
+      isGateTarget: false,
+      banishesOwn: [{ from: "graveyard", trigger: "on_play" }],
+      enablesPlayFromBanish: [{ target: { group: "runeblade_attack_action" } }],
+    },
+    variantAttributes: [],
+  };
+  const usurp: SynergyCard = {
+    ...base,
+    id: "Usurp the Shadow Throne",
+    name: "Usurp the Shadow Throne",
+    type: "attack_action",
+    subtypes: [],
+    attributes: {
+      ...base.attributes,
+      groups: ["runeblade_attack_action"],
+      tokens: [],
+      banishesOwn: [],
+      hasBloodDebt: true,
+      isGateTarget: true,
+      playableFromBanish: { conditions: ["usurped_this_turn"] },
+    },
+    variantAttributes: [],
+  };
+
+  it("links them by that alone", () => {
+    const found = deriveSynergies([rattle, usurp]).find(
+      (e) => e.from === "Rattle Bones" && e.to === "Usurp the Shadow Throne",
+    );
+    expect(found?.reasons).toEqual(["enables-play-from-banish"]);
+  });
+});

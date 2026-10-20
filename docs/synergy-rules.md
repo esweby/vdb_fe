@@ -138,3 +138,5 @@ synergy(card, picked) = λ × Σ over engines  min(1, Σ weight of edges between
 Still open: whether side focus scales synergy (3), and the default λ (scoring group).
 
 **Self-banishers (the maintainer, 20 Oct 2026):** a card that banishes only itself (Fallen Herald) puts nothing else in the banished zone. It no longer links to cards played from banish, to banish-type payoffs or to "when banished" triggers; it still fills the zone for banish-play payoffs.
+
+**Enabling beats banishing (the maintainer, 20 Oct 2026):** when a card lets another be played from banish (Rattle Bones and Usurp the Shadow Throne), that's the link between them. The banisher rules don't add their own reasons to the same pair.
