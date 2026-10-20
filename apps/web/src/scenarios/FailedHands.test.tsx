@@ -23,7 +23,7 @@ const ALL_BLUE = [card("bsl3", 60)];
 async function open(
   cards: DeckCard[],
   scenarios = fakeScenarioRepository(),
-  path = "/decks/deck-1?tab=scenarios",
+  path = "/decks/deck-1?tab=scenarios&mode=create",
 ) {
   const { router } = await renderApp({
     path,
@@ -130,7 +130,7 @@ describe("compare decks", () => {
         },
       ],
     });
-    const { user } = await open(FULL, scenarios);
+    const { user } = await open(FULL, scenarios, "/decks/deck-1?tab=scenarios");
     const yours = within(
       await screen.findByRole("region", { name: "Your scenarios" }),
     );

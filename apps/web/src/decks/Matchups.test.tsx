@@ -229,7 +229,7 @@ describe("playing a matchup", () => {
   });
 
   it("scenarios run on the plan's cards", async () => {
-    await openAt("/decks/deck-1?tab=scenarios&vs=h1");
+    await openAt("/decks/deck-1?tab=scenarios&vs=h1&mode=create");
     expect(await screen.findByLabelText("Playing")).toHaveValue("h1");
     const user = userEvent.setup();
     const builder = within(

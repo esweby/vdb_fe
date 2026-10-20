@@ -1016,7 +1016,7 @@ describe("deck scenarios", () => {
     await user.click(await screen.findByRole("tab", { name: "Scenarios" }));
     expect(router.state.location.search).toMatchObject({ tab: "scenarios" });
     const panel = within(screen.getByRole("tabpanel"));
-    expect(panel.getByText(/Build a scenario of your own/)).toBeInTheDocument();
+    expect(panel.getByText(/Run your scenarios/)).toBeInTheDocument();
     await user.click(panel.getByRole("button", { name: "Run scenarios" }));
     expect(
       await panel.findByText("10,000 runs each · seed 1 · 5 deck cards"),

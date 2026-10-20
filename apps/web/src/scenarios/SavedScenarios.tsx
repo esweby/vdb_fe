@@ -36,6 +36,9 @@ export function SavedScenarios(props: {
   deckId: string;
   entries: DeckEntry[];
   deck: DeckForScenarios;
+  /** Running saved scenarios, or creating one in the builder (the maintainer, 20 Oct 2026). */
+  mode: "run" | "create";
+  onMode: (mode: "run" | "create") => void;
 }) {
   const { scenarios: repo, decks } = useServices();
   const { items: pool } = useCards();
@@ -109,6 +112,11 @@ export function SavedScenarios(props: {
   function edit(s: SavedScenario | undefined) {
     setEditing(s);
     setBuilderKey((k) => k + 1);
+  }
+  /** Opens the builder, on a saved scenario or a new one. */
+  function create(s?: SavedScenario) {
+    edit(s);
+    props.onMode("create");
   }
 
   async function save(
@@ -256,21 +264,37 @@ export function SavedScenarios(props: {
   const mine = list.filter((s) => s.mine);
   const library = list.filter((s) => !s.mine);
 
+  const errorLine = error && (
+    <p className={styles.problem} role="alert">
+      {error}
+    </p>
+  );
+  if (props.mode === "create")
+    return (
+      <div className={styles.createLayout}>
+        <div>
+          <ScenarioBuilder
+            key={builderKey}
+            deck={props.deck}
+            deckId={props.deckId}
+            editing={editing}
+            onSave={userId ? save : undefined}
+            canUseLibrary={canUseLibrary}
+          />
+          {errorLine}
+        </div>
+        <ScenarioGuide signedIn={!!userId} />
+      </div>
+    );
+
   return (
     <>
-      <ScenarioBuilder
-        key={builderKey}
-        deck={props.deck}
-        deckId={props.deckId}
-        editing={editing}
-        onSave={userId ? save : undefined}
-        canUseLibrary={canUseLibrary}
-      />
-      {error && (
-        <p className={styles.problem} role="alert">
-          {error}
-        </p>
-      )}
+      {errorLine}
+      <div className={styles.addRow}>
+        <Button variant="primary" onClick={() => create()}>
+          Add a new scenario
+        </Button>
+      </div>
       {!userId ? (
         <p className={styles.hint}>
           Sign in to save scenarios and run them all.
@@ -287,11 +311,6 @@ export function SavedScenarios(props: {
                 </p>
               </div>
               <div className={styles.save}>
-                {editing && (
-                  <Button variant="ghost" onClick={() => edit(undefined)}>
-                    New scenario
-                  </Button>
-                )}
                 <label className={styles.select}>
                   <span>Compare with</span>
                   <select
@@ -319,7 +338,7 @@ export function SavedScenarios(props: {
             </header>
             {mine.length === 0 ? (
               <p className={styles.hint}>
-                None saved yet. Build one above and save it.
+                None saved yet. Add a new scenario to build one and save it.
               </p>
             ) : (
               <table className={styles.table}>
@@ -345,7 +364,7 @@ export function SavedScenarios(props: {
                         <Button
                           variant="ghost"
                           aria-label={`Edit ${s.definition.name}`}
-                          onClick={() => edit(s)}
+                          onClick={() => create(s)}
                         >
                           Edit
                         </Button>
@@ -406,5 +425,52 @@ export function SavedScenarios(props: {
         </>
       )}
     </>
+  );
+}
+
+/** What each part of a scenario expects, beside the builder (the maintainer, 20 Oct 2026). */
+function ScenarioGuide(props: { signedIn: boolean }) {
+  return (
+    <aside aria-label="How a scenario works" className={styles.guide}>
+      <h2>How a scenario works</h2>
+      <p>
+        A scenario asks a question about this deck's hands, like "do I have a
+        Gate maker and a blood debt card by turn 2?". It shuffles the deck
+        thousands of times and counts how often the answer is yes. It counts
+        what's visible; it doesn't play the game.
+      </p>
+      <dl>
+        <dt>When</dt>
+        <dd>
+          The turn the question is asked: the opening hand, or after a turn or
+          more of draws.
+        </dd>
+        <dt>Starting with</dt>
+        <dd>
+          Optional. Cards you already hold in hand or arsenal, for "what if I
+          open with this?".
+        </dd>
+        <dt>Each turn</dt>
+        <dd>
+          Optional. Fixed steps after each draw, like putting a blue card in
+          arsenal. Only for checks after turn 1.
+        </dd>
+        <dt>Look at</dt>
+        <dd>
+          Where the cards may be: hand, arsenal, banished and so on. Weapons and
+          equipment always count.
+        </dd>
+        <dt>Succeeds if</dt>
+        <dd>
+          The answer: which cards, by name, pitch or role, and how many. Group
+          them with "All of these" or "Any of these".
+        </dd>
+      </dl>
+      <p>
+        {props.signedIn
+          ? "Then: Run this scenario to try it here. Save it to add it to your scenarios, where Run all checks it on this deck with the rest."
+          : "Then: Run this scenario to try it here. Sign in to save it."}
+      </p>
+    </aside>
   );
 }

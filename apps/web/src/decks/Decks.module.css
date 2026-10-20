@@ -576,6 +576,29 @@
   display: grid;
   gap: 1rem;
 }
+/* Run or create, as a two-way switch (the maintainer, 20 Oct 2026). */
+.modeToggle {
+  display: inline-flex;
+  justify-self: start;
+  padding: 0.2rem;
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  background: var(--bg);
+}
+.modeToggle button {
+  padding: 0.45rem 1rem;
+  border: none;
+  border-radius: 0.45rem;
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.modeToggle button[aria-pressed="true"] {
+  background: var(--accent);
+  color: white;
+}
 .preview {
   margin: 0;
   padding: 0.6rem 0.9rem;
