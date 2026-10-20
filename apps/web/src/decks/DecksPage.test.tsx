@@ -305,29 +305,6 @@ describe("deck page", () => {
     expect(fake.saved).toEqual(["set deck-1 nb 1 side"]);
   });
 
-  it("won't add to the sideboard a card that's already in the deck", async () => {
-    // One-handed, so a second copy is still allowed in the deck.
-    const oneHanded = sampleCards.map((c) =>
-      c.name === "Nebula Blade" ? { ...c, subtypes: ["Sword", "1H"] } : c,
-    );
-    await renderApp({
-      path: "/decks/deck-1",
-      auth: auth(),
-      cards: fakeCardRepository(oneHanded),
-      decks: withDeck([{ variantId: "nb", quantity: 1, sideboard: false }])
-        .repository,
-    });
-    const blade = within(
-      await screen.findByRole("listitem", { name: "Nebula Blade" }),
-    );
-    expect(
-      blade.getByRole("button", { name: "Add Nebula Blade to the sideboard" }),
-    ).toBeDisabled();
-    expect(
-      blade.getByRole("button", { name: "Add Nebula Blade" }),
-    ).toBeEnabled();
-  });
-
   it("allows only one copy of a piece of equipment", async () => {
     const purgatory = {
       ...sampleCards.find((c) => c.name === "Nebula Blade")!,
@@ -387,7 +364,9 @@ describe("deck page", () => {
       gear.queryByRole("button", { name: "One fewer Face Purgatory" }),
     ).toBeNull();
     expect(
-      gear.getByLabelText("Sideboard: Face Purgatory"),
+      gear.getByRole("button", {
+        name: "Move one Face Purgatory to the sideboard",
+      }),
     ).toBeInTheDocument();
     await userEvent
       .setup()
@@ -542,24 +521,83 @@ describe("deck page", () => {
     ).toBeInTheDocument();
   });
 
-  it("moves cards to the sideboard and back", async () => {
+  // The maintainer, 20 Oct 2026: a card can be split, e.g. 1 in the deck and 2 in the sideboard.
+  it("moves one copy at a time between the deck and the sideboard", async () => {
     const fake = withDeck([
-      { variantId: "hp1", quantity: 2, sideboard: false },
+      { variantId: "hp1", quantity: 3, sideboard: false },
     ]);
     await renderApp({
       path: "/decks/deck-1",
       auth: auth(),
       decks: fake.repository,
     });
-    const user = userEvent.setup();
-    await user.click(
-      await screen.findByRole("checkbox", {
-        name: "Sideboard: Hocus Pocus (red)",
+    await screen.findByRole("region", { name: "Deck" });
+    await userEvent.setup().click(
+      region("Deck").getByRole("button", {
+        name: "Move one Hocus Pocus (red) to the sideboard",
       }),
     );
-    expect(region("Sideboard").getByText("Hocus Pocus")).toBeInTheDocument();
-    expect(region("Deck").queryByText("Hocus Pocus")).not.toBeInTheDocument();
-    expect(fake.saved).toEqual(["set deck-1 hp1 2 side"]);
+    await screen.findByText("2 deck cards · 1 sideboard · 3 in the pool");
+    // The sideboard copy is saved first, so a matchup never loses a copy in between.
+    expect(fake.saved).toEqual([
+      "set deck-1 hp1 1 side",
+      "set deck-1 hp1 2 main",
+    ]);
+    await userEvent.setup().click(
+      region("Sideboard").getByRole("button", {
+        name: "Move one Hocus Pocus (red) to the deck",
+      }),
+    );
+    await screen.findByText("3 deck cards · 0 sideboard · 3 in the pool");
+    expect(fake.saved.slice(2)).toEqual([
+      "set deck-1 hp1 3 main",
+      "set deck-1 hp1 0 side",
+    ]);
+    expect(region("Sideboard").queryByText("Hocus Pocus")).toBeNull();
+  });
+
+  it("adds a card to the sideboard when it's already in the deck", async () => {
+    const fake = withDeck([
+      { variantId: "hp1", quantity: 1, sideboard: false },
+    ]);
+    await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      decks: fake.repository,
+    });
+    const red = within(
+      await screen.findByRole("listitem", { name: "Hocus Pocus (red)" }),
+    );
+    await userEvent.setup().click(
+      red.getByRole("button", {
+        name: "Add Hocus Pocus (red) to the sideboard",
+      }),
+    );
+    expect(fake.saved).toEqual(["set deck-1 hp1 1 side"]);
+    await screen.findByText("1 deck cards · 1 sideboard · 2 in the pool");
+  });
+
+  it("counts the deck and sideboard copies together for the copy limit", async () => {
+    const fake = withDeck([
+      { variantId: "hp1", quantity: 1, sideboard: false },
+      { variantId: "hp1", quantity: 2, sideboard: true },
+    ]);
+    await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      decks: fake.repository,
+    });
+    const red = within(
+      await screen.findByRole("listitem", { name: "Hocus Pocus (red)" }),
+    );
+    expect(
+      red.getByRole("button", { name: "Add Hocus Pocus (red)" }),
+    ).toBeDisabled();
+    expect(
+      region("Deck").getByRole("button", {
+        name: "One more Hocus Pocus (red)",
+      }),
+    ).toBeDisabled();
   });
 
   it("shows weapons apart from the deck, and what makes the deck illegal", async () => {

@@ -14,7 +14,10 @@ export interface DeckSummary {
   cards: DeckCard[];
 }
 
-/** A card in the pool. Main deck cards (sideboard false) are in the default loadout. */
+/**
+ * Copies of a card in the pool: in the deck (the default loadout), or in the sideboard. A card
+ * split between them has a row for each.
+ */
 export interface DeckCard {
   variantId: string;
   quantity: number;
@@ -59,7 +62,10 @@ export interface DeckRepository {
   /** Deletes the deck, with its cards, plans and scenario results. */
   deleteDeck(deckId: string): Promise<void>;
   getDeck(id: string): Promise<Deck | null>;
-  /** Adds, updates or (with quantity 0) removes a card in the pool. */
+  /**
+   * Adds, updates or (with quantity 0) removes a card's deck row or sideboard row. A card can have
+   * both: some copies in the deck, the rest in the sideboard.
+   */
   setCard(deckId: string, card: DeckCard): Promise<void>;
   setPitchTargets(deckId: string, targets: PitchTargets): Promise<void>;
   getFormatRules(): Promise<FormatRules>;
@@ -172,7 +178,8 @@ export function supabaseDeckRepository(client: SupabaseClient): DeckRepository {
               .from("deck_cards")
               .delete()
               .eq("deck_id", deckId)
-              .eq("variant_id", card.variantId);
+              .eq("variant_id", card.variantId)
+              .eq("sideboard", card.sideboard);
       if (error) throw error;
       await client
         .from("decks")

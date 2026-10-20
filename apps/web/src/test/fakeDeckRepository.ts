@@ -74,7 +74,11 @@ export function fakeDeckRepository(
           : {
               ...d,
               cards: [
-                ...d.cards.filter((c) => c.variantId !== card.variantId),
+                ...d.cards.filter(
+                  (c) =>
+                    c.variantId !== card.variantId ||
+                    c.sideboard !== card.sideboard,
+                ),
                 ...(card.quantity > 0 ? [card] : []),
               ],
             },

@@ -38,4 +38,18 @@ describe("entriesForMatchup", () => {
       [ff, 1, true],
     ]);
   });
+
+  // The maintainer, 20 Oct 2026: a card can be split between the deck and the sideboard.
+  it("counts a split card's deck and sideboard copies together", () => {
+    const entries = [
+      entry("Hocus Pocus", 0, 1),
+      entry("Hocus Pocus", 0, 2, true),
+    ];
+    const hp = entries[0]!.variant.id;
+    const played = entriesForMatchup(entries, [{ variantId: hp, quantity: 2 }]);
+    expect(played.map((e) => [e.variant.id, e.quantity, e.sideboard])).toEqual([
+      [hp, 2, false],
+      [hp, 1, true],
+    ]);
+  });
 });

@@ -155,21 +155,29 @@ export function DeckPage() {
     [deck, byVariant],
   );
 
-  async function setCard(card: DeckCard) {
+  /**
+   * Sets a card's deck row or sideboard row (a card can have both: the maintainer, 20 Oct 2026),
+   * saving the changes in order.
+   */
+  async function setCards(...changes: DeckCard[]) {
     if (!deck) return;
     const previous = deck;
-    const others = deck.cards.filter((c) => c.variantId !== card.variantId);
-    setDeck({
-      ...deck,
-      cards: card.quantity > 0 ? [...others, card] : others,
-    });
+    let cards = deck.cards;
+    for (const card of changes) {
+      const others = cards.filter(
+        (c) => c.variantId !== card.variantId || c.sideboard !== card.sideboard,
+      );
+      cards = card.quantity > 0 ? [...others, card] : others;
+    }
+    setDeck({ ...deck, cards });
     try {
-      await decks.setCard(deck.id, card);
+      for (const card of changes) await decks.setCard(deck.id, card);
     } catch (e) {
       setDeck(previous);
       setError(`Couldn't save: ${e instanceof Error ? e.message : String(e)}`);
     }
   }
+  const setCard = (card: DeckCard) => setCards(card);
 
   async function setPitchTargets(targets: PitchTargets) {
     if (!deck) return;
@@ -183,8 +191,20 @@ export function DeckPage() {
     }
   }
 
-  const inPool = (variantId: string) =>
-    deck?.cards.find((c) => c.variantId === variantId);
+  /** A card's deck row or sideboard row. */
+  const rowOf = (variantId: string, sideboard: boolean) =>
+    deck?.cards.find(
+      (c) => c.variantId === variantId && c.sideboard === sideboard,
+    );
+  /** Copies of a card in the deck and in the sideboard. */
+  const copiesOf = (variantId: string) => ({
+    deck: rowOf(variantId, false)?.quantity ?? 0,
+    sideboard: rowOf(variantId, true)?.quantity ?? 0,
+  });
+  const copiesInPool = (variantId: string) => {
+    const c = copiesOf(variantId);
+    return c.deck + c.sideboard;
+  };
 
   const limitOf = (card: CardSummary) =>
     rules ? copyLimitFor(card, rules) : Infinity;
@@ -193,27 +213,33 @@ export function DeckPage() {
     return found ? limitOf(found.card) : Infinity;
   };
   const atLimit = (variantId: string) =>
-    (inPool(variantId)?.quantity ?? 0) >= limitOfVariant(variantId);
+    copiesInPool(variantId) >= limitOfVariant(variantId);
 
-  function add(variantId: string) {
+  /** One more copy in the deck, or in the sideboard. */
+  function add(variantId: string, sideboard = false) {
     if (atLimit(variantId)) return;
-    const existing = inPool(variantId);
     void setCard({
       variantId,
-      quantity: (existing?.quantity ?? 0) + 1,
-      sideboard: existing?.sideboard ?? false,
+      quantity: (rowOf(variantId, sideboard)?.quantity ?? 0) + 1,
+      sideboard,
     });
   }
 
-  /** A card is in the deck or the sideboard, not both: one already in the deck stays there. */
-  function addToSideboard(variantId: string) {
-    const existing = inPool(variantId);
-    if (atLimit(variantId) || (existing && !existing.sideboard)) return;
-    void setCard({
-      variantId,
-      quantity: (existing?.quantity ?? 0) + 1,
-      sideboard: true,
-    });
+  /**
+   * One copy across, deck to sideboard or back. The copy is added on the other side first, so a
+   * matchup plan never loses it in between.
+   */
+  function moveOne(variantId: string, toSideboard: boolean) {
+    const from = rowOf(variantId, !toSideboard);
+    if (!from) return;
+    void setCards(
+      {
+        variantId,
+        quantity: (rowOf(variantId, toSideboard)?.quantity ?? 0) + 1,
+        sideboard: toSideboard,
+      },
+      { ...from, quantity: from.quantity - 1 },
+    );
   }
 
   const pitch = useMemo(
@@ -249,6 +275,7 @@ export function DeckPage() {
     ? entriesForMatchup(entries, playing.cards)
     : entries;
   const onSet = canEdit ? (card: DeckCard) => void setCard(card) : undefined;
+  const onMove = canEdit ? moveOne : undefined;
   const counts = deckCounts(entries);
   const problems = rules ? deckProblems(entries, rules) : [];
   const main = entries.filter((e) => !e.sideboard);
@@ -455,16 +482,10 @@ export function DeckPage() {
                 <h2 className={styles.finderTitle}>Add cards</h2>
                 <CardFinder
                   cards={cards}
-                  quantityOf={(id) => inPool(id)?.quantity}
-                  placeOf={(id) => {
-                    const e = inPool(id);
-                    return e ? (e.sideboard ? "sideboard" : "deck") : undefined;
-                  }}
+                  copiesOf={copiesOf}
                   atLimit={atLimit}
                   limitOf={limitOfVariant}
-                  onAdd={(id, toSideboard) =>
-                    toSideboard ? addToSideboard(id) : add(id)
-                  }
+                  onAdd={(id, toSideboard) => add(id, !!toSideboard)}
                 />
               </section>
             )}
@@ -493,6 +514,8 @@ export function DeckPage() {
                   limitOf={limitOf}
                   view={view}
                   onSet={onSet}
+                  onMove={onMove}
+                  copiesInPool={copiesInPool}
                 />
                 <PoolSection
                   title="Deck"
@@ -501,6 +524,8 @@ export function DeckPage() {
                   limitOf={limitOf}
                   view={view}
                   onSet={onSet}
+                  onMove={onMove}
+                  copiesInPool={copiesInPool}
                 />
                 <PoolSection
                   title="Sideboard"
@@ -508,6 +533,8 @@ export function DeckPage() {
                   limitOf={limitOf}
                   view={view}
                   onSet={onSet}
+                  onMove={onMove}
+                  copiesInPool={copiesInPool}
                 />
               </div>
             </div>
@@ -565,6 +592,10 @@ function PoolSection(props: {
   order?: "pitch" | "gear";
   /** Changes a card; without it (someone else's deck) the section is read only. */
   onSet?: (card: DeckCard) => void;
+  /** Moves one copy between the deck and the sideboard. */
+  onMove?: (variantId: string, toSideboard: boolean) => void;
+  /** Copies in the deck and the sideboard together, for the copy limit. */
+  copiesInPool: (variantId: string) => number;
 }) {
   const { title, entries, limitOf, view, onSet } = props;
   const rank = (e: DeckEntry) =>
@@ -589,7 +620,7 @@ function PoolSection(props: {
         ...change,
       });
     const limit = limitOf(e.card);
-    const full = e.quantity >= limit;
+    const full = props.copiesInPool(e.variant.id) >= limit;
     return (
       <>
         {limit === 1 ? (
@@ -622,18 +653,21 @@ function PoolSection(props: {
             </button>
           </>
         )}
-        <label
-          className={styles.sideboard}
-          title={e.sideboard ? "Move to the deck" : "Move to the sideboard"}
-        >
-          <input
-            type="checkbox"
-            aria-label={`Sideboard: ${label}`}
-            checked={e.sideboard}
-            onChange={(ev) => set({ sideboard: ev.target.checked })}
-          />
-          SB
-        </label>
+        {props.onMove && (
+          <button
+            type="button"
+            className={styles.sideboard}
+            aria-label={`Move one ${label} to the ${e.sideboard ? "deck" : "sideboard"}`}
+            title={
+              e.sideboard
+                ? "Move one copy to the deck"
+                : "Move one copy to the sideboard"
+            }
+            onClick={() => props.onMove?.(e.variant.id, !e.sideboard)}
+          >
+            {e.sideboard ? "→ Deck" : "→ SB"}
+          </button>
+        )}
       </>
     );
   };

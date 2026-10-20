@@ -1,7 +1,7 @@
 // Matchups, part 3: a plan's cards become the deck's main deck for goldfish and scenarios;
 // whatever the plan boards out drops to the sideboard, so nothing leaves the pool.
 import type { Matchup } from "./deckRepository.ts";
-import type { DeckEntry } from "./deckRules.ts";
+import { poolEntries, type DeckEntry } from "./deckRules.ts";
 
 export function entriesForMatchup(
   entries: DeckEntry[],
@@ -9,11 +9,13 @@ export function entriesForMatchup(
 ): DeckEntry[] {
   const planned = new Map(cards.map((c) => [c.variantId, c.quantity]));
   const inPlan = (e: DeckEntry) => planned.get(e.variant.id) ?? 0;
+  // A card split between the deck and the sideboard counts as one, its copies added up.
+  const pool = poolEntries(entries);
   return [
-    ...entries
+    ...pool
       .filter((e) => inPlan(e) > 0)
       .map((e) => ({ ...e, quantity: inPlan(e), sideboard: false })),
-    ...entries
+    ...pool
       .filter((e) => e.quantity - inPlan(e) > 0)
       .map((e) => ({
         ...e,

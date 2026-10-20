@@ -5,7 +5,13 @@ import { useEffect, useMemo, useState } from "react";
 import { useServices } from "../servicesContext.ts";
 import { Button } from "../ui/index.ts";
 import type { Hero, Matchup } from "./deckRepository.ts";
-import { sectionOf, slotOf, variantName, type DeckEntry } from "./deckRules.ts";
+import {
+  poolEntries,
+  sectionOf,
+  slotOf,
+  variantName,
+  type DeckEntry,
+} from "./deckRules.ts";
 import styles from "./Decks.module.css";
 
 /** In and out against the main deck, by card. */
@@ -13,9 +19,10 @@ export function boardChanges(
   entries: DeckEntry[],
   plan: Map<string, number>,
 ): { name: string; delta: number }[] {
-  return entries
+  const inDeck = mainPlan(entries);
+  return poolEntries(entries)
     .map((e) => {
-      const main = e.sideboard ? 0 : e.quantity;
+      const main = inDeck.get(e.variant.id) ?? 0;
       return {
         name: variantName(e.card, e.variant),
         delta: (plan.get(e.variant.id) ?? 0) - main,
@@ -78,7 +85,7 @@ export function MatchupsPanel(props: {
         : 1 + GEAR_ORDER.indexOf(slotOf(e.card) ?? "Head");
   const rows = useMemo(
     () =>
-      [...props.entries].sort(
+      poolEntries(props.entries).sort(
         (a, b) =>
           rank(a) - rank(b) ||
           variantName(a.card, a.variant).localeCompare(

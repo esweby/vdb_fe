@@ -47,7 +47,7 @@ select is(
 select throws_ok(
   $$insert into public.deck_cards (deck_id, variant_id, quantity)
     values ('30000000-0000-0000-0000-0000000006d1', '20000000-0000-0000-0000-0000000006c1', 1)
-    on conflict (deck_id, variant_id) do update set quantity = 1$$,
+    on conflict (deck_id, variant_id, sideboard) do update set quantity = 1$$,
   '42501', null, 'or change its cards'
 );
 reset role;

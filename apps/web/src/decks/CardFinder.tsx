@@ -29,9 +29,8 @@ const GEAR = ["weapon", "equipment"];
  */
 export function CardFinder(props: {
   cards: CardSummary[];
-  quantityOf: (variantId: string) => number | undefined;
-  /** Whether a card is already in the deck or the sideboard (a card is in one or the other). */
-  placeOf: (variantId: string) => "deck" | "sideboard" | undefined;
+  /** Copies already in the deck and in the sideboard (a card can be in both). */
+  copiesOf: (variantId: string) => { deck: number; sideboard: number };
   atLimit: (variantId: string) => boolean;
   /** Copies allowed of a card and pitch (equipment: one). */
   limitOf: (variantId: string) => number;
@@ -190,8 +189,7 @@ export function CardFinder(props: {
         <ul className={styles.results} aria-label="Cards to add">
           {tiles.slice(at, at + PAGE).map(({ card, variant: v }) => {
             const name = variantName(card, v);
-            const q = props.quantityOf(v.id);
-            const place = props.placeOf(v.id);
+            const have = props.copiesOf(v.id);
             const full = props.atLimit(v.id);
             const limit = props.limitOf(v.id);
             const atMost = `At most ${limit} ${limit === 1 ? "copy" : "copies"}`;
@@ -229,14 +227,8 @@ export function CardFinder(props: {
                       className={styles.action}
                       data-sideboard=""
                       aria-label={`Add ${name} to the sideboard`}
-                      title={
-                        place === "deck"
-                          ? "Already in the deck: move it from the deck list"
-                          : full
-                            ? atMost
-                            : "Add to the sideboard"
-                      }
-                      disabled={place === "deck" || full}
+                      title={full ? atMost : "Add to the sideboard"}
+                      disabled={full}
                       onClick={() => props.onAdd(v.id, true)}
                     >
                       SB
@@ -249,9 +241,12 @@ export function CardFinder(props: {
                       className={styles.enlarge}
                     />
                   )}
-                  {q ? (
+                  {have.deck + have.sideboard > 0 ? (
                     <span className={styles.haveOnArt} aria-hidden="true">
-                      {place === "sideboard" ? `${q} SB` : q}
+                      {[
+                        ...(have.deck ? [String(have.deck)] : []),
+                        ...(have.sideboard ? [`${have.sideboard} SB`] : []),
+                      ].join(" + ")}
                     </span>
                   ) : null}
                 </span>
