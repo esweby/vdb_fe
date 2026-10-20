@@ -22,7 +22,7 @@ export const TRAITS: Record<string, string> = {
 const roleName = (id: string) => ROLES.find((r) => r.id === id)?.name ?? id;
 
 /** A filter's describing words: "blue Shadow attack action". */
-function filterWords(f: Block["filter"]): string[] {
+export function filterWords(f: Block["filter"]): string[] {
   return [
     f.pitch !== undefined ? (PITCH_NAMES[f.pitch] ?? `pitch ${f.pitch}`) : "",
     f.trait ? (TRAITS[f.trait] ?? f.trait) : "",

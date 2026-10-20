@@ -13,6 +13,13 @@ import { blockLabel } from "./blocks.ts";
 export type Measure = "cards" | "distinct" | "runechants" | "gates";
 export type Compare = "atLeast" | "atMost" | "exactly";
 export type Filter = Block["filter"];
+export type FilterKey = keyof Filter;
+
+/** The filters a block or step shows: the ones it sets, plus any just added. */
+export const shownFilters = (filter: Filter, shown: FilterKey[] = []) =>
+  (["name", "role", "trait", "type", "pitch"] as FilterKey[]).filter(
+    (k) => shown.includes(k) || filter[k] !== undefined,
+  );
 
 export interface BlockDraft {
   kind: "block";
@@ -21,6 +28,8 @@ export interface BlockDraft {
   /** As typed, so a half-typed number doesn't jump about. */
   amount: string;
   filter: Filter;
+  /** Filters added but not set yet (the form shows only filters in use). */
+  shown?: FilterKey[];
 }
 export interface GroupDraft {
   kind: "group";
@@ -34,6 +43,8 @@ export interface StepDraft {
   count: string;
   /** For pitch, arsenal and banish. */
   filter: Filter;
+  /** Filters added but not set yet. */
+  shown?: FilterKey[];
 }
 
 export const newStep = (): StepDraft => ({
@@ -133,6 +144,11 @@ function toBlock(d: BlockDraft): Omit<Block, "label"> {
       ? { total: d.measure }
       : {}),
   };
+}
+
+/** A block in plain words, or "" while its amount isn't a number yet. */
+export function blockDraftLabel(d: BlockDraft): string {
+  return /^\d+$/.test(d.amount.trim()) ? blockLabel(toBlock(d)) : "";
 }
 
 function toGroup(g: GroupDraft): ConditionGroup {

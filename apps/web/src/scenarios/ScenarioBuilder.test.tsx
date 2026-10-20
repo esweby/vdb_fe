@@ -40,13 +40,25 @@ async function open() {
 }
 const block = (b: ReturnType<typeof within>, n: number) =>
   within(b.getByRole("group", { name: `Block ${n}` }));
+/** Filters show only once added (the maintainer, 19 Oct 2026: too many fields at once). */
+async function filter(
+  user: ReturnType<typeof userEvent.setup>,
+  scope: ReturnType<typeof within>,
+  label: string,
+) {
+  await user.selectOptions(scope.getByLabelText("Add a filter"), label);
+  return scope.getByLabelText(label);
+}
 const result = () =>
   within(screen.getByRole("region", { name: "Scenario result" }));
 
 describe("building a scenario", () => {
   it("starts with one block, and runs it on the deck", async () => {
     const { builder, user } = await open();
-    await user.selectOptions(block(builder, 1).getByLabelText("Pitch"), "3");
+    await user.selectOptions(
+      await filter(user, block(builder, 1), "Pitch"),
+      "3",
+    );
     await user.click(
       builder.getByRole("button", { name: "Run this scenario" }),
     );
@@ -65,7 +77,7 @@ describe("building a scenario", () => {
       "Become the Shadow Lord (blue)",
     );
     await user.selectOptions(
-      block(builder, 1).getByLabelText("Card"),
+      await filter(user, block(builder, 1), "Card"),
       "Become the Shadow Lord",
     );
     await user.click(
@@ -100,7 +112,7 @@ describe("building a scenario", () => {
   it("always sees the weapon", async () => {
     const { builder, user } = await open();
     await user.selectOptions(
-      block(builder, 1).getByLabelText("Type"),
+      await filter(user, block(builder, 1), "Type"),
       "weapon",
     );
     await user.click(
@@ -112,7 +124,7 @@ describe("building a scenario", () => {
   it("groups failures by the block that wasn't met", async () => {
     const { builder, user } = await open();
     await user.selectOptions(
-      block(builder, 1).getByLabelText("Type"),
+      await filter(user, block(builder, 1), "Type"),
       "instant",
     );
     await user.click(
@@ -128,10 +140,13 @@ describe("building a scenario", () => {
 
   it("combines blocks with all or any, and nests groups", async () => {
     const { builder, user } = await open();
-    await user.selectOptions(block(builder, 1).getByLabelText("Pitch"), "3");
+    await user.selectOptions(
+      await filter(user, block(builder, 1), "Pitch"),
+      "3",
+    );
     await user.click(builder.getByRole("button", { name: "Add a block" }));
     const second = block(builder, 2);
-    await user.selectOptions(second.getByLabelText("Pitch"), "1");
+    await user.selectOptions(await filter(user, second, "Pitch"), "1");
     const amount = second.getByRole("textbox", { name: "Amount" });
     await user.clear(amount);
     await user.type(amount, "5");
@@ -198,19 +213,20 @@ describe("scripted steps", () => {
       ).getByLabelText("Card"),
       "Become the Shadow Lord (blue)",
     );
+    // Steps need a turn: the opening hand has none.
+    await user.selectOptions(builder.getByLabelText("Check"), "1");
     await user.click(builder.getByRole("button", { name: "Add a step" }));
     const step = within(builder.getByRole("group", { name: "Step 1" }));
     await user.selectOptions(step.getByLabelText("When"), "1");
     await user.selectOptions(step.getByLabelText("Do"), "arsenal");
     await user.selectOptions(
-      step.getByLabelText("Card"),
+      await filter(user, step, "Card"),
       "Become the Shadow Lord",
     );
-    await user.selectOptions(builder.getByLabelText("Check"), "1");
     await user.click(builder.getByRole("checkbox", { name: "Hand" }));
     await user.click(builder.getByRole("checkbox", { name: "Arsenal" }));
     await user.selectOptions(
-      block(builder, 1).getByLabelText("Card"),
+      await filter(user, block(builder, 1), "Card"),
       "Become the Shadow Lord",
     );
     await user.click(
@@ -221,6 +237,7 @@ describe("scripted steps", () => {
 
   it("draws extra cards with a count", async () => {
     const { builder, user } = await open();
+    await user.selectOptions(builder.getByLabelText("Check"), "2");
     await user.click(builder.getByRole("button", { name: "Add a step" }));
     const step = within(builder.getByRole("group", { name: "Step 1" }));
     await user.selectOptions(step.getByLabelText("Do"), "draw");
@@ -235,23 +252,71 @@ describe("scripted steps", () => {
     expect(builder.queryByText(/Step counts/)).toBeNull();
   });
 
-  it("can see the banished zone, and says steps don't run for the opening hand", async () => {
+  it("can see the banished zone, and only takes steps once a turn is chosen", async () => {
     const { builder, user } = await open();
     expect(
       builder.getByRole("checkbox", { name: "Banished zone" }),
     ).toBeInTheDocument();
+    // The opening hand is checked before any steps run.
+    expect(builder.getByRole("button", { name: "Add a step" })).toBeDisabled();
+    expect(builder.getByText(/choose a turn under When/)).toBeInTheDocument();
+    await user.selectOptions(builder.getByLabelText("Check"), "2");
     await user.click(builder.getByRole("button", { name: "Add a step" }));
-    expect(
-      builder.getByText(/The opening hand is checked before any steps/),
-    ).toBeInTheDocument();
     await user.click(
       within(builder.getByRole("group", { name: "Step 1" })).getByRole(
         "button",
-        {
-          name: "Remove step",
-        },
+        { name: "Remove step" },
       ),
     );
     expect(builder.queryByRole("group", { name: "Step 1" })).toBeNull();
+  });
+});
+
+// The maintainer, 19 Oct 2026: too many fields at once, hard to read back, steps and fixed
+// cards unclear.
+describe("the form", () => {
+  it("reads back as one sentence, as you edit", async () => {
+    const { builder, user } = await open();
+    const readsAs = () =>
+      within(builder.getByRole("region", { name: "Reads as" }));
+    expect(
+      readsAs().getByText("In your opening hand: at least 1 card."),
+    ).toBeInTheDocument();
+    await user.selectOptions(
+      await filter(user, block(builder, 1), "Pitch"),
+      "3",
+    );
+    expect(
+      readsAs().getByText("In your opening hand: at least 1 blue card."),
+    ).toBeInTheDocument();
+  });
+
+  it("is laid out as five numbered sections, in the order they apply", async () => {
+    const { builder } = await open();
+    expect(
+      builder
+        .getAllByRole("heading", { level: 3 })
+        .map((h) => h.textContent)
+        .slice(0, 5),
+    ).toEqual([
+      "1. When",
+      "2. Starting with",
+      "3. Each turn",
+      "4. Look at",
+      "5. Succeeds if",
+    ]);
+  });
+
+  it("shows a block's filters only once added, each removable", async () => {
+    const { builder, user } = await open();
+    const first = block(builder, 1);
+    expect(first.queryByLabelText("Pitch")).toBeNull();
+    await user.selectOptions(await filter(user, first, "Pitch"), "3");
+    expect(first.getByText("at least 1 blue card")).toBeInTheDocument();
+    await user.click(
+      first.getByRole("button", { name: "Remove the Pitch filter" }),
+    );
+    expect(first.queryByLabelText("Pitch")).toBeNull();
+    expect(first.getByText("at least 1 card")).toBeInTheDocument();
   });
 });

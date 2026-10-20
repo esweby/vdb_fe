@@ -57,12 +57,10 @@ const result = () =>
   within(screen.getByRole("region", { name: "Scenario result" }));
 
 async function runFailing(user: ReturnType<typeof userEvent.setup>) {
-  await user.selectOptions(
-    within(builder().getByRole("group", { name: "Block 1" })).getByLabelText(
-      "Type",
-    ),
-    "instant",
-  );
+  const block = within(builder().getByRole("group", { name: "Block 1" }));
+  // Filters show only once added.
+  await user.selectOptions(block.getByLabelText("Add a filter"), "Type");
+  await user.selectOptions(block.getByLabelText("Type"), "instant");
   await user.click(
     builder().getByRole("button", { name: "Run this scenario" }),
   );

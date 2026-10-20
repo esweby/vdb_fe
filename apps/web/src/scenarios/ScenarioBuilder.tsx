@@ -13,8 +13,12 @@ import { BUILT_IN_SCENARIOS } from "../ranking/scenarios.ts";
 import { Button, TextField } from "../ui/index.ts";
 import { labelsOf, TRAITS } from "./blocks.ts";
 import type { SavedScenario, Visibility } from "./scenarioRepository.ts";
+import { describeScenario } from "./describeScenario.ts";
 import {
+  blockDraftLabel,
   fromDefinition,
+  shownFilters,
+  type FilterKey,
   newBlock,
   newDraft,
   newGroup,
@@ -153,54 +157,100 @@ export function ScenarioBuilder(props: {
     );
   }
 
-  /** Card, card fact, class, type and pitch: a filter for a block or a step. */
+  /**
+   * Filters for a block or a step: only those in use, each removable, and "Add a filter" for
+   * the rest (the maintainer, 19 Oct 2026: too many fields at once).
+   */
   function filterFields(
     filter: BlockDraft["filter"],
-    set: (field: keyof BlockDraft["filter"], value: string) => void,
+    shown: FilterKey[] | undefined,
+    setField: (field: FilterKey, value: string) => void,
+    setShown: (shown: FilterKey[]) => void,
   ) {
+    const visible = shownFilters(filter, shown);
+    const fields: Record<
+      FilterKey,
+      { label: string; value: string; options: [string, string][] }
+    > = {
+      name: {
+        label: "Card",
+        value: filter.name ?? "",
+        options: [
+          ["", "Any card"],
+          ...names.map((x): [string, string] => [x, x]),
+        ],
+      },
+      role: {
+        label: "Card fact",
+        value: filter.role ?? "",
+        options: [
+          ["", "Any"],
+          ...ROLES.map((r): [string, string] => [r.id, r.name]),
+        ],
+      },
+      trait: {
+        label: "Class, talent or trait",
+        value: filter.trait ?? "",
+        options: [["", "Any"], ...Object.entries(TRAITS)],
+      },
+      type: {
+        label: "Type",
+        value: filter.type ?? "",
+        options: [["", "Any"], ...Object.entries(TYPE_LABELS)],
+      },
+      pitch: {
+        label: "Pitch",
+        value: filter.pitch === undefined ? "" : String(filter.pitch),
+        options: [
+          ["", "Any"],
+          ["1", "Red"],
+          ["2", "Yellow"],
+          ["3", "Blue"],
+        ],
+      },
+    };
+    const hidden = (Object.keys(fields) as FilterKey[]).filter(
+      (k) => !visible.includes(k),
+    );
     return (
       <>
-        <Select
-          label="Card"
-          value={filter.name ?? ""}
-          options={[
-            ["", "Any card"],
-            ...names.map((x): [string, string] => [x, x]),
-          ]}
-          onChange={(v) => set("name", v)}
-        />
-        <Select
-          label="Card fact"
-          value={filter.role ?? ""}
-          options={[
-            ["", "Any"],
-            ...ROLES.map((r): [string, string] => [r.id, r.name]),
-          ]}
-          onChange={(v) => set("role", v)}
-        />
-        <Select
-          label="Class, talent or trait"
-          value={filter.trait ?? ""}
-          options={[["", "Any"], ...Object.entries(TRAITS)]}
-          onChange={(v) => set("trait", v)}
-        />
-        <Select
-          label="Type"
-          value={filter.type ?? ""}
-          options={[["", "Any"], ...Object.entries(TYPE_LABELS)]}
-          onChange={(v) => set("type", v)}
-        />
-        <Select
-          label="Pitch"
-          value={filter.pitch === undefined ? "" : String(filter.pitch)}
-          options={[
-            ["", "Any"],
-            ["1", "Red"],
-            ["2", "Yellow"],
-            ["3", "Blue"],
-          ]}
-          onChange={(v) => set("pitch", v)}
-        />
+        {visible.map((k) => (
+          <span key={k} className={styles.chip}>
+            <Select
+              label={fields[k].label}
+              value={fields[k].value}
+              options={fields[k].options}
+              onChange={(v) => setField(k, v)}
+            />
+            <button
+              type="button"
+              className={styles.chipRemove}
+              aria-label={`Remove the ${fields[k].label} filter`}
+              onClick={() => {
+                setField(k, "");
+                setShown(visible.filter((x) => x !== k));
+              }}
+            >
+              ×
+            </button>
+          </span>
+        ))}
+        {hidden.length > 0 && (
+          <Select
+            label="Add a filter"
+            value=""
+            options={[
+              ["", visible.length ? "Another filter…" : "Any card · filter…"],
+              ...hidden.map((k): [string, string] => [k, fields[k].label]),
+            ]}
+            onChange={(v) => {
+              const key = (Object.keys(fields) as FilterKey[]).find(
+                (k) => k === v || fields[k].label === v,
+              );
+              if (key) setShown([...visible, key]);
+            }}
+          />
+        )}
       </>
     );
   }
@@ -266,19 +316,23 @@ export function ScenarioBuilder(props: {
         </div>
         {!counted && (
           <div className={styles.row}>
-            <span className={styles.from}>the lowest-pitch card matching</span>
-            {filterFields(step.filter, (field, value) =>
-              setStep(i, {
-                filter: {
-                  ...step.filter,
-                  [field]:
-                    value === ""
-                      ? undefined
-                      : field === "pitch"
-                        ? Number(value)
-                        : value,
-                },
-              }),
+            <span className={styles.from}>the lowest-pitch card from</span>
+            {filterFields(
+              step.filter,
+              step.shown,
+              (field, value) =>
+                setStep(i, {
+                  filter: {
+                    ...step.filter,
+                    [field]:
+                      value === ""
+                        ? undefined
+                        : field === "pitch"
+                          ? Number(value)
+                          : value,
+                  },
+                }),
+              (shown) => setStep(i, { shown }),
             )}
           </div>
         )}
@@ -345,9 +399,14 @@ export function ScenarioBuilder(props: {
           </Button>
         </div>
         <div className={styles.row}>
-          <span className={styles.from}>from cards matching</span>
-          {filterFields(block.filter, setFilter)}
+          <span className={styles.from}>from</span>
+          {filterFields(block.filter, block.shown, setFilter, (shown) =>
+            setBlock({ shown }),
+          )}
         </div>
+        {blockDraftLabel(block) && (
+          <p className={styles.blockReads}>{blockDraftLabel(block)}</p>
+        )}
       </fieldset>
     );
   }
@@ -450,67 +509,56 @@ export function ScenarioBuilder(props: {
         )}
       </header>
 
-      <div className={styles.settings}>
-        <TextField
-          label="Name"
-          value={draft.name}
-          onChange={(e) => set({ name: e.target.value })}
-        />
-        <Select
-          label="Check"
-          value={String(draft.horizon)}
-          options={HORIZONS.map((h) => [
-            String(h),
-            h === 0
-              ? "Opening hand"
-              : h === 1
-                ? "Turn 1, after its steps"
-                : `By turn ${h}`,
-          ])}
-          onChange={(v) => set({ horizon: Number(v) })}
-        />
-        {draft.horizon > 0 && (
-          <Select
-            label="Between turns"
-            value={draft.turnModel}
-            options={[
-              ["fresh", "Fresh hand each turn"],
-              ["drawUp", "Keep the hand, draw up to 4"],
-            ]}
-            onChange={(v) => set({ turnModel: v as Draft["turnModel"] })}
-          />
-        )}
-        <fieldset className={styles.access}>
-          <legend>Conditions can see</legend>
-          {ZONES.map(({ zone, label }) => (
-            <label key={zone}>
-              <input
-                type="checkbox"
-                checked={draft.access.includes(zone)}
-                onChange={(e) =>
-                  set({
-                    access: e.target.checked
-                      ? ZONES.map((z) => z.zone).filter(
-                          (z) => z === zone || draft.access.includes(z),
-                        )
-                      : draft.access.filter((z) => z !== zone),
-                  })
-                }
-              />
-              {label}
-            </label>
-          ))}
-          <span className={styles.hint}>
-            Weapons and equipment always count.
-          </span>
-        </fieldset>
-      </div>
+      <TextField
+        label="Name"
+        value={draft.name}
+        onChange={(e) => set({ name: e.target.value })}
+      />
 
-      <fieldset className={styles.fixed}>
-        <legend>Fixed cards</legend>
+      <section aria-label="Reads as" className={styles.readsAs}>
+        <p>
+          {"definition" in checked
+            ? describeScenario(checked.definition)
+            : `Not ready yet: ${checked.problem}`}
+        </p>
+      </section>
+
+      <section className={styles.part} aria-labelledby="part-when">
+        <h3 id="part-when">1. When</h3>
+        <p className={styles.hint}>When the conditions are checked.</p>
+        <div className={styles.row}>
+          <Select
+            label="Check"
+            value={String(draft.horizon)}
+            options={HORIZONS.map((h) => [
+              String(h),
+              h === 0
+                ? "Opening hand"
+                : h === 1
+                  ? "Turn 1, after its steps"
+                  : `By turn ${h}`,
+            ])}
+            onChange={(v) => set({ horizon: Number(v) })}
+          />
+          {draft.horizon > 0 && (
+            <Select
+              label="Between turns"
+              value={draft.turnModel}
+              options={[
+                ["fresh", "Fresh hand each turn"],
+                ["drawUp", "Keep the hand, draw up to 4"],
+              ]}
+              onChange={(v) => set({ turnModel: v as Draft["turnModel"] })}
+            />
+          )}
+        </div>
+      </section>
+
+      <section className={styles.part} aria-labelledby="part-start">
+        <h3 id="part-start">2. Starting with</h3>
         <p className={styles.hint}>
-          Cards assumed to already be in hand or arsenal. Each takes one copy
-          out of the deck before shuffling.
+          Cards already in your hand or arsenal when the game starts. Each takes
+          one copy out of the deck before it's shuffled.
         </p>
         {draft.fixed.map((f, i) => (
           <div
@@ -572,28 +620,62 @@ export function ScenarioBuilder(props: {
         >
           Add a fixed card
         </Button>
-      </fieldset>
+      </section>
 
-      <fieldset className={styles.fixed}>
-        <legend>Steps</legend>
+      <section className={styles.part} aria-labelledby="part-steps">
+        <h3 id="part-steps">3. Each turn</h3>
         <p className={styles.hint}>
-          Scripted actions each turn, after the draw and before the check. A
-          step that chooses a card takes the lowest pitch, then the first in
-          hand: a fixed rule, never a judgement.
+          {draft.horizon === 0
+            ? "Steps run after each turn's draw, so the opening hand has none: choose a turn under When to add them."
+            : "Scripted actions after each turn's draw, before the check. A step that picks a card takes the lowest pitch, then the first in hand: a fixed rule, never a judgement."}
         </p>
         {draft.steps.map(renderStep)}
         {draft.steps.length > 0 && draft.horizon === 0 && (
           <p className={styles.problem}>
             The opening hand is checked before any steps. Choose a turn under
-            Check for them to run.
+            When for them to run.
           </p>
         )}
-        <Button onClick={() => set({ steps: [...draft.steps, newStep()] })}>
+        <Button
+          disabled={draft.horizon === 0}
+          onClick={() => set({ steps: [...draft.steps, newStep()] })}
+        >
           Add a step
         </Button>
-      </fieldset>
+      </section>
 
-      {renderGroup(draft.condition, [])}
+      <section className={styles.part} aria-labelledby="part-look">
+        <h3 id="part-look">4. Look at</h3>
+        <p className={styles.hint}>
+          Where the conditions look. Weapons and equipment always count.
+        </p>
+        <fieldset className={styles.access}>
+          <legend className={styles.visuallyHidden}>Conditions can see</legend>
+          {ZONES.map(({ zone, label }) => (
+            <label key={zone}>
+              <input
+                type="checkbox"
+                checked={draft.access.includes(zone)}
+                onChange={(e) =>
+                  set({
+                    access: e.target.checked
+                      ? ZONES.map((z) => z.zone).filter(
+                          (z) => z === zone || draft.access.includes(z),
+                        )
+                      : draft.access.filter((z) => z !== zone),
+                  })
+                }
+              />
+              {label}
+            </label>
+          ))}
+        </fieldset>
+      </section>
+
+      <section className={styles.part} aria-labelledby="part-if">
+        <h3 id="part-if">5. Succeeds if</h3>
+        {renderGroup(draft.condition, [])}
+      </section>
 
       <div className={styles.runRow}>
         {props.onSave && (
