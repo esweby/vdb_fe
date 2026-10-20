@@ -179,7 +179,22 @@ export const SYNERGY_RULES: SynergyRule[] = [
     description: "Lets this card be played from banish",
     weight: 0.8,
     engine: null,
-    targets: (a) => (a.enablesPlayFromBanish ?? []).map((e) => e.target),
+    targets: (a) =>
+      (a.enablesPlayFromBanish ?? [])
+        .filter((e) => !e.from)
+        .map((e) => e.target),
+  },
+  {
+    // Not "lets it be played from banish": it takes the card back out of the graveyard (the
+    // maintainer, 20 Oct 2026: Rattle Bones and Usurp the Shadow Throne).
+    id: "recurs-from-graveyard",
+    description: "Gets this card back from your graveyard to play again",
+    weight: 0.8,
+    engine: null,
+    targets: (a) =>
+      (a.enablesPlayFromBanish ?? [])
+        .filter((e) => e.from === "graveyard")
+        .map((e) => e.target),
   },
   {
     id: "supports",
@@ -260,10 +275,14 @@ export function deriveSynergies(
 
   return [...matches.entries()].map(([key, all]) => {
     const [from, to] = key.split("\u0000") as [string, string];
-    // A card that lets this one be played from banish already says why it helps: the banisher
-    // rules would repeat it (the maintainer, 20 Oct 2026: Rattle Bones and Usurp the Shadow
-    // Throne).
-    const enables = all.some((m) => m.rule.id === "enables-play-from-banish");
+    // A card that lets this one be played from banish, or gets it back from the graveyard, already
+    // says why it helps: the banisher rules would repeat it (the maintainer, 20 Oct 2026: Rattle
+    // Bones and Usurp the Shadow Throne).
+    const enables = all.some(
+      (m) =>
+        m.rule.id === "enables-play-from-banish" ||
+        m.rule.id === "recurs-from-graveyard",
+    );
     const found = enables
       ? all.filter(
           (m) =>

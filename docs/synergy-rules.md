@@ -52,11 +52,12 @@ The two Runechant rows are the "non-obvious" kind. If they turn out too broad (m
 
 These attributes already name the cards they work with ([attribute-vocabulary.md](attribute-vocabulary.md), "Card references"), so the edge is the authored fact itself.
 
-| Attribute               | Edge                                 | Default weight | Example                                   |
-| ----------------------- | ------------------------------------ | -------------: | ----------------------------------------- |
-| `tutors`                | tutor → each card it can find        |            0.6 | Sinspeaker Gloomblade → each sinchant     |
-| `enablesPlayFromBanish` | enabler → each card it lets you play |            0.8 | Embrace Sin → each sinchant               |
-| `supports`              | card → each card in its target group |            0.7 | Envelop in Darkness → each Rune Gate card |
+| Attribute                                      | Edge                                 | Default weight | Example                                     |
+| ---------------------------------------------- | ------------------------------------ | -------------: | ------------------------------------------- |
+| `tutors`                                       | tutor → each card it can find        |            0.6 | Sinspeaker Gloomblade → each sinchant       |
+| `enablesPlayFromBanish`                        | enabler → each card it lets you play |            0.8 | Embrace Sin → each sinchant                 |
+| `enablesPlayFromBanish` with `from: graveyard` | recursion → each card it gets back   |            0.8 | Rattle Bones → each Runeblade attack action |
+| `supports`                                     | card → each card in its target group |            0.7 | Envelop in Darkness → each Rune Gate card   |
 
 Only a handful of cards have these (4 tutors, 2 enablers, 3 supports), so they're cheap to check one by one.
 
@@ -140,3 +141,5 @@ Still open: whether side focus scales synergy (3), and the default λ (scoring g
 **Self-banishers (the maintainer, 20 Oct 2026):** a card that banishes only itself (Fallen Herald) puts nothing else in the banished zone. It no longer links to cards played from banish, to banish-type payoffs or to "when banished" triggers; it still fills the zone for banish-play payoffs.
 
 **Enabling beats banishing (the maintainer, 20 Oct 2026):** when a card lets another be played from banish (Rattle Bones and Usurp the Shadow Throne), that's the link between them. The banisher rules don't add their own reasons to the same pair.
+
+**Recursion, not banish play (the maintainer, 20 Oct 2026):** Rattle Bones doesn't help Usurp the Shadow Throne by letting it be played from banish (paying for both in one turn is unlikely). It takes a card back out of the graveyard to play again. An enabler that banishes the card itself (`from: graveyard`) links as "Gets this card back from your graveyard to play again" (`recurs-from-graveyard`), and the banisher rules stay out of that pair too.

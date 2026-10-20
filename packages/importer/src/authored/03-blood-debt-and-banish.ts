@@ -434,7 +434,9 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     verified: true,
     card: {
       banishesOwn: [{ from: "graveyard", trigger: "on_play" }],
-      enablesPlayFromBanish: [{ target: { group: "runeblade_attack_action" } }],
+      enablesPlayFromBanish: [
+        { target: { group: "runeblade_attack_action" }, from: "graveyard" },
+      ],
       instantSpeed: {
         conditions: ["dealt_arcane_damage_to_opponent_this_turn"],
       },

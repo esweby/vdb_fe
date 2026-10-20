@@ -56,6 +56,7 @@ const statusLabel = (e: WeightedEdge) =>
 const RULE_VERB: Record<string, string> = {
   "tutor-finds": "searches for them",
   "enables-play-from-banish": "lets them be played from banish",
+  "recurs-from-graveyard": "gets them back from the graveyard",
   supports: "works with them",
   community: "the scoring group links them",
 };
