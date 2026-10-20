@@ -82,6 +82,7 @@ export function DeckPage() {
     log,
     fixed,
     vs,
+    mode,
   } = route.useSearch();
   const navigate = useNavigate();
   const { decks } = useServices();
@@ -382,6 +383,19 @@ export function DeckPage() {
             key={playing ? playing.id : "main"}
             deckId={deckId}
             entries={playEntries}
+            mode={mode === "create" ? "create" : "run"}
+            onMode={(next) =>
+              void navigate({
+                to: ".",
+                replace: true,
+                resetScroll: false,
+                search: {
+                  tab: "scenarios",
+                  ...(vs ? { vs } : {}),
+                  ...(next === "create" ? { mode: "create" as const } : {}),
+                },
+              })
+            }
           />
         ) : tab === "matchups" ? (
           <MatchupsPanel deckId={deckId} entries={entries} canEdit={canEdit} />

@@ -57,14 +57,21 @@ const yours = async () =>
   within(await screen.findByRole("region", { name: "Your scenarios" }));
 const builder = () =>
   within(screen.getByRole("region", { name: "Build a scenario" }));
+/** Scenarios are run on one side of the tab and created on the other. */
+const toCreate = (user: ReturnType<typeof userEvent.setup>) =>
+  user.click(screen.getByRole("button", { name: "Add a new scenario" }));
+const toRun = (user: ReturnType<typeof userEvent.setup>) =>
+  user.click(screen.getByRole("button", { name: "Run" }));
 
 describe("saved scenarios", () => {
   it("saves a built scenario, private by default, and lists it", async () => {
     const { user, scenarios } = await open();
+    await toCreate(user);
     const name = builder().getByRole("textbox", { name: "Name" });
     await user.clear(name);
     await user.type(name, "Blue in hand");
     await user.click(builder().getByRole("button", { name: "Save scenario" }));
+    await toRun(user);
     const row = (await yours()).getByRole("row", { name: /Blue in hand/ });
     expect(row).toHaveTextContent("Private");
     expect(scenarios.saved).toEqual(["save Blue in hand private"]);
@@ -154,21 +161,23 @@ describe("saved scenarios", () => {
 
   it("shares a scenario by link", async () => {
     const { user } = await open();
+    await toCreate(user);
     await user.selectOptions(
       builder().getByLabelText("Who can see it"),
       "link",
     );
     await user.click(builder().getByRole("button", { name: "Save scenario" }));
     expect(
-      (await yours()).getByRole("row", { name: /My scenario/ }),
-    ).toHaveTextContent("Anyone with the link");
-    expect(
       (
-        builder().getByRole("textbox", {
+        (await screen.findByRole("textbox", {
           name: "Share link",
-        }) as HTMLInputElement
+        })) as HTMLInputElement
       ).value,
     ).toMatch(/\/scenarios\/scenario-1$/);
+    await toRun(user);
+    expect(
+      (await yours()).getByRole("row", { name: /My scenario/ }),
+    ).toHaveTextContent("Anyone with the link");
   });
 
   it("deletes a saved scenario", async () => {

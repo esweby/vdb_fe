@@ -18,7 +18,7 @@ const DECK = [card("hp1", 3), card("bsl3", 2), card("nb", 1)];
 
 async function open() {
   await renderApp({
-    path: "/decks/deck-1?tab=scenarios",
+    path: "/decks/deck-1?tab=scenarios&mode=create",
     auth: fakeAuthService({
       users: { "u@test.local": { id: "u1", password: "pw", role: "user" } },
       signedIn: { id: "u1", email: "u@test.local" },

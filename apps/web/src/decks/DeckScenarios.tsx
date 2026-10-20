@@ -17,7 +17,15 @@ import styles from "./Decks.module.css";
  * against the main deck as built (no blanks). Weapons and equipment aren't drawn; the sideboard
  * isn't used.
  */
-export function DeckScenarios(props: { deckId: string; entries: DeckEntry[] }) {
+export type ScenarioMode = "run" | "create";
+
+export function DeckScenarios(props: {
+  deckId: string;
+  entries: DeckEntry[];
+  /** Running scenarios, or creating one (the maintainer, 20 Oct 2026). */
+  mode: ScenarioMode;
+  onMode: (mode: ScenarioMode) => void;
+}) {
   const drawn = props.entries.filter(
     (e) => !e.sideboard && sectionOf(e.card) === "deck",
   );
@@ -65,24 +73,52 @@ export function DeckScenarios(props: { deckId: string; entries: DeckEntry[] }) {
 
   return (
     <div className={styles.scenarios}>
+      <div
+        role="group"
+        aria-label="Scenarios: run or create"
+        className={styles.modeToggle}
+      >
+        {(
+          [
+            ["run", "Run"],
+            ["create", "Create"],
+          ] as const
+        ).map(([mode, label]) => (
+          <button
+            key={mode}
+            type="button"
+            aria-pressed={props.mode === mode}
+            onClick={() => props.onMode(mode)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
       <p className={styles.preview}>
-        Build a scenario of your own, or run the built-in ones from Build a
-        core. Runs use the main deck as built.
+        {props.mode === "run"
+          ? "Run your scenarios, the library's and the built-ins on this deck. Runs use the main deck as built, or the matchup being played."
+          : "Build a scenario: a question about this deck's hands, checked over thousands of shuffles. Run it here to try it, then save it to add it to your scenarios."}
       </p>
       <SavedScenarios
         deckId={props.deckId}
         entries={props.entries}
         deck={forBuilder}
+        mode={props.mode}
+        onMode={props.onMode}
       />
-      <RulesPanel entries={props.entries} />
-      <ScenariosPanel
-        source="deck"
-        output={run?.output ?? null}
-        stale={!!run && run.signature !== signature}
-        running={running}
-        onRun={start}
-      />
-      {run && <TraverseTimeline output={run.output} />}
+      {props.mode === "run" && (
+        <>
+          <RulesPanel entries={props.entries} />
+          <ScenariosPanel
+            source="deck"
+            output={run?.output ?? null}
+            stale={!!run && run.signature !== signature}
+            running={running}
+            onRun={start}
+          />
+          {run && <TraverseTimeline output={run.output} />}
+        </>
+      )}
     </div>
   );
 }
