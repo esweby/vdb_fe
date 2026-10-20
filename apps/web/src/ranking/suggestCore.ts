@@ -122,15 +122,35 @@ export function alternatives<T extends CoreCandidate>(
  * Equipment for the core (the maintainer, 20 Oct 2026): the best card of each gear slot (a
  * weapon, then each equipment slot), added to the core, one copy each. A slot the core already
  * has a piece for is left alone. Slots' cards come best first.
+ *
+ * A two-handed weapon takes both hands (the maintainer, 20 Oct 2026: Grimoire of Fellingsong can't
+ * be played alongside Seven Sin Nebula), so there's no off-hand beside one, and a core that
+ * already has an off-hand gets a one-handed weapon.
  */
 export function suggestGear(
   slots: { title: string; cards: { variantId: string }[] }[],
   core: Record<string, number>,
+  twoHanded: ReadonlySet<string> = new Set(),
 ): Record<string, number> {
   const next = { ...core };
+  const has = (slot: { cards: { variantId: string }[] }) =>
+    slot.cards.some((c) => next[c.variantId]);
+  const weapons = slots.find((s) => s.title === "Weapons");
+  const offHand = slots.find((s) => s.title === "Off-Hand");
+  const offHandTaken = () => !!offHand && has(offHand);
   for (const slot of slots) {
-    if (slot.cards.some((c) => next[c.variantId])) continue;
-    const best = slot.cards[0];
+    if (has(slot)) continue;
+    if (
+      slot === offHand &&
+      weapons?.cards.some(
+        (c) => next[c.variantId] && twoHanded.has(c.variantId),
+      )
+    )
+      continue;
+    const best = slot.cards.find(
+      (c) =>
+        !(slot === weapons && offHandTaken() && twoHanded.has(c.variantId)),
+    );
     if (best) next[best.variantId] = 1;
   }
   return next;

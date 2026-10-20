@@ -42,6 +42,10 @@ import {
 } from "./rankingSearch.ts";
 import { preferenceBoost } from "./preferences.ts";
 import { offPitchReactions, suggestCore, suggestGear } from "./suggestCore.ts";
+import {
+  lowValueGenerator,
+  withGeneratorPenalty,
+} from "./lowValueGenerator.ts";
 import { ScopedSynergies } from "../synergy/SynergyExplorer.tsx";
 import {
   buildSynergyGraph,
@@ -431,6 +435,11 @@ export function RankingPage() {
     }
   }
 
+  const isLowValue = (cardId: string, variantId: string) => {
+    const card = cardsById.get(cardId);
+    const variant = card?.variants.find((v) => v.id === variantId);
+    return !!card && !!variant && lowValueGenerator(card, variant);
+  };
   // Fill each pitch to its target: cards already in the core stay, the rest come best fits first.
   /** The core filled to the pitch targets; cards already in it stay. */
   function filled(): Record<string, number> {
@@ -440,7 +449,11 @@ export function RankingPage() {
     const candidates = [...deckCards]
       .map((r) => ({
         r,
-        key: r.value + preferenceBoost(r.roles, settings.prefs),
+        // One-and-done Runechant makers, like blue Runeblood Incantation, go lower (20 Oct 2026).
+        key: withGeneratorPenalty(
+          r.value + preferenceBoost(r.roles, settings.prefs),
+          isLowValue(r.cardId, r.variantId),
+        ),
         fits: partners(r.name, r.roles, core).length,
       }))
       .sort((a, b) =>
@@ -479,7 +492,13 @@ export function RankingPage() {
         gearCards.some((g) => g.variantId === id),
       ),
     ]);
-    return settings.suggestGear ? suggestGear(gear, picks) : picks;
+    // Two-handed weapons take the off-hand too.
+    const twoHanded = new Set(
+      gearCards
+        .filter((g) => cardsById.get(g.cardId)?.subtypes.includes("2H"))
+        .map((g) => g.variantId),
+    );
+    return settings.suggestGear ? suggestGear(gear, picks, twoHanded) : picks;
   }
 
   async function addCore(id: string, start: Deck["cards"]) {
