@@ -177,6 +177,38 @@ describe("draftEffects", () => {
     );
   });
 
+  // Cards that banish themselves (20 Oct 2026): "instead of going to the graveyard" is drafted;
+  // combat timings are out of scope; activated abilities aren't drafted yet.
+  it("drafts banishing itself instead of going to the graveyard", () => {
+    const card = withAttributes({
+      banishesSelf: [{ trigger: "would_go_to_graveyard" }],
+    });
+    const draft = draftEffects(card, card.variants[0]!);
+    expect(draft.rules.graveyardToBanish).toBe(true);
+    expect(draft.description).toContain(
+      "If it would go to the graveyard, it's banished instead.",
+    );
+    expect(draft.complete).toBe(true);
+  });
+
+  it("sorts the other times a card banishes itself", () => {
+    const card = withAttributes({
+      banishesSelf: [
+        { trigger: "combat_chain_closes", conditions: ["it_defended"] },
+        { trigger: "would_be_dealt_damage", optional: true },
+        { from: "hand", trigger: "activated" },
+      ],
+    });
+    const draft = draftEffects(card, card.variants[0]!);
+    expect(draft.outOfScope).toEqual([
+      "Banishing itself when the combat chain closes: combat is out of scope",
+      "Banishing itself when you would be dealt damage: combat is out of scope",
+    ]);
+    expect(draft.notDrafted).toEqual([
+      "Banishing itself when it's activated: activated abilities aren't drafted yet",
+    ]);
+  });
+
   it("drafts conditional go again it can check, and notes the conditions it can't", () => {
     const card = withAttributes({
       banishesOwn: [{ from: "hand", trigger: "on_play" }],
