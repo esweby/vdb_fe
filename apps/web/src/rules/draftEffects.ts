@@ -106,6 +106,28 @@ export function draftEffects(
     if (!notDrafted.includes(line)) notDrafted.push(line);
   };
 
+  const attackTriggerEffects: Effect[] = [];
+  const attackPlayedEffects: Effect[] = [];
+
+  // Opt comes first: on every card with it, it's the card's first instruction (Blood Tribute:
+  // "Opt 3, then banish the top card of your deck").
+  for (const o of a.opt ?? []) {
+    if (o.fromArsenal) {
+      note(
+        "Opt if it was played from arsenal: the engine can't check that yet",
+      );
+      continue;
+    }
+    const opt: Effect = { op: "opt", amount: o.amount };
+    if (o.trigger === "on_play") effects.push(opt);
+    else if (o.trigger === "on_attack") attackTriggerEffects.push(opt);
+    else if (o.trigger === "on_hit" || o.trigger === "on_defend")
+      note(
+        `Opt when it ${o.trigger === "on_hit" ? "hits" : "defends"}: combat is out of scope`,
+      );
+    else note(`Opt ${TRIGGER_PLAIN[o.trigger] ?? o.trigger}: not drafted yet`);
+  }
+
   // Banishing your own cards, as the card is played.
   for (const b of a.banishesOwn ?? []) {
     if (b.trigger !== "on_play") {
@@ -158,8 +180,6 @@ export function draftEffects(
   }
 
   // Tokens.
-  const attackTriggerEffects: Effect[] = [];
-  const attackPlayedEffects: Effect[] = [];
   for (const t of a.tokens ?? []) {
     const label = TOKEN_LABEL[t.token] ?? t.token;
     if (t.grantedTo) {
@@ -245,6 +265,8 @@ export function draftEffects(
     note("Turning banished cards face down: not drafted yet");
   if (a.instantSpeed) note("Playing it as an instant: not drafted yet");
   if (a.grantsGoAgain) note("Go again given to a later card: not drafted yet");
+  // A note says what the facts couldn't, so the draft can't be complete without a look.
+  if (a.notes) note(`A note on the card's facts, to check by hand: ${a.notes}`);
   const playableFromBanish =
     !!a.playableFromBanish &&
     (a.playableFromBanish.conditions?.length ?? 0) === 0;

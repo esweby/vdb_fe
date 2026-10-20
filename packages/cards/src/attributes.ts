@@ -169,6 +169,17 @@ export const ownBanishSchema = z.strictObject({
   optional: z.boolean().optional(),
 });
 
+/**
+ * Opt N: look at the top N cards of your deck and put any on the bottom (the maintainer,
+ * 20 Oct 2026). Read from each pitch's text when importing.
+ */
+export const optSchema = z.strictObject({
+  amount: z.number().int().min(1).max(10),
+  trigger,
+  /** Only "if this was played from arsenal". */
+  fromArsenal: z.boolean().optional(),
+});
+
 export const selfBanishSchema = z.strictObject({
   /** Where it banishes itself from, when that matters (e.g. "banish this from your hand"). */
   from: z.enum(["hand"]).optional(),
@@ -225,6 +236,7 @@ export const arcaneDamageSchema = z.strictObject({
 export const authoredAttributesSchema = z.strictObject({
   tokens: z.array(tokenCreationSchema).optional(),
   banishesOwn: z.array(ownBanishSchema).optional(),
+  opt: z.array(optSchema).optional(),
   /** The card banishes itself (feeds Gates and play-from-banish). */
   banishesSelf: z.array(selfBanishSchema).optional(),
   playableFromBanish: z.strictObject({ conditions }).optional(),

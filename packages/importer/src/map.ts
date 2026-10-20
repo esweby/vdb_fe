@@ -106,6 +106,42 @@ function validated(
   return result.data;
 }
 
+/**
+ * Opt in a card's text, sentence by sentence: "Opt 3", "When this attacks, opt 1", "If this was
+ * played from arsenal, opt 2", "Instant - Destroy this: Opt 2" (the maintainer, 20 Oct 2026).
+ * Without a "When this …" or an activated ability, it happens as the card is played.
+ */
+export function optsFromText(
+  text: string,
+): NonNullable<AuthoredCardAttributes["opt"]> {
+  const opts: NonNullable<AuthoredCardAttributes["opt"]> = [];
+  // An activated ability ("Instant - Destroy this: Opt 2"): its Opt happens when activated.
+  const activated = /^\s*(Instant|Action)\s*-[^:]*:/i.test(text);
+  for (const sentence of text.split(".")) {
+    const found = /\bopt (\d+)\b/i.exec(sentence);
+    if (!found) continue;
+    const trigger = activated
+      ? "activated"
+      : /when this attacks/i.test(sentence)
+        ? "on_attack"
+        : /when this hits/i.test(sentence)
+          ? "on_hit"
+          : /when this defends/i.test(sentence)
+            ? "on_defend"
+            : /when this is pitched/i.test(sentence)
+              ? "on_pitch"
+              : "on_play";
+    opts.push({
+      amount: Number(found[1]),
+      trigger,
+      ...(/played from (your )?arsenal/i.test(sentence)
+        ? { fromArsenal: true }
+        : {}),
+    });
+  }
+  return opts;
+}
+
 /** A variant's full attributes: the card's, with the variant's overrides replacing matching keys. */
 export function variantAttributes(
   card: ImportCard,
@@ -160,6 +196,13 @@ export function toImportCards(
           `Authored attributes for "${name}" pitch ${pitch}, which doesn't exist`,
         );
       variant.attributes = validated(name, `pitch ${pitch}`, attributes);
+    }
+
+    // Opt from each pitch's text, unless authored.
+    for (const variant of variants) {
+      const opt = optsFromText(variant.text ?? "");
+      if (opt.length && !variant.attributes.opt)
+        variant.attributes = { ...variant.attributes, opt };
     }
 
     return {

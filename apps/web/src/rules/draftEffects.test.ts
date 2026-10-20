@@ -81,6 +81,55 @@ describe("draftEffects", () => {
     ]);
   });
 
+  // The maintainer, 20 Oct 2026: Blood Tribute's draft must record Opt.
+  it("drafts Opt before the card's other effects, as Blood Tribute reads", () => {
+    const card = withAttributes({
+      banishesOwn: [{ from: "deck_top", trigger: "on_play" }],
+    });
+    const red = {
+      ...card.variants[0]!,
+      attributes: { opt: [{ amount: 3, trigger: "on_play" as const }] },
+    };
+    const draft = draftEffects(card, red);
+    expect(draft.rules.effects).toEqual([
+      { op: "opt", amount: 3 },
+      { op: "banish", from: "deckTop", amount: 1 },
+    ]);
+    expect(draft.complete).toBe(true);
+  });
+
+  it("drafts Opt when it attacks, and lists the Opt it can't draft", () => {
+    const card = withAttributes({
+      opt: [
+        { amount: 1, trigger: "on_attack" },
+        { amount: 2, trigger: "on_hit" },
+        { amount: 1, trigger: "on_pitch" },
+        { amount: 2, trigger: "on_play", fromArsenal: true },
+      ],
+    });
+    const draft = draftEffects(card, card.variants[0]!);
+    expect(draft.rules.triggers).toMatchObject([
+      {
+        on: { event: "attacking", self: true },
+        effects: [{ op: "opt", amount: 1 }],
+      },
+    ]);
+    expect(draft.notDrafted).toEqual([
+      "Opt when it hits: combat is out of scope",
+      "Opt when it's pitched: not drafted yet",
+      "Opt if it was played from arsenal: the engine can't check that yet",
+    ]);
+  });
+
+  it("isn't complete while the card's facts have a note to check by hand", () => {
+    const card = withAttributes({ notes: "Something the facts can't say." });
+    const draft = draftEffects(card, card.variants[0]!);
+    expect(draft.complete).toBe(false);
+    expect(draft.notDrafted).toContain(
+      "A note on the card's facts, to check by hand: Something the facts can't say.",
+    );
+  });
+
   it("drafts conditional go again it can check, and notes the conditions it can't", () => {
     const card = withAttributes({
       banishesOwn: [{ from: "hand", trigger: "on_play" }],
