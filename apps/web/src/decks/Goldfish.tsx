@@ -838,11 +838,20 @@ export function Goldfish(props: {
         {zoneSection("graveyard", "Graveyard", styles.pile)}
         {zoneSection("weapons", "Weapons")}
         <section aria-label="Hero" className={styles.hero} data-place="hero">
-          {props.heroImages?.[g.side] ? (
-            <img src={props.heroImages[g.side]!} alt={heroName} />
-          ) : (
-            <span className={styles.heroName}>{heroName}</span>
-          )}
+          {/* Clicking Viserai traverses (the maintainer, 20 Oct 2026). */}
+          <button
+            type="button"
+            className={styles.heroButton}
+            aria-label={`Traverse to ${g.side === "usurper" ? "Forsaken" : "Usurper"}`}
+            title="Traverse"
+            onClick={() => perform({ type: "traverse" })}
+          >
+            {props.heroImages?.[g.side] ? (
+              <img src={props.heroImages[g.side]!} alt={heroName} />
+            ) : (
+              <span className={styles.heroName}>{heroName}</span>
+            )}
+          </button>
           <span className={styles.life}>{`${LIFE - g.lifeLost} life`}</span>
         </section>
         {zoneSection("pitch", "Pitch", styles.pile)}

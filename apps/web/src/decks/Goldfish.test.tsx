@@ -519,6 +519,20 @@ describe("closer to the playmat", () => {
     ).toHaveAttribute("src", "https://img.test/usurper.png");
   });
 
+  // The maintainer, 20 Oct 2026: "Button Viserai to traverse?"
+  it("traverses when Viserai's card is clicked", async () => {
+    const { table, user } = await open(undefined, VISERAI);
+    const hero = within(table.getByRole("region", { name: "Hero" }));
+    await user.click(
+      await hero.findByRole("button", { name: "Traverse to Usurper" }),
+    );
+    expect(table.getByText("On Usurper")).toBeInTheDocument();
+    await user.click(
+      hero.getByRole("button", { name: "Traverse to Forsaken" }),
+    );
+    expect(table.getByText("On Forsaken")).toBeInTheDocument();
+  });
+
   it("only counts the tokens the deck makes", async () => {
     // Hocus Pocus and Become the Shadow Lord make Runechants and Gates; nothing makes Eloquence.
     const { table } = await open();

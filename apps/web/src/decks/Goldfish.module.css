@@ -478,6 +478,24 @@
   text-align: center;
   font-size: 0.75rem;
 }
+.heroButton {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: none;
+  border-radius: 0.35rem;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.heroButton:hover,
+.heroButton:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 .hero img {
   width: 100%;
   height: 100%;
