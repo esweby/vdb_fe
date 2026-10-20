@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { fakeAuthService } from "../test/fakeAuthService.ts";
 import { fakeDraftReviewRepository } from "../test/fakeDraftReviewRepository.ts";
 import { renderApp } from "../test/renderApp.tsx";
-import { sampleCards } from "../test/fakeCardRepository.ts";
+import { fakeCardRepository, sampleCards } from "../test/fakeCardRepository.ts";
 import { draftQueue } from "./draftQueue.ts";
 
 const users = {
@@ -25,6 +25,36 @@ describe("effect drafts page", () => {
     expect(hocus).toHaveTextContent("When this attacks: create 1 Runechant.");
     expect(hocus).toHaveTextContent("Pitch 1, 2, 3");
     expect(hocus).toHaveTextContent("Unverified");
+  });
+
+  // The maintainer, 20 Oct 2026: a magnifying glass over the card, to read it in the same window.
+  it("enlarges the printed card in place from a magnifying glass", async () => {
+    const withImages = sampleCards.map((c) => ({
+      ...c,
+      variants: c.variants.map((v) => ({
+        ...v,
+        imageUrl: `https://img.test/${v.id}.png`,
+      })),
+    }));
+    await renderApp({
+      path: "/needs-review/effects",
+      auth: signedInAs("s1", "s@test.local"),
+      cards: fakeCardRepository(withImages),
+    });
+    const user = userEvent.setup();
+    const hocus = within(
+      await screen.findByRole("article", { name: "Hocus Pocus" }),
+    );
+    await user.click(
+      hocus.getByRole("button", { name: "Enlarge Hocus Pocus" }),
+    );
+    const large = screen.getByRole("dialog", { name: "Hocus Pocus" });
+    expect(within(large).getByRole("img")).toHaveAttribute(
+      "src",
+      "https://img.test/hp1.png",
+    );
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 
   it("shows cards with verified rules apart, so they aren't checked twice", async () => {
