@@ -58,6 +58,12 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "goldfish", label: "Goldfish" },
 ];
 
+/** Cards in a list's main deck, leaving out weapons and equipment. */
+const deckCount = (entries: DeckEntry[]) =>
+  entries
+    .filter((e) => !e.sideboard && sectionOf(e.card) === "deck")
+    .reduce((n, e) => n + e.quantity, 0);
+
 /** Viserai's card pictures by side, from the hero list ("Viserai, the Forsaken", "Viserai, Usurper"). */
 const viseraiImages = (heroes: Hero[]) => {
   const find = (word: string) =>
@@ -294,35 +300,6 @@ export function DeckPage() {
           </ul>
         ))}
 
-      {(tab === "goldfish" || tab === "scenarios") &&
-        plans.matchups.length > 0 && (
-          <label className={styles.playing}>
-            <span>Playing</span>
-            <select
-              value={playing?.heroId ?? ""}
-              onChange={(e) =>
-                void navigate({
-                  to: ".",
-                  replace: true,
-                  resetScroll: false,
-                  search: {
-                    tab,
-                    // The same shuffle, with or without the plan, to compare.
-                    ...(seed !== undefined ? { seed } : {}),
-                    ...(e.target.value ? { vs: e.target.value } : {}),
-                  },
-                })
-              }
-            >
-              <option value="">Main deck</option>
-              {plans.matchups.map((m) => (
-                <option key={m.id} value={m.heroId}>
-                  {`vs ${plans.heroes.find((h) => h.id === m.heroId)?.name ?? "an unknown hero"}`}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
       <div role="tablist" aria-label="Deck views" className={styles.tabs}>
         {TABS.map((t) => (
           <button
@@ -345,6 +322,43 @@ export function DeckPage() {
         id={`deck-panel-${tab}`}
         aria-labelledby={`deck-tab-${tab}`}
       >
+        {/* What goldfish and scenarios play: the main deck, or a matchup plan (the maintainer,
+            20 Oct 2026: always on offer, with each list's card count). */}
+        {(tab === "goldfish" || tab === "scenarios") && (
+          <div className={styles.playing}>
+            <label>
+              <span>Playing</span>
+              <select
+                value={playing?.heroId ?? ""}
+                onChange={(e) =>
+                  void navigate({
+                    to: ".",
+                    replace: true,
+                    resetScroll: false,
+                    search: {
+                      tab,
+                      // The same shuffle, with or without the plan, to compare.
+                      ...(seed !== undefined ? { seed } : {}),
+                      ...(e.target.value ? { vs: e.target.value } : {}),
+                    },
+                  })
+                }
+              >
+                <option value="">{`Main deck · ${deckCount(entries)} cards`}</option>
+                {plans.matchups.map((m) => (
+                  <option key={m.id} value={m.heroId}>
+                    {`vs ${plans.heroes.find((h) => h.id === m.heroId)?.name ?? "an unknown hero"} · ${deckCount(entriesForMatchup(entries, m.cards))} cards`}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {canEdit && plans.matchups.length === 0 && (
+              <Link to="." search={{ tab: "matchups" }}>
+                Plan a matchup
+              </Link>
+            )}
+          </div>
+        )}
         {tab === "goldfish" ? (
           <Goldfish
             key={playing ? playing.id : "main"}

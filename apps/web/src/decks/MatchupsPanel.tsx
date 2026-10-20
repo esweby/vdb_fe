@@ -63,12 +63,13 @@ export function MatchupsPanel(props: {
     heroes.find((h) => h.id === id)?.name ?? "an unknown hero";
   const planOf = (m: Matchup) =>
     new Map(m.cards.map((c) => [c.variantId, c.quantity]));
-  // Main deck first, then the sideboard; weapons and equipment with them.
+  // Weapons and equipment first, in a group of their own, then the cards by name.
+  const isGear = (e: DeckEntry) => sectionOf(e.card) !== "deck";
   const rows = useMemo(
     () =>
       [...props.entries].sort(
         (a, b) =>
-          Number(a.sideboard) - Number(b.sideboard) ||
+          Number(isGear(b)) - Number(isGear(a)) ||
           variantName(a.card, a.variant).localeCompare(
             variantName(b.card, b.variant),
           ),
@@ -236,7 +237,11 @@ export function MatchupsPanel(props: {
                       const set = (q: number) =>
                         setPlan((p) => new Map(p).set(e.variant.id, q));
                       return (
-                        <li key={e.variant.id} aria-label={name}>
+                        <li
+                          key={e.variant.id}
+                          aria-label={name}
+                          data-gear={isGear(e) || undefined}
+                        >
                           {e.variant.imageUrl ? (
                             <img
                               src={e.variant.imageUrl}

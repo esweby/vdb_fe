@@ -789,6 +789,10 @@
 .matchupCards li {
   position: relative;
 }
+/* The cards start on a new row after the weapons and equipment. */
+.matchupCards li[data-gear] + li:not([data-gear]) {
+  grid-column-start: 1;
+}
 .matchupCards img,
 .matchupStandIn {
   display: block;
@@ -851,11 +855,18 @@
 
 /* Goldfish and scenarios: which list is being played (main deck or a matchup plan). */
 .playing {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+}
+.playing label {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  margin: 0.5rem 0;
-  font-size: 0.9rem;
+  font-weight: 600;
 }
 .playing select {
   font: inherit;
