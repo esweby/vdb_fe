@@ -665,3 +665,33 @@ describe("quicker turns", () => {
     expect(within(tunic()).queryByLabelText(/counter/)).toBeNull();
   });
 });
+
+// The maintainer, 20 Oct 2026: close lists by clicking outside, and show the deck as it'll be drawn.
+describe("the lists", () => {
+  it("closes when you click outside it", async () => {
+    const { table, user } = await open();
+    await user.click(table.getByRole("button", { name: "Open the deck" }));
+    expect(table.getByRole("dialog", { name: "Deck" })).toBeInTheDocument();
+    await user.click(screen.getByTestId("pile-backdrop"));
+    expect(table.queryByRole("dialog")).toBeNull();
+  });
+
+  it("lists the deck in the order it'll be drawn", async () => {
+    const { table, user } = await open();
+    await user.click(table.getByRole("button", { name: "Open the deck" }));
+    await user.click(table.getByRole("button", { name: "Look at top 3" }));
+    const names = (list: string) =>
+      within(table.getByRole("list", { name: list }))
+        .getAllByRole("listitem")
+        .map((li) => li.getAttribute("aria-label"));
+    expect(names("Cards in the deck").slice(0, 3)).toEqual(
+      names("Top of deck"),
+    );
+    // Drawing takes the first card in the list.
+    const first = names("Cards in the deck")[0];
+    await user.click(table.getByRole("button", { name: "Draw" }));
+    expect(
+      zoneCards(table, "Hand").map((li) => li.getAttribute("aria-label")),
+    ).toContain(first);
+  });
+});

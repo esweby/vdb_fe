@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { fakeAuthService } from "../test/fakeAuthService.ts";
 import { fakeDeckRepository } from "../test/fakeDeckRepository.ts";
+import { fakeCardRepository, sampleCards } from "../test/fakeCardRepository.ts";
 import { renderApp } from "../test/renderApp.tsx";
 import type { DeckCard, Matchup } from "./deckRepository.ts";
 
@@ -36,7 +37,12 @@ const HEROES = [
   },
 ];
 
-async function open(matchups: Matchup[] = [], heroes = HEROES, cards = CARDS) {
+async function open(
+  matchups: Matchup[] = [],
+  heroes = HEROES,
+  cards = CARDS,
+  pool = sampleCards,
+) {
   const fake = fakeDeckRepository(
     [
       {
@@ -56,6 +62,7 @@ async function open(matchups: Matchup[] = [], heroes = HEROES, cards = CARDS) {
       signedIn: { id: "u1", email: "u@test.local" },
     }).service,
     decks: fake.repository,
+    cards: fakeCardRepository(pool),
   });
   const panel = within(await screen.findByRole("region", { name: "Matchups" }));
   return { panel, fake, user: userEvent.setup() };
@@ -118,20 +125,46 @@ describe("matchups", () => {
 
   // Bug (the maintainer, 20 Oct 2026): "The plan against doesn't include equipment". Gear was
   // sorted in among the cards; it now comes first, in a group of its own.
-  it("shows weapons and equipment first, in their own group", async () => {
-    const { panel, user } = await open([], HEROES, [...CARDS, card("nb", 1)]);
+  // The maintainer, 20 Oct 2026: gear apart from the cards, in slot order (weapon, head, chest,
+  // arms, legs), and the deck counted against its size.
+  it("shows weapons and equipment apart, in slot order, and the deck against its size", async () => {
+    const nebula = sampleCards.find((c) => c.name === "Nebula Blade")!;
+    const gear = (id: string, name: string, slot: string) => ({
+      ...nebula,
+      id: `card-${id}`,
+      name,
+      type: "equipment",
+      subtypes: [slot],
+      variants: [{ ...nebula.variants[0]!, id }],
+    });
+    const { panel, user } = await open(
+      [],
+      HEROES,
+      [...CARDS, card("legs", 1), card("nb", 1), card("helm", 1)],
+      [
+        ...sampleCards,
+        gear("legs", "Test Greaves", "Legs"),
+        gear("helm", "Test Helm", "Head"),
+      ],
+    );
     await user.selectOptions(panel.getByLabelText("Plan against"), "h1");
     const plan = within(panel.getByRole("region", { name: "vs Example Hero" }));
-    const items = within(
-      plan.getByRole("list", { name: "Deck for this matchup" }),
-    ).getAllByRole("listitem");
-    expect(items.map((li) => li.getAttribute("aria-label"))).toEqual([
+    const names = (list: string) =>
+      within(plan.getByRole("list", { name: list }))
+        .getAllByRole("listitem")
+        .map((li) => li.getAttribute("aria-label"));
+    expect(names("Weapons and equipment")).toEqual([
       "Nebula Blade",
+      "Test Helm",
+      "Test Greaves",
+    ]);
+    expect(names("Deck for this matchup")).toEqual([
       "Become the Shadow Lord (blue)",
       "Hocus Pocus (red)",
     ]);
-    expect(items[0]).toHaveAttribute("data-gear");
-    expect(items[1]).not.toHaveAttribute("data-gear");
+    expect(
+      plan.getByRole("heading", { name: "Deck · 5/60 cards" }),
+    ).toBeInTheDocument();
   });
 
   it("never boards in more copies than the pool has", async () => {

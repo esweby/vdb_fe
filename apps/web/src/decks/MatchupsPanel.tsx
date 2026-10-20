@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useServices } from "../servicesContext.ts";
 import { Button } from "../ui/index.ts";
 import type { Hero, Matchup } from "./deckRepository.ts";
-import { sectionOf, variantName, type DeckEntry } from "./deckRules.ts";
+import { sectionOf, slotOf, variantName, type DeckEntry } from "./deckRules.ts";
 import styles from "./Decks.module.css";
 
 /** In and out against the main deck, by card. */
@@ -33,6 +33,8 @@ export function MatchupsPanel(props: {
   deckId: string;
   entries: DeckEntry[];
   canEdit: boolean;
+  /** The deck size the format asks for (60), for "Deck · 58/60 cards". */
+  deckSize?: number;
 }) {
   const { decks } = useServices();
   const [heroes, setHeroes] = useState<Hero[]>([]);
@@ -65,11 +67,20 @@ export function MatchupsPanel(props: {
     new Map(m.cards.map((c) => [c.variantId, c.quantity]));
   // Weapons and equipment first, in a group of their own, then the cards by name.
   const isGear = (e: DeckEntry) => sectionOf(e.card) !== "deck";
+  // Gear in slot order, as on the mat: weapon, off-hand, head, chest, arms, legs (the
+  // maintainer, 20 Oct 2026); then the cards.
+  const GEAR_ORDER = ["Off-Hand", "Head", "Chest", "Arms", "Legs"];
+  const rank = (e: DeckEntry) =>
+    !isGear(e)
+      ? 10
+      : sectionOf(e.card) === "weapon"
+        ? 0
+        : 1 + GEAR_ORDER.indexOf(slotOf(e.card) ?? "Head");
   const rows = useMemo(
     () =>
       [...props.entries].sort(
         (a, b) =>
-          Number(isGear(b)) - Number(isGear(a)) ||
+          rank(a) - rank(b) ||
           variantName(a.card, a.variant).localeCompare(
             variantName(b.card, b.variant),
           ),
@@ -122,6 +133,70 @@ export function MatchupsPanel(props: {
       setError("Couldn't delete the plan.");
     }
   }
+
+  // What's in the deck for the matchup, and what's left in the sideboard.
+  const inPlan = rows
+    .map((e) => ({ e, copies: plan.get(e.variant.id) ?? 0 }))
+    .filter((r) => r.copies > 0);
+  const gearIn = inPlan.filter((r) => isGear(r.e));
+  const cardsIn = inPlan.filter((r) => !isGear(r.e));
+  const sideboard = rows
+    .map((e) => ({ e, copies: e.quantity - (plan.get(e.variant.id) ?? 0) }))
+    .filter((r) => r.copies > 0);
+  const count = (list: { copies: number }[]) =>
+    list.reduce((n, r) => n + r.copies, 0);
+  const cardList = (
+    label: string,
+    shown: { e: DeckEntry; copies: number }[],
+    side: "deck" | "sideboard",
+  ) =>
+    shown.length === 0 ? (
+      <p className={styles.muted}>Nothing here.</p>
+    ) : (
+      <ul aria-label={label} className={styles.matchupCards}>
+        {shown.map(({ e, copies }) => {
+          const name = variantName(e.card, e.variant);
+          const n = plan.get(e.variant.id) ?? 0;
+          const set = (q: number) =>
+            setPlan((p) => new Map(p).set(e.variant.id, q));
+          return (
+            <li
+              key={e.variant.id}
+              aria-label={name}
+              data-gear={isGear(e) || undefined}
+            >
+              {e.variant.imageUrl ? (
+                <img src={e.variant.imageUrl} alt="" loading="lazy" />
+              ) : (
+                <span className={styles.matchupStandIn}>{name}</span>
+              )}
+              <span className={styles.matchupCount}>{`×${copies}`}</span>
+              {side === "deck" ? (
+                <button
+                  type="button"
+                  className={styles.matchupMove}
+                  aria-label={`Board out a ${name}`}
+                  title="Board out one copy"
+                  onClick={() => set(n - 1)}
+                >
+                  →
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className={styles.matchupMove}
+                  aria-label={`Board in a ${name}`}
+                  title="Board in one copy"
+                  onClick={() => set(n + 1)}
+                >
+                  ←
+                </button>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    );
 
   const changes = boardChanges(props.entries, plan);
   const ins = changes.filter((c) => c.delta > 0);
@@ -217,76 +292,24 @@ export function MatchupsPanel(props: {
             {`${mainCount} cards in the main deck for this matchup`}
           </p>
           <div className={styles.matchupBoard}>
-            {(["deck", "sideboard"] as const).map((side) => {
-              const label =
-                side === "deck" ? "Deck for this matchup" : "Sideboard";
-              const shown = rows
-                .map((e) => {
-                  const n = plan.get(e.variant.id) ?? 0;
-                  return { e, copies: side === "deck" ? n : e.quantity - n };
-                })
-                .filter((r) => r.copies > 0);
-              const total = shown.reduce((n, r) => n + r.copies, 0);
-              return (
-                <section key={side} className={styles.matchupSide}>
-                  <h4>{`${label} · ${total}`}</h4>
-                  <ul aria-label={label} className={styles.matchupCards}>
-                    {shown.map(({ e, copies }) => {
-                      const name = variantName(e.card, e.variant);
-                      const n = plan.get(e.variant.id) ?? 0;
-                      const set = (q: number) =>
-                        setPlan((p) => new Map(p).set(e.variant.id, q));
-                      return (
-                        <li
-                          key={e.variant.id}
-                          aria-label={name}
-                          data-gear={isGear(e) || undefined}
-                        >
-                          {e.variant.imageUrl ? (
-                            <img
-                              src={e.variant.imageUrl}
-                              alt=""
-                              loading="lazy"
-                            />
-                          ) : (
-                            <span className={styles.matchupStandIn}>
-                              {name}
-                            </span>
-                          )}
-                          <span
-                            className={styles.matchupCount}
-                          >{`×${copies}`}</span>
-                          {side === "deck" ? (
-                            <button
-                              type="button"
-                              className={styles.matchupMove}
-                              aria-label={`Board out a ${name}`}
-                              title="Board out one copy"
-                              onClick={() => set(n - 1)}
-                            >
-                              →
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              className={styles.matchupMove}
-                              aria-label={`Board in a ${name}`}
-                              title="Board in one copy"
-                              onClick={() => set(n + 1)}
-                            >
-                              ←
-                            </button>
-                          )}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                  {shown.length === 0 && (
-                    <p className={styles.muted}>Nothing here.</p>
-                  )}
-                </section>
-              );
-            })}
+            <section className={styles.matchupSide}>
+              {gearIn.length > 0 && (
+                <>
+                  <h4>{`Weapons and equipment · ${count(gearIn)}`}</h4>
+                  {cardList("Weapons and equipment", gearIn, "deck")}
+                </>
+              )}
+              <h4>
+                {props.deckSize
+                  ? `Deck · ${count(cardsIn)}/${props.deckSize} cards`
+                  : `Deck · ${count(cardsIn)} cards`}
+              </h4>
+              {cardList("Deck for this matchup", cardsIn, "deck")}
+            </section>
+            <section className={styles.matchupSide}>
+              <h4>{`Sideboard · ${count(sideboard)}`}</h4>
+              {cardList("Sideboard", sideboard, "sideboard")}
+            </section>
           </div>
           <div className={styles.matchupActions}>
             <Button variant="primary" onClick={() => void save()}>

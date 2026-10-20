@@ -398,7 +398,12 @@ export function DeckPage() {
             }
           />
         ) : tab === "matchups" ? (
-          <MatchupsPanel deckId={deckId} entries={entries} canEdit={canEdit} />
+          <MatchupsPanel
+            deckId={deckId}
+            entries={entries}
+            canEdit={canEdit}
+            deckSize={rules?.deckMin}
+          />
         ) : tab === "gaps" ? (
           <DeckGapsPanel
             entries={entries}

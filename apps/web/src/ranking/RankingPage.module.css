@@ -1158,3 +1158,27 @@
 .signInPrompt a {
   font-weight: 600;
 }
+
+/* A deck's scenarios: tighter rows, two across (the maintainer, 20 Oct 2026). */
+.compact .scenarioList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(24rem, 1fr));
+  column-gap: 2rem;
+}
+.compact .scenarioList li {
+  grid-template-columns: minmax(0, 1fr) 3.5rem 4rem;
+  padding: 0.35rem 0;
+}
+.compact .scenarioName {
+  font-size: 0.9rem;
+}
+.compact .rate {
+  font-size: 1rem;
+}
+.compact .why {
+  font-size: 0.75rem;
+}
+.compact .cantRun {
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+}

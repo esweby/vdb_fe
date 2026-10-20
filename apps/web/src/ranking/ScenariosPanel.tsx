@@ -19,11 +19,13 @@ export function ScenariosPanel(props: {
 }) {
   const { output } = props;
   const source = props.source ?? "core";
+  // On a deck page the results sit in tighter rows, two across (the maintainer, 20 Oct 2026).
+  const compact = source === "deck";
   // Scenarios that need something no card in the core has: listed apart, not as 0%.
   const cantRun = output?.scenarios.filter((s) => s.missing) ?? [];
   return (
     <section
-      className={`${styles.formCard} ${styles.wide}`}
+      className={`${styles.formCard} ${styles.wide} ${compact ? styles.compact : ""}`}
       aria-label="Scenarios"
     >
       <header className={styles.cardHeadRow}>

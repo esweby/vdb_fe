@@ -677,9 +677,6 @@ export function Goldfish(props: {
     return { "--fan": from, "--drop": Math.abs(from) } as React.CSSProperties;
   };
 
-  const sortedDeck = [...g.zones.deck].sort((a, b) =>
-    nameOf(a.uid).localeCompare(nameOf(b.uid)),
-  );
   const request = pending?.request;
   const heroName =
     g.side === "usurper" ? "Viserai, the Usurper" : "Viserai, the Forsaken";
@@ -918,6 +915,15 @@ export function Goldfish(props: {
       </section>
 
       {opened && (
+        // Clicking outside the list closes it (the maintainer, 20 Oct 2026).
+        <div
+          data-testid="pile-backdrop"
+          className={styles.pileBackdrop}
+          aria-hidden="true"
+          onClick={() => setOpened(null)}
+        />
+      )}
+      {opened && (
         <section
           role="dialog"
           aria-label={LABEL[opened] ?? "Deck"}
@@ -973,9 +979,8 @@ export function Goldfish(props: {
               }
               className={styles.cards}
             >
-              {(opened === "deck" ? sortedDeck : g.zones[opened]).map((c) =>
-                renderCard(c, opened),
-              )}
+              {/* The deck as it'll be drawn, top first (the maintainer, 20 Oct 2026). */}
+              {g.zones[opened].map((c) => renderCard(c, opened))}
             </ul>
           )}
           <div className={styles.deckActions}>
