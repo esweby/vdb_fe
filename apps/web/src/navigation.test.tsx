@@ -17,7 +17,7 @@ describe("navigation", () => {
   it("shows public pages and Sign in when signed out", async () => {
     await renderApp({ path: "/", auth: fakeAuthService().service });
     expect(nav().getByRole("link", { name: "Cards" })).toBeInTheDocument();
-    expect(nav().getByRole("link", { name: "Ranking" })).toBeInTheDocument();
+    expect(nav().getByRole("link", { name: "Core" })).toBeInTheDocument();
     expect(
       account().getByRole("link", { name: "Sign in" }),
     ).toBeInTheDocument();
@@ -87,13 +87,26 @@ describe("navigation", () => {
     expect(fake.calls).toContain("signOut");
   });
 
+  // The maintainer, 20 Oct 2026: the ranking is renamed Core. Old links keep working.
+  it("sends an old /ranking link to /core, settings and all", async () => {
+    const { router } = await renderApp({
+      path: "/ranking?tab=board&risk=-50",
+      auth: fakeAuthService().service,
+    });
+    await waitFor(() => expect(router.state.location.pathname).toBe("/core"));
+    expect(router.state.location.search).toMatchObject({
+      tab: "board",
+      risk: -50,
+    });
+  });
+
   it("marks the current page's tab, and the wordmark links home", async () => {
     await renderApp({ path: "/cards", auth: fakeAuthService().service });
     expect(nav().getByRole("link", { name: "Cards" })).toHaveAttribute(
       "aria-current",
       "page",
     );
-    expect(nav().getByRole("link", { name: "Ranking" })).not.toHaveAttribute(
+    expect(nav().getByRole("link", { name: "Core" })).not.toHaveAttribute(
       "aria-current",
     );
     const banner = within(screen.getByRole("banner"));

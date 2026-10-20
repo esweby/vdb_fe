@@ -61,7 +61,7 @@ export function HomePage() {
             </>
           )}
           {user && (
-            <Link to="/ranking" className={button("primary")}>
+            <Link to="/core" className={button("primary")}>
               Build a core
             </Link>
           )}

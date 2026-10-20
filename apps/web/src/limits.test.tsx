@@ -38,7 +38,7 @@ describe("form limits", () => {
 
   it("caps a deck name saved from the core at 80 characters", async () => {
     await renderApp({
-      path: "/ranking?tab=board",
+      path: "/core?tab=board",
       auth: auth(),
       decks: decks(),
     });

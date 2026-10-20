@@ -42,7 +42,7 @@ export function Layout() {
           </Link>
           <nav aria-label="Main" className={styles.nav}>
             <Tab to="/cards">Cards</Tab>
-            <Tab to="/ranking">Ranking</Tab>
+            <Tab to="/core">Core</Tab>
             {canScore && <Tab to="/needs-review">Needs review</Tab>}
             <Tab to="/synergies">Synergies</Tab>
             <Tab to="/decks">Decks</Tab>

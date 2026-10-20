@@ -346,7 +346,7 @@ export function DecksPage() {
                 <Button variant="primary" onClick={() => setCreating(true)}>
                   New deck
                 </Button>
-                <Link to="/ranking" className={linkButton("secondary")}>
+                <Link to="/core" className={linkButton("secondary")}>
                   Start from Build a core
                 </Link>
               </div>

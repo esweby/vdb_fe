@@ -68,6 +68,25 @@ describe("account page", () => {
     expect(screen.queryByRole("textbox", { name: "Username" })).toBeNull();
   });
 
+  // The maintainer, 20 Oct 2026: a tighter profile page. The username sits with email and role.
+  it("lists email, username and role together", async () => {
+    await renderApp({
+      path: "/account",
+      auth: fakeAuthService({
+        users: {
+          "s@test.local": { ...users["s@test.local"], username: "Edd_99" },
+        },
+        signedIn: { id: "s1", email: "s@test.local" },
+      }).service,
+    });
+    expect(await screen.findByText("Edd_99")).toBeInTheDocument();
+    expect(screen.getAllByRole("term").map((t) => t.textContent)).toEqual([
+      "Email",
+      "Username",
+      "Role",
+    ]);
+  });
+
   it("lets an account without one choose it, once", async () => {
     await renderApp({ path: "/account", auth: auth() });
     const user = userEvent.setup();

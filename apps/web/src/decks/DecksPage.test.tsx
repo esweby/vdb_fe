@@ -167,7 +167,7 @@ describe("decks list", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "Start from Build a core" }),
-    ).toHaveAttribute("href", "/ranking");
+    ).toHaveAttribute("href", "/core");
   });
 
   it("shows signed-out visitors the public decks and how to start their own", async () => {
