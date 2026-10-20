@@ -63,14 +63,8 @@ export const SYNERGY_RULES: SynergyRule[] = [
     from: ["hand_banisher", "deck_banisher"],
     to: ["plays_from_banish"],
   },
-  {
-    id: "self-banish-feeds-plays-from-banish",
-    description: "Banishes itself, and this card can be played from banish",
-    weight: 0.4,
-    engine: "banish",
-    from: ["self_banisher"],
-    to: ["plays_from_banish"],
-  },
+  // No "banishes itself, so this card can be played from banish": a card that banishes only
+  // itself puts nothing else in the banished zone (the maintainer, 20 Oct 2026: Fallen Herald).
   {
     id: "banish-feeds-banish-play-payoff",
     description: "Fills the banished zone this card is better played from",
@@ -94,7 +88,8 @@ export const SYNERGY_RULES: SynergyRule[] = [
       "Banishes a card, and this card cares if it's Shadow or Runeblade",
     weight: 0.3,
     engine: "banish",
-    from: ["deck_banisher", "self_banisher"],
+    // Not a self-banisher: it doesn't banish this card (20 Oct 2026).
+    from: ["deck_banisher"],
     to: ["banish_type_payoff"],
   },
   {
@@ -103,7 +98,8 @@ export const SYNERGY_RULES: SynergyRule[] = [
       "Banishes cards, which fires this card's 'when banished' effect",
     weight: 0.7,
     engine: "banish",
-    from: banishers,
+    // Not a self-banisher: banishing itself doesn't banish this card (20 Oct 2026).
+    from: ["hand_banisher", "deck_banisher"],
     to: ["banish_trigger"],
   },
   {
