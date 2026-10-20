@@ -58,6 +58,14 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "goldfish", label: "Goldfish" },
 ];
 
+/** Viserai's card pictures by side, from the hero list ("Viserai, the Forsaken", "Viserai, Usurper"). */
+const viseraiImages = (heroes: Hero[]) => {
+  const find = (word: string) =>
+    heroes.find((h) => h.name.startsWith("Viserai") && h.name.includes(word))
+      ?.imageUrl ?? null;
+  return { forsaken: find("Forsaken"), usurper: find("Usurper") };
+};
+
 export function DeckPage() {
   const { deckId } = route.useParams();
   const {
@@ -345,6 +353,7 @@ export function DeckPage() {
             side={side}
             log={log}
             fixed={fixed}
+            heroImages={viseraiImages(plans.heroes)}
           />
         ) : tab === "synergies" ? (
           <ScopedSynergies

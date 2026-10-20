@@ -273,18 +273,25 @@
 /* The board (the maintainer, 19 and 20 Oct 2026; after Fabrary's draw view): a quiet white
    board, small cards in each zone's place, piles as stacks with a count, menus only on hover or
    focus, and a plain row of cards for the hand. Desktop first; one column on narrow screens. */
+/* The board, after the maintainer's screenshot (20 Oct 2026): equipment on the left (head; chest
+   and arms; legs), the arena across the top, the weapon and hero with the arsenal below, the
+   graveyard over the deck with pitch beside it and banished below, the hand fanned along the
+   bottom. */
 .mat {
-  --card-w: 4.75rem;
+  --card-w: 5.5rem;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto auto auto minmax(0, 1fr) auto;
+  grid-template-columns:
+    auto minmax(0, 1fr) auto auto auto minmax(0, 1fr)
+    auto auto;
   grid-template-areas:
-    "equipment arena   arena  arena   arena   arena  graveyard"
-    "equipment .       weapons hero   pitch   .      deck"
-    "equipment .       .      arsenal .       .      banished"
-    "hand      hand    hand   hand    hand    hand   hand";
-  gap: 0.75rem 1rem;
+    "equipment arena arena   arena   arena arena arena graveyard"
+    "equipment .     weapons hero    .     .     pitch deck"
+    "equipment .     .       arsenal .     .     .     banished"
+    "hand      hand  hand    hand    hand  hand  hand  hand";
+  gap: 0.75rem;
   align-items: start;
-  padding: 1rem;
+  padding: 1rem 1rem 0;
+  overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 0.75rem;
   background: var(--bg);
@@ -294,6 +301,7 @@
 }
 .mat > [data-place="arena"] {
   grid-area: arena;
+  align-self: stretch;
 }
 .mat > [data-place="graveyard"] {
   grid-area: graveyard;
@@ -329,9 +337,10 @@
   background: none;
 }
 .mat .cards {
-  gap: 0.35rem;
+  gap: 0.4rem;
 }
 .mat .card {
+  position: relative;
   grid-template-columns: minmax(0, 1fr);
   width: var(--card-w);
   gap: 0.15rem;
@@ -343,40 +352,49 @@
 }
 .mat .card img,
 .mat .standIn {
-  border-radius: 0.3rem;
+  border-radius: 0.35rem;
 }
 .mat .standIn {
   font-size: 0.65rem;
 }
+.mat .card[data-used] img {
+  opacity: 0.55;
+}
+.mat .used {
+  font-size: 0.65rem;
+}
 
-/* An empty zone: a card-sized dashed space with its name. */
-.emptySlot {
+/* An empty zone: a card-sized space with its name. */
+.emptySlot,
+.slotEmpty {
   display: grid;
   place-items: center;
   width: var(--card-w);
   aspect-ratio: 5 / 7;
   padding: 0.25rem;
-  border: 1.5px dashed var(--border);
+  border: 1px solid var(--border);
   border-radius: 0.4rem;
   color: var(--muted);
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   text-align: center;
 }
 .mat [data-place="arena"] {
-  min-height: calc(var(--card-w) * 1.4 + 0.5rem);
+  min-height: calc(var(--card-w) * 1.4 + 1rem);
   padding: 0.5rem;
   border: 1px solid var(--border);
   border-radius: 0.6rem;
 }
 .mat [data-place="arena"] .emptySlot {
   width: 100%;
+  height: 100%;
   aspect-ratio: auto;
   min-height: calc(var(--card-w) * 1.4);
   border: none;
-  font-size: 0.85rem;
+  font-size: 0.95rem;
 }
 
-/* Piles: the cards stacked on one another, the newest on top, with a count badge. */
+/* Piles: the cards stacked on one another, the newest on top, with a count badge. The
+   graveyard and banished zone open as a list when clicked. */
 .pile .cards {
   display: grid;
   grid-template-areas: "stack";
@@ -384,50 +402,61 @@
 .pile .card {
   grid-area: stack;
 }
-.pile .card:nth-last-child(n + 2) .cardMenu,
-.pile .card:nth-last-child(n + 2) img {
+.pile .card:nth-last-child(n + 2) {
   visibility: hidden;
+}
+.pile .cardMenu {
+  display: none;
+}
+.openPile {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border: none;
+  border-radius: 0.4rem;
+  background: none;
+  cursor: pointer;
+}
+.openPile:hover,
+.openPile:focus-visible {
+  outline: 2px solid var(--accent);
 }
 .count {
   position: absolute;
-  top: -0.45rem;
-  right: -0.45rem;
+  top: 0.35rem;
+  right: 0.35rem;
   z-index: 2;
   display: grid;
   place-items: center;
-  min-width: 1.4rem;
-  height: 1.4rem;
-  padding: 0 0.3rem;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.35rem;
   border-radius: 999px;
   background: var(--fg);
   color: var(--bg);
   font-size: 0.75rem;
   font-weight: 700;
+  pointer-events: none;
 }
 .deckZone .deckBack {
+  display: block;
   width: var(--card-w);
+  padding: 0;
+  border: none;
+  cursor: pointer;
 }
-.deckZone .deckActions {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.25rem;
-  width: calc(var(--card-w) * 2);
-  margin-top: 0.4rem;
-}
-.deckZone .deckActions > :last-child {
-  grid-column: 1 / -1;
-}
-.deckZone .deckActions input {
-  width: 100%;
-}
-.deckZone .deckActions button {
-  padding: 0.2rem 0.4rem;
-  font-size: 0.75rem;
+.deckZone .deckBack:hover,
+.deckZone .deckBack:focus-visible {
+  outline: 2px solid var(--accent);
 }
 
 /* Card menus only show when the card is pointed at or focused; still there for keys and screen
    readers. */
 .mat .cardMenu {
+  position: absolute;
+  bottom: 0.25rem;
+  left: 0.25rem;
+  right: 0.25rem;
   opacity: 0;
   font-size: 0.7rem;
   transition: opacity 120ms;
@@ -437,86 +466,158 @@
   opacity: 1;
 }
 
+/* The hero: Viserai's card, with life over it. */
 .hero {
-  display: grid;
-  place-items: center;
-  align-content: center;
-  gap: 0.2rem;
-  width: calc(var(--card-w) * 1.2);
-  aspect-ratio: 5 / 7;
-  padding: 0.4rem;
-  border: 1.5px solid var(--accent);
-  border-radius: 0.5rem;
-  background: color-mix(in srgb, var(--accent) 10%, var(--bg));
-  text-align: center;
-  font-size: 0.75rem;
-}
-.heroName {
-  font-weight: 700;
-}
-
-.equipment {
-  display: grid;
-  grid-template-columns: repeat(2, var(--card-w));
-  gap: 0.35rem 0.5rem;
-  align-content: start;
-}
-.slot {
-  display: grid;
-  gap: 0.1rem;
-}
-.slotName {
-  font-size: 0.65rem;
-  color: var(--muted);
-}
-.slotEmpty {
+  position: relative;
   display: grid;
   place-items: center;
   width: var(--card-w);
   aspect-ratio: 5 / 7;
-  border: 1.5px dashed var(--border);
+  border: 1px solid var(--border);
   border-radius: 0.4rem;
-  color: var(--muted);
-  font-size: 0.7rem;
+  text-align: center;
+  font-size: 0.75rem;
 }
-.gear {
-  font-size: 0.7rem;
+.hero img {
+  width: 100%;
+  height: 100%;
+  border-radius: 0.35rem;
 }
-.gear button {
-  padding: 0.15rem 0.35rem;
+.heroName {
+  padding: 0.3rem;
+  font-weight: 700;
+}
+.life {
+  position: absolute;
+  bottom: 0.3rem;
+  left: 50%;
+  translate: -50% 0;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  background: var(--fg);
+  color: var(--bg);
   font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
-/* The hand: a plain row of slightly bigger cards; a card lifts when pointed at. */
+/* Equipment as on the mat: head, then chest and arms, then legs. */
+.equipment {
+  display: grid;
+  grid-template-columns: repeat(2, var(--card-w));
+  grid-template-areas:
+    "head  ."
+    "chest arms"
+    "legs  .";
+  gap: 0.75rem;
+  align-content: start;
+}
+.slot {
+  display: grid;
+}
+.slot[data-slot="Head"] {
+  grid-area: head;
+}
+.slot[data-slot="Chest"] {
+  grid-area: chest;
+}
+.slot[data-slot="Arms"] {
+  grid-area: arms;
+}
+.slot[data-slot="Legs"] {
+  grid-area: legs;
+}
+
+/* The hand: big cards fanned along the bottom of the board, cut off by its edge; a card rises
+   when pointed at. */
 .mat [data-place="hand"] {
-  padding-top: 0.75rem;
-  border-top: 1px solid var(--border);
+  min-height: 9rem;
+}
+.mat [data-place="hand"] .emptySlot {
+  display: none;
 }
 .mat [data-place="hand"] .cards {
   justify-content: center;
   flex-wrap: nowrap;
-  overflow-x: auto;
-  padding-top: 0.5rem;
-}
-.mat [data-place="hand"] .cards {
-  gap: 0.5rem;
+  gap: 0;
+  padding: 1.5rem 0 0;
 }
 .mat [data-place="hand"] .card {
-  width: 6.5rem;
+  width: 10rem;
+  margin: 0 -1.25rem -3.5rem;
+  transform: rotate(calc(var(--fan, 0) * 4deg))
+    translateY(calc(var(--drop, 0) * 0.5rem));
+  transform-origin: 50% 120%;
   transition: transform 120ms;
 }
 .mat [data-place="hand"] .card:hover,
 .mat [data-place="hand"] .card:focus-within {
-  transform: translateY(-0.5rem);
-  z-index: 1;
+  z-index: 3;
+  transform: translateY(-2.5rem);
+}
+
+/* A pile opened as a list. */
+.pileList {
+  position: fixed;
+  inset: 8vh 50% auto auto;
+  translate: 50% 0;
+  z-index: 50;
+  display: grid;
+  gap: 0.75rem;
+  width: min(60rem, calc(100vw - 2rem));
+  max-height: 84vh;
+  overflow-y: auto;
+  padding: 1rem;
+  box-shadow: 0 1rem 3rem rgb(0 0 0 / 0.25);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--bg);
+}
+.pileList header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+.pileList h3 {
+  margin: 0;
+}
+.pileList .deckActions {
+  margin: 0;
+}
+.pileList .cards {
+  flex-wrap: wrap;
+}
+.pileList .card {
+  grid-template-columns: minmax(0, 1fr);
+  width: 6.5rem;
+}
+.pileList .card img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.pileList .cardMenu {
+  font-size: 0.7rem;
 }
 
 @media (max-width: 60rem) {
   .mat {
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas: "hero" "hand" "arsenal" "arena" "weapons" "equipment" "pitch" "deck" "graveyard" "banished";
+    padding-bottom: 1rem;
   }
   .mat .cardMenu {
+    position: static;
     opacity: 1;
+  }
+  .mat [data-place="hand"] .cards {
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .mat [data-place="hand"] .card {
+    width: 7rem;
+    margin: 0;
+    transform: none;
   }
 }

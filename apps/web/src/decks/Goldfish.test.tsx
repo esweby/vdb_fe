@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 import { fakeAuthService } from "../test/fakeAuthService.ts";
 import { fakeDeckRepository } from "../test/fakeDeckRepository.ts";
 import { renderApp } from "../test/renderApp.tsx";
-import type { DeckCard } from "./deckRepository.ts";
+import type { DeckCard, Hero } from "./deckRepository.ts";
 import { encodeFixed } from "./goldfishLink.ts";
 
 const card = (variantId: string, quantity: number): DeckCard => ({
@@ -18,22 +18,28 @@ const card = (variantId: string, quantity: number): DeckCard => ({
 // 10 deck cards and a weapon.
 const deck = [card("hp1", 3), card("bsl3", 3), card("ff1", 4), card("nb", 1)];
 
-async function open(path = "/decks/deck-1?tab=goldfish&seed=7") {
+async function open(
+  path = "/decks/deck-1?tab=goldfish&seed=7",
+  heroes: Hero[] = [],
+) {
   await renderApp({
     path,
     auth: fakeAuthService({
       users: { "u@test.local": { id: "u1", password: "pw", role: "user" } },
       signedIn: { id: "u1", email: "u@test.local" },
     }).service,
-    decks: fakeDeckRepository([
-      {
-        id: "deck-1",
-        name: "Gate tempo",
-        updatedAt: "2026-10-14T10:00:00Z",
-        cards: deck,
-        pitchTargets: {},
-      },
-    ]).repository,
+    decks: fakeDeckRepository(
+      [
+        {
+          id: "deck-1",
+          name: "Gate tempo",
+          updatedAt: "2026-10-14T10:00:00Z",
+          cards: deck,
+          pitchTargets: {},
+        },
+      ],
+      { heroes },
+    ).repository,
   });
   // The latest render: one test opens the page twice.
   const table = within(
@@ -45,6 +51,18 @@ const zone = (table: ReturnType<typeof within>, name: string) =>
   within(table.getByRole("region", { name }));
 const zoneCards = (table: ReturnType<typeof within>, name: string) =>
   zone(table, name).queryAllByRole("listitem");
+/** Picks an action from a card's menu. */
+const act = async (
+  user: ReturnType<typeof userEvent.setup>,
+  card: HTMLElement,
+  action: string,
+) =>
+  user.selectOptions(
+    within(card).getByRole("combobox", {
+      name: `Action for ${card.getAttribute("aria-label")}`,
+    }),
+    action,
+  );
 
 describe("goldfish", () => {
   it("deals a hand of 4 from the shuffled deck, with the weapon in play and the seed shown", async () => {
@@ -158,6 +176,7 @@ describe("goldfish", () => {
   describe("the deck", () => {
     it("looks at the top cards, and moves one to the bottom", async () => {
       const { table, user } = await open();
+      await user.click(table.getByRole("button", { name: "Open the deck" }));
       await user.click(table.getByRole("button", { name: "Look at top 3" }));
       const top = () =>
         within(table.getByRole("list", { name: "Top of deck" })).getAllByRole(
@@ -175,7 +194,7 @@ describe("goldfish", () => {
 
     it("searches the deck for a card, then shuffles", async () => {
       const { table, user } = await open();
-      await user.click(table.getByRole("button", { name: "Search the deck" }));
+      await user.click(table.getByRole("button", { name: "Open the deck" }));
       const found = within(
         table.getByRole("list", { name: "Cards in the deck" }),
       ).getAllByRole("listitem")[0]!;
@@ -201,24 +220,28 @@ describe("goldfish", () => {
     it("attacks with the weapon, marked used until the end of the turn", async () => {
       const { table, user } = await open();
       const weapons = zone(table, "Weapons");
-      await user.click(
-        weapons.getByRole("button", { name: "Attack with Nebula Blade" }),
-      );
+      await act(user, zoneCards(table, "Weapons")[0]!, "Attack");
       expect(weapons.getByText("Used this turn")).toBeInTheDocument();
-      expect(
-        weapons.getByRole("button", { name: "Attack with Nebula Blade" }),
-      ).toBeDisabled();
+      expect(weapons.getByRole("option", { name: "Attack" })).toBeDisabled();
       await user.click(table.getByRole("button", { name: "End turn" }));
       expect(weapons.queryByText("Used this turn")).toBeNull();
     });
 
-    it("keeps counters on gear", async () => {
+    // The maintainer, 20 Oct 2026: only cards that need counters have them.
+    it("keeps counters on gear, shown only once a card has one", async () => {
       const { table, user } = await open();
       const weapons = zone(table, "Weapons");
-      await user.click(
-        weapons.getByRole("button", { name: "More counters on Nebula Blade" }),
-      );
+      expect(
+        weapons.queryByRole("button", {
+          name: "More counters on Nebula Blade",
+        }),
+      ).toBeNull();
+      await act(user, zoneCards(table, "Weapons")[0]!, "Add a counter");
       expect(weapons.getByText("Counters 1")).toBeInTheDocument();
+      await user.click(
+        weapons.getByRole("button", { name: "Fewer counters on Nebula Blade" }),
+      );
+      expect(weapons.queryByText(/Counters/)).toBeNull();
     });
 
     it("counts life and damage", async () => {
@@ -252,9 +275,7 @@ describe("goldfish", () => {
       "Pitch",
     );
     await user.click(table.getByRole("button", { name: "More Runechants" }));
-    await user.click(
-      table.getByRole("button", { name: "Attack with Nebula Blade" }),
-    );
+    await act(user, zoneCards(table, "Weapons")[0]!, "Attack");
     await user.click(table.getByRole("button", { name: "Traverse" }));
     await user.click(table.getByRole("button", { name: "End turn" }));
     expect(
@@ -455,5 +476,86 @@ describe("the compact board", () => {
     const { table } = await open();
     expect(zone(table, "Banished").getByText("Banished")).toBeInTheDocument();
     expect(zone(table, "Graveyard").getByText("Graveyard")).toBeInTheDocument();
+  });
+});
+
+// The maintainer, 20 Oct 2026: closer to the playmat in their screenshot (after Fabrary).
+describe("closer to the playmat", () => {
+  const VISERAI: Hero[] = [
+    {
+      id: "hf",
+      name: "Viserai, the Forsaken",
+      classes: ["Runeblade"],
+      talents: ["Shadow"],
+      imageUrl: "https://img.test/forsaken.png",
+    },
+    {
+      id: "hu",
+      name: "Viserai, Usurper",
+      classes: ["Runeblade"],
+      talents: ["Shadow"],
+      imageUrl: "https://img.test/usurper.png",
+    },
+  ];
+
+  it("shows Viserai's card for the side the hero is on", async () => {
+    const { table, user } = await open(undefined, VISERAI);
+    const hero = () => within(table.getByRole("region", { name: "Hero" }));
+    expect(
+      await hero().findByRole("img", { name: "Viserai, the Forsaken" }),
+    ).toHaveAttribute("src", "https://img.test/forsaken.png");
+    await user.click(table.getByRole("button", { name: "Traverse" }));
+    expect(
+      hero().getByRole("img", { name: "Viserai, the Usurper" }),
+    ).toHaveAttribute("src", "https://img.test/usurper.png");
+  });
+
+  it("only counts the tokens the deck makes", async () => {
+    // Hocus Pocus and Become the Shadow Lord make Runechants and Gates; nothing makes Eloquence.
+    const { table } = await open();
+    expect(
+      table.getByRole("button", { name: "More Runechants" }),
+    ).toBeVisible();
+    expect(table.getByRole("button", { name: "More Gates" })).toBeVisible();
+    expect(table.queryByRole("button", { name: "More Eloquence" })).toBeNull();
+  });
+
+  it("draws from the bar", async () => {
+    const { table, user } = await open();
+    await user.click(table.getByRole("button", { name: "Draw" }));
+    expect(zoneCards(table, "Hand")).toHaveLength(5);
+  });
+
+  it("opens the graveyard and the banished zone as a list", async () => {
+    const { table, user } = await open();
+    const [first] = zoneCards(table, "Hand");
+    const name = first!.getAttribute("aria-label")!;
+    await act(user, first!, "Graveyard");
+    await user.click(table.getByRole("button", { name: "Open the graveyard" }));
+    const list = within(table.getByRole("dialog", { name: "Graveyard" }));
+    expect(list.getByRole("listitem", { name })).toBeInTheDocument();
+    await act(user, list.getByRole("listitem", { name }), "Banish");
+    await user.click(list.getByRole("button", { name: "Close" }));
+    expect(table.queryByRole("dialog")).toBeNull();
+    await user.click(
+      table.getByRole("button", { name: "Open the banished zone" }),
+    );
+    expect(
+      within(table.getByRole("dialog", { name: "Banished" })).getByRole(
+        "listitem",
+        { name },
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("pitches a card dropped on the pitch zone, by the rules", async () => {
+    const { table } = await open();
+    const [first] = zoneCards(table, "Hand");
+    fireEvent.dragStart(first!);
+    fireEvent.drop(table.getByRole("region", { name: "Pitch" }));
+    expect(zoneCards(table, "Pitch")).toHaveLength(1);
+    expect(table.getByText(/^Resources \d$/)).not.toHaveTextContent(
+      "Resources 0",
+    );
   });
 });

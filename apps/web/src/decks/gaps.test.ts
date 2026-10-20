@@ -40,6 +40,25 @@ describe("findGaps", () => {
     ).toEqual(["gate red 3 5", "banish red 3 5"]);
   });
 
+  // The maintainer, 20 Oct 2026: "Order gaps by red".
+  it("lists red gaps first, then yellow, then blue; most-used roles first within a colour", () => {
+    // Red 5 cards, yellow 5, blue 3. Runechant makers 6 (red and blue), Gate makers and
+    // banishers 3 (blue only).
+    const gaps = findGaps([
+      entry(hocus, "hp1", 3),
+      entry(bsl, "bsl3", 3),
+      entry(fate, "ff1", 2),
+      entry(fate, "ff2", 5),
+    ]);
+    expect(gaps.map((g) => `${g.role.id} ${PITCH_NAMES[g.pitch]}`)).toEqual([
+      "gate red",
+      "banish red",
+      "runechant yellow",
+      "gate yellow",
+      "banish yellow",
+    ]);
+  });
+
   it("ignores pitches the deck barely plays, and roles it barely uses", () => {
     // Yellow has only 3 cards; nothing here has go again.
     const gaps = findGaps(deck);
