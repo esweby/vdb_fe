@@ -389,6 +389,41 @@ describe("synergy explorer", () => {
         await panel().findByText(/No hidden gems yet/),
       ).toBeInTheDocument();
     });
+
+    // The maintainer, 20 Oct 2026: clicking a gem revealed nothing.
+    it("picks a gem and its partners out in the graph", async () => {
+      const { user } = await open(
+        "/synergies",
+        undefined,
+        fakeScoreRepository([], { community: sampleCommunity() }).repository,
+      );
+      const gem = within(
+        await panel().findByRole("list", { name: "Hidden gems" }),
+      ).getByRole("listitem");
+      await user.click(
+        within(gem).getByRole("button", { name: "Show in graph" }),
+      );
+      await waitFor(() =>
+        expect(graph()).toEqual(
+          expect.arrayContaining([
+            "Hocus Pocus (picked)",
+            "Become the Shadow Lord (picked)",
+          ]),
+        ),
+      );
+    });
+  });
+
+  // The maintainer, 20 Oct 2026: the Discover column buried the controls.
+  describe("the rail", () => {
+    it("puts Refine above Discover", async () => {
+      await open();
+      await panel().findByRole("heading", { name: "Discover" });
+      const order = panel()
+        .getAllByRole("heading", { level: 2 })
+        .map((h) => h.textContent);
+      expect(order.indexOf("Refine")).toBeLessThan(order.indexOf("Discover"));
+    });
   });
 
   // Feature 3 (maintainer, 19 Oct 2026): how sure we are, and the best partners.
