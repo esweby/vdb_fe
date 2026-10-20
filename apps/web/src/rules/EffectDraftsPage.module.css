@@ -31,9 +31,19 @@
 .card:not(:has(.image)) {
   grid-template-columns: 1fr;
 }
+.imageWrap {
+  position: relative;
+  align-self: start;
+}
 .image {
+  display: block;
   width: 100%;
   border-radius: 0.4rem;
+}
+.magnify {
+  position: absolute;
+  right: 0.4rem;
+  bottom: 0.4rem;
 }
 .heading {
   display: flex;

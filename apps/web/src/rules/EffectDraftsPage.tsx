@@ -12,6 +12,7 @@ import {
   type DraftStatus,
   type QueuedDraft,
 } from "./draftQueue.ts";
+import { Enlarge } from "../decks/Enlarge.tsx";
 import styles from "./EffectDraftsPage.module.css";
 
 const SECTIONS: { status: DraftStatus; title: string; note: string }[] = [
@@ -137,12 +138,16 @@ function DraftCard(props: { entry: DraftEntry; actions?: Actions }) {
   return (
     <article aria-labelledby={titleId} className={styles.card}>
       {image && (
-        <img
-          className={styles.image}
-          src={image}
-          alt={`${card.name}, the printed card`}
-          loading="lazy"
-        />
+        // A magnifying glass enlarges the card to read it (the maintainer, 20 Oct 2026).
+        <div className={styles.imageWrap}>
+          <img
+            className={styles.image}
+            src={image}
+            alt={`${card.name}, the printed card`}
+            loading="lazy"
+          />
+          <Enlarge name={card.name} src={image} className={styles.magnify} />
+        </div>
       )}
       <div>
         <div className={styles.heading}>
