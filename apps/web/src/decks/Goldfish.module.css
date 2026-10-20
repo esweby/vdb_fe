@@ -269,3 +269,149 @@
   background: color-mix(in srgb, var(--danger, #b42318) 10%, transparent);
   color: var(--fg);
 }
+
+/* The playmat (the maintainer, 19 Oct 2026; after Fabrary and Talishar). Desktop first: each
+   zone in its place on a felt-coloured mat; one column on narrow screens. */
+.mat {
+  display: grid;
+  grid-template-columns:
+    minmax(9rem, 11rem) 1fr minmax(10rem, 13rem)
+    1fr minmax(9rem, 11rem);
+  grid-template-areas:
+    "equipment arena    arena   arena graveyard"
+    "equipment weapons  hero    pitch deck"
+    "equipment .        arsenal .     banished"
+    "hand      hand     hand    hand  hand";
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  background:
+    radial-gradient(
+      circle at 50% 40%,
+      color-mix(in srgb, var(--accent) 10%, transparent),
+      transparent 70%
+    ),
+    color-mix(in srgb, var(--surface) 85%, var(--accent) 15%);
+  border: 1px solid var(--border);
+}
+.mat > [data-place="equipment"] {
+  grid-area: equipment;
+}
+.mat > [data-place="arena"] {
+  grid-area: arena;
+}
+.mat > [data-place="graveyard"] {
+  grid-area: graveyard;
+}
+.mat > [data-place="weapons"] {
+  grid-area: weapons;
+}
+.mat > [data-place="hero"] {
+  grid-area: hero;
+}
+.mat > [data-place="pitch"] {
+  grid-area: pitch;
+}
+.mat > [data-place="deck"] {
+  grid-area: deck;
+}
+.mat > [data-place="arsenal"] {
+  grid-area: arsenal;
+}
+.mat > [data-place="banished"] {
+  grid-area: banished;
+}
+.mat > [data-place="hand"] {
+  grid-area: hand;
+}
+
+.mat .zone {
+  min-width: 0;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border-style: dashed;
+}
+.mat .zone h3 {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.mat [data-place="hand"] {
+  border-style: solid;
+}
+.mat [data-place="hand"] .cards {
+  justify-content: center;
+}
+.mat [data-place="arena"] {
+  min-height: 9rem;
+}
+
+/* Piles: cards overlap like a stack on the table, the newest on top. */
+.pile .cards {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
+.pile .card {
+  width: 6rem;
+  flex: none;
+}
+.pile .card + .card {
+  margin-left: -4rem;
+}
+.pile .card:hover,
+.pile .card:focus-within {
+  z-index: 1;
+}
+
+.hero {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 0.35rem;
+  min-height: 11rem;
+  padding: 0.75rem;
+  border-radius: 0.8rem;
+  border: 2px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  text-align: center;
+}
+.heroName {
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.equipment {
+  display: grid;
+  gap: 0.5rem;
+  align-content: start;
+}
+.slot {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.4rem;
+  border: 1px dashed var(--border);
+  border-radius: 0.5rem;
+}
+.slotName {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.slotEmpty {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-style: italic;
+}
+.equipment .card,
+.mat [data-place="weapons"] .card {
+  width: 6.5rem;
+}
+.deckZone .deckBack {
+  width: 5.5rem;
+}
+
+@media (max-width: 60rem) {
+  .mat {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "hero" "hand" "arsenal" "arena" "weapons" "equipment" "pitch" "deck" "graveyard" "banished";
+  }
+}
