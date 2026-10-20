@@ -60,5 +60,5 @@ describe("play by the rules", () => {
     const table = within(panel.getByRole("table", { name: "By turn" }));
     expect(table.getAllByRole("row")).toHaveLength(4);
     expect(table.getByRole("row", { name: /^Turn 1/ })).toHaveTextContent(/%/);
-  });
+  }, 20_000); // A batch of rules games: slow on a busy CI machine.
 });

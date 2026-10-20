@@ -696,6 +696,14 @@
   white-space: normal;
 }
 
+/* Behind an open list: a click here closes it. */
+.pileBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 49;
+  background: rgb(0 0 0 / 0.25);
+}
+
 /* − resources + under the pitch pile. */
 .pitchAdjust {
   display: grid;
