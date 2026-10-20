@@ -470,6 +470,7 @@ export function Goldfish(props: {
           <span className={styles.standIn}>{name}</span>
         )}
         <select
+          className={styles.cardMenu}
           aria-label={`Action for ${label}`}
           value=""
           onChange={(e) => {
@@ -537,7 +538,19 @@ export function Goldfish(props: {
       data-zone={zone}
       {...dropOn(zone)}
     >
-      <h3>{`${label} · ${g.zones[zone].length}`}</h3>
+      <h3
+        className={styles.visuallyHidden}
+      >{`${label} · ${g.zones[zone].length}`}</h3>
+      {extra === styles.pile && (
+        <span className={styles.count} data-testid="count" aria-hidden="true">
+          {g.zones[zone].length}
+        </span>
+      )}
+      {g.zones[zone].length === 0 && (
+        <div className={styles.emptySlot} aria-hidden="true">
+          {zone === "arena" ? "No cards played this turn" : label}
+        </div>
+      )}
       <ul className={styles.cards}>
         {g.zones[zone].map((c) => renderCard(c, zone))}
       </ul>
@@ -677,7 +690,9 @@ export function Goldfish(props: {
           data-zone="equipment"
           {...dropOn("equipment")}
         >
-          <h3>{`Equipment · ${g.zones.equipment.length}`}</h3>
+          <h3
+            className={styles.visuallyHidden}
+          >{`Equipment · ${g.zones.equipment.length}`}</h3>
           {EQUIPMENT_SLOTS.filter(
             (slot) =>
               slot !== "Off-Hand" ||
@@ -725,7 +740,12 @@ export function Goldfish(props: {
           data-place="deck"
           {...dropOn("deck")}
         >
-          <h3>{`Deck · ${g.zones.deck.length}`}</h3>
+          <h3
+            className={styles.visuallyHidden}
+          >{`Deck · ${g.zones.deck.length}`}</h3>
+          <span className={styles.count} data-testid="count" aria-hidden="true">
+            {g.zones.deck.length}
+          </span>
           <div className={styles.deckBack} aria-hidden="true" />
           <div className={styles.deckActions}>
             <Button
