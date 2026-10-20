@@ -298,6 +298,8 @@
 }
 .mat > [data-place="equipment"] {
   grid-area: equipment;
+  /* Down a little from the top edge (the maintainer, 20 Oct 2026). */
+  margin-top: 1.5rem;
 }
 .mat > [data-place="arena"] {
   grid-area: arena;
@@ -527,11 +529,14 @@
     "head  ."
     "chest arms"
     "legs  .";
-  gap: 0.75rem;
+  /* The same gap across and down, and every slot one card high, filled or not. */
+  gap: 1rem;
   align-content: start;
 }
 .slot {
   display: grid;
+  align-content: start;
+  min-height: calc(var(--card-w) * 7 / 5);
 }
 .slot[data-slot="Head"] {
   grid-area: head;
