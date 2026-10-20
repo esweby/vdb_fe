@@ -263,6 +263,20 @@
 .deckHeader h1 {
   margin: 0 0 0.2rem;
 }
+/* Public or private, rename and delete, for the deck's owner (the maintainer, 20 Oct 2026). */
+.deckSettings {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.6rem;
+  margin: 0.2rem 0 0.4rem;
+}
+.renameForm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.4rem;
+}
 .meta {
   margin: 0;
   color: var(--muted);

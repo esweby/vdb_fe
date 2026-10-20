@@ -55,6 +55,9 @@ export interface DeckRepository {
     options?: { isPublic?: boolean },
   ): Promise<DeckSummary>;
   setVisibility(deckId: string, isPublic: boolean): Promise<void>;
+  renameDeck(deckId: string, name: string): Promise<void>;
+  /** Deletes the deck, with its cards, plans and scenario results. */
+  deleteDeck(deckId: string): Promise<void>;
   getDeck(id: string): Promise<Deck | null>;
   /** Adds, updates or (with quantity 0) removes a card in the pool. */
   setCard(deckId: string, card: DeckCard): Promise<void>;
@@ -133,6 +136,17 @@ export function supabaseDeckRepository(client: SupabaseClient): DeckRepository {
         .from("decks")
         .update({ is_public: isPublic })
         .eq("id", deckId);
+      if (error) throw error;
+    },
+    async renameDeck(deckId, name) {
+      const { error } = await client
+        .from("decks")
+        .update({ name })
+        .eq("id", deckId);
+      if (error) throw error;
+    },
+    async deleteDeck(deckId) {
+      const { error } = await client.from("decks").delete().eq("id", deckId);
       if (error) throw error;
     },
     async getDeck(id) {
