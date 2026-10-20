@@ -6,7 +6,7 @@ This is the working plan for phase one: what to build, in what order, and how we
 **Budget:** 3–4 weeks part-time for the build, plus about 1 week for card data.
 **Exit:** ship to the scoring group, then a coverage pass before public launch.
 
-## Status (19 Oct 2026)
+## Status (20 Oct 2026)
 
 **Shipped to the scoring group.** They're scoring: two scorers have reviewed the whole pool (627 cards) and the maintainer about 130. Exit criterion 1 is met, and the coverage pass for public launch runs alongside phase two.
 
@@ -17,7 +17,7 @@ Carried into phase two (none of these block it):
 - M8: a shared type scale and spacing scale, and a full keyboard and screen-reader pass.
 - The scoring group's open questions: slider wording, risk presets, the spread threshold, the Mine / Blend / Community presets and the strategy question wording.
 
-Phase two starts with synergy. The derived rules are drafted, unverified, in [synergy-rules.md](synergy-rules.md).
+Phase two is largely built: see [phase-two.md](phase-two.md) for its status, the maintainer's decisions and what's open. These carried items are still open there too.
 
 ## Card data findings (14 Oct 2026)
 

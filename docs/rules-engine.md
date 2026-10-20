@@ -1,6 +1,14 @@
 # Rules engine
 
-The plan for phase three's rules engine: a small, verified engine that plays a Viserai deck's turns solo, built beside the counting engine and switched in card by card. This is the repo copy of "Viserai scenario engine brief v2" (19 Oct 2026); the README's "Shared game engine" section points here.
+The rules engine: a small, verified engine that plays a Viserai deck's turns solo, built beside the counting engine and switched in card by card. Planned for phase three, it was built in phase two. This is the repo copy of "Viserai scenario engine brief v2" (19 Oct 2026); the README's "Shared game engine" section points here.
+
+## Status (20 Oct 2026)
+
+All nine steps of the build order are done. Goldfish and scenarios use the engine for every card with verified rules. The rest of the work is cards and features:
+
+- **Cards** are added as the maintainer verifies them, through the effect drafts review ([phase-two.md](phase-two.md), "Verifying cards"). The first batch (24 cards) and the sinchants are in.
+- **Features the engine has gained since the brief:** Opt, with a scripted rule for which cards stay on top; a card banished instead of going to the graveyard; a card that needs damage dealt this turn to be played; a card destroying itself (sinchants); the arena clearing at the end of the turn, while permanents stay.
+- **Features still missing,** most cards unlocked first: an activate action, cost reductions, Opt reordering, and "counts as a Runechant".
 
 ## Decisions
 
@@ -58,6 +66,8 @@ Each step is its own pull request, test first.
 9. Effect drafting from attributes; more cards as players verify them.
 
 ## Open questions
+
+Most of the maintainer's questions below have since been answered: Viserai's text and the Runechant token's rule were signed off with steps 5a and 5b. The turn structure and end of turn are in [phase-two.md](phase-two.md), "Decisions". They're kept here as the brief's record.
 
 For the council (design): whether effects belong in a separate rules package the engine loads; whether action points and costs are needed in the first milestone; the unmodelled-card default; immutable state versus a mutable engine with a trace; whether bounded `repeat` and `if` belong in the step vocabulary; drafting effects from facts versus authoring from scratch.
 

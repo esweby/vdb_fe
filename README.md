@@ -248,7 +248,7 @@ Edges come from two sources, which are kept separate and drawn differently in th
 Scorers create community edges in two ways. Nobody browses thousands of possible card pairs, so neither way asks them to.
 
 1. **Related cards**: on each card's page, a picker to add "this card helps…" and "is helped by…" cards, with an optional note and a "works both ways" tick.
-2. **Confirm suggestions**: a queue of edges proposed by the derived rules, which scorers confirm, reject or reweight. This also tests the rules: an edge that keeps being rejected points to a rule that needs correcting.
+2. **Confirm suggestions**: a queue of edges proposed by the derived rules, which scorers confirm, reject or reweight. This also tests the rules: an edge that keeps being rejected points to a rule that needs correcting. It asks only about links that matter to the scorer (a card in one of their decks, or two cards both rated 7 or more), 20 at a time, and the same questions turn up now and then as a **quick question** on card pages and the home page.
 
 #### Derived synergy rules
 
@@ -328,75 +328,53 @@ The default depends on what the engine can do:
 
 - **Filters**: by pitch, dimension and card type together, for example "blue Gate creators" or "red cards that create Runechants".
 - **Sort by dimension**: within the current filter, using the user's score source (mine, community or blend).
-- **Gaps** (phase two): highlight dimensions that are thin in a pitch colour (for example "no yellow Gate creation") and filter to the cards that would fill them.
+- **Gaps** (phase two): highlight roles the deck relies on that are missing from a pitch colour it plays (for example "no yellow banishers"), red first, each with the cards that would fill it. Gate makers aren't needed in every colour, so they're never a gap by colour.
 - **Condition availability** (phase two): sort or filter by how often a card's condition is available in this deck.
+
+### Matchups
+
+A plan for each hero the deck might face: which cards come in from the sideboard and which go out. The plan is shown as card pictures, the deck for the matchup beside the sideboard, with an arrow on each card to board a copy in or out; weapons and equipment sit apart from the cards, and the deck is counted against its size (for example "Deck · 58/60 cards"). Goldfish and scenarios can play a plan. Plans are private to the deck's owner.
 
 ### Shared game engine
 
 Goldfishing and Scenarios share one engine: a plain TypeScript module with no React and no network calls. It holds the game state, which is the zones, weapon and equipment slots, token counts, hero side, turn number and a seeded shuffle, and it applies actions to that state. The seed means any shuffle can be reproduced exactly, which is how the two tools link together (see below).
 
-**Phases one and two: the engine only moves cards and counts things. It doesn't know any card rules.** Game logic lives in separate rule sets that are switched on explicitly and checked by a player:
+**The counting engine only moves cards and counts things. It doesn't know any card rules.** Game logic lives in separate rule sets that are switched on explicitly and checked by a player:
 
 - **Synergy rules**: card A helps card B (see Synergy graph).
-- **Hero prompts**: suggestions in goldfishing (see below).
 - **Condition definitions**: the conditions recorded in card facts, used for condition availability.
 
-**Phase three: a rules engine.** Counting can't check a condition when it resolves, so Runechant totals and condition availability are estimates. The plan is a small rules engine that executes hand-verified card effects and triggers, built beside the counting engine and switched in card by card: see [docs/rules-engine.md](docs/rules-engine.md).
+**The rules engine (planned for phase three, built in phase two).** Counting can't check a condition when it resolves, so Runechant totals and condition availability are estimates. A small rules engine executes hand-verified card effects and triggers: Viserai's hero text, the Runechant token's rule, Blood Debt and every card the maintainer has verified. It's built beside the counting engine and switched in card by card. Cards are verified through the effect drafts review: see [docs/rules-engine.md](docs/rules-engine.md) and [docs/phase-two.md](docs/phase-two.md).
 
 ### Goldfishing
 
-The draw 4 tool on Fabrary is fairly limited. The goldfish tool is a nicer, more manual Talishar for testing: a **sandbox** for playing a deck's turns alone. The user moves every card by hand and the tool keeps track of the state. The tool enforces no game rules.
+A more manual Talishar for testing a deck's turns alone, laid out like a Flesh and Blood playmat. It runs on the rules engine: cards with verified rules are played by them, and Viserai, Runechants and Blood Debt happen by themselves. Anything else is moved by hand, so the tool stays a sandbox for unmodelled cards.
 
 **Setup**
 
-- Choose a deck, a loadout and a starting side (Forsaken by default).
+- Choose what to play: the main deck as built, or a matchup plan (**Playing**, at the top of the tab). Choose a starting side (Forsaken by default).
 - Shuffle, then draw up to intellect (4). The seed is shown, and a seed can be entered to replay a specific shuffle.
-- The hero, weapons and equipment from the loadout start in play.
+- The hero (Viserai's card, which traverses when clicked), weapons and equipment start in play.
 
-**Zones**
+**The board.** Equipment on the left (head; chest and arms; legs), the arena across the top, the weapon and hero with the arsenal below, the graveyard over the deck with pitch beside it and banished below, and the hand fanned along the bottom. Piles show their count; clicking the graveyard, banished zone or deck opens it as a list, and the deck's list is in the order it'll be drawn.
 
-Deck, hand, arsenal, pitch, arena (cards in play), graveyard and banished, plus the weapon and equipment slots. Every zone shows its card count. The deck stays face down, apart from cards the user chooses to look at.
+**Card actions.** By drag and drop (onto the arena plays a card, onto pitch pitches it, by the rules where it has them), a menu on each card, and keyboard shortcuts:
 
-**Card actions.** Available by drag and drop, a menu on each card, and keyboard shortcuts:
+- Play, pitch, move to any zone, top or bottom of the deck, banish face up or face down
+- Play from the banished zone, with a Play button in the banished list
+- **Banish top** of the deck, Draw, look at the top N cards, search the deck, shuffle
 
-- Move to any zone
-- Put on top of or at the bottom of the deck
-- Play (to the arena, then the graveyard)
-- Pitch (to the pitch zone, adding its pitch value to the resource counter)
-- Banish, face up or face down
-- Look at the top N cards of the deck, and reorder or move them
-- Search the deck for a card, then shuffle
+**Weapons and equipment.** Attack with a weapon or use equipment from its menu (marked used until the end of the turn). A counter shows on a card once it has one, with − and + underneath; Fyendal's Spring Tunic spends 3 for a resource.
 
-**Weapon and equipment actions**
+**Tokens and counters.** Resources (also with − and + beside the pitch pile, to put the board right by hand), Runechants, Gates and Eloquence (only the tokens the deck makes), life, and damage this turn and in total.
 
-- **Attack with the weapon**: marks the weapon as used this turn and logs the attack. Activating a weapon attack destroys Runechants, so this is where a Runechant prompt would appear (see Hero prompts).
-- **Use or destroy equipment**: marks a piece as used, or moves it to the graveyard.
-- **Counters** on any weapon or equipment piece, with + and − buttons.
-- End turn resets the "used this turn" markers.
+**Turns.** End turn runs the end phase by the rules: pitched cards to the bottom of the deck, the arena to the graveyard (auras, items, allies and landmarks stay), the turn's counters reset and a draw up to intellect. A turn recap sums up each turn, there's undo and redo for every action and an action log, and the game restarts with the same seed or a new one.
 
-**Tokens and counters.** Each has + and − buttons:
-
-- Runechants, Gates to i'Arathael and Eloquence
-- Runechants created and Gates created or activated this turn. These are the counts the hero's traverse conditions depend on. Adding a token with + also counts it as created this turn.
-- Resources available
-- Life total
-- Damage dealt this turn and in total (entered manually)
-- Hero side, with a flip button
-
-**Turns.** A turn counter is always visible, so the user gets a feel for what the deck can do in a given turn.
-
-- **End turn**: a helper, not a rule. It moves pitch zone cards to the bottom of the deck (in an order the user chooses, or random), resets the "this turn" counters, draws up to intellect and moves the turn counter on. The user can skip it and move things by hand.
-- **Turn recap**: at the end of each turn, a short summary of what happened: cards played and pitched, weapon attacks, resources spent, tokens created and used, damage dealt, and whether the side changed. Recaps build into a turn-by-turn history for the session.
-- **Undo and redo** for every action, plus an action log.
-- **Restart** with the same seed or a new one.
-
-**Hand summary.** A side panel shows the current hand and arsenal's totals for each dimension and pitch, alongside what the weapons and equipment add. It uses the same numbers as Deck analysis.
-
-**Hero prompts (maybe, later).** Optional and off by default, turned on in user settings. When a hero ability or token might trigger, the tool asks, for example "You created Runechants. Banish the top card of your deck?" on Forsaken, or "Attack played. Destroy 3 Runechants and deal 3 arcane damage?". The user confirms each one, and nothing happens automatically. Prompts are a separate rule set, checked like the synergy rules.
-
-Goldfish sessions aren't saved to the database. A session can be shared as a link containing the deck, loadout, seed and action log.
+Goldfish sessions aren't saved to the database. A session can be shared as a link containing the deck, seed and action log.
 
 ### Scenarios
+
+The Scenarios tab has two sides, with a switch between them: **Run** (your scenarios, the library's and the built-ins, run on this deck or a matchup plan) and **Create** (the builder, with a guide to what each part expects). An **Add a new scenario** button opens the builder.
 
 Scenarios are a **rule engine** for decks, in the style of Marketo smart lists and flows. The user builds a rule from blocks, such as "by turn 2, with these assumptions, does my hand meet these conditions?", and runs it against a deck. The app shuffles and plays out the rule thousands of times and reports how often it succeeds.
 
@@ -633,6 +611,8 @@ Never cut corners on the scoring model to hit the date. Cut interface features i
 
 ## Phase Two
 
+**Status:** largely built (20 Oct 2026); see [docs/phase-two.md](docs/phase-two.md) for what's built, the maintainer's decisions and what's open. Hero prompts (step 10) were dropped: the rules engine resolves Viserai itself.
+
 Build in this order, because each step uses the one before it:
 
 1. **Synergy:** derived rules with tests, the confirm-suggestions queue, related-cards picker, synergy in the ranking
@@ -648,7 +628,7 @@ Build in this order, because each step uses the one before it:
 
 ## Phase Three
 
-- The rules engine, in the order set out in [docs/rules-engine.md](docs/rules-engine.md)
+- The rules engine moved forward into phase two and is built ([docs/rules-engine.md](docs/rules-engine.md)); what's left is verifying cards and the features in [docs/phase-two.md](docs/phase-two.md), "Open"
 - Go on AWS Lambda for Talishar integration
 - Weekly stats update from match data
 
