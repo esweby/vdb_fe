@@ -678,3 +678,20 @@
 .counterButtons button:hover {
   border-color: var(--accent);
 }
+
+/* A banished card's Play button, with other moves in its menu; the pile on the board opens
+   the list instead (the maintainer, 20 Oct 2026). */
+.playButton {
+  width: 100%;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.8rem;
+}
+.pile .playButton {
+  display: none;
+}
+.gearAbility {
+  padding: 0.15rem 0.3rem;
+  font-size: 0.65rem;
+  line-height: 1.2;
+  white-space: normal;
+}
