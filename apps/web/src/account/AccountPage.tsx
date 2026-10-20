@@ -4,6 +4,7 @@ import { Button, TextField } from "../ui/index.ts";
 import { useAppSelector } from "../hooks.ts";
 import { useServices } from "../servicesContext.ts";
 import type { Preferences } from "../scoring/scoreRepository.ts";
+import styles from "./AccountPage.module.css";
 
 const ROLE_LABEL = {
   user: "User",
@@ -83,63 +84,76 @@ export function AccountPage() {
   }
 
   return (
-    <>
+    <div className={styles.page}>
       <h1>Account</h1>
-      <dl>
-        <dt>Email</dt>
-        <dd>{user?.email}</dd>
-        <dt>Role</dt>
-        <dd>{role ? ROLE_LABEL[role] : "…"}</dd>
-      </dl>
-      <h2>Username</h2>
-      {/* Set once, then fixed (the maintainer, 20 Oct 2026). */}
-      {hadUsername || usernameSaved ? (
-        <>
-          <p>
-            <strong>{username}</strong>
-          </p>
-          {usernameSaved && <p role="status">Username saved</p>}
-          <p className="muted">
-            You sign in with it, and it's shown on decks you share. Usernames
-            can't be changed.
-          </p>
-        </>
-      ) : hadUsername === false ? (
-        <>
-          <p role="note">
-            Choose a username: you'll be able to sign in with it instead of your
-            email. Choose carefully: it can't be changed once it's set.
-          </p>
-          <form onSubmit={(e) => void saveUsername(e)}>
-            <TextField
-              label="Username"
-              autoComplete="username"
-              maxLength={24}
-              value={username}
-              error={usernameError}
-              hint="You sign in with it, and it's shown on decks you share."
-              onChange={(e) => {
-                setUsername(e.target.value);
-                setUsernameError(null);
-                setUsernameSaved(false);
-              }}
-            />
-            <Button type="submit">Save username</Button>
-          </form>
-        </>
-      ) : null}
-      <h2>Scoring</h2>
+      <section className={styles.panel} aria-label="Profile">
+        <dl className={styles.details}>
+          <dt>Email</dt>
+          <dd>{user?.email}</dd>
+          <dt>Username</dt>
+          <dd>
+            {/* Set once, then fixed (the maintainer, 20 Oct 2026). */}
+            {hadUsername || usernameSaved ? (
+              <>
+                <strong>{username}</strong>
+                {usernameSaved && (
+                  <span role="status" className={styles.note}>
+                    {" "}
+                    Username saved
+                  </span>
+                )}
+                <p className={styles.note}>
+                  You sign in with it, and it's shown on decks you share.
+                  Usernames can't be changed.
+                </p>
+              </>
+            ) : hadUsername === false ? (
+              <form
+                className={styles.usernameForm}
+                onSubmit={(e) => void saveUsername(e)}
+              >
+                <TextField
+                  label="Username"
+                  hideLabel
+                  autoComplete="username"
+                  maxLength={24}
+                  value={username}
+                  error={usernameError}
+                  hint="Choose a username: you'll be able to sign in with it instead of your email. Choose carefully: it can't be changed once it's set."
+                  onChange={(e) => {
+                    setUsername(e.target.value);
+                    setUsernameError(null);
+                    setUsernameSaved(false);
+                  }}
+                />
+                <Button type="submit">Save username</Button>
+              </form>
+            ) : (
+              "…"
+            )}
+          </dd>
+          <dt>Role</dt>
+          <dd>{role ? ROLE_LABEL[role] : "…"}</dd>
+        </dl>
+      </section>
       {preferences && (
-        <label>
-          <input
-            type="checkbox"
-            checked={preferences.scoreSidesTogether ?? true}
-            onChange={(e) => void setSidesTogether(e.target.checked)}
-          />
-          Score both sides together by default
-        </label>
+        <section className={styles.panel}>
+          <h2>Preferences</h2>
+          <label className={styles.check}>
+            <input
+              type="checkbox"
+              checked={preferences.scoreSidesTogether ?? true}
+              onChange={(e) => void setSidesTogether(e.target.checked)}
+            />
+            Score both sides together by default
+          </label>
+        </section>
       )}
-      {error && <p role="alert">{error}</p>}
-    </>
+      {error && (
+        <p role="alert" className={styles.alert}>
+          {error}
+        </p>
+      )}
+    </div>
   );
 }

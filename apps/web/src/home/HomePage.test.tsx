@@ -51,7 +51,7 @@ describe("home page", () => {
     await renderApp({ path: "/", auth: signedInAs("user") });
     expect(
       await screen.findByRole("link", { name: "Build a core" }),
-    ).toHaveAttribute("href", "/ranking");
+    ).toHaveAttribute("href", "/core");
     expect(
       screen.queryByRole("link", { name: "Continue reviewing" }),
     ).toBeNull();

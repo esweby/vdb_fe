@@ -94,9 +94,17 @@ const routeTree = rootRoute.addChildren([
   }),
   createRoute({
     getParentRoute: () => rootRoute,
-    path: "/ranking",
+    path: "/core",
     validateSearch: (search: Record<string, unknown>) => search,
     component: RankingPage,
+  }),
+  createRoute({
+    getParentRoute: () => rootRoute,
+    // The page was called Ranking until 20 Oct 2026; shared links keep working.
+    path: "/ranking",
+    beforeLoad: ({ search }) => {
+      throw redirect({ to: "/core", search, replace: true });
+    },
   }),
   createRoute({
     getParentRoute: () => rootRoute,

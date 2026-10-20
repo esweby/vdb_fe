@@ -70,9 +70,9 @@ describe("loading and load errors", () => {
     ).toBeInTheDocument();
   });
 
-  it("Ranking: cards that fail to load can be retried", async () => {
+  it("Core: cards that fail to load can be retried", async () => {
     await renderApp({
-      path: "/ranking",
+      path: "/core",
       auth: scorer(),
       cards: flakyCards(),
       scores: fakeScoreRepository().repository,
@@ -83,10 +83,10 @@ describe("loading and load errors", () => {
     ).toBeInTheDocument();
   });
 
-  it("Ranking: scores that fail to load can be retried", async () => {
+  it("Core: scores that fail to load can be retried", async () => {
     const scores = fakeScoreRepository().repository;
     await renderApp({
-      path: "/ranking",
+      path: "/core",
       auth: scorer(),
       scores: {
         ...scores,

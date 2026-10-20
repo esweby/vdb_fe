@@ -45,7 +45,7 @@ describe("Synergies tab in Build a core", () => {
 
   it("shows your core and what links to it", async () => {
     await renderApp({
-      path: `/ranking?tab=synergies&core=${core}`,
+      path: `/core?tab=synergies&core=${core}`,
       auth: fakeAuthService().service,
     });
     expect(screen.getByRole("tab", { name: /Synergies/ })).toHaveAttribute(
@@ -62,7 +62,7 @@ describe("Synergies tab in Build a core", () => {
 
   it("lists your core's cards that link to nothing else in it, and the cards that link to it most", async () => {
     await renderApp({
-      path: `/ranking?tab=synergies&core=${core}`,
+      path: `/core?tab=synergies&core=${core}`,
       auth: fakeAuthService().service,
     });
     await waitFor(() =>
@@ -77,7 +77,7 @@ describe("Synergies tab in Build a core", () => {
 
   it("selects a card and goes back, without leaving the tab", async () => {
     const { router } = await renderApp({
-      path: `/ranking?tab=synergies&core=${core}`,
+      path: `/core?tab=synergies&core=${core}`,
       auth: fakeAuthService().service,
     });
     const user = userEvent.setup();
@@ -98,7 +98,7 @@ describe("Synergies tab in Build a core", () => {
 
   it("asks for a core first", async () => {
     await renderApp({
-      path: "/ranking?tab=synergies",
+      path: "/core?tab=synergies",
       auth: fakeAuthService().service,
     });
     expect(

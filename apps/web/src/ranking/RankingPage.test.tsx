@@ -35,7 +35,7 @@ const core = (entries: Record<string, number>) =>
   `core=${encodeURIComponent(JSON.stringify(entries))}`;
 
 async function open(
-  path = "/ranking",
+  path = "/core",
   opts: {
     signedIn?: boolean;
     onlyScorer?: boolean;
@@ -83,7 +83,7 @@ const trayCards = () =>
 // Maintainer, 19 Oct 2026: the board didn't say how cards work together.
 describe("engine board explains itself", () => {
   it("says what the core has in each engine, and what's missing", async () => {
-    await open(`/ranking?${core({ hp3: 3 })}`);
+    await open(`/core?${core({ hp3: 3 })}`);
     expect(
       within(screen.getByRole("region", { name: "Gate engine" })).getByText(
         "Your core: 3 in Gate targets, but nothing in Make Gates yet.",
@@ -92,7 +92,7 @@ describe("engine board explains itself", () => {
   });
 
   it("shows an engine running from makers to users", async () => {
-    await open(`/ranking?${core({ hp3: 3, bsl3: 3 })}`);
+    await open(`/core?${core({ hp3: 3, bsl3: 3 })}`);
     expect(
       within(screen.getByRole("region", { name: "Gate engine" })).getByText(
         "Your core: 3 in Make Gates → 3 in Gate targets.",
@@ -101,7 +101,7 @@ describe("engine board explains itself", () => {
   });
 
   it("says plainly how many core cards a card works with, and copies in the core", async () => {
-    await open(`/ranking?${core({ hp3: 3 })}`);
+    await open(`/core?${core({ hp3: 3 })}`);
     expect(lane("Make Gates")[0]).toHaveTextContent("works with 1");
     const hocusBlue = lane("Gate targets").find(
       (li) => li.getAttribute("aria-label") === "Hocus Pocus (blue)",
@@ -110,7 +110,7 @@ describe("engine board explains itself", () => {
   });
 
   it("explains a card's links in words when you point at it", async () => {
-    const { user } = await open(`/ranking?${core({ hp3: 3 })}`);
+    const { user } = await open(`/core?${core({ hp3: 3 })}`);
     await user.hover(lane("Make Gates")[0]!);
     expect(
       screen.getByRole("status", { name: "About this card" }),
@@ -203,7 +203,7 @@ describe("engine board", () => {
     // At Consistent, Hocus Pocus (red) 50 leads Become the Shadow Lord 45. Avoiding Gate
     // targets sinks Hocus Pocus by 25 and Become the Shadow Lord (a Gate maker) by half that.
     await open(
-      `/ranking?risk=-50&pref=${encodeURIComponent(JSON.stringify({ gateTargets: 0 }))}`,
+      `/core?risk=-50&pref=${encodeURIComponent(JSON.stringify({ gateTargets: 0 }))}`,
     );
     expect(laneNames("Make Runechants")[0]).toBe("Become the Shadow Lord");
     expect(lane("Make Runechants")[0]).toHaveTextContent("4.5");
@@ -211,7 +211,7 @@ describe("engine board", () => {
 
   it("marks preferred cards on the board", async () => {
     await open(
-      `/ranking?pref=${encodeURIComponent(JSON.stringify({ gateTargets: 100 }))}`,
+      `/core?pref=${encodeURIComponent(JSON.stringify({ gateTargets: 100 }))}`,
     );
     for (const li of lane("Gate targets")) {
       expect(li).toHaveTextContent("preferred");
@@ -268,7 +268,7 @@ describe("engine board", () => {
   });
 
   it("explains an empty board and points to Needs review", async () => {
-    await open("/ranking", { scores: scores({ community: [] }) });
+    await open("/core", { scores: scores({ community: [] }) });
     expect(screen.getByText("Nothing ranked yet")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Review cards" })).toHaveAttribute(
       "href",
@@ -300,12 +300,12 @@ describe("engine board", () => {
   });
 
   it("offers whose scores to use only when signed in", async () => {
-    await open("/ranking?tab=setup");
+    await open("/core?tab=setup");
     expect(screen.queryByRole("group", { name: "Whose scores" })).toBeNull();
   });
 
   it("keeps the priorities in Set up", async () => {
-    await open("/ranking", { signedIn: true });
+    await open("/core", { signedIn: true });
     await goTab("Set up");
     for (const name of ["Play style", "Side", "Whose scores"]) {
       expect(panel().getByRole("group", { name })).toBeInTheDocument();
@@ -316,7 +316,7 @@ describe("engine board", () => {
 
 describe("tabs", () => {
   it("opens on Set up, step 1, and keeps the other tabs in the URL", async () => {
-    const { router } = await open("/ranking", { asIs: true });
+    const { router } = await open("/core", { asIs: true });
     expect(screen.getByRole("tab", { name: /Set up/ })).toHaveAttribute(
       "aria-selected",
       "true",
@@ -331,7 +331,7 @@ describe("tabs", () => {
   });
 
   it("opens on the tab in the URL", async () => {
-    await open("/ranking?tab=board");
+    await open("/core?tab=board");
     expect(screen.getByRole("tab", { name: /Board/ })).toHaveAttribute(
       "aria-selected",
       "true",
@@ -343,7 +343,7 @@ describe("tabs", () => {
 // it, starting from the core.
 describe("synergy explorer link", () => {
   it("doesn't link to the explorer from the board (a Synergies tab comes next)", async () => {
-    await open(`/ranking?${core({ hp3: 3 })}`);
+    await open(`/core?${core({ hp3: 3 })}`);
     expect(
       screen.queryByRole("link", { name: "Explore your core's synergies" }),
     ).toBeNull();
@@ -357,7 +357,7 @@ describe("synergy explorer link", () => {
 
 describe("strategy questions", () => {
   it("saves your answer and shows the scoring group's average beside it", async () => {
-    const { user, strategy } = await open("/ranking?tab=setup", {
+    const { user, strategy } = await open("/core?tab=setup", {
       signedIn: true,
     });
     const question = within(
@@ -377,7 +377,7 @@ describe("strategy questions", () => {
   });
 
   it("updates the scoring group's average after you answer", async () => {
-    const { user } = await open("/ranking?tab=setup", {
+    const { user } = await open("/core?tab=setup", {
       signedIn: true,
       onlyScorer: true,
     });
@@ -393,7 +393,7 @@ describe("strategy questions", () => {
   });
 
   it("says when the scoring group hasn't answered yet", async () => {
-    await open("/ranking?tab=setup", { signedIn: true });
+    await open("/core?tab=setup", { signedIn: true });
     const question = within(
       await panel().findByRole("group", {
         name: "Once on Usurper, how keen are you to flip back to Forsaken?",
@@ -405,7 +405,7 @@ describe("strategy questions", () => {
   });
 
   it("asks signed-out visitors to sign in to answer", async () => {
-    await open("/ranking?tab=setup");
+    await open("/core?tab=setup");
     const question = within(
       await panel().findByRole("group", {
         name: "How important is traversing to Usurper?",
@@ -435,7 +435,7 @@ describe("the core", () => {
   });
 
   it("changes copies and removes cards", async () => {
-    const { user } = await open(`/ranking?${core({ bsl3: 3 })}`);
+    const { user } = await open(`/core?${core({ bsl3: 3 })}`);
     await user.click(
       tray().getByRole("button", { name: "Fewer Become the Shadow Lord" }),
     );
@@ -447,7 +447,7 @@ describe("the core", () => {
   });
 
   it("can order lanes by best fit", async () => {
-    const { user, router } = await open(`/ranking?${core({ hp1: 3 })}`);
+    const { user, router } = await open(`/core?${core({ hp1: 3 })}`);
     await user.click(
       within(screen.getByRole("group", { name: "Order" })).getByRole("button", {
         name: "Best fits first",
@@ -458,7 +458,7 @@ describe("the core", () => {
   });
 
   it("weighs each engine in Readings and says what's missing", async () => {
-    await open(`/ranking?tab=readings&${core({ bsl3: 3 })}`);
+    await open(`/core?tab=readings&${core({ bsl3: 3 })}`);
     const gate = within(panel().getByRole("group", { name: "Gate engine" }));
     expect(gate.getByText("3 make")).toBeInTheDocument();
     expect(gate.getByText("0 targets")).toBeInTheDocument();
@@ -466,7 +466,7 @@ describe("the core", () => {
   });
 
   it("weighs the Runechant engine by its makers alone", async () => {
-    await open(`/ranking?tab=readings&${core({ bsl3: 3 })}`);
+    await open(`/core?tab=readings&${core({ bsl3: 3 })}`);
     const runechant = within(
       panel().getByRole("group", { name: "Runechant engine" }),
     );
@@ -475,7 +475,7 @@ describe("the core", () => {
   });
 
   it("only weighs engines that have cards in the core", async () => {
-    await open("/ranking?tab=readings");
+    await open("/core?tab=readings");
     expect(panel().queryByRole("group", { name: "Gate engine" })).toBeNull();
     expect(
       panel().getByText("Add cards to see how each engine balances."),
@@ -483,7 +483,7 @@ describe("the core", () => {
   });
 
   it("counts deck cards and compares pitch with the targets", async () => {
-    await open(`/ranking?${core({ bsl3: 3, hp1: 2 })}`);
+    await open(`/core?${core({ bsl3: 3, hp1: 2 })}`);
     // The count is in the header, on every tab.
     expect(screen.getByText("5 of 60 deck cards")).toBeInTheDocument();
     await goTab("Set up");
@@ -504,7 +504,7 @@ describe("the core", () => {
   };
 
   it("finishing Set up builds the core to the pitch targets and shows the board", async () => {
-    const { user } = await open("/ranking?tab=setup");
+    const { user } = await open("/core?tab=setup");
     await setTargets(user, [
       ["Red target", "3"],
       ["Yellow target", "0"],
@@ -534,7 +534,7 @@ describe("the core", () => {
 
   it("with synergy on, building uses the scoring group's links and still fills to the targets", async () => {
     const synergy = fakeSynergyRepository();
-    const { user } = await open("/ranking?tab=setup&syn=100", { synergy });
+    const { user } = await open("/core?tab=setup&syn=100", { synergy });
     await setTargets(user, [
       ["Red target", "3"],
       ["Yellow target", "0"],
@@ -550,7 +550,7 @@ describe("the core", () => {
 
   // The maintainer, 20 Oct 2026: "Could the core creator recommend equipment too?"
   it("suggests a weapon and equipment when asked, apart from the deck cards", async () => {
-    const { user, router } = await open("/ranking?tab=setup");
+    const { user, router } = await open("/core?tab=setup");
     await setTargets(user, [
       ["Red target", "3"],
       ["Yellow target", "0"],
@@ -566,7 +566,7 @@ describe("the core", () => {
   });
 
   it("keeps the cards already in the core when building", async () => {
-    const { user } = await open(`/ranking?tab=setup&${core({ hp3: 2 })}`);
+    const { user } = await open(`/core?tab=setup&${core({ hp3: 2 })}`);
     await setTargets(user, [
       ["Red target", "3"],
       ["Yellow target", "0"],
@@ -581,7 +581,7 @@ describe("the core", () => {
   });
 
   it("can go to the board without adding cards", async () => {
-    const { user } = await open("/ranking?tab=setup");
+    const { user } = await open("/core?tab=setup");
     await user.click(
       panel().getByRole("button", {
         name: "Go to the board without adding cards",
@@ -595,10 +595,9 @@ describe("the core", () => {
   });
 
   it("adds the core to the chosen deck", async () => {
-    const { user, fake } = await open(
-      `/ranking?deck=deck-1&${core({ hp1: 3 })}`,
-      { signedIn: true },
-    );
+    const { user, fake } = await open(`/core?deck=deck-1&${core({ hp1: 3 })}`, {
+      signedIn: true,
+    });
     await user.click(
       await tray().findByRole("button", { name: "Add core to Gate tempo" }),
     );
@@ -612,7 +611,7 @@ describe("the core", () => {
   });
 
   it("saves the core as a new deck", async () => {
-    const { user, fake, router } = await open(`/ranking?${core({ hp1: 3 })}`, {
+    const { user, fake, router } = await open(`/core?${core({ hp1: 3 })}`, {
       signedIn: true,
     });
     await user.type(
@@ -636,7 +635,7 @@ describe("the core", () => {
   });
 
   it("marks cards already in the chosen deck", async () => {
-    await open("/ranking?deck=deck-1", {
+    await open("/core?deck=deck-1", {
       signedIn: true,
       decks: [
         gateTempo({
@@ -654,7 +653,7 @@ describe("the core", () => {
   });
 
   it("asks signed-out visitors to sign in to save", async () => {
-    await open(`/ranking?${core({ hp1: 3 })}`);
+    await open(`/core?${core({ hp1: 3 })}`);
     expect(
       tray().getByText("Sign in to save the core as a deck."),
     ).toBeInTheDocument();
@@ -663,7 +662,7 @@ describe("the core", () => {
 
 describe("scenarios", () => {
   it("lists the built-in scenarios before they've run", async () => {
-    await open(`/ranking?tab=readings&${core({ bsl3: 3, hp1: 3 })}`);
+    await open(`/core?tab=readings&${core({ bsl3: 3, hp1: 3 })}`);
     const scenarios = within(screen.getByRole("region", { name: "Scenarios" }));
     expect(
       scenarios.getByText("Opening hand creates 3 or more Runechants"),
@@ -673,7 +672,7 @@ describe("scenarios", () => {
 
   it("runs them all with one button and reports success rates and why runs failed", async () => {
     const { user } = await open(
-      `/ranking?tab=readings&${core({ bsl3: 3, hp1: 3 })}`,
+      `/core?tab=readings&${core({ bsl3: 3, hp1: 3 })}`,
     );
     await user.click(screen.getByRole("button", { name: "Run scenarios" }));
     const scenarios = within(
@@ -696,7 +695,7 @@ describe("scenarios", () => {
 
   it("says plainly what a run fails without when there's only one reason", async () => {
     const { user } = await open(
-      `/ranking?tab=readings&${core({ bsl3: 3, hp1: 3 })}`,
+      `/core?tab=readings&${core({ bsl3: 3, hp1: 3 })}`,
     );
     await user.click(screen.getByRole("button", { name: "Run scenarios" }));
     const row = within(
@@ -708,7 +707,7 @@ describe("scenarios", () => {
   });
 
   it("doesn't run a scenario the core can't meet, and says why in a note below the list", async () => {
-    const { user } = await open(`/ranking?tab=readings&${core({ hp1: 3 })}`);
+    const { user } = await open(`/core?tab=readings&${core({ hp1: 3 })}`);
     await user.click(screen.getByRole("button", { name: "Run scenarios" }));
     const scenarios = within(
       await screen.findByRole("region", { name: "Scenarios" }),
@@ -738,7 +737,7 @@ describe("scenarios", () => {
 
   it("gives slightly different results for a new seed", async () => {
     const { user } = await open(
-      `/ranking?tab=readings&${core({ bsl3: 3, hp1: 3 })}`,
+      `/core?tab=readings&${core({ bsl3: 3, hp1: 3 })}`,
     );
     const scenarios = within(screen.getByRole("region", { name: "Scenarios" }));
     const rate = () =>
@@ -757,7 +756,7 @@ describe("scenarios", () => {
 
   it("draws the traverse timeline when run", async () => {
     const { user } = await open(
-      `/ranking?tab=readings&${core({ bsl3: 3, hp1: 3 })}`,
+      `/core?tab=readings&${core({ bsl3: 3, hp1: 3 })}`,
     );
     await user.click(screen.getByRole("button", { name: "Run scenarios" }));
     const timeline = within(
@@ -773,7 +772,7 @@ describe("scenarios", () => {
 
   it("says when the core has changed since the last run", async () => {
     const { user } = await open(
-      `/ranking?tab=readings&${core({ bsl3: 3, hp1: 3 })}`,
+      `/core?tab=readings&${core({ bsl3: 3, hp1: 3 })}`,
     );
     await user.click(screen.getByRole("button", { name: "Run scenarios" }));
     await screen.findByRole("region", { name: "Traverse timeline" });

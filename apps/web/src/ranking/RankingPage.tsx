@@ -52,7 +52,7 @@ import {
 import { LoadError, Loading } from "../ui/index.ts";
 import styles from "./RankingPage.module.css";
 
-const route = getRouteApi("/ranking");
+const route = getRouteApi("/core");
 const GEAR = ["weapon", "equipment"];
 const SLOTS = ["Head", "Chest", "Arms", "Legs", "Off-Hand"];
 
