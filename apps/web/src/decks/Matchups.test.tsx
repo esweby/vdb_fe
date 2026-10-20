@@ -36,14 +36,14 @@ const HEROES = [
   },
 ];
 
-async function open(matchups: Matchup[] = [], heroes = HEROES) {
+async function open(matchups: Matchup[] = [], heroes = HEROES, cards = CARDS) {
   const fake = fakeDeckRepository(
     [
       {
         id: "deck-1",
         name: "Gate tempo",
         updatedAt: "2026-10-14T10:00:00Z",
-        cards: CARDS,
+        cards,
         pitchTargets: {},
       },
     ],
@@ -116,6 +116,24 @@ describe("matchups", () => {
     expect(panel.queryByLabelText("Plan against")).toBeNull();
   });
 
+  // Bug (the maintainer, 20 Oct 2026): "The plan against doesn't include equipment". Gear was
+  // sorted in among the cards; it now comes first, in a group of its own.
+  it("shows weapons and equipment first, in their own group", async () => {
+    const { panel, user } = await open([], HEROES, [...CARDS, card("nb", 1)]);
+    await user.selectOptions(panel.getByLabelText("Plan against"), "h1");
+    const plan = within(panel.getByRole("region", { name: "vs Example Hero" }));
+    const items = within(
+      plan.getByRole("list", { name: "Deck for this matchup" }),
+    ).getAllByRole("listitem");
+    expect(items.map((li) => li.getAttribute("aria-label"))).toEqual([
+      "Nebula Blade",
+      "Become the Shadow Lord (blue)",
+      "Hocus Pocus (red)",
+    ]);
+    expect(items[0]).toHaveAttribute("data-gear");
+    expect(items[1]).not.toHaveAttribute("data-gear");
+  });
+
   it("never boards in more copies than the pool has", async () => {
     const { panel, user } = await open();
     await user.selectOptions(panel.getByLabelText("Plan against"), "h1");
@@ -172,7 +190,7 @@ describe("playing a matchup", () => {
       { variantId: "ff1", quantity: 1 },
     ],
   };
-  const openAt = async (path: string) => {
+  const openAt = async (path: string, matchups = [plan]) => {
     const fake = fakeDeckRepository(
       [
         {
@@ -183,7 +201,7 @@ describe("playing a matchup", () => {
           pitchTargets: {},
         },
       ],
-      { heroes: HEROES, matchups: [plan] },
+      { heroes: HEROES, matchups },
     );
     const { router } = await renderApp({
       path,
@@ -223,5 +241,29 @@ describe("playing a matchup", () => {
     expect(
       await screen.findByText(/of 10,000 runs · seed 1 · 5 deck cards$/),
     ).toBeInTheDocument();
+  });
+
+  // The maintainer, 20 Oct 2026: goldfish should let you choose a matchup, or keep the main deck.
+  it("always offers the choice on goldfish, with each list's card count", async () => {
+    await openAt("/decks/deck-1?tab=goldfish&seed=7");
+    const panel = within(await screen.findByRole("tabpanel"));
+    const playing = await panel.findByLabelText("Playing");
+    expect(playing).toHaveValue("");
+    expect(
+      within(playing)
+        .getAllByRole("option")
+        .map((o) => o.textContent),
+    ).toEqual(["Main deck · 5 cards", "vs Example Hero · 5 cards"]);
+  });
+
+  it("offers to plan a matchup when there are none yet", async () => {
+    const { router, user } = await openAt(
+      "/decks/deck-1?tab=goldfish&seed=7",
+      [],
+    );
+    const panel = within(await screen.findByRole("tabpanel"));
+    expect(await panel.findByLabelText("Playing")).toHaveValue("");
+    await user.click(panel.getByRole("link", { name: "Plan a matchup" }));
+    expect(router.state.location.search).toMatchObject({ tab: "matchups" });
   });
 });
