@@ -37,7 +37,7 @@ describe("findGaps", () => {
         (g) =>
           `${g.role.id} ${PITCH_NAMES[g.pitch]} ${g.roleCopies} ${g.pitchCopies}`,
       ),
-    ).toEqual(["gate red 3 5", "banish red 3 5"]);
+    ).toEqual(["banish red 3 5"]);
   });
 
   // The maintainer, 20 Oct 2026: "Order gaps by red".
@@ -51,12 +51,16 @@ describe("findGaps", () => {
       entry(fate, "ff2", 5),
     ]);
     expect(gaps.map((g) => `${g.role.id} ${PITCH_NAMES[g.pitch]}`)).toEqual([
-      "gate red",
       "banish red",
       "runechant yellow",
-      "gate yellow",
       "banish yellow",
     ]);
+  });
+
+  // The maintainer, 20 Oct 2026: "Not every colour needs a Gate maker". Gate makers are one pool,
+  // never a gap in a colour.
+  it("never flags Gate makers by colour", () => {
+    expect(findGaps(deck).some((g) => g.role.id === "gate")).toBe(false);
   });
 
   it("ignores pitches the deck barely plays, and roles it barely uses", () => {
