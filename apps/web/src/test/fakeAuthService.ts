@@ -73,7 +73,11 @@ export function fakeAuthService(
       );
     },
     async getUsername(userId) {
-      return usernames.get(userId) ?? null;
+      return (
+        usernames.get(userId) ??
+        Object.values(users).find((u) => u.id === userId)?.username ??
+        null
+      );
     },
     async setUsername(userId, name) {
       if (taken.some((t) => t.toLowerCase() === name.toLowerCase()))

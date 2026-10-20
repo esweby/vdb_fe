@@ -56,7 +56,7 @@ describe("usernames", () => {
     expect(fake.calls).toEqual([]);
   });
 
-  it("can be set or changed on the Account page", async () => {
+  it("can be set on the Account page (once: 20 Oct 2026)", async () => {
     const fake = fakeAuthService({
       users: { "s@test.local": { id: "s1", password: "pw", role: "scorer" } },
       signedIn: { id: "s1", email: "s@test.local" },
@@ -80,7 +80,7 @@ describe("usernames", () => {
     await renderApp({ path: "/account", auth: fake.service });
     expect(
       await screen.findByText(
-        "Choose a username: you'll be able to sign in with it instead of your email.",
+        /^Choose a username: you'll be able to sign in with it instead of your email\./,
       ),
     ).toBeInTheDocument();
   });
