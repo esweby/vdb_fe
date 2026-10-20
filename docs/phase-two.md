@@ -25,7 +25,7 @@ Phase two is largely built. What's left is less building than feeding the engine
 3. An admin accepts or rejects each draft, pitch by pitch. A verdict covers that draft only: when a card's facts change, its draft and hash change, and the verdict goes stale.
 4. Accepted drafts are added to the engine's verified rules (`CARD_RULES` in `packages/engine/src/rules/viserai.ts`), with tests. Only then do goldfish and scenarios play the card by the rules.
 
-The first batch (24 cards) went in on 20 Oct 2026, with the sinchants. The second (62 cards, mostly equipment, potions and amulets whose activated ability is otherwise out of scope) went in the same evening; a played item now stays in the arena, so it can be activated. The hosted cards need re-importing after any change to card facts: `npm run import -w @vdb/importer -- --yes-remote`, run from an up-to-date `main`.
+The first batch (24 cards) went in on 20 Oct 2026, with the sinchants. The second (62 cards, mostly equipment, potions and amulets whose activated ability is otherwise out of scope) went in the same evening; a played item now stays in the arena, so it can be activated. The third (5 cards) followed: Amplify the Arknight, Ninth Blade of the Blood Oath, Reduce to Runechant and Rune Flash, which cost less for each Runechant, and Dimenxxional Crossroads. The hosted cards need re-importing after any change to card facts: `npm run import -w @vdb/importer -- --yes-remote`, run from an up-to-date `main`.
 
 ## Decisions (the maintainer)
 
