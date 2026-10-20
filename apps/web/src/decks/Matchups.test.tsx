@@ -64,23 +64,36 @@ const row = (scope: ReturnType<typeof within>, name: string) =>
   within(scope.getByRole("row", { name: new RegExp(`^${name}`) }));
 
 describe("matchups", () => {
+  // The maintainer, 20 Oct 2026: the plan as card pictures, deck and sideboard side by side, with
+  // arrows on hover to board a copy in or out.
   it("plans a matchup: starts as the main deck, boards in and out, and saves", async () => {
     const { panel, fake, user } = await open();
     await user.selectOptions(panel.getByLabelText("Plan against"), "h1");
     const plan = within(panel.getByRole("region", { name: "vs Example Hero" }));
+    const deckSide = () =>
+      within(plan.getByRole("list", { name: "Deck for this matchup" }));
+    const sideboard = () =>
+      within(plan.getByRole("list", { name: "Sideboard" }));
     expect(
-      plan.getByRole("row", { name: /^Hocus Pocus \(red\)/ }),
-    ).toHaveTextContent("3");
+      deckSide().getByRole("listitem", { name: "Hocus Pocus (red)" }),
+    ).toHaveTextContent("×3");
     await user.click(
-      row(plan, "Hocus Pocus \\(red\\)").getByRole("button", {
-        name: "Fewer Hocus Pocus (red)",
+      deckSide().getByRole("button", {
+        name: "Board out a Hocus Pocus (red)",
       }),
     );
     await user.click(
-      row(plan, "Fate Foreseen \\(red\\)").getByRole("button", {
-        name: "More Fate Foreseen (red)",
+      sideboard().getByRole("button", {
+        name: "Board in a Fate Foreseen (red)",
       }),
     );
+    // A card split between the two shows on both sides, with its copies.
+    expect(
+      deckSide().getByRole("listitem", { name: "Hocus Pocus (red)" }),
+    ).toHaveTextContent("×2");
+    expect(
+      sideboard().getByRole("listitem", { name: "Hocus Pocus (red)" }),
+    ).toHaveTextContent("×1");
     expect(
       plan.getByText("In: Fate Foreseen (red) ×1 · Out: Hocus Pocus (red) ×1"),
     ).toBeInTheDocument();
@@ -107,12 +120,18 @@ describe("matchups", () => {
     const { panel, user } = await open();
     await user.selectOptions(panel.getByLabelText("Plan against"), "h1");
     const plan = within(panel.getByRole("region", { name: "vs Example Hero" }));
-    const more = row(plan, "Fate Foreseen \\(red\\)").getByRole("button", {
-      name: "More Fate Foreseen (red)",
-    });
-    await user.click(more);
-    await user.click(more);
-    expect(more).toBeDisabled();
+    const sideboard = () =>
+      within(plan.getByRole("list", { name: "Sideboard" }));
+    for (const _ of [1, 2])
+      await user.click(
+        sideboard().getByRole("button", {
+          name: "Board in a Fate Foreseen (red)",
+        }),
+      );
+    expect(
+      plan.queryByRole("list", { name: "Sideboard" }) &&
+        sideboard().queryByRole("listitem", { name: "Fate Foreseen (red)" }),
+    ).toBeFalsy();
   });
 
   it("lists saved plans with what goes in and out, and deletes one", async () => {
