@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest";
 import type { CardSummary } from "../cards/cardRepository.ts";
 import { sampleCards } from "../test/fakeCardRepository.ts";
-import { draftQueue } from "./draftQueue.ts";
+import { draftQueue, missingFeatures } from "./draftQueue.ts";
 
 const byName = (name: string) => sampleCards.find((c) => c.name === name)!;
 
@@ -66,6 +66,7 @@ describe("draftQueue", () => {
         {
           ...hp.variants[0]!,
           attributes: {
+            ...hp.variants[0]!.attributes,
             arcaneDamage: [{ amount: 1, trigger: "on_play" }],
           },
         },
@@ -77,6 +78,41 @@ describe("draftQueue", () => {
       ["Hocus Pocus", "complete"],
       ["Arcane Test", "partial"],
       ["Become the Shadow Lord", "verified"],
+    ]);
+  });
+});
+
+// The maintainer, 20 Oct 2026, after accepting drafts with nothing in them: a card the engine
+// can't draft any of is set apart, not listed with the partly drafted ones.
+describe("cards with nothing drafted", () => {
+  const nothing: CardSummary = {
+    ...byName("Hocus Pocus"),
+    id: "card-nothing",
+    name: "Nothing Test",
+    variants: [
+      {
+        ...byName("Hocus Pocus").variants[0]!,
+        attributes: {
+          tokens: [{ token: "runechant", amount: "X", trigger: "on_play" }],
+        },
+      },
+    ],
+  };
+
+  it("are their own group, after the rest", () => {
+    expect(
+      draftQueue([...sampleCards, nothing]).map((e) => [e.card.name, e.status]),
+    ).toEqual([
+      ["Hocus Pocus", "complete"],
+      ["Become the Shadow Lord", "verified"],
+      ["Nothing Test", "undraftable"],
+    ]);
+  });
+
+  it("count what's missing across cards, most common first", () => {
+    const other = { ...nothing, id: "card-other", name: "Other Test" };
+    expect(missingFeatures(draftQueue([nothing, other]))).toEqual([
+      { what: "X Runechants", cards: 2 },
     ]);
   });
 });

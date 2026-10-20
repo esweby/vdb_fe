@@ -57,6 +57,20 @@ describe("effect drafts page", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
+  // The maintainer, 20 Oct 2026: it wasn't clear what to do, and partly drafted cards looked
+  // ready to accept.
+  it("says what to do, and keeps the partly drafted cards folded away", async () => {
+    await renderApp({
+      path: "/needs-review/effects",
+      auth: signedInAs("a1", "a@test.local"),
+    });
+    const guide = await screen.findByRole("region", { name: "What to do" });
+    expect(guide).toHaveTextContent(/Ready to check/);
+    expect(guide).toHaveTextContent(/doesn't change the game yet/);
+    const partly = screen.getByRole("group", { name: /Partly drafted/ });
+    expect(partly).not.toHaveAttribute("open");
+  });
+
   it("shows cards with verified rules apart, so they aren't checked twice", async () => {
     await renderApp({
       path: "/needs-review/effects",
