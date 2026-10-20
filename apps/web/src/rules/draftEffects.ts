@@ -17,6 +17,8 @@ export interface DraftRules {
   triggers?: Trigger[];
   usurp?: boolean;
   playableFromBanish?: boolean;
+  /** "If this would be put into your graveyard from anywhere, instead banish it." */
+  graveyardToBanish?: boolean;
 }
 
 export interface EffectDraft {
@@ -268,7 +270,31 @@ export function draftEffects(
         ? `Each hero ${d.action === "discard" ? "discards" : `${d.action}s`}: not drafted yet`
         : "Disrupting an opponent: out of scope",
     );
-  if (a.banishesSelf?.length) note("Banishing itself: not drafted yet");
+  // Banishing itself (20 Oct 2026): instead of the graveyard is drafted; combat timings are out
+  // of scope; activated abilities and the rest aren't drafted yet.
+  let graveyardToBanish = false;
+  for (const b of a.banishesSelf ?? []) {
+    if (b.trigger === "would_go_to_graveyard") graveyardToBanish = true;
+    else if (
+      [
+        "combat_chain_closes",
+        "would_be_dealt_damage",
+        "on_hit",
+        "on_defend",
+      ].includes(b.trigger)
+    )
+      note(
+        `Banishing itself ${TRIGGER_PLAIN[b.trigger] ?? (b.trigger === "on_hit" ? "when it hits" : b.trigger)}: combat is out of scope`,
+      );
+    else if (b.trigger === "activated")
+      note(
+        "Banishing itself when it's activated: activated abilities aren't drafted yet",
+      );
+    else
+      note(
+        `Banishing itself ${TRIGGER_PLAIN[b.trigger] ?? b.trigger}: not drafted yet`,
+      );
+  }
   for (const bonus of a.conditionalBonuses ?? [])
     note(
       bonus.effect === "draw"
@@ -301,6 +327,7 @@ export function draftEffects(
     ...(triggers.length ? { triggers } : {}),
     ...(a.hasUsurp ? { usurp: true } : {}),
     ...(playableFromBanish ? { playableFromBanish: true } : {}),
+    ...(graveyardToBanish ? { graveyardToBanish: true } : {}),
   };
   return {
     cardName: card.name,
@@ -317,6 +344,9 @@ export function draftEffects(
       ...(rules.usurp ? ["Usurp."] : []),
       ...(rules.playableFromBanish
         ? ["It can be played from the banished zone."]
+        : []),
+      ...(rules.graveyardToBanish
+        ? ["If it would go to the graveyard, it's banished instead."]
         : []),
     ],
     notDrafted,
