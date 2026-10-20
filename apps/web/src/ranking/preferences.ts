@@ -39,6 +39,13 @@ export const PREFERENCES: Preference[] = [
     companions: (r) => has(r, "gate_generator"),
   },
   {
+    id: "everyTurn",
+    label: "Runechants every turn",
+    note: "Auras and the like that make Runechants turn after turn, e.g. Malefic Incantation.",
+    members: (r) => has(r, "runechant_every_turn"),
+    companions: () => false,
+  },
+  {
     id: "disruption",
     label: "Disruption",
     note: "Cards that banish, discard or destroy the opponent's cards.",

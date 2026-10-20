@@ -13,6 +13,7 @@ export type Engine =
 export const ROLE_IDS = [
   "runechant_generator",
   "runechant_burst",
+  "runechant_every_turn",
   "runechant_granter",
   "rune_gate",
   "runechant_discount",
@@ -95,6 +96,23 @@ export const ROLES: RoleDef[] = [
       runechantsMade(c).some(
         (t) =>
           t.amount === "X" || (typeof t.amount === "number" && t.amount >= 3),
+      ),
+  },
+  // The maintainer, 20 Oct 2026: Runechants turn after turn (Malefic Incantation, Runeblood
+  // Incantation, Blessing of Occult). An aura making them as you play attacks, or anything making
+  // them at the start of a turn; a one-off like Promise of Power isn't one.
+  {
+    id: "runechant_every_turn",
+    name: "Runechants every turn",
+    engine: "runechant",
+    kind: "generator",
+    matches: (c) =>
+      runechantsMade(c).some(
+        (t) =>
+          t.trigger === "start_of_turn" ||
+          t.trigger === "start_of_action_phase" ||
+          (t.trigger === "your_attack_action_played" &&
+            !!c.subtypes?.includes("Aura")),
       ),
   },
   {
