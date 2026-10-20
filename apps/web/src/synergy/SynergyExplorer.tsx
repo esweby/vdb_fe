@@ -208,6 +208,8 @@ export function SynergyExplorer(props: {
     };
   }, [view, edges, shownPick]);
   const packageList = useMemo(() => packages(edges), [edges]);
+  // Discover lists start short, so they don't bury Refine (the maintainer, 20 Oct 2026).
+  const [showAll, setShowAll] = useState({ packages: false, gems: false });
   const gems = useMemo(
     () => (ratings ? hiddenGems(edges, ratings) : []),
     [edges, ratings],
@@ -431,78 +433,6 @@ export function SynergyExplorer(props: {
         )}
 
         <section className={styles.group}>
-          <h2>Discover</h2>
-          <h3>Packages</h3>
-          {packageList.length === 0 ? (
-            <p className={styles.muted}>
-              No packages yet: they come from cards that name others, and links
-              the scoring group adds.
-            </p>
-          ) : (
-            <ul aria-label="Packages" className={styles.links}>
-              {packageList.slice(0, 8).map((p) => {
-                const members = [...p.referrers, ...p.targets];
-                const key = `package:${p.id}`;
-                const shown = shownPick?.key === key;
-                const inScope = scope
-                  ? members.filter((id) => scope.cardIds.includes(id)).length
-                  : 0;
-                return (
-                  <li key={key}>
-                    <strong>{p.referrers.map(nameOf).join(" + ")}</strong> ·{" "}
-                    {members.length} cards
-                    {scope && ` · ${inScope} in ${scope.label}`}
-                    <span className={styles.reasons}>
-                      {p.why.map((w) => (
-                        <span
-                          key={`${w.card}:${w.rule}`}
-                          className={styles.step}
-                        >
-                          {nameOf(w.card)}: {RULE_VERB[w.rule] ?? w.rule}
-                        </span>
-                      ))}
-                      <span className={styles.step}>
-                        {p.targets.map(nameOf).join(", ")}
-                      </span>
-                    </span>
-                    <Button
-                      onClick={() =>
-                        setPicked(shown ? null : { key, cards: members })
-                      }
-                    >
-                      {shown ? "Hide" : "Show in graph"}
-                    </Button>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-          <h3>Hidden gems</h3>
-          {gems.length === 0 ? (
-            <p className={styles.muted}>
-              No hidden gems yet: they need cards the scoring group has rated.
-            </p>
-          ) : (
-            <ul aria-label="Hidden gems" className={styles.links}>
-              {gems.map((g) => (
-                <li key={g.id}>
-                  {walk(g.id)} · rated {formatScore(g.score)} · works with{" "}
-                  {g.partners.length}{" "}
-                  {g.partners.length === 1 ? "card" : "cards"} rated 7 or more:{" "}
-                  {g.partners.slice(0, 3).map(nameOf).join(", ")}
-                  {g.partners.length > 3 &&
-                    ` and ${g.partners.length - 3} more`}
-                </li>
-              ))}
-            </ul>
-          )}
-          <p className={styles.muted}>
-            Low-rated cards linked strongly to high-rated ones: underrated, or a
-            link worth a second look. Thresholds are unverified.
-          </p>
-        </section>
-
-        <section className={styles.group}>
           <h2>Refine</h2>
           <label className={styles.field}>
             <span>Links from</span>
@@ -563,6 +493,112 @@ export function SynergyExplorer(props: {
             <span style={{ color: STATUS_COLOURS.community }}>■</span> added by
             scorers <span style={{ color: STATUS_COLOURS.disputed }}>■</span>{" "}
             disputed. Thicker is stronger; arrows point at the card helped.
+          </p>
+        </section>
+        <section className={styles.group}>
+          <h2>Discover</h2>
+          <h3>Packages</h3>
+          {packageList.length === 0 ? (
+            <p className={styles.muted}>
+              No packages yet: they come from cards that name others, and links
+              the scoring group adds.
+            </p>
+          ) : (
+            <ul aria-label="Packages" className={styles.links}>
+              {packageList.slice(0, showAll.packages ? 8 : 3).map((p) => {
+                const members = [...p.referrers, ...p.targets];
+                const key = `package:${p.id}`;
+                const shown = shownPick?.key === key;
+                const inScope = scope
+                  ? members.filter((id) => scope.cardIds.includes(id)).length
+                  : 0;
+                return (
+                  <li key={key}>
+                    <strong>{p.referrers.map(nameOf).join(" + ")}</strong> ·{" "}
+                    {members.length} cards
+                    {scope && ` · ${inScope} in ${scope.label}`}
+                    <span className={styles.reasons}>
+                      {p.why.map((w) => (
+                        <span
+                          key={`${w.card}:${w.rule}`}
+                          className={styles.step}
+                        >
+                          {nameOf(w.card)}: {RULE_VERB[w.rule] ?? w.rule}
+                        </span>
+                      ))}
+                      <span className={styles.step}>
+                        {p.targets.map(nameOf).join(", ")}
+                      </span>
+                    </span>
+                    <Button
+                      onClick={() =>
+                        setPicked(shown ? null : { key, cards: members })
+                      }
+                    >
+                      {shown ? "Hide" : "Show in graph"}
+                    </Button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          {packageList.length > 3 && (
+            <Button
+              variant="ghost"
+              onClick={() =>
+                setShowAll((a) => ({ ...a, packages: !a.packages }))
+              }
+            >
+              {showAll.packages
+                ? "Show fewer packages"
+                : `Show all ${Math.min(packageList.length, 8)} packages`}
+            </Button>
+          )}
+          <h3>Hidden gems</h3>
+          {gems.length === 0 ? (
+            <p className={styles.muted}>
+              No hidden gems yet: they need cards the scoring group has rated.
+            </p>
+          ) : (
+            <ul aria-label="Hidden gems" className={styles.links}>
+              {gems.slice(0, showAll.gems ? undefined : 3).map((g) => {
+                const key = `gem:${g.id}`;
+                const shown = shownPick?.key === key;
+                return (
+                  <li key={g.id}>
+                    {walk(g.id)} · rated {formatScore(g.score)} · works with{" "}
+                    {g.partners.length}{" "}
+                    {g.partners.length === 1 ? "card" : "cards"} rated 7 or
+                    more: {g.partners.slice(0, 3).map(nameOf).join(", ")}
+                    {g.partners.length > 3 &&
+                      ` and ${g.partners.length - 3} more`}
+                    <Button
+                      onClick={() =>
+                        setPicked(
+                          shown ? null : { key, cards: [g.id, ...g.partners] },
+                        )
+                      }
+                    >
+                      {shown ? "Hide" : "Show in graph"}
+                    </Button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          {gems.length > 3 && (
+            <Button
+              variant="ghost"
+              onClick={() => setShowAll((a) => ({ ...a, gems: !a.gems }))}
+            >
+              {showAll.gems
+                ? "Show fewer gems"
+                : `Show all ${gems.length} gems`}
+            </Button>
+          )}
+          <p className={styles.muted}>
+            Low-rated cards linked strongly to high-rated ones: underrated, or a
+            link worth a second look. Thresholds are unverified.
           </p>
         </section>
 
