@@ -595,10 +595,9 @@ describe("the core", () => {
   });
 
   it("adds the core to the chosen deck", async () => {
-    const { user, fake } = await open(
-      `/core?deck=deck-1&${core({ hp1: 3 })}`,
-      { signedIn: true },
-    );
+    const { user, fake } = await open(`/core?deck=deck-1&${core({ hp1: 3 })}`, {
+      signedIn: true,
+    });
     await user.click(
       await tray().findByRole("button", { name: "Add core to Gate tempo" }),
     );
