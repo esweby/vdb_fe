@@ -635,7 +635,8 @@ describe("quicker turns", () => {
     );
   });
 
-  // UNVERIFIED: "Instant – Remove 3 energy counters from this: Gain {r}".
+  // Signed off by the maintainer, 20 Oct 2026: "Instant – Remove 3 energy counters from this:
+  // Gain {r}".
   it("spends Fyendal's Spring Tunic's 3 counters for a resource", async () => {
     const { table, user } = await open(
       undefined,

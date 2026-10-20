@@ -564,7 +564,7 @@ export function Goldfish(props: {
         </select>
         {used && <span className={styles.used}>Used this turn</span>}
         {/* Fyendal's Spring Tunic: "Instant – Remove 3 energy counters from this: Gain {r}"
-            (the maintainer, 20 Oct 2026; UNVERIFIED). */}
+            (signed off by the maintainer, 20 Oct 2026). */}
         {counters >= 3 && c.card.name === "Fyendal's Spring Tunic" && (
           <Button
             className={styles.gearAbility}

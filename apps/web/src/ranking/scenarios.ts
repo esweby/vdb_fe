@@ -146,7 +146,7 @@ const X_AS = 2;
  * A card as the engine sees it: its roles, a few traits, and how many Runechants and Gates it
  * makes, with and without its conditions (an on-hit effect counts as conditional).
  */
-/** Subtypes that stay in the arena when the turn ends (UNVERIFIED). */
+/** Subtypes that stay in the arena when the turn ends (signed off, 20 Oct 2026). */
 const PERMANENT_SUBTYPES = ["Aura", "Item", "Ally", "Landmark"];
 
 export function toEngineCard(
@@ -175,7 +175,11 @@ export function toEngineCard(
       ...(card.talents.includes("Shadow") ? ["shadow"] : []),
       ...(card.classes.includes("Runeblade") ? ["runeblade"] : []),
       ...(card.classes.includes("Generic") ? ["generic"] : []),
-      // Auras, items, allies and landmarks stay in the arena when the turn ends (UNVERIFIED).
+      // Easier to play from banish, for the scripted Opt rule (the maintainer, 20 Oct 2026).
+      ...(card.attributes.hasRuneGate ? ["rune_gate"] : []),
+      ...(card.attributes.hasUsurp ? ["usurp"] : []),
+      ...(card.attributes.playableFromBanish ? ["playable_from_banish"] : []),
+      // Auras, items, allies and landmarks stay in the arena when the turn ends (signed off).
       ...card.subtypes
         .filter((t) => PERMANENT_SUBTYPES.includes(t))
         .map((t) => t.toLowerCase()),

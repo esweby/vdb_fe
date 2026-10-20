@@ -118,7 +118,17 @@ export function draftEffects(
       );
       continue;
     }
-    const opt: Effect = { op: "opt", amount: o.amount };
+    // A Gate that needs a top card of the card's own pitch (Pull from Beyond): keep one on top.
+    const wantsPitch =
+      variant.pitch !== null &&
+      (a.tokens ?? []).some((t) =>
+        t.conditions?.includes("top_card_matches_pitch"),
+      );
+    const opt: Effect = {
+      op: "opt",
+      amount: o.amount,
+      ...(wantsPitch ? { keepPitch: variant.pitch! } : {}),
+    };
     if (o.trigger === "on_play") effects.push(opt);
     else if (o.trigger === "on_attack") attackTriggerEffects.push(opt);
     else if (o.trigger === "on_hit" || o.trigger === "on_defend")

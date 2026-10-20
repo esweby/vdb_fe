@@ -98,6 +98,28 @@ describe("draftEffects", () => {
     expect(draft.complete).toBe(true);
   });
 
+  // Pull from Beyond: "Opt 2. Banish the top card of your deck. If it's blue, create a Gate".
+  it("drafts Opt keeping the card's own pitch on top when its Gate needs a matching card", () => {
+    const card = withAttributes({
+      opt: [{ amount: 2, trigger: "on_play" }],
+      banishesOwn: [{ from: "deck_top", trigger: "on_play" }],
+      tokens: [
+        {
+          token: "gate",
+          amount: 1,
+          trigger: "on_play",
+          conditions: ["top_card_matches_pitch"],
+        },
+      ],
+    });
+    const blue = { ...card.variants[0]!, pitch: 3 };
+    expect(draftEffects(card, blue).rules.effects[0]).toEqual({
+      op: "opt",
+      amount: 2,
+      keepPitch: 3,
+    });
+  });
+
   it("drafts Opt when it attacks, and lists the Opt it can't draft", () => {
     const card = withAttributes({
       opt: [
