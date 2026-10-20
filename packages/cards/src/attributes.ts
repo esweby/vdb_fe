@@ -104,6 +104,8 @@ export const tutorSchema = z.strictObject({
 export const playFromBanishEnablerSchema = z.strictObject({
   target: cardRefSchema,
   conditions,
+  /** The enabler banishes the card from here itself, then lets you play it: recursion (Rattle Bones). */
+  from: z.enum(["graveyard"]).optional(),
 });
 
 /** Who a disruption effect hits. `each_hero` includes you. */

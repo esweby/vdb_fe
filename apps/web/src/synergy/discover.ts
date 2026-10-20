@@ -11,6 +11,7 @@ import type { WeightedEdge } from "../ranking/synergyCore.ts";
 const NAMING_RULES = new Set([
   "tutor-finds",
   "enables-play-from-banish",
+  "recurs-from-graveyard",
   "supports",
 ]);
 /** Naming more cards than this is a group (Become the Arknight finds 118), not a package. */

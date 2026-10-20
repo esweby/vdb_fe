@@ -240,7 +240,9 @@ describe("deriveSynergies: a card that lets the other be played from banish", ()
       hasBloodDebt: false,
       isGateTarget: false,
       banishesOwn: [{ from: "graveyard", trigger: "on_play" }],
-      enablesPlayFromBanish: [{ target: { group: "runeblade_attack_action" } }],
+      enablesPlayFromBanish: [
+        { target: { group: "runeblade_attack_action" }, from: "graveyard" },
+      ],
     },
     variantAttributes: [],
   };
@@ -262,9 +264,37 @@ describe("deriveSynergies: a card that lets the other be played from banish", ()
     variantAttributes: [],
   };
 
-  it("links them by that alone", () => {
+  // The maintainer, 20 Oct 2026: it isn't that Rattle Bones lets Usurp be played from banish
+  // (2 + 13 pitch in one turn is unlikely). It takes a card back out of the graveyard: recursion.
+  it("links them as getting the card back from the graveyard, by that alone", () => {
     const found = deriveSynergies([rattle, usurp]).find(
       (e) => e.from === "Rattle Bones" && e.to === "Usurp the Shadow Throne",
+    );
+    expect(found?.reasons).toEqual(["recurs-from-graveyard"]);
+  });
+
+  it("says so in words", () => {
+    const rule = SYNERGY_RULES.find((r) => r.id === "recurs-from-graveyard");
+    expect(rule?.description).toBe(
+      "Gets this card back from your graveyard to play again",
+    );
+  });
+
+  it("keeps 'played from banish' for an enabler that doesn't take the card itself", () => {
+    const embrace: SynergyCard = {
+      ...rattle,
+      id: "Embrace",
+      name: "Embrace",
+      attributes: {
+        ...rattle.attributes,
+        banishesOwn: [],
+        enablesPlayFromBanish: [
+          { target: { group: "runeblade_attack_action" } },
+        ],
+      },
+    };
+    const found = deriveSynergies([embrace, usurp]).find(
+      (e) => e.from === "Embrace" && e.to === "Usurp the Shadow Throne",
     );
     expect(found?.reasons).toEqual(["enables-play-from-banish"]);
   });

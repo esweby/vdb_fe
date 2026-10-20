@@ -320,7 +320,9 @@ function describedItems(attributes: CardAttributes): Item[] {
     add(
       "resolves",
       undefined,
-      `Lets you play ${refText(e.target)} from your banished zone this turn${ifConditions(e.conditions)}.`,
+      e.from === "graveyard"
+        ? `Banishes ${refText(e.target)} from your graveyard, and lets you play it this turn${ifConditions(e.conditions)}.`
+        : `Lets you play ${refText(e.target)} from your banished zone this turn${ifConditions(e.conditions)}.`,
     );
   }
 

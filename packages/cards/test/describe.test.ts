@@ -432,6 +432,16 @@ describe("describeAttributes", () => {
     expect(
       describeAttributes({
         ...generated,
+        enablesPlayFromBanish: [
+          { target: { group: "runeblade_attack_action" }, from: "graveyard" },
+        ],
+      }),
+    ).toEqual([
+      "Banishes a Runeblade attack action card from your graveyard, and lets you play it this turn.",
+    ]);
+    expect(
+      describeAttributes({
+        ...generated,
         groups: ["runechant_aura", "runeblade_aura"],
       }),
     ).toEqual(["Is a Runechant aura (sinchant)."]);
