@@ -31,6 +31,26 @@ async function open(ownerId = "u1", isPublic = false) {
   return { fake, router, user: userEvent.setup() };
 }
 
+describe("opening a deck in FaBrary", () => {
+  it("links to FaBrary's import form filled in with the hero and every copy", async () => {
+    await open();
+    const link = screen.getByRole("link", { name: "Open in FaBrary" });
+    const url = new URL(link.getAttribute("href") ?? "");
+    expect(url.searchParams.get("name")).toBe("Gate tempo");
+    expect(url.searchParams.get("cards")).toBe(
+      "viserai-the-forsaken,hocus-pocus-red,hocus-pocus-red,hocus-pocus-red",
+    );
+    expect(link).toHaveAttribute("target", "_blank");
+  });
+
+  it("is there on someone else's public deck too", async () => {
+    await open("u2", true);
+    expect(
+      screen.getByRole("link", { name: "Open in FaBrary" }),
+    ).toBeInTheDocument();
+  });
+});
+
 describe("managing a deck from its page", () => {
   it("switches it between private and public", async () => {
     const { fake, user } = await open();
