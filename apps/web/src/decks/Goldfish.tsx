@@ -555,13 +555,35 @@ export function Goldfish(props: {
         </select>
         {used && <span className={styles.used}>Used this turn</span>}
         {gear && counters > 0 && (
-          <Counter
-            label={`counters on ${name}`}
-            text={`Counters ${counters}`}
-            onChange={(delta) =>
-              perform({ type: "counter", uid: c.uid, delta })
-            }
-          />
+          <>
+            {/* A counter on the card itself, with − and + underneath (the maintainer, 20 Oct). */}
+            <span
+              className={styles.counterMark}
+              aria-label={`${counters} counter${counters === 1 ? "" : "s"}`}
+            >
+              {counters}
+            </span>
+            <span className={styles.counterButtons}>
+              <button
+                type="button"
+                aria-label={`Fewer counters on ${name}`}
+                onClick={() =>
+                  perform({ type: "counter", uid: c.uid, delta: -1 })
+                }
+              >
+                −
+              </button>
+              <button
+                type="button"
+                aria-label={`More counters on ${name}`}
+                onClick={() =>
+                  perform({ type: "counter", uid: c.uid, delta: 1 })
+                }
+              >
+                +
+              </button>
+            </span>
+          </>
         )}
       </li>
     );
