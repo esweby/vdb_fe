@@ -40,6 +40,7 @@ export function MatchupsPanel(props: {
   const [heroId, setHeroId] = useState<string | null>(null);
   const [plan, setPlan] = useState<Map<string, number>>(new Map());
   const [error, setError] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     if (!props.canEdit) return;
@@ -49,6 +50,7 @@ export function MatchupsPanel(props: {
         if (!live) return;
         setHeroes(h);
         setMatchups(m);
+        setLoaded(true);
       },
       () => live && setError("Couldn't load the matchups."),
     );
@@ -167,20 +169,26 @@ export function MatchupsPanel(props: {
         </ul>
       )}
 
-      <label className={styles.matchupPick}>
-        <span>Plan against</span>
-        <select
-          value=""
-          onChange={(e) => e.target.value && open(e.target.value)}
-        >
-          <option value="">Choose a hero…</option>
-          {unplanned.map((h) => (
-            <option key={h.id} value={h.id}>
-              {h.name}
-            </option>
-          ))}
-        </select>
-      </label>
+      {loaded && heroes.length === 0 ? (
+        <p className={styles.muted}>
+          No heroes to plan against yet: the hero list hasn't been imported.
+        </p>
+      ) : (
+        <label className={styles.matchupPick}>
+          <span>Plan against</span>
+          <select
+            value=""
+            onChange={(e) => e.target.value && open(e.target.value)}
+          >
+            <option value="">Choose a hero…</option>
+            {unplanned.map((h) => (
+              <option key={h.id} value={h.id}>
+                {h.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
 
       {error && <p role="alert">{error}</p>}
 

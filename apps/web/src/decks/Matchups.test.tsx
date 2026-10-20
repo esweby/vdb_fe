@@ -36,7 +36,7 @@ const HEROES = [
   },
 ];
 
-async function open(matchups: Matchup[] = []) {
+async function open(matchups: Matchup[] = [], heroes = HEROES) {
   const fake = fakeDeckRepository(
     [
       {
@@ -47,7 +47,7 @@ async function open(matchups: Matchup[] = []) {
         pitchTargets: {},
       },
     ],
-    { heroes: HEROES, matchups },
+    { heroes, matchups },
   );
   await renderApp({
     path: "/decks/deck-1?tab=matchups",
@@ -91,6 +91,16 @@ describe("matchups", () => {
     await waitFor(() =>
       expect(fake.saved).toContain("matchup deck-1 h1 bsl3:2,ff1:1,hp1:2"),
     );
+  });
+
+  // Bug (the maintainer, 20 Oct 2026): "Matchups dont allow me to create a matchup". With no
+  // heroes imported, the hero list was empty and said nothing.
+  it("says so when there are no heroes to plan against", async () => {
+    const { panel } = await open([], []);
+    expect(
+      await panel.findByText(/No heroes to plan against yet/),
+    ).toBeInTheDocument();
+    expect(panel.queryByLabelText("Plan against")).toBeNull();
   });
 
   it("never boards in more copies than the pool has", async () => {
