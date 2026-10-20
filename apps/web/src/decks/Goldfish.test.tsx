@@ -237,11 +237,20 @@ describe("goldfish", () => {
         }),
       ).toBeNull();
       await act(user, zoneCards(table, "Weapons")[0]!, "Add a counter");
-      expect(weapons.getByText("Counters 1")).toBeInTheDocument();
+      // The maintainer, 20 Oct 2026: a mark on the card itself, with − and + underneath.
+      const blade = within(zoneCards(table, "Weapons")[0]!);
+      expect(blade.getByLabelText("1 counter")).toHaveTextContent("1");
       await user.click(
-        weapons.getByRole("button", { name: "Fewer counters on Nebula Blade" }),
+        blade.getByRole("button", { name: "More counters on Nebula Blade" }),
       );
-      expect(weapons.queryByText(/Counters/)).toBeNull();
+      expect(blade.getByLabelText("2 counters")).toHaveTextContent("2");
+      await user.click(
+        blade.getByRole("button", { name: "Fewer counters on Nebula Blade" }),
+      );
+      await user.click(
+        blade.getByRole("button", { name: "Fewer counters on Nebula Blade" }),
+      );
+      expect(blade.queryByLabelText(/counter/)).toBeNull();
     });
 
     it("counts life and damage", async () => {

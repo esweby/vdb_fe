@@ -454,7 +454,7 @@
    readers. */
 .mat .cardMenu {
   position: absolute;
-  bottom: 0.25rem;
+  top: 0.25rem;
   left: 0.25rem;
   right: 0.25rem;
   opacity: 0;
@@ -620,4 +620,43 @@
     margin: 0;
     transform: none;
   }
+}
+
+/* A card's counters: a token on the picture, with − and + underneath. */
+.counterMark {
+  position: absolute;
+  top: calc(var(--card-w, 7.5rem) * 0.7);
+  left: 50%;
+  translate: -50% -50%;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0 0.3rem;
+  border: 2px solid white;
+  border-radius: 999px;
+  background: var(--accent);
+  color: white;
+  font-weight: 700;
+  box-shadow: 0 0.15rem 0.5rem rgb(0 0 0 / 0.4);
+  pointer-events: none;
+}
+.counterButtons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.25rem;
+}
+.counterButtons button {
+  padding: 0.1rem 0;
+  border: 1px solid var(--border);
+  border-radius: 0.3rem;
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 0.9rem;
+  line-height: 1.2;
+  cursor: pointer;
+}
+.counterButtons button:hover {
+  border-color: var(--accent);
 }
