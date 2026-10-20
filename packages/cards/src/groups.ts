@@ -46,9 +46,10 @@ export function groupsOf(card: GroupableCard): CardGroup[] {
 export function attributeGroups(
   attributes: AuthoredCardAttributes,
 ): CardGroup[] {
+  // Banishing only itself from hand (Fallen Herald) isn't banishing your other cards: it's a
+  // self-banisher, not this (the maintainer, 20 Oct 2026).
   const fromHand =
     attributes.banishesOwn?.some((b) => b.from === "hand") ||
-    attributes.banishesSelf?.some((b) => b.from === "hand") ||
     attributes.disrupts?.some(
       (d) =>
         d.action === "banish" && d.from === "hand" && d.target === "each_hero",

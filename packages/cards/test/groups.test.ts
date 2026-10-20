@@ -59,12 +59,14 @@ describe("attributeGroups", () => {
     ).toEqual(["banishes_from_hand"]);
   });
 
-  it("tags cards that banish themselves from your hand", () => {
+  // The maintainer, 20 Oct 2026: "Fallen Herald banishes itself, not other cards - which is
+  // skewing the synergy questions." Banishing itself from hand makes it a self-banisher only.
+  it("doesn't tag cards that banish only themselves from your hand", () => {
     expect(
       attributeGroups({
         banishesSelf: [{ trigger: "activated", from: "hand" }],
       }),
-    ).toEqual(["banishes_from_hand"]);
+    ).toEqual([]);
   });
 
   it("tags cards that make every hero banish from hand", () => {
