@@ -117,6 +117,34 @@ describe("effect drafts page", () => {
     ).toHaveTextContent("Accepted");
   });
 
+  // The maintainer, 20 Oct 2026: reviewed cards fold to the card picture's height, with a
+  // chevron to open the rest.
+  it("folds reviewed cards, with a chevron to open each", async () => {
+    const reviews = fakeDraftReviewRepository();
+    await renderApp({
+      path: "/needs-review/effects",
+      auth: signedInAs("a1", "a@test.local"),
+      draftReviews: reviews.repository,
+    });
+    const ready = await screen.findByRole("region", { name: "Ready to check" });
+    const hocus = within(ready).getByRole("article", { name: "Hocus Pocus" });
+    expect(
+      within(hocus).queryByRole("button", { name: /Show all/ }),
+    ).toBeNull();
+    await userEvent.click(
+      within(hocus).getByRole("button", { name: "Accept" }),
+    );
+    const reviewed = within(
+      await screen.findByRole("region", { name: "Reviewed" }),
+    ).getByRole("article", { name: "Hocus Pocus" });
+    const chevron = within(reviewed).getByRole("button", {
+      name: "Show all of Hocus Pocus",
+    });
+    expect(chevron).toHaveAttribute("aria-expanded", "false");
+    await userEvent.click(chevron);
+    expect(chevron).toHaveAttribute("aria-expanded", "true");
+  });
+
   it("lets an admin reject a draft with a note, and take a verdict back", async () => {
     const reviews = fakeDraftReviewRepository();
     await renderApp({

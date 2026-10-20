@@ -115,3 +115,32 @@ details.section > summary h2 {
   padding-left: 1.2rem;
   font-size: 0.9rem;
 }
+
+/* A reviewed card, folded to its picture's height; the chevron opens it. */
+.folded {
+  max-height: calc(8rem * 7 / 5 + 2rem);
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, #000 80%, transparent);
+  mask-image: linear-gradient(to bottom, #000 80%, transparent);
+}
+.chevron {
+  display: grid;
+  place-items: center;
+  margin-left: auto;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--fg);
+  cursor: pointer;
+  transition: transform 150ms;
+}
+.chevron[aria-expanded="true"] {
+  transform: rotate(180deg);
+}
+.chevron:hover,
+.chevron:focus-visible {
+  border-color: var(--accent);
+}
