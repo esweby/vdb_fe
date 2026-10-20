@@ -16,6 +16,7 @@ import { DeckSettings } from "./DeckSettings.tsx";
 import { MatchupsPanel } from "./MatchupsPanel.tsx";
 import { entriesForMatchup } from "./matchupEntries.ts";
 import { Goldfish } from "./Goldfish.tsx";
+import { fabraryImportLink } from "./fabraryLink.ts";
 import { ScopedSynergies } from "../synergy/SynergyExplorer.tsx";
 import type {
   Deck,
@@ -64,6 +65,9 @@ const deckCount = (entries: DeckEntry[]) =>
   entries
     .filter((e) => !e.sideboard && sectionOf(e.card) === "deck")
     .reduce((n, e) => n + e.quantity, 0);
+
+/** The hero FaBrary gets: Viserai's front side. */
+const HERO = "Viserai, the Forsaken";
 
 /** Viserai's card pictures by side, from the hero list ("Viserai, the Forsaken", "Viserai, Usurper"). */
 const viseraiImages = (heroes: Hero[]) => {
@@ -290,6 +294,16 @@ export function DeckPage() {
           <p className={styles.meta}>
             {counts.deck} deck cards · {counts.sideboard} sideboard ·{" "}
             {counts.pool} in the pool
+          </p>
+          {/* FaBrary's import form, filled in; the player presses Import there. */}
+          <p>
+            <a
+              href={fabraryImportLink(HERO, deck.name, entries)}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Open in FaBrary
+            </a>
           </p>
         </div>
         <PitchBar pitch={pitch} />
