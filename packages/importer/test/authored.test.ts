@@ -85,4 +85,11 @@ describe("Dimenxxional Crossroads", () => {
   it("is destroyed when you lose life", () => {
     expect(crossroads().destroyedOnLifeLoss).toBe(true);
   });
+
+  // The maintainer, 20 Oct 2026: "your assumptions are right". A card of that type played earlier
+  // in the turn, from anywhere, means no damage.
+  it("is verified, with a note that any earlier card of that type counts", () => {
+    expect(allAuthored()["Dimenxxional Crossroads"]!.verified).toBe(true);
+    expect(crossroads().notes).toContain("from anywhere");
+  });
 });
