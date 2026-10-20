@@ -80,6 +80,13 @@ const TRIGGER_PLAIN: Record<string, string> = {
   activated: "when it's activated",
 };
 
+/** How a drafted trigger's event reads. */
+const TRIGGER_EVENT_TEXT: Record<string, string> = {
+  attacking: "When this attacks",
+  played: "When you play an attack action card",
+  lifeLost: "When you lose life",
+};
+
 const slug = (name: string) =>
   name
     .toLowerCase()
@@ -264,6 +271,13 @@ export function draftEffects(
         `${label} ${TRIGGER_PLAIN[t.trigger] ?? t.trigger}: not drafted yet`,
       );
   }
+  // "If you lose {h} during your turn, destroy this." Goldfish and scenarios play your turns only.
+  if (a.destroyedOnLifeLoss)
+    triggers.push({
+      id: `${slug(card.name)}-life-lost`,
+      on: { event: "lifeLost" },
+      effects: [{ op: "destroySelf" }],
+    });
   if (attackTriggerEffects.length)
     triggers.push({
       id: `${slug(card.name)}-attacks`,
@@ -399,7 +413,7 @@ export function draftEffects(
       ...triggers.flatMap((t) =>
         describeEffects(t.effects).map(
           (line) =>
-            `${t.on.event === "attacking" ? "When this attacks" : "When you play an attack action card"}: ${line[0]!.toLowerCase()}${line.slice(1)}`,
+            `${TRIGGER_EVENT_TEXT[t.on.event] ?? "When you play an attack action card"}: ${line[0]!.toLowerCase()}${line.slice(1)}`,
         ),
       ),
       ...(rules.usurp ? ["Usurp."] : []),

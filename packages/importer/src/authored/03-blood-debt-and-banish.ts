@@ -191,10 +191,15 @@ export const bloodDebtAndBanish: AuthoredAttributes = {
     },
   },
   "Dimenxxional Crossroads": {
+    // Checked by the maintainer, 20 Oct 2026: it pays off cards played from the banished zone, and
+    // losing life on your turn destroys it, so blood debt kills it in your end phase. The arcane
+    // damage isn't modelled.
     verified: true,
     card: {
+      roles: { add: ["banish_play_payoff"] },
+      destroyedOnLifeLoss: true,
       notes:
-        "Deals 1 arcane damage the first time each turn you play an attack action card, and the first time a non-attack action card, from the banished zone. Destroyed if you lose life on your turn.",
+        "Deals 1 arcane damage when you play an attack action card from the banished zone, if it's your first attack action card this turn from anywhere; the same for non-attack action cards. Destroyed if you lose life on your turn.",
     },
   },
   "Dimenxxional Ferryman": {

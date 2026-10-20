@@ -299,6 +299,8 @@ export const authoredAttributesSchema = z.strictObject({
     .optional(),
   /** The card gets better when played from your banished zone (e.g. with a Gate). */
   rewardsPlayFromBanish: z.boolean().optional(),
+  /** "If you lose {h} during your turn, destroy this" (Dimenxxional Crossroads). */
+  destroyedOnLifeLoss: z.boolean().optional(),
   /** Gives go again to a later card. */
   grantsGoAgain: z
     .union([

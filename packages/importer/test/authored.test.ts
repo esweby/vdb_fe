@@ -71,3 +71,25 @@ describe("corrected cards", () => {
     expect(allAuthored()["Darkest Hour"]!.card?.notes).toContain("+4/+3/+2");
   });
 });
+
+// "Can you defeat him please" (the maintainer, 20 Oct 2026, of a player stress testing with
+// Dimenxxional Crossroads). It pays off cards played from the banished zone, and it's destroyed
+// when you lose life on your turn, which blood debt does in your end phase.
+describe("Dimenxxional Crossroads", () => {
+  const crossroads = () => allAuthored()["Dimenxxional Crossroads"]!.card!;
+
+  it("pays off cards played from the banished zone", () => {
+    expect(crossroads().roles?.add).toContain("banish_play_payoff");
+  });
+
+  it("is destroyed when you lose life", () => {
+    expect(crossroads().destroyedOnLifeLoss).toBe(true);
+  });
+
+  // The maintainer, 20 Oct 2026: "your assumptions are right". A card of that type played earlier
+  // in the turn, from anywhere, means no damage.
+  it("is verified, with a note that any earlier card of that type counts", () => {
+    expect(allAuthored()["Dimenxxional Crossroads"]!.verified).toBe(true);
+    expect(crossroads().notes).toContain("from anywhere");
+  });
+});

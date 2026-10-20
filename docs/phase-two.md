@@ -49,6 +49,7 @@ Game logic decided by the maintainer, with where it lives. Anything not here is 
 - **Fyendal's Spring Tunic:** remove 3 counters to gain 1 resource.
 - **Even Bigger Than That!** needs damage dealt this turn, which is noted by hand.
 - **Usernames** can't be changed once set.
+- **Dimenxxional Crossroads** pays off cards played from the banished zone, and only the first card of each type played this turn, from anywhere, counts. Losing life on your turn destroys it, so blood debt kills it in your end phase. Its arcane damage isn't modelled.
 
 ## Open
 
