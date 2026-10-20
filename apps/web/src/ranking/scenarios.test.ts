@@ -42,6 +42,27 @@ describe("toEngineCard", () => {
     expect(card.traits).toContain("runeblade");
   });
 
+  // For the scripted Opt rule (the maintainer, 20 Oct 2026): what's easier to play from banish.
+  it("marks Rune Gate, Usurp and play-from-banish cards as traits", () => {
+    const bsl = byName("Become the Shadow Lord");
+    const card = toEngineCard(
+      {
+        ...bsl,
+        attributes: {
+          ...bsl.attributes,
+          hasRuneGate: true,
+          hasUsurp: true,
+          playableFromBanish: { conditions: [] },
+        },
+      },
+      bsl.variants[0]!,
+      [],
+    );
+    expect(card.traits).toEqual(
+      expect.arrayContaining(["rune_gate", "usurp", "playable_from_banish"]),
+    );
+  });
+
   it("takes each pitch's own attributes and keeps blood debt as a trait", () => {
     const hp = byName("Hocus Pocus");
     const card = toEngineCard(hp, hp.variants[0]!, []);
