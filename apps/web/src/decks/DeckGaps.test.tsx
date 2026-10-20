@@ -33,7 +33,8 @@ const gaps = async () =>
 
 describe("gaps", () => {
   it("names a role the deck relies on that's missing from a pitch it plays", async () => {
-    // Red: Hocus Pocus and Fate Foreseen; blue: Become the Shadow Lord (the only Gate maker).
+    // Red: Hocus Pocus and Fate Foreseen; blue: Become the Shadow Lord (the only banisher).
+    // Gate makers are never a gap by colour (the maintainer, 20 Oct 2026).
     await renderApp({
       path: "/decks/deck-1?tab=gaps",
       auth: auth(),
@@ -45,10 +46,10 @@ describe("gaps", () => {
       ]).repository,
     });
     const gap = within(
-      (await gaps()).getByRole("article", { name: "No red Gate makers" }),
+      (await gaps()).getByRole("article", { name: "No red banishers" }),
     );
     expect(
-      gap.getByText("You play 5 red cards and 3 Gate makers."),
+      gap.getByText("You play 5 red cards and 3 banishers."),
     ).toBeInTheDocument();
     expect(
       gap.getByText("Nothing in the card pool fills this yet."),

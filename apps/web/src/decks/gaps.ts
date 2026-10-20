@@ -10,6 +10,11 @@ export interface GapRole {
   /** Plural, lower case, as it reads mid-sentence. */
   label: string;
   roles: RoleId[];
+  /**
+   * False when the role isn't needed in every colour, so it's never a gap in one (the maintainer,
+   * 20 Oct 2026: "not every colour needs a Gate maker").
+   */
+  byColour?: false;
 }
 
 /** The maker roles a deck can be short of in a pitch, in the order gaps are listed. */
@@ -19,7 +24,12 @@ export const GAP_ROLES: GapRole[] = [
     label: "Runechant makers",
     roles: ["runechant_generator"],
   },
-  { id: "gate", label: "Gate makers", roles: ["gate_generator"] },
+  {
+    id: "gate",
+    label: "Gate makers",
+    roles: ["gate_generator"],
+    byColour: false,
+  },
   {
     id: "banish",
     label: "banishers",
@@ -71,6 +81,7 @@ export function findGaps(entries: DeckEntry[]): Gap[] {
 
   const gaps: Gap[] = [];
   for (const role of GAP_ROLES) {
+    if (role.byColour === false) continue;
     const withRole = deck.filter((e) =>
       hasRole(variantRoles(e.card, e.variant), role),
     );
