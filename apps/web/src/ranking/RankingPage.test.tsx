@@ -548,6 +548,23 @@ describe("the core", () => {
     expect(synergy.loads).toBeGreaterThan(0);
   });
 
+  // The maintainer, 20 Oct 2026: "Could the core creator recommend equipment too?"
+  it("suggests a weapon and equipment when asked, apart from the deck cards", async () => {
+    const { user, router } = await open("/ranking?tab=setup");
+    await setTargets(user, [
+      ["Red target", "3"],
+      ["Yellow target", "0"],
+      ["Blue target", "3"],
+    ]);
+    await user.click(
+      panel().getByRole("checkbox", { name: /Suggest equipment/ }),
+    );
+    expect(router.state.location.search).toMatchObject({ gear: 1 });
+    await user.click(panel().getByRole("button", { name: "Build the core →" }));
+    expect(trayCards()).toContain("1 × Nebula Blade");
+    expect(screen.getByText(/^6 (of 60 )?deck cards/)).toBeInTheDocument();
+  });
+
   it("keeps the cards already in the core when building", async () => {
     const { user } = await open(`/ranking?tab=setup&${core({ hp3: 2 })}`);
     await setTargets(user, [

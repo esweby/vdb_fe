@@ -4,6 +4,7 @@ import {
   alternatives,
   offPitchReactions,
   suggestCore,
+  suggestGear,
   type CoreCandidate,
   type CoreConstraints,
 } from "./suggestCore.ts";
@@ -163,5 +164,34 @@ describe("defence reactions", () => {
         "b1",
       ).map((a) => a.variantId),
     ).not.toContain("ff3");
+  });
+});
+
+// The maintainer, 20 Oct 2026: the core builder can suggest equipment too, as an option.
+describe("suggestGear", () => {
+  const slots = [
+    {
+      title: "Weapons",
+      cards: [{ variantId: "nebula" }, { variantId: "blade" }],
+    },
+    { title: "Head", cards: [{ variantId: "hood" }, { variantId: "helm" }] },
+    { title: "Chest", cards: [{ variantId: "tunic" }] },
+  ];
+
+  it("adds the best of each slot, kept apart from what's already in the core", () => {
+    expect(suggestGear(slots, { r1: 3 })).toEqual({
+      r1: 3,
+      nebula: 1,
+      hood: 1,
+      tunic: 1,
+    });
+  });
+
+  it("leaves a slot alone when the core already has a piece for it", () => {
+    expect(suggestGear(slots, { helm: 1 })).toEqual({
+      helm: 1,
+      nebula: 1,
+      tunic: 1,
+    });
   });
 });

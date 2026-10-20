@@ -19,6 +19,8 @@ export interface RankingSettings {
    * Off by default until the scoring group agrees one (docs/synergy-rules.md).
    */
   synergy: number;
+  /** Build my core also suggests a weapon and a piece for each slot (the maintainer, 20 Oct 2026). */
+  suggestGear: boolean;
 }
 
 export interface RankingSearch {
@@ -29,6 +31,7 @@ export interface RankingSearch {
   core?: Record<string, number>;
   pref?: Record<string, number>;
   syn?: number;
+  gear?: 1;
 }
 
 /** README "Ranking" presets. UNVERIFIED values, for the scoring group to confirm. */
@@ -78,6 +81,8 @@ export function readRankingSearch(
     core: readCore(search.core),
     prefs: readPrefs(search.pref),
     synergy: or(search.syn, 0, 0, 100),
+    suggestGear:
+      search.gear === 1 || search.gear === "1" || search.gear === true,
   };
 }
 
@@ -91,5 +96,6 @@ export function writeRankingSearch(s: RankingSettings): RankingSearch {
     ...(Object.keys(s.core).length ? { core: s.core } : {}),
     ...(Object.keys(s.prefs).length ? { pref: s.prefs } : {}),
     ...(s.synergy !== 0 ? { syn: s.synergy } : {}),
+    ...(s.suggestGear ? { gear: 1 as const } : {}),
   };
 }

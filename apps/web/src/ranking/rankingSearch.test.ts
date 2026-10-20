@@ -11,6 +11,7 @@ describe("ranking URL state", () => {
       core: {},
       prefs: {},
       synergy: 0,
+      suggestGear: false,
     });
     expect(writeRankingSearch(readRankingSearch({}))).toEqual({});
   });
@@ -24,6 +25,7 @@ describe("ranking URL state", () => {
       core: { a1: 3, b2: 1 },
       prefs: { usurp: 100, runeGate: 0 },
       synergy: 60,
+      suggestGear: true,
     };
     expect(readRankingSearch(writeRankingSearch(state))).toEqual(state);
   });
