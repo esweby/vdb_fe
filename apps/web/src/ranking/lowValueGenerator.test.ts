@@ -8,7 +8,12 @@ import {
   withGeneratorPenalty,
 } from "./lowValueGenerator.ts";
 
-type Token = { token: string; amount: number | "X"; trigger: string };
+type Token = {
+  token: string;
+  amount: number | "X";
+  trigger: string;
+  conditions?: string[];
+};
 const card = (
   name: string,
   tokensByPitch: Record<number, Token[]>,
@@ -49,10 +54,11 @@ const verses = (trigger: string) => ({
 
 describe("lowValueGenerator", () => {
   it("marks blue Runeblood Incantation, which makes one Runechant and is done", () => {
+    // Go again, as printed: an aura's go again doesn't save a one-and-done pitch.
     const runeblood = card(
       "Runeblood Incantation",
       verses("start_of_action_phase"),
-      { subtypes: ["Aura"] },
+      { subtypes: ["Aura"], keywords: ["Go again"] },
     );
     expect(low(runeblood, 3)).toBe(true);
     // Red makes 3; yellow makes them over two turns.
@@ -76,6 +82,13 @@ describe("lowValueGenerator", () => {
     expect([1, 2, 3].map((p) => low(blessing, p))).toEqual([false, true, true]);
   });
 
+  // The maintainer, 20 Oct 2026: one-off makers like yellow and blue Read the Runes are low value
+  // too, "unless the community overwrites my assumptions".
+  it("marks one-off makers that make fewer than 3 (Read the Runes)", () => {
+    const runes = card("Read the Runes", verses("on_play"));
+    expect([1, 2, 3].map((p) => low(runes, p))).toEqual([false, true, true]);
+  });
+
   it("leaves other cards alone, such as attacks that make a Runechant", () => {
     const hocus = card(
       "Hocus Pocus",
@@ -83,10 +96,25 @@ describe("lowValueGenerator", () => {
       { type: "attack_action" },
     );
     expect(low(hocus, 1)).toBe(false);
-    const sins = card("Otherworldly Sins", {
-      3: [{ token: "runechant", amount: 1, trigger: "on_play" }],
-    });
+    // Go again: making one costs no action (UNVERIFIED line, 20 Oct 2026).
+    const sins = card(
+      "Otherworldly Sins",
+      { 3: [{ token: "runechant", amount: 1, trigger: "on_play" }] },
+      { keywords: ["Go again"] },
+    );
     expect(low(sins, 3)).toBe(false);
+    // A card that makes them only under a condition isn't judged by its count.
+    const bsl = card("Become the Shadow Lord", {
+      3: [
+        {
+          token: "runechant",
+          amount: 1,
+          trigger: "on_play",
+          conditions: ["banished_card_is_runeblade"],
+        },
+      ],
+    });
+    expect(low(bsl, 3)).toBe(false);
   });
 });
 
