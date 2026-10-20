@@ -29,6 +29,27 @@ export function synergyQueue<T extends { name: string; classCard: boolean }>(
     );
 }
 
+/**
+ * The links worth asking about (the maintainer, 20 Oct 2026): one of its cards is in your decks,
+ * or both are rated `high` (7, as 70 of 100) or more.
+ */
+export function relevantLinks(
+  edges: SynergyEdge[],
+  {
+    myCards,
+    ratings,
+    high = 70,
+  }: { myCards: Set<string>; ratings: Map<string, number>; high?: number },
+): SynergyEdge[] {
+  const rated = (id: string) => (ratings.get(id) ?? 0) >= high;
+  return edges.filter(
+    (e) =>
+      myCards.has(e.from) ||
+      myCards.has(e.to) ||
+      (rated(e.from) && rated(e.to)),
+  );
+}
+
 export function feedbackRows(
   edge: SynergyEdge,
   verdict: FeedbackRow["verdict"],
