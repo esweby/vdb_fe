@@ -187,7 +187,16 @@ export const ROLES: RoleDef[] = [
     // Maintainer, 15 Oct 2026: the Gate's payoff. A Gate plays a blood debt card out of
     // banish, so it isn't stuck there, and creating or using a Gate lets Usurper traverse.
     kind: "payoff",
-    matches: (c) => c.attributes.isGateTarget,
+    // Not a card that can be played from banish anyway, with no condition: it doesn't need a
+    // Gate (the maintainer, 20 Oct 2026: Sinspeaker Gloomblade).
+    matches: (c) =>
+      c.attributes.isGateTarget &&
+      !any(
+        c,
+        (a) =>
+          !!a.playableFromBanish &&
+          (a.playableFromBanish.conditions?.length ?? 0) === 0,
+      ),
   },
   {
     id: "banish_play_payoff",

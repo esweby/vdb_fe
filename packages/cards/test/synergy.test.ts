@@ -37,11 +37,21 @@ describe("synergy rules", () => {
 
 describe("deriveSynergies: role fits", () => {
   it("a Gate generator helps a Gate target, and it enables traverse", () => {
-    expect(edge("Become the Shadow Lord", "Abyssal Bite")).toMatchObject({
+    expect(edge("Become the Shadow Lord", "Shadowrealm Reaper")).toMatchObject({
       weight: 0.8,
       engine: "gate",
       traverse: true,
     });
+  });
+
+  // The maintainer, 20 Oct 2026: a card already playable from banish doesn't need a Gate.
+  it("doesn't link a Gate to a card that can be played from banish anyway", () => {
+    expect(
+      edge("Become the Shadow Lord", "Abyssal Bite")?.reasons ?? [],
+    ).not.toContain("gate-feeds-gate-target");
+    expect(
+      edge("Become the Shadow Lord", "Sinspeaker Gloomblade")?.reasons ?? [],
+    ).not.toContain("gate-feeds-gate-target");
   });
 
   it("is directed: the Gate target doesn't help the Gate generator", () => {
@@ -117,14 +127,15 @@ describe("deriveSynergies: enabling links (maintainer, 19 Oct 2026)", () => {
   });
 
   it("a hand banisher puts a blood debt card where a Gate can play it, enabling traverse (Cull)", () => {
-    const cull = edge("Cull", "Abyssal Bite");
+    const cull = edge("Cull", "Shadowrealm Reaper");
     expect(cull?.reasons).toEqual(
-      expect.arrayContaining([
-        "hand-banish-feeds-gate-target",
-        "banish-feeds-plays-from-banish",
-      ]),
+      expect.arrayContaining(["hand-banish-feeds-gate-target"]),
     );
     expect(cull?.traverse).toBe(true);
+    // Abyssal Bite plays from banish itself: banishing it helps, no Gate needed.
+    expect(edge("Cull", "Abyssal Bite")?.reasons).toEqual([
+      "banish-feeds-plays-from-banish",
+    ]);
   });
 
   it("takes the highest matching weight, not the sum", () => {

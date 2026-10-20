@@ -35,11 +35,11 @@ Forsaken: create Runechants to banish your top card; create 3 in a turn to trave
 
 Usurper: the first blood debt attack each turn gets go again; create or use a Gate to traverse.
 
-| Role               | Kind      | Rule                                                                                                                      | Cards | For example                          |
-| ------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------- | ----: | ------------------------------------ |
-| Gate generator     | generator | Creates a Gate to i'Arathael                                                                                              |    13 | Become the Shadow Lord, Breach Flesh |
-| Gate target        | payoff    | A blood debt action card. A Gate plays it out of banish, so it isn't stuck there, and lets Usurper traverse. **Checked.** |    72 | Abyssal Bite, Widespread Ruin        |
-| Banish-play payoff | payoff    | Better when played from banish                                                                                            |    13 | Bounding Demigon, Embalm             |
+| Role               | Kind      | Rule                                                                                                                        | Cards | For example                          |
+| ------------------ | --------- | --------------------------------------------------------------------------------------------------------------------------- | ----: | ------------------------------------ |
+| Gate generator     | generator | Creates a Gate to i'Arathael                                                                                                |    13 | Become the Shadow Lord, Breach Flesh |
+| Gate target        | payoff    | Blood debt action card a Gate can play from banish; not one that can be played from banish anyway (maintainer, 20 Oct 2026) |    72 | Abyssal Bite, Widespread Ruin        |
+| Banish-play payoff | payoff    | Better when played from banish                                                                                              |    13 | Bounding Demigon, Embalm             |
 
 ## Banish engine
 

@@ -39,6 +39,33 @@ const runechants = (amount: number | "X", extra = {}) => ({
   ],
 });
 
+// The maintainer, 20 Oct 2026: "Sinspeaker Gloomblade doesn't need a gate to be played from
+// banish". A blood debt action that can already be played from banish isn't a Gate target.
+describe("rolesOf: Gate targets", () => {
+  const bloodDebtAction = (extra: Partial<CardAttributes> = {}) =>
+    card({ hasBloodDebt: true, isGateTarget: true, ...extra }, "attack_action");
+
+  it("is a blood debt action card that can't be played from banish otherwise", () => {
+    expect(rolesOf(bloodDebtAction())).toContain("gate_target");
+  });
+
+  it("isn't one when it can be played from banish anyway", () => {
+    expect(rolesOf(bloodDebtAction({ playableFromBanish: {} }))).not.toContain(
+      "gate_target",
+    );
+  });
+
+  it("still is when playing it from banish needs a condition", () => {
+    expect(
+      rolesOf(
+        bloodDebtAction({
+          playableFromBanish: { conditions: ["dealt_arcane_damage_this_turn"] },
+        }),
+      ),
+    ).toContain("gate_target");
+  });
+});
+
 describe("rolesOf: Runechant engine", () => {
   it("a card that creates Runechants is a Runechant generator", () => {
     expect(rolesOf(card(runechants(1)))).toContain("runechant_generator");
