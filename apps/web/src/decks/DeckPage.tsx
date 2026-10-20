@@ -10,6 +10,7 @@ import { CardFinder } from "./CardFinder.tsx";
 import { CardTile } from "./CardTile.tsx";
 import { DeckAnalysisPanel } from "./DeckAnalysisPanel.tsx";
 import { ConditionAvailabilityPanel } from "./ConditionAvailabilityPanel.tsx";
+import { DeckGapsPanel } from "./DeckGapsPanel.tsx";
 import { DeckScenarios } from "./DeckScenarios.tsx";
 import { Goldfish } from "./Goldfish.tsx";
 import { ScopedSynergies } from "../synergy/SynergyExplorer.tsx";
@@ -30,11 +31,12 @@ import styles from "./Decks.module.css";
 
 const route = getRouteApi("/decks/$deckId");
 
-type Tab = "cards" | "stats" | "synergies" | "scenarios" | "goldfish";
+type Tab = "cards" | "stats" | "gaps" | "synergies" | "scenarios" | "goldfish";
 type View = "tiles" | "list";
 const TABS: { id: Tab; label: string }[] = [
   { id: "cards", label: "Cards" },
   { id: "stats", label: "Stats" },
+  { id: "gaps", label: "Gaps" },
   { id: "synergies", label: "Synergies" },
   { id: "scenarios", label: "Scenarios" },
   { id: "goldfish", label: "Goldfish" },
@@ -281,6 +283,17 @@ export function DeckPage() {
           />
         ) : tab === "scenarios" ? (
           <DeckScenarios deckId={deckId} entries={entries} />
+        ) : tab === "gaps" ? (
+          <DeckGapsPanel
+            entries={entries}
+            pool={cards}
+            onAdd={
+              canEdit
+                ? (variantId) =>
+                    void setCard({ variantId, quantity: 1, sideboard: false })
+                : undefined
+            }
+          />
         ) : tab === "stats" ? (
           <>
             <DeckAnalysisPanel
@@ -288,13 +301,6 @@ export function DeckPage() {
               pitchTargets={deck.pitchTargets ?? {}}
               onTargetsChange={
                 canEdit ? (t) => void setPitchTargets(t) : undefined
-              }
-              pool={cards}
-              onAdd={
-                canEdit
-                  ? (variantId) =>
-                      void setCard({ variantId, quantity: 1, sideboard: false })
-                  : undefined
               }
             />
             <ConditionAvailabilityPanel entries={entries} />
