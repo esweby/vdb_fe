@@ -54,7 +54,10 @@ export function variantRoles(card: CardSummary, variant: VariantSummary) {
 const hasRole = (roles: RoleId[], role: GapRole) =>
   role.roles.some((r) => roles.includes(r));
 
-/** Gaps in the main deck: most-used roles first. Weapons, equipment and sideboard aren't counted. */
+/**
+ * Gaps in the main deck: red first, then yellow, then blue (the maintainer, 20 Oct 2026); most-used
+ * roles first within a colour. Weapons, equipment and sideboard aren't counted.
+ */
 export function findGaps(entries: DeckEntry[]): Gap[] {
   const deck = entries.filter(
     (e) => !e.sideboard && sectionOf(e.card) === "deck" && e.variant.pitch,
@@ -80,7 +83,7 @@ export function findGaps(entries: DeckEntry[]): Gap[] {
         gaps.push({ role, pitch, roleCopies, pitchCopies: played });
     }
   }
-  return gaps.sort((a, b) => b.roleCopies - a.roleCopies);
+  return gaps.sort((a, b) => a.pitch - b.pitch || b.roleCopies - a.roleCopies);
 }
 
 /**

@@ -139,6 +139,14 @@ const TOKENS = [
   { token: "eloquence", label: "Eloquence" },
 ];
 
+/** Piles that open as a list when clicked (the maintainer, 20 Oct 2026). */
+type Opened = "graveyard" | "banished" | "deck";
+const OPEN_LABEL: Record<Opened, string> = {
+  graveyard: "Open the graveyard",
+  banished: "Open the banished zone",
+  deck: "Open the deck",
+};
+
 /** Starting life (UNVERIFIED for the new Viserai). */
 const LIFE = 40;
 
@@ -202,9 +210,11 @@ export function Goldfish(props: {
   log?: string;
   /** Cards a scenario fixed in hand or arsenal, from a failed run's link. */
   fixed?: string;
+  /** Viserai's card pictures, by side, when the hero list has them. */
+  heroImages?: Partial<Record<HeroSide, string | null>>;
 }) {
   // Each copy, by section: the main deck, then the weapons and equipment in play.
-  const { setup, names, images, slots } = useMemo(() => {
+  const { setup, names, images, slots, tokensMade } = useMemo(() => {
     const main = props.entries.filter((e) => !e.sideboard);
     const copies = (section: "deck" | "weapon" | "equipment") =>
       main
@@ -227,6 +237,15 @@ export function Goldfish(props: {
       ),
       images: new Map(main.map((e) => [e.variant.id, e.variant.imageUrl])),
       slots: new Map(main.map((e) => [e.variant.id, slotOf(e.card)])),
+      // Viserai makes Runechants; other tokens only if a card in the deck makes them.
+      tokensMade: new Set([
+        "runechant",
+        ...main.flatMap((e) =>
+          [e.card.attributes, e.variant.attributes].flatMap((a) =>
+            (a.tokens ?? []).map((t) => t.token as string),
+          ),
+        ),
+      ]),
     };
   }, [props.entries, props.fixed]);
 
@@ -262,7 +281,12 @@ export function Goldfish(props: {
   const [error, setError] = useState<string | null>(null);
   const [lookAt, setLookAt] = useState(3);
   const [looking, setLooking] = useState(false);
-  const [searching, setSearching] = useState(false);
+  const [opened, setOpened] = useState<Opened | null>(null);
+  const pileList = useRef<HTMLElement>(null);
+  // An opened pile takes focus, so Escape closes it.
+  useEffect(() => {
+    if (opened) pileList.current?.focus({ preventScroll: true });
+  }, [opened]);
   const [dragging, setDragging] = useState<string | null>(null);
   const [shareLink, setShareLink] = useState<string | null>(null);
 
@@ -435,12 +459,42 @@ export function Goldfish(props: {
       );
 
   /** A card: its picture (or the back if face down), its menu, its keys, and dragging. */
-  const renderCard = (c: RulesInstance, zone: Zone) => {
+  const renderCard = (c: RulesInstance, zone: Zone, index?: number) => {
     const faceDown = g.faceDown.includes(c.uid);
     const name = nameOf(c.uid);
     const label = faceDown ? `${name} (face down)` : name;
     const image = images.get(c.card.id);
     const used = g.usedThisTurn.includes(c.uid);
+    const gear = zone === "weapons" || zone === "equipment";
+    const counters = g.counters[c.uid] ?? 0;
+    // Gear's own actions, in the same menu as the moves.
+    const gearActions: {
+      label: string;
+      disabled?: boolean;
+      run: () => void;
+    }[] = !gear
+      ? []
+      : [
+          zone === "weapons"
+            ? {
+                label: "Attack",
+                disabled: used,
+                run: () =>
+                  perform(
+                    c.card.weaponAttack
+                      ? { type: "weaponAttack", uid: c.uid }
+                      : { type: "markAttack", uid: c.uid },
+                  ),
+              }
+            : {
+                label: used ? "Unuse" : "Use",
+                run: () => perform({ type: "use", uid: c.uid }),
+              },
+          {
+            label: "Add a counter",
+            run: () => perform({ type: "counter", uid: c.uid, delta: 1 }),
+          },
+        ];
     const onKeyDown = (e: KeyboardEvent<HTMLLIElement>) => {
       if (typing(e.target) || e.ctrlKey || e.metaKey || e.altKey) return;
       const choice = CARD_ACTIONS.find(
@@ -456,9 +510,14 @@ export function Goldfish(props: {
         key={c.uid}
         aria-label={label}
         className={styles.card}
+        data-used={used || undefined}
+        style={index === undefined ? undefined : fan(index)}
         tabIndex={0}
         draggable
-        onDragStart={() => setDragging(c.uid)}
+        onDragStart={(e) => {
+          e.dataTransfer?.setData("text/plain", c.uid);
+          setDragging(c.uid);
+        }}
         onDragEnd={() => setDragging(null)}
         onKeyDown={onKeyDown}
       >
@@ -474,48 +533,35 @@ export function Goldfish(props: {
           aria-label={`Action for ${label}`}
           value=""
           onChange={(e) => {
+            const own = gearActions.find((a) => a.label === e.target.value);
+            if (own) return own.run();
             const choice = CARD_ACTIONS.find((a) => a.label === e.target.value);
             if (choice) perform(choice.action(c, zone));
           }}
         >
           <option value="" disabled>
-            Move…
+            {gear ? "Actions…" : "Move…"}
           </option>
+          {gearActions.map((a) => (
+            <option key={a.label} value={a.label} disabled={a.disabled}>
+              {a.label}
+            </option>
+          ))}
           {CARD_ACTIONS.filter((a) => a.zone !== zone).map((a) => (
             <option key={a.label} value={a.label}>
               {a.label}
             </option>
           ))}
         </select>
-        {(zone === "weapons" || zone === "equipment") && (
-          <div className={styles.gear}>
-            {zone === "weapons" ? (
-              <Button
-                disabled={used}
-                onClick={() =>
-                  perform(
-                    c.card.weaponAttack
-                      ? { type: "weaponAttack", uid: c.uid }
-                      : { type: "markAttack", uid: c.uid },
-                  )
-                }
-              >
-                {`Attack with ${name}`}
-              </Button>
-            ) : (
-              <Button onClick={() => perform({ type: "use", uid: c.uid })}>
-                {`${used ? "Unuse" : "Use"} ${name}`}
-              </Button>
-            )}
-            {used && <span className={styles.used}>Used this turn</span>}
-            <Counter
-              label={`counters on ${name}`}
-              text={`Counters ${g.counters[c.uid] ?? 0}`}
-              onChange={(delta) =>
-                perform({ type: "counter", uid: c.uid, delta })
-              }
-            />
-          </div>
+        {used && <span className={styles.used}>Used this turn</span>}
+        {gear && counters > 0 && (
+          <Counter
+            label={`counters on ${name}`}
+            text={`Counters ${counters}`}
+            onChange={(delta) =>
+              perform({ type: "counter", uid: c.uid, delta })
+            }
+          />
         )}
       </li>
     );
@@ -524,8 +570,23 @@ export function Goldfish(props: {
     onDragOver: (e: React.DragEvent) => e.preventDefault(),
     onDrop: (e: React.DragEvent) => {
       e.preventDefault();
-      if (dragging) perform({ type: "move", uid: dragging, to: zone });
+      const uid = dragging ?? e.dataTransfer?.getData("text/plain");
       setDragging(null);
+      if (!uid) return;
+      const from = (Object.keys(g.zones) as Zone[]).find((z) =>
+        g.zones[z].some((c) => c.uid === uid),
+      );
+      const card = from && g.zones[from].find((c) => c.uid === uid);
+      // Dropped on the arena it's played, on the pitch zone it's pitched: as the menu would.
+      const byRules =
+        card && from !== zone
+          ? CARD_ACTIONS.find((a) => a.zone === zone && a.zone !== "hand")
+          : undefined;
+      perform(
+        byRules && card && from
+          ? byRules.action(card, from)
+          : { type: "move", uid, to: zone },
+      );
     },
   });
 
@@ -546,27 +607,50 @@ export function Goldfish(props: {
           {g.zones[zone].length}
         </span>
       )}
+      {(zone === "graveyard" || zone === "banished") && (
+        <button
+          type="button"
+          className={styles.openPile}
+          aria-label={OPEN_LABEL[zone]}
+          onClick={() => setOpened(zone)}
+        />
+      )}
       {g.zones[zone].length === 0 && (
         <div className={styles.emptySlot} aria-hidden="true">
           {zone === "arena" ? "No cards played this turn" : label}
         </div>
       )}
       <ul className={styles.cards}>
-        {g.zones[zone].map((c) => renderCard(c, zone))}
+        {g.zones[zone].map((c, i) =>
+          renderCard(c, zone, zone === "hand" ? i : undefined),
+        )}
       </ul>
     </section>
   );
+  /** The hand fans out from its middle. */
+  const fan = (i: number) => {
+    const from = i - (g.zones.hand.length - 1) / 2;
+    return { "--fan": from, "--drop": Math.abs(from) } as React.CSSProperties;
+  };
 
   const sortedDeck = [...g.zones.deck].sort((a, b) =>
     nameOf(a.uid).localeCompare(nameOf(b.uid)),
   );
   const request = pending?.request;
+  const heroName =
+    g.side === "usurper" ? "Viserai, the Usurper" : "Viserai, the Forsaken";
 
   return (
     <section aria-label="Goldfish" className={styles.goldfish}>
       <header className={styles.bar}>
         <strong>{`Turn ${g.turn}`}</strong>
         <span className={styles.side}>{`On ${sideName(g.side)}`}</span>
+        <Button
+          onClick={() => perform({ type: "draw" })}
+          disabled={g.zones.deck.length === 0}
+        >
+          Draw
+        </Button>
         <Button onClick={() => perform({ type: "traverse" })}>Traverse</Button>
         <Button variant="primary" onClick={() => perform({ type: "endTurn" })}>
           End turn
@@ -654,7 +738,9 @@ export function Goldfish(props: {
           text={`Resources ${g.resources}`}
           onChange={(delta) => perform({ type: "resources", delta })}
         />
-        {TOKENS.map((t) => {
+        {TOKENS.filter(
+          (t) => tokensMade.has(t.token) || (g.tokens[t.token] ?? 0) > 0,
+        ).map((t) => {
           const made = g.createdThisTurn[t.token] ?? 0;
           return (
             <Counter
@@ -709,10 +795,14 @@ export function Goldfish(props: {
                 role="group"
                 aria-label={`${slot} slot`}
                 className={styles.slot}
+                data-slot={slot}
               >
-                <span className={styles.slotName}>{slot}</span>
+                <span className={styles.visuallyHidden}>{slot}</span>
                 {here.length === 0 ? (
-                  <span className={styles.slotEmpty}>Empty</span>
+                  <span className={styles.slotEmpty}>
+                    <span aria-hidden="true">{slot}</span>
+                    <span className={styles.visuallyHidden}>Empty</span>
+                  </span>
                 ) : (
                   <ul className={styles.cards}>
                     {here.map((c) => renderCard(c, "equipment"))}
@@ -726,12 +816,12 @@ export function Goldfish(props: {
         {zoneSection("graveyard", "Graveyard", styles.pile)}
         {zoneSection("weapons", "Weapons")}
         <section aria-label="Hero" className={styles.hero} data-place="hero">
-          <span className={styles.heroName}>
-            {g.side === "usurper"
-              ? "Viserai, the Usurper"
-              : "Viserai, the Forsaken"}
-          </span>
-          <span className={styles.muted}>{`${LIFE - g.lifeLost} life`}</span>
+          {props.heroImages?.[g.side] ? (
+            <img src={props.heroImages[g.side]!} alt={heroName} />
+          ) : (
+            <span className={styles.heroName}>{heroName}</span>
+          )}
+          <span className={styles.life}>{`${LIFE - g.lifeLost} life`}</span>
         </section>
         {zoneSection("pitch", "Pitch", styles.pile)}
         <section
@@ -746,82 +836,104 @@ export function Goldfish(props: {
           <span className={styles.count} data-testid="count" aria-hidden="true">
             {g.zones.deck.length}
           </span>
-          <div className={styles.deckBack} aria-hidden="true" />
-          <div className={styles.deckActions}>
-            <Button
-              onClick={() => perform({ type: "draw" })}
-              disabled={g.zones.deck.length === 0}
-            >
-              Draw
-            </Button>
-            <Button onClick={() => perform({ type: "shuffle" })}>
-              Shuffle
-            </Button>
-            <Button
-              onClick={() => {
-                setLooking(true);
-                setSearching(false);
-              }}
-            >
-              {`Look at top ${lookAt}`}
-            </Button>
-            <label className={styles.lookAt}>
-              <span className={styles.visuallyHidden}>How many to look at</span>
-              <input
-                type="number"
-                min={1}
-                max={20}
-                value={lookAt}
-                onChange={(e) =>
-                  setLookAt(
-                    Math.max(1, Math.min(20, Number(e.target.value) || 1)),
-                  )
-                }
-              />
-            </label>
-            <Button
-              onClick={() => {
-                setSearching(true);
-                setLooking(false);
-              }}
-            >
-              Search the deck
-            </Button>
-          </div>
-          {looking && (
-            <div className={styles.peek}>
-              <ol aria-label="Top of deck" className={styles.cards}>
-                {g.zones.deck
-                  .slice(0, lookAt)
-                  .map((c) => renderCard(c, "deck"))}
-              </ol>
-              <Button onClick={() => setLooking(false)}>Close</Button>
-            </div>
-          )}
-          {searching && (
-            <div className={styles.peek}>
-              <ul aria-label="Cards in the deck" className={styles.cards}>
-                {sortedDeck.map((c) => renderCard(c, "deck"))}
-              </ul>
-              <Button
-                variant="primary"
-                onClick={() => {
-                  perform({ type: "shuffle" });
-                  setSearching(false);
-                }}
-              >
-                Shuffle and close
-              </Button>
-              <Button onClick={() => setSearching(false)}>
-                Close without shuffling
-              </Button>
-            </div>
-          )}
+          <button
+            type="button"
+            className={styles.deckBack}
+            aria-label={OPEN_LABEL.deck}
+            onClick={() => {
+              setOpened("deck");
+              setLooking(false);
+            }}
+          />
         </section>
         {zoneSection("arsenal", "Arsenal")}
         {zoneSection("banished", "Banished", styles.pile)}
         {zoneSection("hand", "Hand")}
       </section>
+
+      {opened && (
+        <section
+          role="dialog"
+          aria-label={LABEL[opened] ?? "Deck"}
+          className={styles.pileList}
+          tabIndex={-1}
+          ref={pileList}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setOpened(null);
+          }}
+        >
+          <header>
+            <h3>{`${LABEL[opened] ?? "Deck"} · ${g.zones[opened].length}`}</h3>
+            {opened === "deck" && (
+              <div className={styles.deckActions}>
+                <Button onClick={() => perform({ type: "shuffle" })}>
+                  Shuffle
+                </Button>
+                <Button onClick={() => setLooking(true)}>
+                  {`Look at top ${lookAt}`}
+                </Button>
+                <label className={styles.lookAt}>
+                  <span className={styles.visuallyHidden}>
+                    How many to look at
+                  </span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={20}
+                    value={lookAt}
+                    onChange={(e) =>
+                      setLookAt(
+                        Math.max(1, Math.min(20, Number(e.target.value) || 1)),
+                      )
+                    }
+                  />
+                </label>
+              </div>
+            )}
+          </header>
+          {opened === "deck" && looking && (
+            <ol aria-label="Top of deck" className={styles.cards}>
+              {g.zones.deck.slice(0, lookAt).map((c) => renderCard(c, "deck"))}
+            </ol>
+          )}
+          {g.zones[opened].length === 0 ? (
+            <p className={styles.muted}>Nothing here.</p>
+          ) : (
+            <ul
+              aria-label={
+                opened === "deck"
+                  ? "Cards in the deck"
+                  : `Cards in the ${LABEL[opened]!.toLowerCase()} zone`
+              }
+              className={styles.cards}
+            >
+              {(opened === "deck" ? sortedDeck : g.zones[opened]).map((c) =>
+                renderCard(c, opened),
+              )}
+            </ul>
+          )}
+          <div className={styles.deckActions}>
+            {opened === "deck" ? (
+              <>
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    perform({ type: "shuffle" });
+                    setOpened(null);
+                  }}
+                >
+                  Shuffle and close
+                </Button>
+                <Button onClick={() => setOpened(null)}>
+                  Close without shuffling
+                </Button>
+              </>
+            ) : (
+              <Button onClick={() => setOpened(null)}>Close</Button>
+            )}
+          </div>
+        </section>
+      )}
 
       <div className={styles.history}>
         <section className={styles.logBox}>
