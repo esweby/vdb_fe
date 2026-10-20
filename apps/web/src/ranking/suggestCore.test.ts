@@ -187,6 +187,40 @@ describe("suggestGear", () => {
     });
   });
 
+  // The maintainer, 20 Oct 2026: Grimoire of Fellingsong can't be played alongside Seven Sin
+  // Nebula. A two-handed weapon takes both hands, so there's no off-hand to suggest.
+  describe("hands", () => {
+    const withOffHand = [
+      ...slots,
+      { title: "Off-Hand", cards: [{ variantId: "grimoire" }] },
+    ];
+    const twoHanded = new Set(["nebula"]);
+
+    it("suggests no off-hand alongside a two-handed weapon", () => {
+      expect(suggestGear(withOffHand, {}, twoHanded)).toEqual({
+        nebula: 1,
+        hood: 1,
+        tunic: 1,
+      });
+    });
+
+    it("suggests a one-handed weapon when the core already has an off-hand", () => {
+      expect(suggestGear(withOffHand, { grimoire: 1 }, twoHanded)).toEqual({
+        grimoire: 1,
+        blade: 1,
+        hood: 1,
+        tunic: 1,
+      });
+    });
+
+    it("suggests the off-hand when the weapon is one-handed", () => {
+      expect(suggestGear(withOffHand, { blade: 1 }, twoHanded)).toMatchObject({
+        blade: 1,
+        grimoire: 1,
+      });
+    });
+  });
+
   it("leaves a slot alone when the core already has a piece for it", () => {
     expect(suggestGear(slots, { helm: 1 })).toEqual({
       helm: 1,
