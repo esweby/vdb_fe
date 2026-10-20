@@ -715,3 +715,21 @@ describe("fixing the pitch by hand", () => {
     expect(pitch.getByLabelText("1 resource")).toBeInTheDocument();
   });
 });
+
+// The maintainer, 20 Oct 2026: "if we can't account for it automatically, can we at least give
+// the user the ability to give themselves an extra action point".
+describe("action points by hand", () => {
+  it("shows the action points, and adds one by hand", async () => {
+    const { table, user } = await open();
+    expect(table.getByText("Action points 1")).toBeInTheDocument();
+    await user.click(table.getByRole("button", { name: "More action points" }));
+    expect(table.getByText("Action points 2")).toBeInTheDocument();
+    await user.click(
+      table.getByRole("button", { name: "Fewer action points" }),
+    );
+    expect(table.getByText("Action points 1")).toBeInTheDocument();
+    expect(table.getByRole("list", { name: "Action log" })).toHaveTextContent(
+      "+1 action point",
+    );
+  });
+});
