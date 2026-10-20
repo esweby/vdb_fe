@@ -23,7 +23,13 @@ import {
 } from "react";
 import { rulesCardOf } from "../scenarios/rulesCards.ts";
 import { Button, TextField } from "../ui/index.ts";
-import { sectionOf, variantName, type DeckEntry } from "./deckRules.ts";
+import {
+  sectionOf,
+  slotOf,
+  SLOTS,
+  variantName,
+  type DeckEntry,
+} from "./deckRules.ts";
 import { decodeFixed, encodeFixed } from "./goldfishLink.ts";
 import { turnRecaps } from "./goldfishRecap.ts";
 import styles from "./Goldfish.module.css";
@@ -44,6 +50,9 @@ const LABEL: Record<string, string> = Object.fromEntries(
 );
 
 const PLAYABLE_FROM: Zone[] = ["hand", "arsenal", "banished"];
+
+/** Equipment slots on the mat, in the order they're laid out. */
+const EQUIPMENT_SLOTS = SLOTS;
 
 /**
  * What a card can do, from its menu, its keyboard key, or a drag. Play and Pitch follow the
@@ -195,7 +204,7 @@ export function Goldfish(props: {
   fixed?: string;
 }) {
   // Each copy, by section: the main deck, then the weapons and equipment in play.
-  const { setup, names, images } = useMemo(() => {
+  const { setup, names, images, slots } = useMemo(() => {
     const main = props.entries.filter((e) => !e.sideboard);
     const copies = (section: "deck" | "weapon" | "equipment") =>
       main
@@ -217,6 +226,7 @@ export function Goldfish(props: {
         main.map((e) => [e.variant.id, variantName(e.card, e.variant)]),
       ),
       images: new Map(main.map((e) => [e.variant.id, e.variant.imageUrl])),
+      slots: new Map(main.map((e) => [e.variant.id, slotOf(e.card)])),
     };
   }, [props.entries, props.fixed]);
 
@@ -518,6 +528,22 @@ export function Goldfish(props: {
     },
   });
 
+  /** A zone in its place on the mat. Piles overlap their cards, as a stack on the table. */
+  const zoneSection = (zone: Zone, label: string, extra = "") => (
+    <section
+      aria-label={label}
+      className={`${styles.zone} ${extra}`}
+      data-place={zone}
+      data-zone={zone}
+      {...dropOn(zone)}
+    >
+      <h3>{`${label} · ${g.zones[zone].length}`}</h3>
+      <ul className={styles.cards}>
+        {g.zones[zone].map((c) => renderCard(c, zone))}
+      </ul>
+    </section>
+  );
+
   const sortedDeck = [...g.zones.deck].sort((a, b) =>
     nameOf(a.uid).localeCompare(nameOf(b.uid)),
   );
@@ -640,8 +666,65 @@ export function Goldfish(props: {
         />
       </div>
 
-      <div className={styles.table}>
-        <section aria-label="Deck" className={styles.zone} {...dropOn("deck")}>
+      {/* Laid out like a FaB playmat (the maintainer, 19 Oct 2026; after Fabrary and Talishar):
+          equipment down the left, the arena across the top, weapons either side of the hero with
+          the arsenal below it, pitch, deck, graveyard and banished on the right, the hand below. */}
+      <section aria-label="Playmat" className={styles.mat}>
+        <section
+          aria-label="Equipment"
+          className={`${styles.zone} ${styles.equipment}`}
+          data-place="equipment"
+          data-zone="equipment"
+          {...dropOn("equipment")}
+        >
+          <h3>{`Equipment · ${g.zones.equipment.length}`}</h3>
+          {EQUIPMENT_SLOTS.filter(
+            (slot) =>
+              slot !== "Off-Hand" ||
+              g.zones.equipment.some((c) => slots.get(c.card.id) === slot),
+          ).map((slot) => {
+            const here = g.zones.equipment.filter(
+              (c) =>
+                slots.get(c.card.id) === slot ||
+                (slot === "Head" && !slots.get(c.card.id)),
+            );
+            return (
+              <div
+                key={slot}
+                role="group"
+                aria-label={`${slot} slot`}
+                className={styles.slot}
+              >
+                <span className={styles.slotName}>{slot}</span>
+                {here.length === 0 ? (
+                  <span className={styles.slotEmpty}>Empty</span>
+                ) : (
+                  <ul className={styles.cards}>
+                    {here.map((c) => renderCard(c, "equipment"))}
+                  </ul>
+                )}
+              </div>
+            );
+          })}
+        </section>
+        {zoneSection("arena", "Arena")}
+        {zoneSection("graveyard", "Graveyard", styles.pile)}
+        {zoneSection("weapons", "Weapons")}
+        <section aria-label="Hero" className={styles.hero} data-place="hero">
+          <span className={styles.heroName}>
+            {g.side === "usurper"
+              ? "Viserai, the Usurper"
+              : "Viserai, the Forsaken"}
+          </span>
+          <span className={styles.muted}>{`${LIFE - g.lifeLost} life`}</span>
+        </section>
+        {zoneSection("pitch", "Pitch", styles.pile)}
+        <section
+          aria-label="Deck"
+          className={`${styles.zone} ${styles.deckZone}`}
+          data-place="deck"
+          {...dropOn("deck")}
+        >
           <h3>{`Deck · ${g.zones.deck.length}`}</h3>
           <div className={styles.deckBack} aria-hidden="true" />
           <div className={styles.deckActions}>
@@ -715,21 +798,10 @@ export function Goldfish(props: {
             </div>
           )}
         </section>
-        {ZONE_LABELS.map(({ zone, label }) => (
-          <section
-            key={zone}
-            aria-label={label}
-            className={styles.zone}
-            data-zone={zone}
-            {...dropOn(zone)}
-          >
-            <h3>{`${label} · ${g.zones[zone].length}`}</h3>
-            <ul className={styles.cards}>
-              {g.zones[zone].map((c) => renderCard(c, zone))}
-            </ul>
-          </section>
-        ))}
-      </div>
+        {zoneSection("arsenal", "Arsenal")}
+        {zoneSection("banished", "Banished", styles.pile)}
+        {zoneSection("hand", "Hand")}
+      </section>
 
       <div className={styles.history}>
         <section className={styles.logBox}>

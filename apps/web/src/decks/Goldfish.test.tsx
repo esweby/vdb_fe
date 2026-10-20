@@ -380,3 +380,44 @@ describe("by the rules", () => {
     expect(table.queryByText(/Hero prompts/)).toBeNull();
   });
 });
+
+// The maintainer, 19 Oct 2026: lay goldfish out like a FaB playmat (Fabrary and Talishar).
+describe("the playmat", () => {
+  it("puts the hero in the middle, showing its side", async () => {
+    const { table, user } = await open();
+    const hero = () => within(table.getByRole("region", { name: "Hero" }));
+    expect(hero().getByText("Viserai, the Forsaken")).toBeInTheDocument();
+    await user.click(table.getByRole("button", { name: "Traverse" }));
+    expect(hero().getByText("Viserai, the Usurper")).toBeInTheDocument();
+  });
+
+  it("shows the equipment slots by name, empty until filled", async () => {
+    const { table } = await open();
+    const equipment = zone(table, "Equipment");
+    for (const slot of ["Head", "Chest", "Arms", "Legs"])
+      expect(
+        equipment.getByRole("group", { name: `${slot} slot` }),
+      ).toHaveTextContent(`${slot}Empty`);
+  });
+
+  it("lays the zones out in the mat's places", async () => {
+    const { table } = await open();
+    const places = [
+      ...table
+        .getByRole("region", { name: "Playmat" })
+        .querySelectorAll("[data-place]"),
+    ].map((el) => el.getAttribute("data-place"));
+    expect(places).toEqual([
+      "equipment",
+      "arena",
+      "graveyard",
+      "weapons",
+      "hero",
+      "pitch",
+      "deck",
+      "arsenal",
+      "banished",
+      "hand",
+    ]);
+  });
+});
