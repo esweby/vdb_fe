@@ -608,3 +608,80 @@
   align-items: center;
   gap: 0.5rem;
 }
+
+/* Gaps tab: each gap a card, desktop first in a grid, stacking on narrow screens. */
+.gapsTab {
+  display: grid;
+  gap: 1rem;
+}
+.gapsTab header h2 {
+  margin: 0 0 0.25rem;
+}
+.gapsTab header p {
+  margin: 0;
+}
+.gapCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+.gapCard {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  border-radius: 0.6rem;
+  background: var(--surface);
+}
+.gapCard h3,
+.gapCard h4,
+.gapCard p {
+  margin: 0;
+}
+.gapCard h4 {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.pitch1Edge {
+  border-left-color: var(--pitch-red, #c0392b);
+}
+.pitch2Edge {
+  border-left-color: var(--pitch-yellow, #d4a72c);
+}
+.pitch3Edge {
+  border-left-color: var(--pitch-blue, #2f6fbf);
+}
+.fillerTiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fillerTiles li {
+  display: grid;
+  gap: 0.25rem;
+  justify-items: start;
+  font-size: 0.85rem;
+}
+.fillerTiles img,
+.fillerStandIn {
+  width: 100%;
+  aspect-ratio: 5 / 7;
+  border-radius: 0.4rem;
+}
+.fillerStandIn {
+  display: grid;
+  place-items: center;
+  padding: 0.4rem;
+  text-align: center;
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+.fillerName {
+  font-weight: 600;
+}
