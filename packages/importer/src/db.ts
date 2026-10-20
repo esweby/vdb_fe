@@ -1,7 +1,7 @@
 // Upserts imported cards. Safe to re-run: imported facts and attributes are
 // replaced, curator decisions (fringe, hidden) are kept.
 import type { Sql } from "postgres";
-import type { ImportCard } from "./map.ts";
+import type { ImportCard, ImportHero } from "./map.ts";
 
 export async function upsertCards(
   sql: Sql,
@@ -65,4 +65,31 @@ export async function hideRetired(
      where external_id in ${sql(externalIds)} and not hidden
     returning id`;
   return rows.length;
+}
+
+/**
+ * Upserts the heroes a deck can face (matchups). A hero no longer playable is marked not legal
+ * rather than deleted, so matchups planned against it keep working.
+ */
+export async function upsertHeroes(
+  sql: Sql,
+  heroes: ImportHero[],
+): Promise<void> {
+  await sql.begin(async (tx) => {
+    for (const h of heroes) {
+      await tx`
+        insert into public.heroes (external_id, name, classes, talents, image_url, legal)
+        values (${h.externalId}, ${h.name}, ${h.classes}, ${h.talents}, ${h.imageUrl}, true)
+        on conflict (external_id) do update set
+          name = excluded.name,
+          classes = excluded.classes,
+          talents = excluded.talents,
+          image_url = excluded.image_url,
+          legal = true,
+          updated_at = now()`;
+    }
+    const ids = heroes.map((h) => h.externalId);
+    await tx`update public.heroes set legal = false, updated_at = now()
+              where not (external_id = any(${ids}))`;
+  });
 }

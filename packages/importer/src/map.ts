@@ -10,6 +10,7 @@ import {
 } from "@vdb/cards";
 import {
   classifyTypes,
+  isCcPlayable,
   retiredNames,
   isViseraiLegal,
   specializationOf,
@@ -250,4 +251,35 @@ export function pickImageUrl(
     (p) => (p.foiling ?? "S") === "S" && (p.art_variations ?? []).length === 0,
   );
   return (standard.at(-1) ?? withImage.at(-1))?.image_url ?? null;
+}
+
+/** An opposing hero for matchups. */
+export interface ImportHero {
+  externalId: string;
+  name: string;
+  classes: string[];
+  talents: string[];
+  imageUrl: string | null;
+}
+
+/** Every adult hero playable in Classic Constructed (young heroes are for Blitz). */
+export function toHeroes(dataset: DatasetCard[]): ImportHero[] {
+  return dataset
+    .filter(
+      (c) =>
+        c.types.includes("Hero") &&
+        !c.types.includes("Young") &&
+        isCcPlayable(c),
+    )
+    .map((c) => {
+      const { classes, talents } = classifyTypes(c.types);
+      return {
+        externalId: c.unique_id,
+        name: c.name,
+        classes,
+        talents,
+        imageUrl: pickImageUrl(c.printings),
+      };
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
