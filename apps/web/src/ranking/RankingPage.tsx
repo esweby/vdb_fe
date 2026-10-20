@@ -484,16 +484,23 @@ export function RankingPage() {
 
   async function addCore(id: string, start: Deck["cards"]) {
     let cards = start;
+    // The core goes into the deck: its deck row is raised to the core's copies. Sideboard copies
+    // stay where they are (a card can be split: the maintainer, 20 Oct 2026).
     for (const c of core) {
-      const existing = cards.find((d) => d.variantId === c.variantId);
+      const existing = cards.find(
+        (d) => d.variantId === c.variantId && !d.sideboard,
+      );
       if ((existing?.quantity ?? 0) >= c.quantity) continue;
       const card = {
         variantId: c.variantId,
         quantity: c.quantity,
-        sideboard: existing?.sideboard ?? false,
+        sideboard: false,
       };
       await decks.setCard(id, card);
-      cards = [...cards.filter((d) => d.variantId !== c.variantId), card];
+      cards = [
+        ...cards.filter((d) => d.variantId !== c.variantId || d.sideboard),
+        card,
+      ];
     }
     return cards;
   }

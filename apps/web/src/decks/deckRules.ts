@@ -66,6 +66,28 @@ function handsOf(card: CardSummary): number {
   return slotOf(card) === "Off-Hand" ? 1 : 0;
 }
 
+/**
+ * The pool, one entry per card and pitch: a card split between the deck and the sideboard (the
+ * maintainer, 20 Oct 2026) has its copies added up. Sideboard only if every copy is.
+ */
+export function poolEntries(entries: DeckEntry[]): DeckEntry[] {
+  const pooled = new Map<string, DeckEntry>();
+  for (const e of entries) {
+    const seen = pooled.get(e.variant.id);
+    pooled.set(
+      e.variant.id,
+      seen
+        ? {
+            ...seen,
+            quantity: seen.quantity + e.quantity,
+            sideboard: seen.sideboard && e.sideboard,
+          }
+        : e,
+    );
+  }
+  return [...pooled.values()];
+}
+
 const sum = (entries: DeckEntry[]) =>
   entries.reduce((n, e) => n + e.quantity, 0);
 
