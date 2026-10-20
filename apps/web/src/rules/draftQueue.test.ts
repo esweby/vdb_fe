@@ -80,3 +80,63 @@ describe("draftQueue", () => {
     ]);
   });
 });
+
+describe("draftQueue with verdicts", () => {
+  const hocus = () => draftQueue([byName("Hocus Pocus")])[0]!;
+
+  it("gives each draft a hash that changes with the card's facts", () => {
+    const hp = byName("Hocus Pocus");
+    const before = hocus().drafts[0]!.hash;
+    expect(before).toMatch(/^[0-9a-f]{8}$/);
+    const changed: CardSummary = {
+      ...hp,
+      variants: hp.variants.map((v) => ({
+        ...v,
+        attributes: {
+          tokens: [
+            {
+              token: "runechant" as const,
+              amount: 2,
+              trigger: "on_attack" as const,
+            },
+          ],
+        },
+      })),
+    };
+    expect(draftQueue([changed])[0]!.drafts[0]!.hash).not.toBe(before);
+  });
+
+  it("attaches the verdict on the current draft, and moves the card to reviewed", () => {
+    const hash = hocus().drafts[0]!.hash;
+    const [entry] = draftQueue(
+      [byName("Hocus Pocus")],
+      [
+        {
+          cardId: "card-hocus-pocus",
+          draftHash: hash,
+          verdict: "accepted",
+          note: null,
+        },
+      ],
+    );
+    expect(entry!.drafts[0]!.review?.verdict).toBe("accepted");
+    expect(entry!.status).toBe("reviewed");
+  });
+
+  it("treats a verdict on an earlier draft as stale, not as a verdict", () => {
+    const [entry] = draftQueue(
+      [byName("Hocus Pocus")],
+      [
+        {
+          cardId: "card-hocus-pocus",
+          draftHash: "00000000",
+          verdict: "accepted",
+          note: null,
+        },
+      ],
+    );
+    expect(entry!.drafts[0]!.review).toBeUndefined();
+    expect(entry!.staleReview).toBe(true);
+    expect(entry!.status).toBe("complete");
+  });
+});

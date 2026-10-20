@@ -57,3 +57,19 @@
   font-size: 0.85em;
   color: var(--muted);
 }
+.verdict {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.verdict > :first-child:not(span) {
+  flex: 1 1 12rem;
+  margin: 0;
+}
+.error {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--danger);
+}
