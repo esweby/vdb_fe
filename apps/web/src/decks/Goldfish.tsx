@@ -413,6 +413,8 @@ export function Goldfish(props: {
           return `Pitch ${nameOf(a.uid)}`;
         case "activateGate":
           return `Activate a Gate for ${nameOf(a.target)}`;
+        case "activate":
+          return `Activate ${nameOf(a.uid)}`;
         case "weaponAttack":
         case "markAttack":
           return `Attack with ${nameOf(a.uid)}`;
@@ -468,13 +470,23 @@ export function Goldfish(props: {
     const gear = zone === "weapons" || zone === "equipment";
     const counters = g.counters[c.uid] ?? 0;
     // Gear's own actions, in the same menu as the moves.
+    // An activated ability by the rules, from hand or in play (20 Oct 2026).
+    const activate = c.card.activate
+      ? [
+          {
+            label: "Activate",
+            run: () => perform({ type: "activate", uid: c.uid }),
+          },
+        ]
+      : [];
     const gearActions: {
       label: string;
       disabled?: boolean;
       run: () => void;
     }[] = !gear
-      ? []
+      ? activate
       : [
+          ...activate,
           zone === "weapons"
             ? {
                 label: "Attack",
@@ -1098,6 +1110,7 @@ const RULES_ACTIONS = new Set([
   "play",
   "pitch",
   "activateGate",
+  "activate",
   "weaponAttack",
   "endTurn",
 ]);

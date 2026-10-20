@@ -40,6 +40,30 @@ describe("authoredAttributesSchema", () => {
     ).toThrow();
   });
 
+  // An activated ability ("Instant - {r}, destroy this: …"), read from the text (20 Oct 2026).
+  it("accepts an activation: its speed, cost and how the card pays", () => {
+    expect(() =>
+      authoredAttributesSchema.parse({
+        activation: { speed: "instant", cost: 1, pay: "destroy" },
+      }),
+    ).not.toThrow();
+    expect(() =>
+      authoredAttributesSchema.parse({
+        activation: {
+          speed: "action",
+          cost: 0,
+          pay: "none",
+          extraCost: true,
+        },
+      }),
+    ).not.toThrow();
+    expect(() =>
+      authoredAttributesSchema.parse({
+        activation: { speed: "sorcery", cost: 1, pay: "destroy" },
+      }),
+    ).toThrow();
+  });
+
   it("accepts a variable amount", () => {
     expect(
       authoredAttributesSchema.safeParse({

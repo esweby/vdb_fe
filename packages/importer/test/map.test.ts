@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { DatasetCard } from "../src/classify.ts";
 import {
+  activationFromText,
   optsFromText,
   parseStat,
   toImportCards,
@@ -344,5 +345,59 @@ describe("optsFromText", () => {
     expect(imported!.variants[0]!.attributes.opt).toEqual([
       { amount: 3, trigger: "on_play" },
     ]);
+  });
+});
+
+// Activated abilities, read from the text (the maintainer asked for an activate action, 20 Oct
+// 2026). Speed, resource cost, how the card itself pays, and whether there's more to pay.
+describe("activationFromText", () => {
+  it.each([
+    [
+      "Instant - {r}, destroy this: Create a Runechant token.",
+      { speed: "instant", cost: 1, pay: "destroy" },
+    ],
+    [
+      "Action - {r}, destroy this: Opt 1, then create a Runechant token. Go again",
+      { speed: "action", cost: 1, pay: "destroy" },
+    ],
+    [
+      "Instant - Banish this from your hand: Prevent the next 4 damage that would be dealt to you this turn. Blood Debt",
+      { speed: "instant", cost: 0, pay: "banish_from_hand" },
+    ],
+    [
+      "Instant - {r}, banish this: Create an Eloquence token. Arcane Barrier 1 Blood Debt",
+      { speed: "instant", cost: 1, pay: "banish" },
+    ],
+    [
+      "Instant - Discard this: Create a Runechant token.",
+      { speed: "instant", cost: 0, pay: "discard" },
+    ],
+    [
+      "Action - {r}{r}: Create a Runechant token.",
+      { speed: "action", cost: 2, pay: "none" },
+    ],
+    [
+      "Instant - Destroy this: Opt 2",
+      { speed: "instant", cost: 0, pay: "destroy" },
+    ],
+    [
+      "Instant - {t} your hero, destroy this: Gain {r} Blade Break",
+      { speed: "instant", cost: 0, pay: "destroy", extraCost: true },
+    ],
+    [
+      "Instant - Discard a card: This gets +3{d}",
+      { speed: "instant", cost: 0, pay: "none", extraCost: true },
+    ],
+    [
+      "At the start of your turn, if this has less than 3 energy counters, you may put an energy counter on it. Instant - Remove 3 energy counters from this: Gain {r} Blade Break",
+      { speed: "instant", cost: 0, pay: "none", extraCost: true },
+    ],
+    [
+      "If you've dealt arcane damage this turn, you may play this as though it were an instant.",
+      undefined,
+    ],
+    ["Create a Runechant token. Go again", undefined],
+  ])("reads %j", (text, expected) => {
+    expect(activationFromText(text)).toEqual(expected);
   });
 });

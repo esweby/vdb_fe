@@ -182,6 +182,18 @@ export const optSchema = z.strictObject({
   fromArsenal: z.boolean().optional(),
 });
 
+/**
+ * An activated ability: "Instant - {r}, destroy this: …" (20 Oct 2026). How fast it is, its
+ * resource cost and how the card itself pays; extraCost when there's more to pay (discard a card,
+ * tap your hero, counters). Read from each pitch's text when importing.
+ */
+export const activationSchema = z.strictObject({
+  speed: z.enum(["instant", "action"]),
+  cost: z.number().int().min(0).max(10),
+  pay: z.enum(["destroy", "banish", "banish_from_hand", "discard", "none"]),
+  extraCost: z.boolean().optional(),
+});
+
 export const selfBanishSchema = z.strictObject({
   /** Where it banishes itself from, when that matters (e.g. "banish this from your hand"). */
   from: z.enum(["hand"]).optional(),
@@ -239,6 +251,7 @@ export const authoredAttributesSchema = z.strictObject({
   tokens: z.array(tokenCreationSchema).optional(),
   banishesOwn: z.array(ownBanishSchema).optional(),
   opt: z.array(optSchema).optional(),
+  activation: activationSchema.optional(),
   /** The card banishes itself (feeds Gates and play-from-banish). */
   banishesSelf: z.array(selfBanishSchema).optional(),
   playableFromBanish: z.strictObject({ conditions }).optional(),
