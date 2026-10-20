@@ -19,7 +19,22 @@ export interface DraftRules {
   playableFromBanish?: boolean;
   /** "If this would be put into your graveyard from anywhere, instead banish it." */
   graveyardToBanish?: boolean;
+  /** An activated ability: how it's paid, and what it does (20 Oct 2026). */
+  activate?: {
+    speed: "instant" | "action";
+    cost: number;
+    pay: "destroy" | "banish" | "banish_from_hand" | "discard" | "none";
+    effects: Effect[];
+  };
 }
+
+/** How an activation is paid, as the card says it. */
+const PAY_TEXT: Record<string, string> = {
+  destroy: "destroy this",
+  banish: "banish this",
+  banish_from_hand: "banish this from your hand",
+  discard: "discard this",
+};
 
 export interface EffectDraft {
   cardName: string;
@@ -124,7 +139,15 @@ export function draftEffects(
 
   // Opt comes first: on every card with it, it's the card's first instruction (Blood Tribute:
   // "Opt 3, then banish the top card of your deck").
+  // What an activated ability does: the facts that happen "when activated" (20 Oct 2026).
+  const activation = a.activation;
+  const activated: Effect[] = [];
+
   for (const o of a.opt ?? []) {
+    if (activation && o.trigger === "activated") {
+      activated.push({ op: "opt", amount: o.amount });
+      continue;
+    }
     if (o.fromArsenal) {
       note(
         "Opt if it was played from arsenal: the engine can't check that yet",
@@ -229,6 +252,7 @@ export function draftEffects(
       { op: "createToken", token: t.token, amount },
     ]);
     if (t.trigger === "on_play") effects.push(...make);
+    else if (activation && t.trigger === "activated") activated.push(...make);
     else if (t.trigger === "on_attack") attackTriggerEffects.push(...make);
     else if (t.trigger === "your_attack_action_played")
       attackPlayedEffects.push(...make);
@@ -274,6 +298,8 @@ export function draftEffects(
   // of scope; activated abilities and the rest aren't drafted yet.
   let graveyardToBanish = false;
   for (const b of a.banishesSelf ?? []) {
+    // Banishing itself to activate it is the activation's payment.
+    if (activation && b.trigger === "activated") continue;
     if (b.trigger === "would_go_to_graveyard") graveyardToBanish = true;
     else if (
       [
@@ -322,8 +348,22 @@ export function draftEffects(
       "Playing it from the banished zone under a condition: not drafted yet",
     );
 
+  if (activation?.extraCost)
+    note(
+      "Another cost to activate it (discarding, tapping, counters): not drafted yet",
+    );
   const rules: DraftRules = {
     effects,
+    ...(activation
+      ? {
+          activate: {
+            speed: activation.speed,
+            cost: activation.cost,
+            pay: activation.pay,
+            effects: activated,
+          },
+        }
+      : {}),
     ...(triggers.length ? { triggers } : {}),
     ...(a.hasUsurp ? { usurp: true } : {}),
     ...(playableFromBanish ? { playableFromBanish: true } : {}),
@@ -348,10 +388,26 @@ export function draftEffects(
       ...(rules.graveyardToBanish
         ? ["If it would go to the graveyard, it's banished instead."]
         : []),
+      ...(rules.activate ? [describeActivation(rules.activate)] : []),
     ],
     notDrafted,
     outOfScope,
     leftOut,
     complete: notDrafted.length === 0,
   };
+}
+
+/** "Activate (instant, 1 resource, destroy this): create 1 Runechant." */
+function describeActivation(a: NonNullable<DraftRules["activate"]>): string {
+  const how = [
+    a.speed,
+    ...(a.cost ? [`${a.cost} resource${a.cost === 1 ? "" : "s"}`] : []),
+    ...(PAY_TEXT[a.pay] ? [PAY_TEXT[a.pay]!] : []),
+  ].join(", ");
+  const does = describeEffects(a.effects)
+    .map(
+      (line) => `${line[0]!.toLowerCase()}${line.slice(1).replace(/\.$/, "")}`,
+    )
+    .join("; ");
+  return `Activate (${how})${does ? `: ${does}` : ""}.`;
 }

@@ -209,6 +209,54 @@ describe("draftEffects", () => {
     ]);
   });
 
+  // Activated abilities (20 Oct 2026): the activation fact says how it's paid; the facts that
+  // happen "when activated" are what it does.
+  it("drafts an activated ability from its activation and what happens when activated", () => {
+    const card = withAttributes({
+      activation: { speed: "instant", cost: 1, pay: "destroy" },
+      tokens: [{ token: "runechant", amount: 1, trigger: "activated" }],
+      opt: [{ amount: 1, trigger: "activated" }],
+    });
+    const draft = draftEffects(card, card.variants[0]!);
+    expect(draft.rules.activate).toEqual({
+      speed: "instant",
+      cost: 1,
+      pay: "destroy",
+      effects: [
+        { op: "opt", amount: 1 },
+        { op: "createToken", token: "runechant", amount: 1 },
+      ],
+    });
+    expect(draft.description).toContain(
+      "Activate (instant, 1 resource, destroy this): opt 1 (look at the top card of your deck and you may put it on the bottom); create 1 Runechant.",
+    );
+    expect(draft.complete).toBe(true);
+  });
+
+  it("drafts Fallen Herald's banish from hand, and notes an extra cost it can't pay", () => {
+    const herald = withAttributes({
+      activation: { speed: "instant", cost: 0, pay: "banish_from_hand" },
+      banishesSelf: [{ from: "hand", trigger: "activated" }],
+    });
+    expect(draftEffects(herald, herald.variants[0]!).rules.activate).toEqual({
+      speed: "instant",
+      cost: 0,
+      pay: "banish_from_hand",
+      effects: [],
+    });
+    const tapping = withAttributes({
+      activation: {
+        speed: "instant",
+        cost: 0,
+        pay: "destroy",
+        extraCost: true,
+      },
+    });
+    expect(draftEffects(tapping, tapping.variants[0]!).notDrafted).toContain(
+      "Another cost to activate it (discarding, tapping, counters): not drafted yet",
+    );
+  });
+
   it("drafts conditional go again it can check, and notes the conditions it can't", () => {
     const card = withAttributes({
       banishesOwn: [{ from: "hand", trigger: "on_play" }],

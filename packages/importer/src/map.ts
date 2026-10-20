@@ -142,6 +142,40 @@ export function optsFromText(
   return opts;
 }
 
+/**
+ * An activated ability in a card's text ("Instant - {r}, destroy this: …"), or undefined: its
+ * speed, resource cost and how the card pays, and whether more is asked (discard a card, tap your
+ * hero, counters). The maintainer asked for an activate action, 20 Oct 2026.
+ */
+export function activationFromText(
+  text: string,
+): AuthoredCardAttributes["activation"] {
+  // Anywhere in the text ("Usurp Instant - Discard this: …"), but only a "Speed - cost:" ability.
+  const found = /\b(Instant|Action)\s*-\s*([^:.]*):/.exec(text);
+  if (!found) return undefined;
+  const speed = found[1]!.toLowerCase() === "instant" ? "instant" : "action";
+  const costText = found[2]!;
+  const cost = (costText.match(/\{r\}/g) ?? []).length;
+  const pay = /banish this from your hand/i.test(costText)
+    ? "banish_from_hand"
+    : /banish this/i.test(costText)
+      ? "banish"
+      : /discard this/i.test(costText)
+        ? "discard"
+        : /destroy this/i.test(costText)
+          ? "destroy"
+          : "none";
+  // Anything left once the resources and the card's own payment are taken out.
+  const rest = costText
+    .replace(/\{r\}/g, "")
+    .replace(
+      /(banish this from your hand|banish this|discard this|destroy this)/i,
+      "",
+    )
+    .replace(/[\s,]/g, "");
+  return { speed, cost, pay, ...(rest ? { extraCost: true } : {}) };
+}
+
 /** A variant's full attributes: the card's, with the variant's overrides replacing matching keys. */
 export function variantAttributes(
   card: ImportCard,
@@ -198,11 +232,17 @@ export function toImportCards(
       variant.attributes = validated(name, `pitch ${pitch}`, attributes);
     }
 
-    // Opt from each pitch's text, unless authored.
+    // Opt and activated abilities from each pitch's text, unless authored.
     for (const variant of variants) {
       const opt = optsFromText(variant.text ?? "");
       if (opt.length && !variant.attributes.opt)
         variant.attributes = { ...variant.attributes, opt };
+      const activation =
+        mainType === "Weapon"
+          ? undefined
+          : activationFromText(variant.text ?? "");
+      if (activation && !variant.attributes.activation)
+        variant.attributes = { ...variant.attributes, activation };
     }
 
     return {
