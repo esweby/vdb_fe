@@ -669,6 +669,30 @@ export function Goldfish(props: {
           renderCard(c, zone, zone === "hand" ? i : undefined),
         )}
       </ul>
+      {/* Resources, fixable by hand beside the pitch (the maintainer, 20 Oct 2026). */}
+      {zone === "pitch" && (
+        <span className={styles.pitchAdjust}>
+          <button
+            type="button"
+            aria-label="Fewer resources"
+            onClick={() => perform({ type: "resources", delta: -1 })}
+          >
+            −
+          </button>
+          <span
+            aria-label={`${g.resources} resource${g.resources === 1 ? "" : "s"}`}
+          >
+            {g.resources}
+          </span>
+          <button
+            type="button"
+            aria-label="More resources"
+            onClick={() => perform({ type: "resources", delta: 1 })}
+          >
+            +
+          </button>
+        </span>
+      )}
     </section>
   );
   /** The hand fans out from its middle. */

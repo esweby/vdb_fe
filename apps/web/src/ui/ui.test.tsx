@@ -2,7 +2,15 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { Button, Dialog, Slider, Table, Tag, TextField } from "./index.ts";
+import {
+  Button,
+  Dialog,
+  ErrorBoundary,
+  Slider,
+  Table,
+  Tag,
+  TextField,
+} from "./index.ts";
 
 describe("Button", () => {
   it("is a non-submitting button by default and calls onClick", async () => {
@@ -289,5 +297,31 @@ describe("Slider tap targets (touch screens)", () => {
     expect(
       screen.queryByRole("group", { name: "Risk, tap a score" }),
     ).toBeNull();
+  });
+});
+
+// The maintainer, 20 Oct 2026: "Synergies sometimes crashes". A crash in one part shouldn't blank
+// the page: it says so, shows the error to report, and offers to try again.
+describe("ErrorBoundary", () => {
+  it("catches a crash, shows the error, and tries again", async () => {
+    let broken = true;
+    const Flaky = () => {
+      if (broken) throw new Error("graph went wrong");
+      return <p>Working again</p>;
+    };
+    const quiet = vi.spyOn(console, "error").mockImplementation(() => {});
+    render(
+      <ErrorBoundary what="The synergy graph">
+        <Flaky />
+      </ErrorBoundary>,
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "The synergy graph hit a problem",
+    );
+    expect(screen.getByText(/graph went wrong/)).toBeInTheDocument();
+    broken = false;
+    await userEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(screen.getByText("Working again")).toBeInTheDocument();
+    quiet.mockRestore();
   });
 });

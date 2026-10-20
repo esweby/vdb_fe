@@ -221,3 +221,16 @@
   background: color-mix(in srgb, var(--accent) 10%, var(--surface));
   font-size: 0.9rem;
 }
+
+/* Show in graph: inline with the text it belongs to (the maintainer, 20 Oct 2026). */
+.inGraph {
+  display: inline-flex;
+  margin: 3px 0 0 0.4rem;
+  padding: 0.1rem 0.55rem;
+  font-size: 0.8rem;
+  vertical-align: baseline;
+}
+/* The last step runs on into its Show in graph button. */
+.reasons .step:last-child {
+  display: inline;
+}
