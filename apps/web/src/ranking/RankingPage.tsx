@@ -41,7 +41,7 @@ import {
   type RankingSettings,
 } from "./rankingSearch.ts";
 import { preferenceBoost } from "./preferences.ts";
-import { suggestCore } from "./suggestCore.ts";
+import { offPitchReactions, suggestCore } from "./suggestCore.ts";
 import { ScopedSynergies } from "../synergy/SynergyExplorer.tsx";
 import {
   buildSynergyGraph,
@@ -432,6 +432,8 @@ export function RankingPage() {
   /** The core filled to the pitch targets; cards already in it stay. */
   function filled(): Record<string, number> {
     // In the board's order: preferences always, fits first when the board is ordered by them.
+    // Defence reactions are suggested at their best defence only (the maintainer, 20 Oct 2026).
+    const offPitch = offPitchReactions(items);
     const candidates = [...deckCards]
       .map((r) => ({
         r,
@@ -443,7 +445,12 @@ export function RankingPage() {
           ? b.fits - a.fits || b.key - a.key
           : b.key - a.key,
       )
-      .map(({ r, key }) => ({ ...r, key, limit: limitOf(r.variantId) }));
+      .map(({ r, key }) => ({
+        ...r,
+        key,
+        limit: limitOf(r.variantId),
+        notSuggested: offPitch.has(r.variantId),
+      }));
     const constraints = {
       targets,
       copiesEach: copyLimit,

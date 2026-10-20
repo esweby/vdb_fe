@@ -204,6 +204,7 @@ export function fillWithSynergy(
     for (const r of ranked) {
       if (r.pitch === null || (left.get(r.pitch) ?? 0) <= 0) continue;
       if (quantity.has(r.variantId) || c.removed.has(r.variantId)) continue;
+      if (r.notSuggested) continue;
       const score = r.value + bonus(r.cardId, picked);
       if (score > bestScore) {
         best = r;
