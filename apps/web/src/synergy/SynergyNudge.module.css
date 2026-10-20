@@ -1,0 +1,57 @@
+.nudge {
+  max-width: 28rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
+  background: var(--surface);
+  font-size: 0.9375rem;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.label {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.close {
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.close:hover {
+  color: var(--fg);
+}
+
+.question {
+  margin: 0.25rem 0;
+}
+
+.reasons {
+  margin: 0 0 0.75rem;
+  padding-left: 1.25rem;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.error {
+  margin: 0.5rem 0 0;
+  color: var(--danger);
+}

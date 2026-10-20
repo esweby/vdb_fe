@@ -5,6 +5,7 @@ import { useCards } from "../cards/useCards.ts";
 import { useAppSelector } from "../hooks.ts";
 import { useServices } from "../servicesContext.ts";
 import ui from "../ui/ui.module.css";
+import { SynergyNudge } from "../synergy/SynergyNudge.tsx";
 import styles from "./HomePage.module.css";
 
 const button = (variant: "primary" | "secondary") =>
@@ -93,6 +94,8 @@ export function HomePage() {
           )}
         </section>
       )}
+
+      <SynergyNudge />
 
       <section className={styles.steps} aria-labelledby="home-how">
         <h2 id="home-how">How it works</h2>
