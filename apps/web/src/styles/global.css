@@ -39,6 +39,16 @@
   }
 }
 
+/* Below 16px, iOS zooms the page in when a field is focused and leaves it zoomed.
+   Important so it wins over each component's own (smaller) field size. */
+@media (pointer: coarse) {
+  input:not([type="checkbox"], [type="radio"], [type="range"]),
+  select,
+  textarea {
+    font-size: max(16px, 1em) !important;
+  }
+}
+
 body {
   margin: 0;
   background: var(--bg);

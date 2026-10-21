@@ -25,6 +25,16 @@
   .layout {
     grid-template-columns: minmax(0, 1fr);
   }
+  /* Stacked: the graph leaves part of the screen to scroll the page by, and the panel
+     scrolls with the page rather than inside itself. */
+  .canvas {
+    height: 60vh;
+    min-height: 20rem;
+  }
+  .panel {
+    max-height: none;
+    overflow-y: visible;
+  }
 }
 
 .canvasWrap {

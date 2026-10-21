@@ -11,17 +11,13 @@
 /* Wide screens show several cards a row; narrow ones stack. */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(26rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(26rem, 100%), 1fr));
   gap: 1rem;
-}
-@media (max-width: 30rem) {
-  .grid {
-    grid-template-columns: 1fr;
-  }
 }
 .card {
   display: grid;
-  grid-template-columns: 8rem 1fr;
+  /* minmax(0, …) so long draft text wraps instead of widening the page on a phone. */
+  grid-template-columns: 8rem minmax(0, 1fr);
   gap: 1rem;
   padding: 1rem;
   border: 1px solid var(--border);
@@ -29,7 +25,14 @@
   background: var(--surface);
 }
 .card:not(:has(.image)) {
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (max-width: 30rem) {
+  .card {
+    grid-template-columns: 5.5rem minmax(0, 1fr);
+    gap: 0.75rem;
+    padding: 0.75rem;
+  }
 }
 .imageWrap {
   position: relative;
@@ -47,6 +50,7 @@
 }
 .heading {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 0.5rem;
