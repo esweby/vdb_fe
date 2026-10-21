@@ -1,6 +1,7 @@
 // Upserts imported cards. Safe to re-run: imported facts and attributes are
 // replaced, curator decisions (fringe, hidden) are kept.
 import type { Sql } from "postgres";
+import type { CardMapRow } from "./fablazing.ts";
 import type { ImportCard, ImportHero } from "./map.ts";
 
 export async function upsertCards(
@@ -91,5 +92,32 @@ export async function upsertHeroes(
     const ids = heroes.map((h) => h.externalId);
     await tx`update public.heroes set legal = false, updated_at = now()
               where not (external_id = any(${ids}))`;
+  });
+}
+
+/**
+ * Maps FaBlazing ids to our variants and heroes (fablazing_card_map), for the FaBlazing ingest.
+ * Run after cards and heroes are upserted. Slugs FaBlazing uses that aren't here are recorded by
+ * the ingest, not the importer.
+ */
+export async function upsertCardMap(
+  sql: Sql,
+  rows: CardMapRow[],
+): Promise<void> {
+  await sql.begin(async (tx) => {
+    for (const r of rows) {
+      if ("variantExternalId" in r)
+        await tx`
+          insert into public.fablazing_card_map (slug, variant_id, hero_id)
+          select ${r.slug}, id, null from public.variants where external_id = ${r.variantExternalId}
+          on conflict (slug) do update set
+            variant_id = excluded.variant_id, hero_id = null, updated_at = now()`;
+      else
+        await tx`
+          insert into public.fablazing_card_map (slug, variant_id, hero_id)
+          select ${r.slug}, null, id from public.heroes where external_id = ${r.heroExternalId}
+          on conflict (slug) do update set
+            variant_id = null, hero_id = excluded.hero_id, updated_at = now()`;
+    }
   });
 }

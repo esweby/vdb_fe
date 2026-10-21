@@ -5,7 +5,8 @@
 import postgres from "postgres";
 import { allAuthored } from "./authored/index.ts";
 import { loadDataset, loadSets } from "./dataset.ts";
-import { hideRetired, upsertCards, upsertHeroes } from "./db.ts";
+import { hideRetired, upsertCardMap, upsertCards, upsertHeroes } from "./db.ts";
+import { cardMapRows } from "./fablazing.ts";
 import { retiredNames } from "./classify.ts";
 import { toHeroes, toImportCards } from "./map.ts";
 import { setReleases } from "./releases.ts";
@@ -47,6 +48,9 @@ async function main() {
     const heroes = toHeroes(dataset);
     await upsertHeroes(sql, heroes);
     console.log(`Heroes for matchups: ${heroes.length}.`);
+    const mapRows = cardMapRows(cards, heroes);
+    await upsertCardMap(sql, mapRows);
+    console.log(`FaBlazing ids mapped: ${mapRows.length}.`);
   } finally {
     await sql.end();
   }

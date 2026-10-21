@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { ImportCard } from "../src/map.ts";
-import { cardSets, fablazingSlug } from "../src/fablazing.ts";
+import type { ImportCard, ImportHero } from "../src/map.ts";
+import { cardMapRows, cardSets, fablazingSlug } from "../src/fablazing.ts";
 
 describe("fablazingSlug", () => {
   // Each case is a real FaBlazing card id for that name and pitch.
@@ -56,6 +56,48 @@ describe("cardSets", () => {
       "deadwood_dirge_blue",
       "deadwood_dirge_red",
       "deadwood_dirge_yellow",
+    ]);
+  });
+});
+
+describe("cardMapRows", () => {
+  const cards = [
+    {
+      name: "Deadwood Dirge",
+      variants: [
+        { externalId: "dd-r", pitch: 1 },
+        { externalId: "dd-b", pitch: 3 },
+      ],
+    },
+    {
+      name: "Seven Sin Nebula",
+      variants: [{ externalId: "ssn", pitch: null }],
+    },
+  ] as unknown as ImportCard[];
+  const heroes = [
+    { externalId: "h-forsaken", name: "Viserai, the Forsaken" },
+    { externalId: "h-usurper", name: "Viserai, Usurper" },
+  ] as unknown as ImportHero[];
+
+  it("maps every variant, and each hero side to its hero row", () => {
+    expect(cardMapRows(cards, heroes)).toEqual([
+      { slug: "deadwood_dirge_blue", variantExternalId: "dd-b" },
+      { slug: "deadwood_dirge_red", variantExternalId: "dd-r" },
+      { slug: "seven_sin_nebula", variantExternalId: "ssn" },
+      { slug: "viserai_the_forsaken", heroExternalId: "h-forsaken" },
+      { slug: "viserai_usurper", heroExternalId: "h-usurper" },
+    ]);
+  });
+
+  it("maps a slug once, preferring the hero", () => {
+    const clash = [
+      {
+        name: "Viserai, Usurper",
+        variants: [{ externalId: "c", pitch: null }],
+      },
+    ] as unknown as ImportCard[];
+    expect(cardMapRows(clash, heroes.slice(1))).toEqual([
+      { slug: "viserai_usurper", heroExternalId: "h-usurper" },
     ]);
   });
 });
