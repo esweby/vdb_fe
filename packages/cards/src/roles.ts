@@ -214,7 +214,23 @@ export const ROLES: RoleDef[] = [
     name: "Hand banisher",
     engine: "banish",
     kind: "generator",
-    matches: (c) => inGroup(c, "banishes_from_hand"),
+    // A temporary banish moves the cards on (Base of the Mountain: they defend, then go to the
+    // graveyard), so it feeds nothing in the banished zone (the maintainer, 21 Oct 2026). The
+    // card keeps the banishes_from_hand tag, and its "when banished" link is authored.
+    matches: (c) =>
+      inGroup(c, "banishes_from_hand") &&
+      !any(
+        c,
+        (a) =>
+          !!a.banishesOwn?.some((b) => b.from === "hand") &&
+          a.banishesOwn.every((b) => b.from !== "hand" || b.temporary) &&
+          !a.disrupts?.some(
+            (d) =>
+              d.action === "banish" &&
+              d.from === "hand" &&
+              d.target === "each_hero",
+          ),
+      ),
   },
   {
     id: "deck_banisher",

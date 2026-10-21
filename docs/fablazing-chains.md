@@ -102,22 +102,24 @@ Every expectation below was written and approved by the maintainer **before** th
 
 - **Counted per side.** A side counts as reaching a step if any attempt in its game did.
 - **Win differences** are "with life totals held level": the difference within each life bucket going into the setup turn, weighted by bucket size, with a 95% margin.
-- **The margins are too narrow, if anything.** They treat every side as independent. The cap of 20 games per player per day isn't applied in this tool yet, so heavy players weigh more than they will in the app.
+- **The margins are too narrow, if anything.** They treat every side as independent. The tables below are uncapped; the cap of 20 games per player per day is applied in [With the player cap](#with-the-player-cap), and it changes little.
 - **Interval widths over 30 days:** about ±1–2 points for chains with thousands of sides, ±4–8 for a few hundred, and ±30 for the Crown chain's 9 completions. On one day the same chains gave ±9–12, which is why the first two chains are measured again here.
 
 ### Summary
 
-| Chain                      | How often (expected)                     | Result, life held level (expected) | Verdict                                                   |
-| -------------------------- | ---------------------------------------- | ---------------------------------- | --------------------------------------------------------- |
-| bsl-gate-blood-debt        | 47.5% of BSL sides (30–60%)              | +2.1 ±1.5 (5–15)                   | Completes as expected; wins less than expected            |
-| bsl-descendancy-same-turn  | 14.7% of BSL sides (10–25%)              | +4.0 ±2.2 (5–15)                   | As expected, but the win difference is just under range   |
-| bsl-gate-no-other-maker    | 45.1% of BSL sides (30–45%)              | +1.9 ±1.5 (3–12)                   | Gate source doesn't matter                                |
-| reach-otg-gate             | 6.9% of Reach blocks pair (5–20%)        | −8.4 ±7.6 (0 to +10)               | Pairs as expected; Gate used less; associated with losing |
-| crown-gate-otg             | 4.4% of Crown blocks (2–10%)             | 9 completions                      | Not enough data                                           |
-| cullingsong-usurp          | 4.8% of Cullingsong sides (15–40%)       | +30.9 ±3.7 (0 to +10)              | Much rarer, and far more associated with winning          |
-| usurp-hits                 | Usurp hits on 76.2% of sides (35–55%)    | +3.5 ±4.1 (+5 to +20)              | Hits far more often than expected; hitting adds little    |
-| traverse-uses-action-point | 87.1% of traversing sides (at least 90%) | +8.3 ±1.6 (0 to +10)               | Just under the expected rate; result in range             |
-| traverse-flip-back         | 44.3% of traversing sides (30–60%)       | +3.4 ±1.1 (within ±5)              | As expected; a small positive association                 |
+| Chain                      | How often (expected)                           | Result, life held level (expected) | Verdict                                                   |
+| -------------------------- | ---------------------------------------------- | ---------------------------------- | --------------------------------------------------------- |
+| bsl-gate-blood-debt        | 47.5% of BSL sides (30–60%)                    | +2.1 ±1.5 (5–15)                   | Completes as expected; wins less than expected            |
+| bsl-descendancy-same-turn  | 14.7% of BSL sides (10–25%)                    | +4.0 ±2.2 (5–15)                   | As expected, but the win difference is just under range   |
+| bsl-gate-no-other-maker    | 45.1% of BSL sides (30–45%)                    | +1.9 ±1.5 (3–12)                   | Gate source doesn't matter                                |
+| reach-otg-gate             | 6.9% of Reach blocks pair (5–20%)              | −8.4 ±7.6 (0 to +10)               | Pairs as expected; Gate used less; associated with losing |
+| crown-gate-otg             | 4.4% of Crown blocks (2–10%)                   | 9 completions                      | Not enough data                                           |
+| cullingsong-usurp          | 4.8% of Cullingsong sides (15–40%)             | +30.9 ±3.7 (0 to +10)              | Much rarer, and far more associated with winning          |
+| usurp-hits                 | Usurp hits on 76.2% of sides (35–55%)          | +3.5 ±4.1 (+5 to +20)              | Hits far more often than expected; hitting adds little    |
+| traverse-uses-action-point | 87.1% of traversing sides (at least 90%)       | +8.3 ±1.6 (0 to +10)               | Just under the expected rate; result in range             |
+| traverse-flip-back         | 44.3% of traversing sides (30–60%)             | +3.4 ±1.1 (within ±5)              | As expected; a small positive association                 |
+| otg-through-gate           | Hits on 56.5% of sides, capped (under 48%)     | +3.8 ±1.9 (reported, not judged)   | Not like for like; the Gate after a hit is rarely used    |
+| otg-hit-gate               | Gate used after 22.2% of hits, capped (60–90%) | +5.2 ±2.4 (reported, not judged)   | The Gate from the hit is usually not used within a turn   |
 
 ### bsl-gate-blood-debt and bsl-descendancy-same-turn, again
 
@@ -137,7 +139,7 @@ The one-day results are above. Over 30 days, against the same expectations:
 **Chain:** Become the Shadow Lord played → a Gate used within 2 turns, with **no other logged Gate maker in between** → a blood debt card played in the same turn as the Gate.
 
 - "Another Gate maker" means an on-play maker played, an on-hit maker hitting, Dam the Shadowake blocking, or a block with Corrupted Crown or Reach of the Abyss.
-- The Gate-maker sets are hand-listed in `chains/sets.json` from `docs/reviews/02-gate-creators.md` until the importer exports them.
+- The Gate-maker sets were hand-listed in `chains/sets.json` from `docs/reviews/02-gate-creators.md` for this measurement. The importer now exports them; see [Card sets from the importer](#card-sets-from-the-importer) for what that changed.
 
 | Furthest step reached | Sides  | Viserai won |
 | --------------------- | ------ | ----------- |
@@ -241,14 +243,104 @@ The one-day results are above. Over 30 days, against the same expectations:
 3. **Result: as expected (within ±5), but not zero.** It's **+3.4 points, ±1.1**. Damage that turn was 7.5 against 7.0.
    - The player said either choice can be right, and a gap this size is consistent with that. Because the interval excludes zero, though, it's worth a look in the simulation.
 
+### With the player cap
+
+Measured 21 Oct 2026 on the same 57 files, with `fablazing chain` applying the plan's cap: each player's earliest 20 sides per day and format, through the same code as the daily aggregates (`aggregate.Counted`). It left out **162 of 27,994 detailed Viserai sides (0.6%)**, so 27,844 remain (1,176 abandoned early concessions left out). The card sets are the hand-listed ones used above, so the only change is the cap. The expectations are unchanged.
+
+| Chain                      | How often, uncapped | How often, capped        | Result, uncapped | Result, capped | Verdict changes? |
+| -------------------------- | ------------------- | ------------------------ | ---------------- | -------------- | ---------------- |
+| bsl-gate-blood-debt        | 47.5% of 13,430     | 47.4% (6,338 of 13,362)  | +2.1 ±1.5        | +2.1 ±1.5      | No               |
+| bsl-descendancy-same-turn  | 14.7% of 13,430     | 14.7% (1,962 of 13,362)  | +4.0 ±2.2        | +4.1 ±2.2      | No               |
+| bsl-gate-no-other-maker    | 45.1% of 13,430     | 45.1% (6,021 of 13,362)  | +1.9 ±1.5        | +2.0 ±1.5      | No               |
+| reach-otg-gate             | 6.9% of 1,281       | 7.0% (89 of 1,271)       | −8.4 ±7.6        | −8.5 ±7.6      | No               |
+| crown-gate-otg             | 4.4% of 204         | 4.4% (9 of 204)          | 9 completions    | 9 completions  | No               |
+| cullingsong-usurp          | 4.8% of 17,336      | 4.7% (812 of 17,245)     | +30.9 ±3.7       | +30.8 ±3.7     | No               |
+| usurp-hits                 | 76.2% of 2,579      | 76.3% (1,949 of 2,556)   | +3.5 ±4.1        | +3.3 ±4.1      | No               |
+| traverse-uses-action-point | 87.1% of 26,072     | 87.2% (22,606 of 25,936) | +8.3 ±1.6        | +8.4 ±1.6      | No               |
+| traverse-flip-back         | 44.3% of 26,072     | 44.4% (11,507 of 25,936) | +3.4 ±1.1        | +3.5 ±1.1      | No               |
+
+The other figures move as little: timings, medians and damage are the same to one decimal place, apart from counts falling by under 1%. Reach's Gate rate after the pairing is still 46 of 89, and Usurp's hit rate after Cullingsong is 654 of 812 (80.5%). Over 30 days, heavy players don't drive any of these results. The margins still treat every side as independent.
+
+### Card sets from the importer
+
+The `gate_maker_*` and `banish_equipment` sets now come from `cardSets` in `packages/importer/src/fablazing.ts` (`npm run fablazing-sets -w @vdb/importer`), not a hand list:
+
+- **Gate makers** are derived from the Gate tokens in our card facts, by the logged event that makes the Gate: the card played, if its play or attack makes it or it grants one to a later attack (`gate_maker_on_play`); its own hit (`gate_maker_on_hit`); its block (`gate_maker_on_block`). Gates made on banish aren't logged, so they're in no set.
+- **`banish_equipment`** (Corrupted Crown, Reach of the Abyss) stays an authored list in the importer: it's the maintainer's judgement that a block with these can make a Gate, and their banishes aren't logged. Base of the Mountain isn't in it: it banishes a card that then defends and goes to the graveyard, so it only keeps a card banished alongside Reach of the Abyss (the maintainer, 21 Oct 2026).
+
+The maintainer checked the cards in these sets in the app and verified them (21 Oct 2026).
+
+Against the hand list, the derived sets add two cards to `gate_maker_on_play`, and are otherwise identical:
+
+- **Shadowrealm Walker** (all three pitches): its attack makes a Gate if it banished a Shadow card. The hand list came from review batch 2, and Walker is in batch 3, so it was missed.
+- **Become the Shadow Lord**: it makes a Gate when played. In bsl-gate-no-other-maker, a second Become the Shadow Lord before the Gate now ends the earlier attempt, and the later one is matched instead. crown-gate-otg already ruled it out.
+
+Only the two chains that use these sets can change. Measured again with the derived sets (expectations unchanged):
+
+| Chain                   | Sets    | Uncapped                                            | Capped                                              |
+| ----------------------- | ------- | --------------------------------------------------- | --------------------------------------------------- |
+| bsl-gate-no-other-maker | hand    | 6,055 of 13,430 (45.1%); +1.9 ±1.5; same-turn 46.7% | 6,021 of 13,362 (45.1%); +2.0 ±1.5                  |
+| bsl-gate-no-other-maker | derived | 5,977 of 13,430 (44.5%); +2.1 ±1.5; same-turn 50.4% | 5,943 of 13,362 (44.5%); +2.1 ±1.5; same-turn 50.5% |
+| crown-gate-otg          | derived | 9 of 204, unchanged                                 | 9 of 204, unchanged                                 |
+
+With the derived sets, bsl-gate-no-other-maker is within the expected 30–45% and the median setup turn is still 3. Same-turn completions are 50.4% (expected at least 43%), and damage on the setup turn is 6.0 against 4.2. The result, +2.1 ±1.5, is still below the expected 3–12 and about the same as the broader chain's, so the verdict stands: **the Gate's source doesn't matter**.
+
+### The Open the Gate chains
+
+The maintainer described the line on 21 Oct 2026: banish Open the Gate and play it through a Gate in the same turn. The opponent then either lets it hit, and it makes another Gate, or blocks with cards from hand to deny the Gate. **Both are intended outcomes.** Both chains were registered and approved before they were measured, and were measured on the same 57 files with the player cap and the card sets from the importer. Uncapped figures are in brackets.
+
+**Limits of the logs:** the banish isn't logged, so "played through a Gate" is a proxy: Open the Gate played in the same turn as a Gate is used. Only Viserai's log is read, so a denial shows only as "didn't hit", not as the cards the opponent spent. Gate creation isn't logged either, so "the Gate from the hit" is a proxy: a Gate used within 1 turn index, with no other logged Gate maker in between.
+
+#### otg-through-gate
+
+**Chain:** a Gate used → Open the Gate played in the same turn → Open the Gate hits in that turn → a Gate used within 1 turn index, with no other logged Gate maker in between. The comparison is among sides that played Open the Gate through a Gate (the new `compareBase` field): those where it hit, against those where it didn't.
+
+| Furthest step reached             | Sides  | Viserai won |
+| --------------------------------- | ------ | ----------- |
+| None                              | 11,895 | 29.7%       |
+| Gate used, no Open the Gate after | 7,534  | 32.3%       |
+| Open the Gate through it, no hit  | 3,661  | 32.0%       |
+| Hits, no Gate after               | 3,748  | 32.0%       |
+| Hits, then a Gate used            | 1,006  | 40.2%       |
+
+**Against the expectation:**
+
+1. **Denial: against the expectation, but not a like-for-like comparison.**
+   - Of the 8,415 sides (8,446) that played Open the Gate through a Gate, it hit on 4,754 (56.5%; 56.5%).
+   - The expectation was below the card's overall 48%. By its own reading, 48% or more suggests opponents usually let it through.
+   - **The two rates aren't measured the same way:** 48% is per play, while 56.5% is per side, and a side counts as hitting if any of its attempts hit. Sides that try more than once push the per-side rate up. So the data doesn't show that opponents deny it more often through a Gate. Whether they deny it less often is unclear.
+2. **After a hit: well below the expected 60–90%, and under the 50% warning line.**
+   - A Gate was used within 1 turn index after the hit in 1,006 of 4,754 (21.2%; 1,012 of 4,772).
+   - Of those, 163 were in the same turn index and 843 one later.
+   - The expectation's reading for under 50%: the Gate is usually held or unused. The proxy may also miss Gates used later than one turn index on.
+3. **Result: reported, not judged.** Hit against no hit, life totals held level: **+3.8 points, ±1.9** (+3.9 ±1.9). Damage on the setup turn was 8.6 against 4.1. Sides that went on to use the Gate won 40.2%, but that group is small and chosen by what happened next.
+
+#### otg-hit-gate
+
+**Chain:** Open the Gate hits, however it was played → a Gate used within 1 turn index, with no other logged Gate maker in between.
+
+| Furthest step reached | Sides  | Viserai won |
+| --------------------- | ------ | ----------- |
+| None                  | 19,444 | 30.0%       |
+| Hits, no Gate after   | 6,533  | 33.5%       |
+| Hits, then a Gate     | 1,867  | 38.6%       |
+
+**Against the expectation:**
+
+1. **How often: well below the expected 60–90%, and under the 50% warning line.**
+   - Of the 8,400 sides (8,440) where Open the Gate hit, a Gate was used within 1 turn index in 1,867 (22.2%; 1,877).
+   - Of those, 378 were in the same turn index and 1,489 one later. The median turn of the hit is 3.
+   - The expectation's reading: the Gate from Open the Gate's hit is usually held or unused. This agrees with otg-through-gate.
+2. **Result: reported, not judged.** With life totals held level: **+5.2 points, ±2.4** (+5.1 ±2.4). Damage on the turn of the hit was 8.6 against 7.9.
+
+**Reading the two together** (associations, not causes): Open the Gate's Gate is rarely used within a turn of the hit. That's either a real habit (holding the Gate, or having no blood debt card to play through it) or a gap in the proxy. The simulation (step 5) can tell those apart, and so can a maintainer's look at a few games with `fablazing game`.
+
 ### Not in the library
 
 **Traverse timing in general.** The maintainer (21 Oct 2026): "Nobody knows." There's nothing to register an expectation against, so it's left to the simulation (step 5). The two traverse chains above measure a player's habits, not the right timing.
 
-**Open the Gate played through a Gate, and Open the Gate hits → Gate used.** The maintainer chose both on 21 Oct 2026, but they aren't specified yet. The Reach and Crown chains came first.
-
 **Next:**
 
-- Apply the player cap in the chain tool, and add the three missing days once FaBlazing serves them.
-- Move the hand-listed `gate_maker_*` and `banish_equipment` sets into the importer's export.
+- Add the three missing days once FaBlazing serves them.
+- Look at a few otg-hit-gate games with the maintainer: is the Gate from Open the Gate's hit really held, or does the proxy miss it?
 - Use the simulation (step 5) to test the large associations, especially cullingsong-usurp's +30.9 and the Reach pairing's −8.4, as counterfactuals.

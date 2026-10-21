@@ -67,6 +67,9 @@ type Summary struct {
 	Decks   map[string]DeckTotals `json:"decks"`
 	CardIDs []string              `json:"card_ids"` // every card id in Cards, for mapping slugs
 	HeroIDs []string              `json:"hero_ids"` // every hero id in the counted sides, as written
+	// Scope is "viserai" for a day built from Viserai's games only; Run
+	// leaves it empty, which fablazing_replace_day takes as every game.
+	Scope string `json:"scope,omitempty"`
 }
 
 // DeckTotals counts Viserai's detailed sides on one side at end.
@@ -131,13 +134,7 @@ type traverseKey struct {
 // Run aggregates games from one date and format. Games may come in any order;
 // the player cap keeps each player's earliest sides by created_at.
 func Run(games []game.Game, o Options) (Result, error) {
-	ordered := append([]game.Game(nil), games...)
-	sort.SliceStable(ordered, func(i, j int) bool {
-		if ordered[i].CreatedAt != ordered[j].CreatedAt {
-			return ordered[i].CreatedAt < ordered[j].CreatedAt
-		}
-		return ordered[i].GUID < ordered[j].GUID
-	})
+	ordered, kept := Counted(games, o.PlayerCap)
 
 	run := Summary{Date: o.Date, Format: o.Format, Decks: map[string]DeckTotals{}}
 	cards := map[cardKey]*CardDaily{}
@@ -145,9 +142,8 @@ func Run(games []game.Game, o Options) (Result, error) {
 	turns := map[int]*TurnDaily{}
 	traverses := map[traverseKey]*TraverseDaily{}
 	heroes := map[string]bool{}
-	perPlayer := map[game.PlayerHash]int{}
 
-	for _, g := range ordered {
+	for gi, g := range ordered {
 		if g.Format != o.Format {
 			return Result{}, fmt.Errorf("game %s is format %d, not %d", g.GUID, g.Format, o.Format)
 		}
@@ -156,7 +152,7 @@ func Run(games []game.Game, o Options) (Result, error) {
 		if abandoned {
 			run.Abandoned++
 		}
-		for _, s := range g.Sides {
+		for si, s := range g.Sides {
 			run.Sides++
 			isViserai := game.IsViserai(s.Hero)
 			if isViserai {
@@ -168,12 +164,9 @@ func Run(games []game.Game, o Options) (Result, error) {
 					run.ViseraiSidesWithoutDetail++
 				}
 			}
-			if s.Player != "" {
-				perPlayer[s.Player]++
-				if o.PlayerCap > 0 && perPlayer[s.Player] > o.PlayerCap {
-					run.CappedSides++
-					continue
-				}
+			if !kept[gi][si] {
+				run.CappedSides++
+				continue
 			}
 			heroes[s.Hero], heroes[s.Opponent] = true, true
 
@@ -309,6 +302,32 @@ func Run(games []game.Game, o Options) (Result, error) {
 		return a.Traverses < b.Traverses
 	})
 	return r, nil
+}
+
+// Counted applies the player cap: it orders games by created_at, then GUID,
+// and kept[i][j] reports whether side j of ordered[i] counts. Every side with
+// a player hash counts toward that player's cap, whatever its hero, detail or
+// result, so a player's earliest limit sides are kept. 0 means no cap.
+func Counted(games []game.Game, limit int) (ordered []game.Game, kept [][2]bool) {
+	ordered = append([]game.Game(nil), games...)
+	sort.SliceStable(ordered, func(i, j int) bool {
+		if ordered[i].CreatedAt != ordered[j].CreatedAt {
+			return ordered[i].CreatedAt < ordered[j].CreatedAt
+		}
+		return ordered[i].GUID < ordered[j].GUID
+	})
+	kept = make([][2]bool, len(ordered))
+	perPlayer := map[game.PlayerHash]int{}
+	for i, g := range ordered {
+		for j, s := range g.Sides {
+			kept[i][j] = true
+			if s.Player != "" {
+				perPlayer[s.Player]++
+				kept[i][j] = limit <= 0 || perPlayer[s.Player] <= limit
+			}
+		}
+	}
+	return ordered, kept
 }
 
 func matchupHero(hero string) string {

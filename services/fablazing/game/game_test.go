@@ -162,3 +162,16 @@ g,1,1,"{'playerHero': 'viserai_usurper', 'turns': 1, 'cardResults': [], 'turnRes
 		t.Fatalf("turn stats: %+v", ts)
 	}
 }
+
+func TestWentFirst(t *testing.T) {
+	// FaBlazing (21 Oct 2026): firstPlayer is per side, 1 = this player went first.
+	if !(Side{FirstPlayer: 1}).WentFirst() {
+		t.Error("firstPlayer 1 went first")
+	}
+	if (Side{FirstPlayer: 0}).WentFirst() {
+		t.Error("firstPlayer 0 didn't go first")
+	}
+	if !byGUID(t, readFixture(t), "g-a").Sides[0].WentFirst() {
+		t.Error("g-a's first side has firstPlayer 1")
+	}
+}

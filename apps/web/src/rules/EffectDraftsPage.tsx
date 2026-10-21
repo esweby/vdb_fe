@@ -16,6 +16,9 @@ import {
   type QueuedDraft,
 } from "./draftQueue.ts";
 import { Enlarge } from "../decks/Enlarge.tsx";
+import { FreshnessNote, useFablazingWindows } from "../fablazing/RealGames.tsx";
+import { MIN_GAMES, playsPerViseraiGame } from "../fablazing/stats.ts";
+import type { CardStat } from "../fablazing/fablazingRepository.ts";
 import styles from "./EffectDraftsPage.module.css";
 
 const route = getRouteApi("/needs-review/effects");
@@ -149,7 +152,12 @@ function Verdict(props: {
   );
 }
 
-function DraftCard(props: { entry: DraftEntry; actions?: Actions }) {
+function DraftCard(props: {
+  entry: DraftEntry;
+  actions?: Actions;
+  /** Real plays per Viserai game, when ordering by them. */
+  plays?: number;
+}) {
   const { card, drafts, verified, staleReview, status } = props.entry;
   // Reviewed cards fold to the picture's height, opened by a chevron (the maintainer, 20 Oct 2026).
   const foldable = status === "reviewed";
@@ -207,6 +215,11 @@ function DraftCard(props: { entry: DraftEntry; actions?: Actions }) {
             </button>
           )}
         </div>
+        {props.plays !== undefined && (
+          <p className={styles.plays}>
+            {`${props.plays.toFixed(1)} real plays per Viserai game`}
+          </p>
+        )}
         {staleReview && (
           <p className={styles.muted}>
             The card's facts changed since its last verdict.
@@ -291,7 +304,7 @@ function DeckGaps(props: { features: { what: string; cards: number }[] }) {
  */
 export function EffectDraftsPage() {
   const { status, items, retry } = useCards();
-  const { draftReviews, decks } = useServices();
+  const { draftReviews, decks, fablazing } = useServices();
   const isAdmin = useAppSelector((s) => selectRole(s) === "admin");
   const userId = useAppSelector((s) => s.auth.user?.id);
   const { deck: deckId } = route.useSearch();
@@ -302,6 +315,31 @@ export function EffectDraftsPage() {
   const [reviews, setReviews] = useState<DraftReview[] | null>(null);
   const [reviewsFailed, setReviewsFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  // Order by real plays (FaBlazing, Classic Constructed): loaded when asked for.
+  const [order, setOrder] = useState<"card" | "plays">("card");
+  const { windows } = useFablazingWindows();
+  const window = windows?.find((w) => w.format === 0);
+  const [stats, setStats] = useState<CardStat[] | null>(null);
+  const [statsFailed, setStatsFailed] = useState(false);
+  useEffect(() => {
+    if (order !== "plays" || stats) return;
+    let live = true;
+    fablazing.listCardStats(0).then(
+      (rows) => live && setStats(rows),
+      () => live && setStatsFailed(true),
+    );
+    return () => {
+      live = false;
+    };
+  }, [fablazing, order, stats]);
+  const viseraiGames = stats?.[0]?.baseResultDecks ?? 0;
+  const plays = useMemo(
+    () =>
+      order === "plays" && stats && viseraiGames >= MIN_GAMES
+        ? playsPerViseraiGame(stats)
+        : null,
+    [order, stats, viseraiGames],
+  );
 
   useEffect(() => {
     let live = true;
@@ -456,13 +494,48 @@ export function EffectDraftsPage() {
           )}
         </section>
       )}
+      <section aria-label="Card order" className={styles.section}>
+        <label className={styles.select}>
+          Order
+          <select
+            value={order}
+            onChange={(e) => setOrder(e.target.value as "card" | "plays")}
+          >
+            <option value="card">Card order</option>
+            <option value="plays">Real plays per game</option>
+          </select>
+        </label>
+        {order === "plays" &&
+          (statsFailed ? (
+            <p role="alert">Couldn&apos;t load the real games.</p>
+          ) : windows && !window ? (
+            <p className={styles.muted}>No real games loaded yet.</p>
+          ) : !stats || !window ? (
+            <Loading label="Loading the real games" />
+          ) : (
+            <>
+              <p className={styles.muted}>
+                {viseraiGames >= MIN_GAMES
+                  ? "Most played first: plays of any pitch per Viserai game in Classic Constructed, across every hero Viserai faced. How often a card is played, not how good it is."
+                  : `Not enough games yet (n = ${viseraiGames}), so the cards stay in card order.`}
+              </p>
+              <FreshnessNote window={window} />
+            </>
+          ))}
+      </section>
       {deckFailed ? (
         <LoadError what="the deck" onRetry={() => setAttempt((n) => n + 1)} />
       ) : deckId && !inDeck ? (
         <Loading label="Loading the deck" />
       ) : (
         SECTIONS.map((s) => {
-          const entries = queue.filter((e) => e.status === s.status);
+          const inSection = queue.filter((e) => e.status === s.status);
+          const entries = plays
+            ? [...inSection].sort(
+                (a, b) =>
+                  (plays.get(b.card.id) ?? 0) - (plays.get(a.card.id) ?? 0),
+              )
+            : inSection;
           const heading = (
             <h2>
               {s.title} <span className={styles.muted}>({entries.length})</span>
@@ -482,7 +555,12 @@ export function EffectDraftsPage() {
               )}
               <div className={styles.grid}>
                 {entries.map((e) => (
-                  <DraftCard key={e.card.id} entry={e} actions={actions} />
+                  <DraftCard
+                    key={e.card.id}
+                    entry={e}
+                    actions={actions}
+                    plays={plays ? (plays.get(e.card.id) ?? 0) : undefined}
+                  />
                 ))}
               </div>
             </>

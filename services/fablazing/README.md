@@ -2,14 +2,15 @@
 
 The FaBlazing data pipeline in Go. The plan is [docs/fablazing-plan.md](../../docs/fablazing-plan.md), and the data is described in [docs/fablazing-data-dictionary.md](../../docs/fablazing-data-dictionary.md).
 
-| Package             | What it does                                                           |
-| ------------------- | ---------------------------------------------------------------------- |
-| `pyliteral`         | parses FaBlazing's Python literal text, and JSON too                   |
-| `game`              | reads a day's CSV into games and player-sides                          |
-| `chain`, `measure`  | chain specs, matching and measurement                                  |
-| `ingest`            | fetches a final day, keeps the Viserai games, stores their raw records |
-| `cmd/fablazing`     | the local CLI                                                          |
-| `cmd/ingest-lambda` | the daily AWS Lambda around `ingest`                                   |
+| Package              | What it does                                                           |
+| -------------------- | ---------------------------------------------------------------------- |
+| `pyliteral`          | parses FaBlazing's Python literal text, and JSON too                   |
+| `game`               | reads a day's CSV into games and player-sides                          |
+| `chain`, `measure`   | chain specs, matching and measurement                                  |
+| `ingest`             | fetches a final day, keeps the Viserai games, stores their raw records |
+| `cmd/fablazing`      | the local CLI                                                          |
+| `cmd/ingest-lambda`  | the daily AWS Lambda around `ingest`                                   |
+| `cmd/fablazing-load` | loads days from local CSVs into Supabase, such as the history          |
 
 `go test ./...` runs the tests. Supabase is a fake in them. To also call the real `fablazing_replace_day` against the local stack (`supabase start`), inside a transaction that's rolled back, set `FABLAZING_TEST_DATABASE_URL=postgres://postgres:postgres@127.0.0.1:54322/postgres`. If the local database doesn't have the fablazing migration yet, add `FABLAZING_TEST_MIGRATION=<path to it>` too. The test refuses any host that isn't local.
 
@@ -36,14 +37,35 @@ aws lambda invoke --profile vdb --region eu-west-1 --function-name vdb-fablazing
 
 A date that hasn't ended in UTC is refused, because it isn't final.
 
+## Loading history
+
+The daily ingest began on 21 Oct 2026. The 30 days before it (21 Sep to 20 Oct) were fetched by hand into `~/.cache/vdb/fablazing/viserai/`, keeping only the games with Viserai on either side. `cmd/fablazing-load` writes them with the same aggregator options and `fablazing_replace_day` as the Lambda:
+
+```bash
+go run ./cmd/fablazing-load -scope viserai -dry-run
+```
+
+- **`-scope viserai`**: every game in the files must have Viserai on a side. The day gets Viserai's card, turn and traverse rows and Viserai's own matchups, never another hero's, since those would be partial. `fablazing_runs.scope` records it as `viserai`, and its `games` and `sides` count only Viserai's games. A day that already has every game is kept, not replaced (the function refuses with `FB001` and the loader reports it).
+- **`-scope all`**: FaBlazing's whole day, written whole like the Lambda. 20 Oct was loaded this way from the full files in `~/.cache/vdb/fablazing/`.
+- A later run with every game for the same date (the Lambda, or `-scope all`) replaces a Viserai-only day whole.
+- **The player cap is approximate on Viserai-only days**: a player's games without Viserai aren't in the files, so they don't count towards the cap of 20. On 20 Oct, where both kinds of file exist, Competitive CC came out the same and Classic Constructed counted 3 more of 548 Viserai decks.
+
+The URL comes from `DB_URL`. Only a local host is used unless `-yes-remote` is given, and the loader stops if the database doesn't have `fablazing_runs.scope` yet. Locally, act as the ingest role with `DB_URL='postgres://postgres:postgres@127.0.0.1:54322/postgres?options=-c%20role%3Dfablazing_ingest'`. For the hosted project, as the maintainer:
+
+```bash
+(source ~/.config/vdb/fablazing.env && export DB_URL && go run ./cmd/fablazing-load -scope all -dir <a folder holding only the full 20 Oct files> -yes-remote && go run ./cmd/fablazing-load -scope viserai -yes-remote)
+```
+
 ## AWS
 
-There are two CloudFormation stacks, both in eu-west-1:
+There are three CloudFormation stacks, all in eu-west-1. Two are the pipeline:
 
 - **`vdb-fablazing-bootstrap`** ([infra/bootstrap.yaml](infra/bootstrap.yaml)) is deployed by hand by the maintainer. It holds GitHub's OIDC provider, the deploy role for GitHub Actions, the role CloudFormation deploys as, a permissions boundary for every role the app stack creates, the build artifacts bucket and the alarm email topic.
 - **`vdb-fablazing`** ([template.yaml](template.yaml), AWS SAM) is the app: the raw bucket, the function, the schedule and the alarm. GitHub Actions deploys it on every merge to main that touches `services/fablazing` ([deploy-fablazing.yml](../../.github/workflows/deploy-fablazing.yml)).
 
 GitHub can only change `vdb-fablazing`. It does that through CloudFormation's role, which can manage only resources named `vdb-fablazing-*`, and every role it creates carries the boundary. Changing the bootstrap stack needs the maintainer.
+
+The third, **`vdb-maintainer`** ([infra/maintainer.yaml](infra/maintainer.yaml)), is the maintainer's own access. See [The maintainer's access](#the-maintainers-access).
 
 **Secrets** are SSM SecureStrings, created by the maintainer and never in the repo:
 
@@ -83,3 +105,43 @@ The maintainer runs these with the `vdb` profile (`aws login --profile vdb` firs
    ```bash
    sam build && sam deploy --profile vdb --s3-bucket vdb-fablazing-artifacts-<account> --s3-prefix vdb-fablazing --role-arn arn:aws:iam::<account>:role/vdb-fablazing-cfn-exec
    ```
+
+### The maintainer's access
+
+The maintainer's IAM user, `viserai.decks`, is in the group `vdb-maintainers` and not in `admins`. Day to day it can:
+
+- invoke and read `vdb-fablazing-*` functions, read and tail their logs, and see the alarm, metrics and schedule
+- read the raw records in `vdb-fablazing-raw-*` (but not change them)
+- get and put the secrets under `/vdb/fablazing/`
+- read every stack, and deploy the app stack with `sam deploy` through `vdb-fablazing-cfn-exec`, as GitHub does
+- see billing, budgets and free tier usage
+- list and describe everything in the console (AWS's `ViewOnlyAccess`), without reading contents
+- sign in with `aws login`, and change its own password and MFA
+
+It can't change IAM, the bootstrap stack, or anything outside the pipeline. For that, switch to **`vdb-admin`**, a role with `AdministratorAccess` that only `viserai.decks` can assume, only when signed in with MFA, for at most an hour:
+
+- **Console:** the `SwitchRoleUrl` output of `vdb-maintainer`, or account `495599764170`, role `vdb-admin`. CloudShell in that session runs as the admin role.
+- **CLI:** add a profile, then pass `--profile vdb-admin`. An `aws login` session counts as signed in with MFA (checked 21 Oct 2026), so there's no `mfa_serial`. That matters because the MFA is a passkey, which the CLI couldn't prompt for.
+
+  ```ini
+  [profile vdb-admin]
+  role_arn = arn:aws:iam::495599764170:role/vdb-admin
+  source_profile = vdb
+  region = eu-west-1
+  ```
+
+The root user (with MFA) stays the last resort.
+
+`vdb-maintainer` is deployed by hand, as the admin role, after any change to it:
+
+```bash
+aws cloudformation deploy --profile vdb-admin --region eu-west-1 --stack-name vdb-maintainer --template-file services/fablazing/infra/maintainer.yaml --capabilities CAPABILITY_NAMED_IAM
+```
+
+Before deploying a change, check the policy against what day-to-day work needs. It runs IAM's policy simulator on the template and changes nothing. It needs PyYAML:
+
+```bash
+python3 services/fablazing/infra/check_maintainer_policy.py
+```
+
+If something day to day is refused, switch to `vdb-admin`, do it, and add what's missing to `MaintainerPolicy` and a case to the check.

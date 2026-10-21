@@ -8,6 +8,7 @@ import {
   type SynergyCard,
   type SynergyEdge,
 } from "../src/synergy.ts";
+import { attributeGroups } from "../src/groups.ts";
 import fixture from "./fixtures/synergy-cards.json" with { type: "json" };
 
 const cards: SynergyCard[] = Object.entries(fixture).map(([name, c]) => ({
@@ -297,5 +298,88 @@ describe("deriveSynergies: a card that lets the other be played from banish", ()
       (e) => e.from === "Embrace" && e.to === "Usurp the Shadow Throne",
     );
     expect(found?.reasons).toEqual(["enables-play-from-banish"]);
+  });
+});
+
+// The maintainer, 21 Oct 2026, from the quick question "Does Base of the Mountain help Usurp the
+// Shadow Throne?": "Base of the Mountain banishes a card and then it goes as a defending card and
+// to the graveyard. The only exception to this is when it is paired with the equipment that
+// banishes defending cards when the chainlink closes." Its banish leaves nothing in the banished
+// zone, so it doesn't feed Gates, fill the zone or enable playing from banish.
+describe("deriveSynergies: a temporary banish (Base of the Mountain)", () => {
+  const base = cards[0]!;
+  const banishesOwn = [
+    {
+      from: "hand" as const,
+      amount: "any" as const,
+      which: "action" as const,
+      trigger: "on_defend" as const,
+      optional: true,
+      temporary: true,
+    },
+  ];
+  const mountainAttributes = {
+    banishesOwn,
+    supports: [
+      { target: { group: "triggers_when_banished" as const } },
+      { target: { card: "Reach of the Abyss" } },
+    ],
+  };
+  const mountain: SynergyCard = {
+    ...base,
+    id: "Base of the Mountain",
+    name: "Base of the Mountain",
+    type: "equipment",
+    subtypes: ["Legs"],
+    attributes: {
+      ...base.attributes,
+      ...mountainAttributes,
+      groups: attributeGroups(mountainAttributes),
+      tokens: [],
+      disrupts: [],
+      instantSpeed: undefined,
+      hasBloodDebt: false,
+      isGateTarget: false,
+    },
+    variantAttributes: [],
+  };
+  const reach: SynergyCard = {
+    ...mountain,
+    id: "Reach of the Abyss",
+    name: "Reach of the Abyss",
+    subtypes: ["Chest"],
+    attributes: {
+      ...base.attributes,
+      groups: [],
+      tokens: [],
+      disrupts: [],
+      instantSpeed: undefined,
+      hasBloodDebt: false,
+      isGateTarget: false,
+      banishesOwn: [
+        {
+          from: "defending_cards",
+          trigger: "combat_chain_closes",
+          conditions: ["it_defended"],
+        },
+      ],
+    },
+  };
+  const all = deriveSynergies([...cards, mountain, reach]);
+
+  it("doesn't help Usurp the Shadow Throne by banishing", () => {
+    expect(
+      edge("Base of the Mountain", "Usurp the Shadow Throne", all),
+    ).toBeUndefined();
+  });
+
+  it("only links to the cards it names: 'when banished' cards and Reach of the Abyss", () => {
+    const to = all
+      .filter((e) => e.from === "Base of the Mountain")
+      .map((e) => [e.to, e.reasons]);
+    expect(to).toEqual([
+      ["Arknight Descendancy", ["supports"]],
+      ["Reach of the Abyss", ["supports"]],
+    ]);
   });
 });

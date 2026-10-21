@@ -2,7 +2,7 @@
 -- authenticated by default (local stacks do), so every grant must be explicit.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(76);
+select plan(84);
 
 -- Public reference data: readable by everyone
 select table_privs_are('public', t, 'anon', array['SELECT'], 'anon can only read ' || t)
@@ -60,6 +60,11 @@ select table_privs_are('public', t, 'fablazing_ingest', array['SELECT', 'INSERT'
 select table_privs_are('public', 'fablazing_runs', 'fablazing_ingest', array['SELECT', 'INSERT', 'UPDATE'], 'the ingest role records runs');
 select table_privs_are('public', t, 'fablazing_ingest', array['SELECT'], 'the ingest role can only read ' || t)
   from unnest(array['fablazing_card_map', 'fablazing_rules_windows']) t;
+-- FaBlazing app views (a rolling window over the tables above): read only, for everyone.
+select table_privs_are('public', t, r, array['SELECT'], r || ' can only read ' || t)
+  from unnest(array['fablazing_window', 'fablazing_viserai_baseline', 'fablazing_card_stats',
+                    'fablazing_viserai_matchups']) t
+ cross join unnest(array['anon', 'authenticated']) r;
 
 -- Private tables: nothing for anon
 select table_privs_are('public', t, 'anon', array[]::text[], 'anon has no access to ' || t)
