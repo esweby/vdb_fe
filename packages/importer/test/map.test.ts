@@ -63,6 +63,33 @@ describe("toImportCards", () => {
     });
   });
 
+  it("imports Soul of Existence, a Shadow resource with the purple pitch 4 (maintainer, 21 Oct 2026)", () => {
+    // Trimmed from the pinned dataset (debce79).
+    const soul: DatasetCard = {
+      unique_id: "d8hLNTfQcKDtKNrWDm7dF",
+      name: "Soul of Existence",
+      pitch: "4",
+      cost: "",
+      power: "",
+      defense: "",
+      types: ["Shadow", "Resource", "Gem"],
+      card_keywords: ["Legendary"],
+      functional_text_plain: "Legendary\nWhen this is pitched, lose 1{h}.",
+      type_text: "Shadow Resource - Gem",
+      cc_legal: true,
+      cc_banned: false,
+      cc_suspended: false,
+      cc_living_legend: false,
+    };
+    const [imported] = toImportCards([soul], {});
+    expect(imported).toMatchObject({
+      name: "Soul of Existence",
+      type: "resource",
+      talents: ["Shadow"],
+      variants: [{ externalId: "d8hLNTfQcKDtKNrWDm7dF", pitch: 4 }],
+    });
+  });
+
   it("maps attack actions", () => {
     expect(card("Deathly Delight").type).toBe("attack_action");
   });

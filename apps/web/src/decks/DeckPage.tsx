@@ -5,7 +5,8 @@ import { useCards } from "../cards/useCards.ts";
 import { useAppSelector } from "../hooks.ts";
 import { useServices } from "../servicesContext.ts";
 import { LoadError, Loading, Tag, TextField } from "../ui/index.ts";
-import { analyseDeck } from "./deckAnalysis.ts";
+import { pitchesShown, pitchName } from "../cards/pitch.ts";
+import { analyseDeck, type PitchCounts } from "./deckAnalysis.ts";
 import { CardFinder } from "./CardFinder.tsx";
 import { CardTile } from "./CardTile.tsx";
 import { DeckAnalysisPanel } from "./DeckAnalysisPanel.tsx";
@@ -550,17 +551,20 @@ export function DeckPage() {
   );
 }
 
-/** Stacked red / yellow / blue bar with counts, for the deck header. */
-function PitchBar({ pitch }: { pitch: Record<1 | 2 | 3, number> }) {
-  const total = pitch[1] + pitch[2] + pitch[3];
+/** Stacked red / yellow / blue (and purple, when there is some) bar with counts, for the deck header. */
+function PitchBar({ pitch }: { pitch: PitchCounts }) {
+  const shown = pitchesShown(pitch) as (keyof PitchCounts)[];
+  const total = shown.reduce((n, p) => n + pitch[p], 0);
   return (
     <div
       role="img"
-      aria-label={`Pitch: ${pitch[1]} red, ${pitch[2]} yellow, ${pitch[3]} blue`}
+      aria-label={`Pitch: ${shown
+        .map((p) => `${pitch[p]} ${pitchName(p).toLowerCase()}`)
+        .join(", ")}`}
       className={styles.pitchBar}
     >
       <div className={styles.pitchBarTrack}>
-        {([1, 2, 3] as const).map((p) =>
+        {shown.map((p) =>
           pitch[p] > 0 ? (
             <span
               key={p}
@@ -572,7 +576,7 @@ function PitchBar({ pitch }: { pitch: Record<1 | 2 | 3, number> }) {
         {total === 0 && <span className={styles.pitchBarEmpty} />}
       </div>
       <div className={styles.pitchBarCounts}>
-        {([1, 2, 3] as const).map((p) => (
+        {shown.map((p) => (
           <span key={p}>
             <span
               className={`${styles.pip} ${styles[`pitch${p}`]}`}

@@ -29,6 +29,7 @@ export const PITCH_NAMES: Record<number, string> = {
   1: "red",
   2: "yellow",
   3: "blue",
+  4: "purple",
 };
 
 /**

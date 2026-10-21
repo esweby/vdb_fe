@@ -1,7 +1,7 @@
 import { getRouteApi, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import type { CardSummary, VariantSummary } from "../cards/cardRepository.ts";
-import { pitchName } from "../cards/pitch.ts";
+import { pitchesShown, pitchName } from "../cards/pitch.ts";
 import { useCards } from "../cards/useCards.ts";
 import { useAppSelector } from "../hooks.ts";
 import { useServices } from "../servicesContext.ts";
@@ -13,7 +13,6 @@ import styles from "./DecksPage.module.css";
 
 const route = getRouteApi("/decks");
 const GEAR = ["weapon", "equipment"];
-const PITCHES = [1, 2, 3] as const;
 const linkButton = (variant: "primary" | "secondary") =>
   [ui.button, ui[variant]].filter(Boolean).join(" ");
 
@@ -42,11 +41,12 @@ function DeckTile(props: {
     .map((c) => ({ ...c, found: lookup.get(c.variantId) }))
     .filter((c) => c.found && !GEAR.includes(c.found.card.type));
   const count = main.reduce((n, c) => n + c.quantity, 0);
-  const byPitch = PITCHES.map((p) =>
-    main
-      .filter((c) => c.found!.variant.pitch === p)
-      .reduce((n, c) => n + c.quantity, 0),
-  );
+  const counts: Record<number, number> = {};
+  for (const c of main) {
+    const p = c.found!.variant.pitch;
+    if (p !== null) counts[p] = (counts[p] ?? 0) + c.quantity;
+  }
+  const byPitch = pitchesShown(counts).map((p) => [p, counts[p] ?? 0]);
   // The cover is the card the deck runs most of, with an image.
   const cover = [...main]
     .sort((a, b) => b.quantity - a.quantity)
@@ -88,16 +88,16 @@ function DeckTile(props: {
           className={styles.mix}
           role="img"
           aria-label={`Pitch mix: ${byPitch
-            .map((n, i) => `${n} ${pitchName(i + 1).toLowerCase()}`)
+            .map(([p, n]) => `${n} ${pitchName(p!).toLowerCase()}`)
             .join(", ")}`}
         >
           {count === 0 ? (
             <i className={styles.mixEmpty} />
           ) : (
-            byPitch.map((n, i) => (
+            byPitch.map(([p, n]) => (
               <i
-                key={i}
-                style={{ flexGrow: n, background: `var(--pitch-${i + 1})` }}
+                key={p}
+                style={{ flexGrow: n, background: `var(--pitch-${p})` }}
               />
             ))
           )}

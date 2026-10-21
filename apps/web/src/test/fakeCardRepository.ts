@@ -130,3 +130,17 @@ export function fakeCardRepository(
 ): CardRepository {
   return { listCards: async () => cards };
 }
+
+/** The one purple (pitch 4) card: a Shadow resource, for tests of pitch 4 in pitch mixes. */
+export const SOUL_OF_EXISTENCE: CardSummary = {
+  id: "card-soul-of-existence",
+  name: "Soul of Existence",
+  type: "resource",
+  subtypes: ["Gem"],
+  classes: [],
+  talents: ["Shadow"],
+  keywords: ["Legendary"],
+  attributes: generated,
+  attributesVerified: false,
+  variants: [{ ...v("soe4", 4), cost: null, defense: null }],
+};

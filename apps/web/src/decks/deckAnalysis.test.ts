@@ -54,7 +54,7 @@ describe("analyseDeck", () => {
   const analysis = analyseDeck({ entries, dimensions, scores });
 
   it("counts deck cards by pitch, leaving out the sideboard and gear", () => {
-    expect(analysis.pitch).toEqual({ 1: 3, 2: 1, 3: 2 });
+    expect(analysis.pitch).toEqual({ 1: 3, 2: 1, 3: 2, 4: 0 });
   });
 
   it("builds a cost curve from deck cards", () => {
@@ -67,7 +67,7 @@ describe("analyseDeck", () => {
         key: "runechantCreation",
         label: "Runechant creation",
         cards: 5,
-        byPitch: { 1: 3, 2: 0, 3: 2 },
+        byPitch: { 1: 3, 2: 0, 3: 2, 4: 0 },
         average: 74,
         alwaysAvailable: 1,
       },
@@ -75,7 +75,7 @@ describe("analyseDeck", () => {
         key: "gateCreation",
         label: "Gate creation",
         cards: 2,
-        byPitch: { 1: 0, 2: 0, 3: 2 },
+        byPitch: { 1: 0, 2: 0, 3: 2, 4: 0 },
         average: 80,
         alwaysAvailable: 0,
       },
@@ -95,5 +95,21 @@ describe("analyseDeck", () => {
 
   it("counts deck cards nobody has scored", () => {
     expect(analysis.unscored).toBe(1);
+  });
+
+  it("counts purple (pitch 4) cards, and scores them by pitch", () => {
+    const withSoul = analyseDeck({
+      entries: [
+        ...entries,
+        entry("soul", 4, 1, { type: "resource", cost: null }),
+      ],
+      dimensions,
+      scores: new Map([
+        ...scores,
+        ["soul", { runechantCreation: 10, gateCreation: 0 }],
+      ]),
+    });
+    expect(withSoul.pitch).toEqual({ 1: 3, 2: 1, 3: 2, 4: 1 });
+    expect(withSoul.dimensions[0]!.byPitch).toEqual({ 1: 3, 2: 0, 3: 2, 4: 1 });
   });
 });
