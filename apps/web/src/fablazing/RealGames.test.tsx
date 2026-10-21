@@ -18,6 +18,7 @@ import {
   WINDOW,
 } from "../test/fakeFablazingRepository.ts";
 import { renderApp } from "../test/renderApp.tsx";
+import type { MatchupStat } from "./fablazingRepository.ts";
 
 const CCC_WINDOW = {
   format: 1 as const,
@@ -132,57 +133,58 @@ describe("In real games, on the card page", () => {
   });
 });
 
-describe("Viserai's real matchups, on a deck's Matchups tab", () => {
-  const HEROES = [
-    {
-      id: "h1",
-      name: "Example Hero",
-      classes: [],
-      talents: [],
-      imageUrl: null,
-    },
-  ];
+const HEROES = [
+  {
+    id: "h1",
+    name: "Example Hero",
+    classes: [],
+    talents: [],
+    imageUrl: null,
+  },
+];
 
-  async function matchupsTab(signedIn: boolean) {
-    const fake = fakeDeckRepository(
-      [
-        {
-          id: "deck-1",
-          name: "Gate tempo",
-          updatedAt: "2026-10-14T10:00:00Z",
-          cards: [{ variantId: "bsl3", quantity: 2, sideboard: false }],
-          pitchTargets: {},
-          isPublic: true,
-        },
+async function matchupsTab(signedIn: boolean, extra: MatchupStat[] = []) {
+  const fake = fakeDeckRepository(
+    [
+      {
+        id: "deck-1",
+        name: "Gate tempo",
+        updatedAt: "2026-10-14T10:00:00Z",
+        cards: [{ variantId: "bsl3", quantity: 2, sideboard: false }],
+        pitchTargets: {},
+        isPublic: true,
+      },
+    ],
+    { heroes: HEROES, userId: "u1" },
+  );
+  await renderApp({
+    path: "/decks/deck-1?tab=matchups",
+    auth: fakeAuthService({
+      users: { "u@test.local": { id: "u1", password: "pw", role: "user" } },
+      signedIn: signedIn ? { id: "u1", email: "u@test.local" } : undefined,
+    }).service,
+    decks: fake.repository,
+    cards: fakeCardRepository(sampleCards),
+    fablazing: fakeFablazingRepository({
+      windows: [WINDOW],
+      matchups: [
+        matchupStat(),
+        matchupStat({
+          opponent: "mystery_hero",
+          heroId: null,
+          games: 30,
+          wins: 20,
+        }),
+        ...extra,
       ],
-      { heroes: HEROES, userId: "u1" },
-    );
-    await renderApp({
-      path: "/decks/deck-1?tab=matchups",
-      auth: fakeAuthService({
-        users: { "u@test.local": { id: "u1", password: "pw", role: "user" } },
-        signedIn: signedIn ? { id: "u1", email: "u@test.local" } : undefined,
-      }).service,
-      decks: fake.repository,
-      cards: fakeCardRepository(sampleCards),
-      fablazing: fakeFablazingRepository({
-        windows: [WINDOW],
-        matchups: [
-          matchupStat(),
-          matchupStat({
-            opponent: "mystery_hero",
-            heroId: null,
-            games: 30,
-            wins: 20,
-          }),
-        ],
-      }),
-    });
-    return within(
-      await screen.findByRole("region", { name: "Viserai in real games" }),
-    );
-  }
+    }),
+  });
+  return within(
+    await screen.findByRole("region", { name: "Viserai in real games" }),
+  );
+}
 
+describe("Viserai's real matchups, on a deck's Matchups tab", () => {
   it("shows Viserai's win rate against each hero with an interval, and meta share", async () => {
     const real = await matchupsTab(true);
     const cells = (name: string) =>
@@ -196,7 +198,7 @@ describe("Viserai's real matchups, on a deck's Matchups tab", () => {
     // Meta share needs no minimum: it's a share of all 400 games.
     expect(cells("Mystery Hero")).toEqual([
       "Not enough games yet (n = 30)",
-      "8%",
+      "7.5%",
       "30",
     ]);
     expect(
@@ -209,6 +211,23 @@ describe("Viserai's real matchups, on a deck's Matchups tab", () => {
     expect(
       await real.findByRole("row", { name: /^Example Hero/ }),
     ).toBeInTheDocument();
+  });
+});
+
+describe("Viserai's real matchups, a long list", () => {
+  it("shows the 12 most-faced heroes, and the rest on request", async () => {
+    const extra = Array.from({ length: 12 }, (_, i) =>
+      matchupStat({ opponent: `hero_${i + 1}`, heroId: null, games: 20 - i }),
+    );
+    const real = await matchupsTab(true, extra);
+    await real.findByRole("row", { name: /^Example Hero/ });
+    // A header row and 12 heroes; the least-faced are held back.
+    expect(real.getAllByRole("row")).toHaveLength(13);
+    expect(real.queryByRole("row", { name: /^Hero 12/ })).toBeNull();
+    await userEvent
+      .setup()
+      .click(real.getByRole("button", { name: "Show all 14 heroes" }));
+    expect(real.getAllByRole("row")).toHaveLength(15);
   });
 });
 

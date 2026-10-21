@@ -227,8 +227,6 @@ export function MatchupsPanel(props: {
         </p>
       </header>
 
-      <RealMatchups />
-
       {matchups.length > 0 && (
         <ul aria-label="Planned matchups" className={styles.matchupList}>
           {matchups.map((m) => {
@@ -332,6 +330,8 @@ export function MatchupsPanel(props: {
           </div>
         </section>
       )}
+
+      <RealMatchups />
     </section>
   );
 }

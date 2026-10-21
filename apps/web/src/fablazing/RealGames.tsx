@@ -24,6 +24,11 @@ import {
 import styles from "./RealGames.module.css";
 
 const percent = (x: number) => `${Math.round(x * 100)}%`;
+/** Shares under 10% keep a decimal, so a rare hero isn't "0%". */
+const share = (x: number) =>
+  x < 0.1 ? `${(x * 100).toFixed(1)}%` : percent(x);
+/** The most-faced heroes shown before "Show all". */
+const FIRST_HEROES = 12;
 const notEnough = (n: number) => `Not enough games yet (n = ${n})`;
 
 /** The window for each format, or null while loading; failed is true if it couldn't load. */
@@ -231,6 +236,7 @@ function MatchupTable(props: { window: FablazingWindow }) {
     [fablazing, format],
   );
   const [heroes, setHeroes] = useState<Hero[]>([]);
+  const [showAll, setShowAll] = useState(false);
   useEffect(() => {
     let live = true;
     decks.listHeroes().then(
@@ -263,7 +269,7 @@ function MatchupTable(props: { window: FablazingWindow }) {
             </tr>
           </thead>
           <tbody>
-            {sorted.map((m) => {
+            {(showAll ? sorted : sorted.slice(0, FIRST_HEROES)).map((m) => {
               const e = matchupEvidence(m);
               return (
                 <tr key={m.opponent}>
@@ -280,7 +286,7 @@ function MatchupTable(props: { window: FablazingWindow }) {
                       ? formatRate(m.wins, m.games)
                       : notEnough(m.games)}
                   </td>
-                  <td>{percent(e.metaShare)}</td>
+                  <td>{share(e.metaShare)}</td>
                   <td>{m.games}</td>
                 </tr>
               );
@@ -288,6 +294,11 @@ function MatchupTable(props: { window: FablazingWindow }) {
           </tbody>
         </table>
       </div>
+      {!showAll && sorted.length > FIRST_HEROES && (
+        <Button variant="ghost" onClick={() => setShowAll(true)}>
+          {`Show all ${sorted.length} heroes`}
+        </Button>
+      )}
       <p className={styles.muted}>
         {`Meta share is how often Viserai faced each hero, out of its ${rows[0]!.totalGames} games. Abandoned early concessions are left out.`}
       </p>
