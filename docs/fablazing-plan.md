@@ -139,14 +139,14 @@ There's no general synergy framework until the chains show what the data actuall
 
 ## Status of steps
 
-| #   | Step                      | State                                                                   | Waiting on                                                |
-| --- | ------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------- |
-| 1   | Data audit                | Written                                                                 | FaBlazing's answers                                       |
-| 2   | One chain through the CLI | Parser, reader, chain spec and CLI built and tested; measurement locked | The maintainer's expectation; card sets from the importer |
-| 3   | Quick-win stats           | Not started                                                             | Step 2                                                    |
-| 4   | Chain library             | Not started                                                             | Step 2                                                    |
-| 5   | Engine calibration        | Not started                                                             | Step 4; thresholds written first                          |
-| 6   | Expand                    | —                                                                       | Evidence from steps 4 and 5                               |
+| #   | Step                      | State                                                                        | Waiting on                                                  |
+| --- | ------------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| 1   | Data audit                | Written                                                                      | FaBlazing's answers                                         |
+| 2   | One chain through the CLI | Parser, reader, chain spec and CLI built and tested; measurement locked      | The maintainer's expectation; card sets from the importer   |
+| 3   | Quick-win stats           | Not started                                                                  | Step 2                                                      |
+| 4   | Chain library             | Nine chains measured on 30 days ([fablazing-chains.md](fablazing-chains.md)) | Player cap in the tool; two Open the Gate chains to specify |
+| 5   | Engine calibration        | Not started                                                                  | Step 4; thresholds written first                            |
+| 6   | Expand                    | —                                                                            | Evidence from steps 4 and 5                                 |
 
 ## Risks
 
