@@ -44,7 +44,7 @@ Full detail is in [fablazing-data-dictionary.md](fablazing-data-dictionary.md). 
 
 The deliverable is [fablazing-data-dictionary.md](fablazing-data-dictionary.md). It still waits on two things:
 
-- **FaBlazing's answers:** what the action codes mean, why some sides lack detail, why some games appear twice, what `firstPlayer` means, and whether hidden zones could be logged.
+- **FaBlazing's answers (21 Oct 2026):** sides without detail are players who turned off stats; duplicates are probably undo-then-finish, so the latest is kept; `firstPlayer` 1 means went first. What the action codes mean is a question for Talishar's developers and is still open.
 - **From the maintainer:** nothing outstanding. There are no ban or errata changes since Viserai's release.
 
 ### 2. Prove one chain through the command line: done
@@ -145,7 +145,7 @@ There's no general synergy framework until the chains show what the data actuall
 
 | #   | Step                      | State                                                                                                                                                                                                              | Waiting on                                                                                                    |
 | --- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
-| 1   | Data audit                | Written ([fablazing-data-dictionary.md](fablazing-data-dictionary.md))                                                                                                                                             | FaBlazing's answers                                                                                           |
+| 1   | Data audit                | Written ([fablazing-data-dictionary.md](fablazing-data-dictionary.md)); FaBlazing answered on 21 Oct                                                                                                               | What the action codes mean: a question for Talishar's developers                                              |
 | 2   | One chain through the CLI | Done (PR 200)                                                                                                                                                                                                      | —                                                                                                             |
 | 3   | Quick-win stats           | **Pipeline live** (PRs 201, 203–206): a Go Lambda at 10:00 UTC daily, raw games in S3, aggregates in Supabase as `fablazing_ingest` (password set and rotated, 21 Oct). History and the app views aren't done yet. | The first run's check; loading history; the app views                                                         |
 | 4   | Chain library             | Nine chains measured on 21 Sep to 20 Oct, 57 of 60 files ([fablazing-chains.md](fablazing-chains.md), PR 207)                                                                                                      | The player cap in the chain tool; hand-listed sets moved to the importer; two Open the Gate chains to specify |
