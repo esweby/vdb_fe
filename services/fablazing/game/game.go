@@ -70,6 +70,8 @@ type Event struct {
 // TurnStats is one turnResults entry.
 type TurnStats struct {
 	DamageDealt, DamageTaken     int
+	DamageThreatened             int // before blocks
+	ArcaneDealt                  int // arcaneDamageDealt
 	LifeAtEnd, OpponentLifeAtEnd int
 	HasLife                      bool
 	Recorded                     bool // the turn is in turnResults
@@ -245,6 +247,7 @@ func parseSide(m map[string]any) Side {
 		_, hasLife := d["lifeAtTurnEnd"]
 		s.TurnStats[n] = TurnStats{
 			DamageDealt: num(d["damageDealt"]), DamageTaken: num(d["damageTaken"]),
+			DamageThreatened: num(d["damageThreatened"]), ArcaneDealt: num(d["arcaneDamageDealt"]),
 			LifeAtEnd: num(d["lifeAtTurnEnd"]), OpponentLifeAtEnd: num(d["opponentLifeAtTurnEnd"]), HasLife: hasLife, Recorded: true,
 		}
 	}
