@@ -22,6 +22,16 @@ import (
 // Viserai is the hero id matchups use for either side of Viserai.
 const Viserai = "viserai"
 
+// PlayerCap is the most sides one player contributes to a day and format:
+// their earliest games by created_at. Set by the maintainer on 21 Oct 2026;
+// recheck once there's a month of data (does Classic Constructed play drop
+// after game 20?).
+const PlayerCap = 20
+
+// Concession is the rule for an abandoned early concession, accepted
+// provisionally by the maintainer on 21 Oct 2026.
+var Concession = game.ConcessionRule{MaxTurns: 2, MaxLife: 20}
+
 // Options for one run.
 type Options struct {
 	Date       string // YYYY-MM-DD, carried into Run
@@ -261,7 +271,8 @@ func Run(games []game.Game, o Options) (Result, error) {
 		}
 	}
 
-	r := Result{Run: run}
+	// Empty lists are [] in JSON, not null: fablazing_replace_day reads each one.
+	r := Result{Run: run, Cards: []CardDaily{}, Matchups: []MatchupDaily{}, Turns: []TurnDaily{}, Traverses: []TraverseDaily{}}
 	seen := map[string]bool{}
 	for _, c := range cards {
 		r.Cards = append(r.Cards, *c)

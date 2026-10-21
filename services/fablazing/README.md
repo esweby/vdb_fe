@@ -11,22 +11,22 @@ The FaBlazing data pipeline in Go. The plan is [docs/fablazing-plan.md](../../do
 | `cmd/fablazing`     | the local CLI                                                          |
 | `cmd/ingest-lambda` | the daily AWS Lambda around `ingest`                                   |
 
-`go test ./...` runs the tests.
+`go test ./...` runs the tests. Supabase is a fake in them. To also call the real `fablazing_replace_day` against the local stack (`supabase start`), inside a transaction that's rolled back, set `FABLAZING_TEST_DATABASE_URL=postgres://postgres:postgres@127.0.0.1:54322/postgres`. If the local database doesn't have the fablazing migration yet, add `FABLAZING_TEST_MIGRATION=<path to it>` too. The test refuses any host that isn't local.
 
 ## The daily ingest
 
 At 10:00 UTC each day, EventBridge Scheduler runs the Lambda `vdb-fablazing-ingest` in eu-west-1. For formats 0 and 1 it:
 
-1. skips the format if that day is already in S3, so a day is never fetched from FaBlazing twice
+1. skips the format if that day is already in S3, so a stored day is never fetched from FaBlazing again
 2. asks the FaBlazing API for yesterday's file (UTC), with the key from SSM, and downloads it
 3. parses it with `game.ReadAll`, which keeps the latest copy of each guid
-4. keeps every game with Viserai on either side, with both sides
-5. writes those games' raw CSV rows, every column as text, as gzipped NDJSON to `s3://vdb-fablazing-raw-<account>/raw/date=YYYY-MM-DD/format=N.ndjson.gz`
-6. logs counts only: rows, games, kept games and Viserai sides
+4. aggregates every game (`aggregate.Run`, with the player cap of 20 and the provisional concession rule) and writes the day to Supabase with `fablazing_replace_day`, as the `fablazing_ingest` role. Matchups and the run summary cover every game, so the aggregator gets them all, not only Viserai's
+5. keeps every game with Viserai on either side, with both sides, and writes their raw CSV rows, every column as text, as gzipped NDJSON to `s3://vdb-fablazing-raw-<account>/raw/date=YYYY-MM-DD/format=N.ndjson.gz`
+6. logs counts only: rows, games, kept games, Viserai sides and rows written. Never a player hash or the payload
 
 The rows are stored raw so that a parser change can rebuild everything without downloading again. They include the hashed player names, which are only for capping one player's weight and are never shown. The bucket is private.
 
-**Writing aggregates to Supabase** plugs in at `ingest.Aggregator`, which receives each day and format's kept games after they're stored. It isn't wired up yet.
+**Supabase comes before S3.** A day is stored in S3 only once its aggregates are written, so a failed write leaves nothing for a rerun to skip. Replacing a day is idempotent, so writing it twice is harmless. The raw records hold only Viserai's games, so they can't rebuild the matchups: a day whose write failed has to be fetched again.
 
 **There are no automatic retries.** An error emails the alarm address. To rerun a day, invoke the function with a date; formats already stored are skipped:
 
@@ -48,7 +48,7 @@ GitHub can only change `vdb-fablazing`. It does that through CloudFormation's ro
 **Secrets** are SSM SecureStrings, created by the maintainer and never in the repo:
 
 - `/vdb/fablazing/api-key`: the FaBlazing API key
-- `/vdb/fablazing/db-password`: reserved for the Supabase `fablazing_ingest` role
+- `/vdb/fablazing/db-url`: the Postgres URL for the Supabase `fablazing_ingest` role, password included. It goes through Supavisor's session pooler, because the direct database host is IPv6 only and a Lambda outside a VPC has no IPv6
 
 Everything stays within the free tier: one short run a day, a few MB a month in S3, standard SSM parameters, one alarm and SSE-S3 encryption (no KMS key).
 
@@ -68,9 +68,17 @@ The maintainer runs these with the `vdb` profile (`aws login --profile vdb` firs
    (source ~/.config/vdb/fablazing.env && aws ssm put-parameter --profile vdb --region eu-west-1 --name /vdb/fablazing/api-key --type SecureString --value "$FUNCTION_API_KEY")
    ```
 
-3. Set the repository variable `AWS_DEPLOY_ROLE_ARN` to the bootstrap stack's `DeployRoleArn` output. Until it's set, the deploy workflow is skipped.
+3. Once the fablazing migration is in the hosted project, give `fablazing_ingest` a password (SQL editor: `alter role fablazing_ingest with password '…'`), then store its pooler URL. The host is under Connect → Session pooler in the dashboard, and the user is `fablazing_ingest.<project ref>`. Put `DB_URL='postgres://fablazing_ingest.gmqdtqgkqygepsbrgomk:<password>@<pooler host>:5432/postgres?sslmode=require'` in `~/.config/vdb/fablazing.env`, then:
 
-4. Deploy the app stack once by hand, from `services/fablazing`, the same way GitHub Actions does:
+   ```bash
+   (source ~/.config/vdb/fablazing.env && aws ssm put-parameter --profile vdb --region eu-west-1 --name /vdb/fablazing/db-url --type SecureString --value "$DB_URL")
+   ```
+
+   The Lambda fails without it, so store it before a deploy that includes the Supabase writer.
+
+4. Set the repository variable `AWS_DEPLOY_ROLE_ARN` to the bootstrap stack's `DeployRoleArn` output. Until it's set, the deploy workflow is skipped.
+
+5. Deploy the app stack once by hand, from `services/fablazing`, the same way GitHub Actions does:
 
    ```bash
    sam build && sam deploy --profile vdb --s3-bucket vdb-fablazing-artifacts-<account> --s3-prefix vdb-fablazing --role-arn arn:aws:iam::<account>:role/vdb-fablazing-cfn-exec

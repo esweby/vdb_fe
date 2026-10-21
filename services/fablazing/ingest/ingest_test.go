@@ -43,7 +43,10 @@ func (s *fakeStore) Put(_ context.Context, key string, body []byte) error {
 	return nil
 }
 
-type fakeAggregator struct{ calls []string }
+type fakeAggregator struct {
+	calls []string
+	err   error
+}
 
 func (a *fakeAggregator) Aggregate(_ context.Context, date string, format int, games []game.Game) error {
 	guids := []string{}
@@ -51,7 +54,7 @@ func (a *fakeAggregator) Aggregate(_ context.Context, date string, format int, g
 		guids = append(guids, g.GUID)
 	}
 	a.calls = append(a.calls, fmt.Sprintf("%s/%d:%s", date, format, strings.Join(guids, ",")))
-	return nil
+	return a.err
 }
 
 // fakeFaBlazing serves the API and the signed download. It records each API request.
@@ -213,7 +216,9 @@ func TestRunSkipsADayAlreadyStored(t *testing.T) {
 	}
 }
 
-func TestRunPassesKeptGamesToTheAggregator(t *testing.T) {
+// Matchups and the run summary cover every game, so the aggregator gets them
+// all, while S3 keeps only the Viserai games.
+func TestRunPassesEveryGameToTheAggregator(t *testing.T) {
 	f := newFakeFaBlazing(t)
 	store := &fakeStore{objects: map[string][]byte{}}
 	agg := &fakeAggregator{}
@@ -225,8 +230,30 @@ func TestRunPassesKeptGamesToTheAggregator(t *testing.T) {
 	if _, err := in.Run(context.Background(), "2026-10-20"); err != nil {
 		t.Fatal(err)
 	}
-	if got := strings.Join(agg.calls, " "); got != "2026-10-20/0:g-vis-first,g-vis-second" {
-		t.Errorf("aggregator calls = %q", got)
+	if got := strings.Join(agg.calls, " "); got != "2026-10-20/0:g-vis-first,g-other,g-vis-second" {
+		t.Errorf("aggregator calls = %q, want every game including g-other", got)
+	}
+	if rows := readNDJSON(t, store.objects["raw/date=2026-10-20/format=0.ndjson.gz"]); len(rows) != 2 {
+		t.Errorf("stored %d raw rows, want only the 2 Viserai games", len(rows))
+	}
+}
+
+// A day whose aggregates didn't reach Supabase isn't stored, so a rerun
+// fetches it again rather than skipping it.
+func TestRunDoesNotStoreADayTheAggregatorFailed(t *testing.T) {
+	f := newFakeFaBlazing(t)
+	store := &fakeStore{objects: map[string][]byte{}}
+	var logs bytes.Buffer
+	in := newIngester(t, f, store, &logs)
+	in.Formats = []int{0}
+	in.Aggregator = &fakeAggregator{err: fmt.Errorf("database down")}
+
+	_, err := in.Run(context.Background(), "2026-10-20")
+	if err == nil || !strings.Contains(err.Error(), "database down") {
+		t.Fatalf("err = %v, want the aggregator's error", err)
+	}
+	if len(store.objects) != 0 {
+		t.Errorf("stored %v, so a rerun would skip the day", keys(store.objects))
 	}
 }
 
