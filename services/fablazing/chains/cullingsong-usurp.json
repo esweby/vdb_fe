@@ -1,0 +1,31 @@
+{
+  "id": "cullingsong-usurp",
+  "status": "line described by the maintainer, 21 Oct 2026; matching unverified",
+  "line": "The maintainer (21 Oct 2026): Usurp the Shadow Throne is typically played from the banished zone, less from arsenal, least from hand. The line is Cullingsong Gloomblade into Usurp the Shadow Throne: Cullingsong makes the opponent block with equipment or a card from hand, which, with pressure applied through the game, usually gives room to send Usurp. The zone Usurp is played from isn't logged, so it's ignored. Logged: Cullingsong played, Usurp played in the same turn, Usurp hits in the same turn. The comparison splits on Usurp being played after Cullingsong; the hit rate after the pair is set against usurp-hits.",
+  "expectation": "Written 21 Oct 2026, before measuring this chain (seen beforehand: only that both card ids appear in the 20 Oct data; no counts). 1. How often: of sides that play Cullingsong Gloomblade, 15-40% play Usurp the Shadow Throne later that turn. 2. Usurp lands: after Cullingsong, Usurp hits in at least 60%, at least 15 points above its hit rate without Cullingsong (from usurp-hits); a smaller gap means Cullingsong isn't making the room, or opponents keep a blocker for Usurp anyway. 3. Result: compared with Cullingsong turns without Usurp, with life totals held level, 0 to +10 points and more damage that turn; the pair should show up more when the opponent's life is lower (the 'pressure applied' condition).",
+  "compareFrom": "usurp",
+  "steps": [
+    {
+      "name": "cullingsong",
+      "action": "M",
+      "card": "cullingsong_gloomblade_red"
+    },
+    {
+      "name": "usurp",
+      "actions": [
+        "M",
+        "INSTANT",
+        "A"
+      ],
+      "card": "usurp_the_shadow_throne_blue",
+      "withinTurns": 0
+    },
+    {
+      "name": "usurp-hits",
+      "action": "HIT",
+      "card": "usurp_the_shadow_throne_blue",
+      "withinTurns": 0
+    }
+  ],
+  "expectationBy": "maintainer (drafted by Claude, approved 21 Oct 2026)"
+}

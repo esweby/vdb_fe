@@ -39,6 +39,7 @@ type Step struct {
 	Actions     []string `json:"actions,omitempty"` // any of these, instead of Action
 	Card        string   `json:"card,omitempty"`
 	Set         string   `json:"set,omitempty"`
+	AnyCard     bool     `json:"anyCard,omitempty"` // any card, instead of Card or Set
 	WithinTurns *int     `json:"withinTurns,omitempty"`
 	// Unless rules the step out if any of these events comes after the
 	// previous step and before this one (for example another Gate maker).
@@ -55,10 +56,11 @@ type Pattern struct {
 	Actions []string `json:"actions,omitempty"`
 	Card    string   `json:"card,omitempty"`
 	Set     string   `json:"set,omitempty"`
+	AnyCard bool     `json:"anyCard,omitempty"`
 }
 
 func (st Step) pattern() Pattern {
-	return Pattern{Action: st.Action, Actions: st.Actions, Card: st.Card, Set: st.Set}
+	return Pattern{Action: st.Action, Actions: st.Actions, Card: st.Card, Set: st.Set, AnyCard: st.AnyCard}
 }
 
 // Result is the furthest a game got through a chain.
@@ -98,8 +100,8 @@ func ParseSpec(r io.Reader, sets Sets) (Spec, error) {
 			return Spec{}, fmt.Errorf("chain %q step %q: anyOrder needs withinTurns 0", s.ID, st.Name)
 		}
 		for _, p := range append([]Pattern{st.pattern()}, st.Unless...) {
-			if (p.Card == "") == (p.Set == "") {
-				return Spec{}, fmt.Errorf("chain %q step %q needs exactly one of card or set", s.ID, st.Name)
+			if n := countTrue(p.Card != "", p.Set != "", p.AnyCard); n != 1 {
+				return Spec{}, fmt.Errorf("chain %q step %q needs exactly one of card, set or anyCard", s.ID, st.Name)
 			}
 			if p.Action != "" && len(p.Actions) > 0 {
 				return Spec{}, fmt.Errorf("chain %q step %q has both action and actions", s.ID, st.Name)
@@ -121,12 +123,25 @@ func ParseSpec(r io.Reader, sets Sets) (Spec, error) {
 	return s, nil
 }
 
+func countTrue(bs ...bool) int {
+	n := 0
+	for _, b := range bs {
+		if b {
+			n++
+		}
+	}
+	return n
+}
+
 func (s Spec) matches(st Pattern, e game.Event) bool {
 	if st.Action != "" && st.Action != e.Action {
 		return false
 	}
 	if len(st.Actions) > 0 && !slices.Contains(st.Actions, e.Action) {
 		return false
+	}
+	if st.AnyCard {
+		return true
 	}
 	if st.Card != "" {
 		return st.Card == e.Card

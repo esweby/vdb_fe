@@ -1,0 +1,20 @@
+{
+  "id": "traverse-uses-action-point",
+  "status": "a player's habit passed on by the maintainer, 21 Oct 2026; matching unverified",
+  "line": "A player's habit, passed on by the maintainer on 21 Oct 2026 (traverse timing is otherwise an open question: 'nobody knows'): almost always traverse to Usurper to use the additional action point, ideally banishing 1 more card at little or no cost; sometimes flip back immediately, sometimes stay on Forsaken for a while; with about 4 cards in banish, sometimes not flip back. Logged: TRANSFORM to viserai_usurper, then any card played (M) later that turn, as the proxy for using the extra action point. Action points and the extra banish aren't logged; M also covers weapon attacks, equipment and Gate uses.",
+  "expectation": "Written 21 Oct 2026, before measuring this chain (seen beforehand: only the data dictionary's total of 2,114 TRANSFORM events on 20 Oct, both directions, about 2.5 per side). 1. How often: 70-90% of traverses to Usurper are followed by a card played that turn. 2. When: reported, not judged. 3. Result: using it against not, with life totals held level, 0 to +10 points.",
+  "steps": [
+    {
+      "name": "traverse",
+      "action": "TRANSFORM",
+      "card": "viserai_usurper"
+    },
+    {
+      "name": "plays-after",
+      "action": "M",
+      "anyCard": true,
+      "withinTurns": 0
+    }
+  ],
+  "expectationBy": "maintainer (drafted by Claude, approved 21 Oct 2026)"
+}

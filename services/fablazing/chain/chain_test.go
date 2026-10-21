@@ -217,3 +217,27 @@ func TestCompareFromSplitsOnANamedStep(t *testing.T) {
 		}
 	}
 }
+
+func TestAnyCardMatchesEveryCard(t *testing.T) {
+	spec := `{"id":"x","steps":[
+	  {"name":"traverse","action":"TRANSFORM","card":"viserai_usurper"},
+	  {"name":"plays-after","action":"M","anyCard":true,"withinTurns":0}]}`
+	s, err := ParseSpec(strings.NewReader(spec), sets)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := s.Match([]game.Event{ev(2, "viserai_usurper", "TRANSFORM"), ev(2, "anything_red", "M")}); got.Reached != 2 {
+		t.Errorf("any card played after: got %+v, want both steps", got)
+	}
+	if got := s.Match([]game.Event{ev(2, "viserai_usurper", "TRANSFORM"), ev(2, "anything_red", "P")}); got.Reached != 1 {
+		t.Errorf("the action still has to match: got %+v", got)
+	}
+	for _, bad := range []string{
+		`{"name":"b","action":"M","anyCard":true,"card":"c"}`,
+		`{"name":"b","action":"M","anyCard":true,"set":"blood_debt"}`,
+	} {
+		if _, err := ParseSpec(strings.NewReader(`{"id":"x","steps":[{"name":"a","action":"M","card":"c"},`+bad+`]}`), sets); err == nil {
+			t.Errorf("anyCard with a card or set should fail: %s", bad)
+		}
+	}
+}
