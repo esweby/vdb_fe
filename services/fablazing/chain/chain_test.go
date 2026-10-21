@@ -241,3 +241,30 @@ func TestAnyCardMatchesEveryCard(t *testing.T) {
 		}
 	}
 }
+
+func TestCompareBaseNarrowsTheComparisonGroup(t *testing.T) {
+	spec := `{"id":"x","compareBase":"otg","compareFrom":"hits","steps":[
+	  {"name":"gate","action":"M","card":"gate_to_iarathael"},
+	  {"name":"otg","action":"M","card":"open_the_gate_to_iarathael_red","withinTurns":0},
+	  {"name":"hits","action":"HIT","card":"open_the_gate_to_iarathael_red","withinTurns":0}]}`
+	s, err := ParseSpec(strings.NewReader(spec), sets)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for reached, want := range map[int]bool{0: false, 1: false, 2: true, 3: true} {
+		if got := s.Compared(Result{Reached: reached}); got != want {
+			t.Errorf("compareBase otg, reached %d: Compared = %v, want %v", reached, got, want)
+		}
+	}
+	// Without compareBase, every side that reached the setup is compared.
+	for reached, want := range map[int]bool{0: false, 1: true} {
+		if got := load(t).Compared(Result{Reached: reached}); got != want {
+			t.Errorf("default, reached %d: Compared = %v, want %v", reached, got, want)
+		}
+	}
+	for _, bad := range []string{`"compareBase":"hits","compareFrom":"hits"`, `"compareBase":"nope"`, `"compareBase":"hits"`} {
+		if _, err := ParseSpec(strings.NewReader(`{"id":"x",`+bad+`,"steps":[{"name":"gate","action":"M","card":"c"},{"name":"otg","action":"M","card":"d"},{"name":"hits","action":"M","card":"e"}]}`), sets); err == nil {
+			t.Errorf("%s should fail: compareBase must name a step before the paid step", bad)
+		}
+	}
+}

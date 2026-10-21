@@ -107,17 +107,19 @@ Every expectation below was written and approved by the maintainer **before** th
 
 ### Summary
 
-| Chain                      | How often (expected)                     | Result, life held level (expected) | Verdict                                                   |
-| -------------------------- | ---------------------------------------- | ---------------------------------- | --------------------------------------------------------- |
-| bsl-gate-blood-debt        | 47.5% of BSL sides (30–60%)              | +2.1 ±1.5 (5–15)                   | Completes as expected; wins less than expected            |
-| bsl-descendancy-same-turn  | 14.7% of BSL sides (10–25%)              | +4.0 ±2.2 (5–15)                   | As expected, but the win difference is just under range   |
-| bsl-gate-no-other-maker    | 45.1% of BSL sides (30–45%)              | +1.9 ±1.5 (3–12)                   | Gate source doesn't matter                                |
-| reach-otg-gate             | 6.9% of Reach blocks pair (5–20%)        | −8.4 ±7.6 (0 to +10)               | Pairs as expected; Gate used less; associated with losing |
-| crown-gate-otg             | 4.4% of Crown blocks (2–10%)             | 9 completions                      | Not enough data                                           |
-| cullingsong-usurp          | 4.8% of Cullingsong sides (15–40%)       | +30.9 ±3.7 (0 to +10)              | Much rarer, and far more associated with winning          |
-| usurp-hits                 | Usurp hits on 76.2% of sides (35–55%)    | +3.5 ±4.1 (+5 to +20)              | Hits far more often than expected; hitting adds little    |
-| traverse-uses-action-point | 87.1% of traversing sides (at least 90%) | +8.3 ±1.6 (0 to +10)               | Just under the expected rate; result in range             |
-| traverse-flip-back         | 44.3% of traversing sides (30–60%)       | +3.4 ±1.1 (within ±5)              | As expected; a small positive association                 |
+| Chain                      | How often (expected)                           | Result, life held level (expected) | Verdict                                                   |
+| -------------------------- | ---------------------------------------------- | ---------------------------------- | --------------------------------------------------------- |
+| bsl-gate-blood-debt        | 47.5% of BSL sides (30–60%)                    | +2.1 ±1.5 (5–15)                   | Completes as expected; wins less than expected            |
+| bsl-descendancy-same-turn  | 14.7% of BSL sides (10–25%)                    | +4.0 ±2.2 (5–15)                   | As expected, but the win difference is just under range   |
+| bsl-gate-no-other-maker    | 45.1% of BSL sides (30–45%)                    | +1.9 ±1.5 (3–12)                   | Gate source doesn't matter                                |
+| reach-otg-gate             | 6.9% of Reach blocks pair (5–20%)              | −8.4 ±7.6 (0 to +10)               | Pairs as expected; Gate used less; associated with losing |
+| crown-gate-otg             | 4.4% of Crown blocks (2–10%)                   | 9 completions                      | Not enough data                                           |
+| cullingsong-usurp          | 4.8% of Cullingsong sides (15–40%)             | +30.9 ±3.7 (0 to +10)              | Much rarer, and far more associated with winning          |
+| usurp-hits                 | Usurp hits on 76.2% of sides (35–55%)          | +3.5 ±4.1 (+5 to +20)              | Hits far more often than expected; hitting adds little    |
+| traverse-uses-action-point | 87.1% of traversing sides (at least 90%)       | +8.3 ±1.6 (0 to +10)               | Just under the expected rate; result in range             |
+| traverse-flip-back         | 44.3% of traversing sides (30–60%)             | +3.4 ±1.1 (within ±5)              | As expected; a small positive association                 |
+| otg-through-gate           | Hits on 56.5% of sides, capped (under 48%)     | +3.8 ±1.9 (reported, not judged)   | Not like for like; the Gate after a hit is rarely used    |
+| otg-hit-gate               | Gate used after 22.2% of hits, capped (60–90%) | +5.2 ±2.4 (reported, not judged)   | The Gate from the hit is usually not used within a turn   |
 
 ### bsl-gate-blood-debt and bsl-descendancy-same-turn, again
 
@@ -283,14 +285,62 @@ Only the two chains that use these sets can change. Measured again with the deri
 
 With the derived sets, bsl-gate-no-other-maker is within the expected 30–45% and the median setup turn is still 3. Same-turn completions are 50.4% (expected at least 43%), and damage on the setup turn is 6.0 against 4.2. The result, +2.1 ±1.5, is still below the expected 3–12 and about the same as the broader chain's, so the verdict stands: **the Gate's source doesn't matter**.
 
+### The Open the Gate chains
+
+The maintainer described the line on 21 Oct 2026: banish Open the Gate and play it through a Gate in the same turn. The opponent then either lets it hit, and it makes another Gate, or blocks with cards from hand to deny the Gate. **Both are intended outcomes.** Both chains were registered and approved before they were measured, and were measured on the same 57 files with the player cap and the card sets from the importer. Uncapped figures are in brackets.
+
+**Limits of the logs:** the banish isn't logged, so "played through a Gate" is a proxy: Open the Gate played in the same turn as a Gate is used. Only Viserai's log is read, so a denial shows only as "didn't hit", not as the cards the opponent spent. Gate creation isn't logged either, so "the Gate from the hit" is a proxy: a Gate used within 1 turn index, with no other logged Gate maker in between.
+
+#### otg-through-gate
+
+**Chain:** a Gate used → Open the Gate played in the same turn → Open the Gate hits in that turn → a Gate used within 1 turn index, with no other logged Gate maker in between. The comparison is among sides that played Open the Gate through a Gate (the new `compareBase` field): those where it hit, against those where it didn't.
+
+| Furthest step reached             | Sides  | Viserai won |
+| --------------------------------- | ------ | ----------- |
+| None                              | 11,895 | 29.7%       |
+| Gate used, no Open the Gate after | 7,534  | 32.3%       |
+| Open the Gate through it, no hit  | 3,661  | 32.0%       |
+| Hits, no Gate after               | 3,748  | 32.0%       |
+| Hits, then a Gate used            | 1,006  | 40.2%       |
+
+**Against the expectation:**
+
+1. **Denial: against the expectation, but not a like-for-like comparison.**
+   - Of the 8,415 sides (8,446) that played Open the Gate through a Gate, it hit on 4,754 (56.5%; 56.5%).
+   - The expectation was below the card's overall 48%. By its own reading, 48% or more suggests opponents usually let it through.
+   - **The two rates aren't measured the same way:** 48% is per play, while 56.5% is per side, and a side counts as hitting if any of its attempts hit. Sides that try more than once push the per-side rate up. So the data doesn't show that opponents deny it more often through a Gate. Whether they deny it less often is unclear.
+2. **After a hit: well below the expected 60–90%, and under the 50% warning line.**
+   - A Gate was used within 1 turn index after the hit in 1,006 of 4,754 (21.2%; 1,012 of 4,772).
+   - Of those, 163 were in the same turn index and 843 one later.
+   - The expectation's reading for under 50%: the Gate is usually held or unused. The proxy may also miss Gates used later than one turn index on.
+3. **Result: reported, not judged.** Hit against no hit, life totals held level: **+3.8 points, ±1.9** (+3.9 ±1.9). Damage on the setup turn was 8.6 against 4.1. Sides that went on to use the Gate won 40.2%, but that group is small and chosen by what happened next.
+
+#### otg-hit-gate
+
+**Chain:** Open the Gate hits, however it was played → a Gate used within 1 turn index, with no other logged Gate maker in between.
+
+| Furthest step reached | Sides  | Viserai won |
+| --------------------- | ------ | ----------- |
+| None                  | 19,444 | 30.0%       |
+| Hits, no Gate after   | 6,533  | 33.5%       |
+| Hits, then a Gate     | 1,867  | 38.6%       |
+
+**Against the expectation:**
+
+1. **How often: well below the expected 60–90%, and under the 50% warning line.**
+   - Of the 8,400 sides (8,440) where Open the Gate hit, a Gate was used within 1 turn index in 1,867 (22.2%; 1,877).
+   - Of those, 378 were in the same turn index and 1,489 one later. The median turn of the hit is 3.
+   - The expectation's reading: the Gate from Open the Gate's hit is usually held or unused. This agrees with otg-through-gate.
+2. **Result: reported, not judged.** With life totals held level: **+5.2 points, ±2.4** (+5.1 ±2.4). Damage on the turn of the hit was 8.6 against 7.9.
+
+**Reading the two together** (associations, not causes): Open the Gate's Gate is rarely used within a turn of the hit. That's either a real habit (holding the Gate, or having no blood debt card to play through it) or a gap in the proxy. The simulation (step 5) can tell those apart, and so can a maintainer's look at a few games with `fablazing game`.
+
 ### Not in the library
 
 **Traverse timing in general.** The maintainer (21 Oct 2026): "Nobody knows." There's nothing to register an expectation against, so it's left to the simulation (step 5). The two traverse chains above measure a player's habits, not the right timing.
 
-**Open the Gate played through a Gate, and Open the Gate hits → Gate used.** The maintainer chose both on 21 Oct 2026, but they aren't specified yet. The Reach and Crown chains came first.
-
 **Next:**
 
 - Add the three missing days once FaBlazing serves them.
-- Specify the two Open the Gate chains with the maintainer, and register their expectations before measuring them.
+- Look at a few otg-hit-gate games with the maintainer: is the Gate from Open the Gate's hit really held, or does the proxy miss it?
 - Use the simulation (step 5) to test the large associations, especially cullingsong-usurp's +30.9 and the Reach pairing's −8.4, as counterfactuals.

@@ -230,7 +230,7 @@ func measureChain(specPath, setsPath string, csvs []string, capN int) error {
 					sameTurnPayoffs[r.PayoffCard]++
 				}
 			}
-			if r.Reached == 0 {
+			if !spec.Compared(r) {
 				return
 			}
 			diff, ok := s.LifeDiffBefore(r.SetupTurn)
@@ -285,6 +285,9 @@ func measureChain(specPath, setsPath string, csvs []string, capN int) error {
 	c := measure.Compare(outcomes, "complete", "setup")
 	if spec.CompareFrom != "" {
 		fmt.Printf("\ncompared from step %q: \"completed\" below means reached that step", spec.CompareFrom)
+	}
+	if spec.CompareBase != "" {
+		fmt.Printf("\ncompared among sides that reached step %q: \"setup only\" below means reached it but not the paid step", spec.CompareBase)
 	}
 	fmt.Printf("\ncompleted v setup without payoff, life totals held level (sides without life data left out: %d)\n", noLife)
 	fmt.Printf("  raw win rate:   completed %.1f%% (n=%d)  v  setup only %.1f%% (n=%d)\n", 100*c.RawA, c.NA, 100*c.RawB, c.NB)
