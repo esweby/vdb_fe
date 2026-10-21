@@ -1,7 +1,7 @@
 // Command fablazing inspects FaBlazing CSVs locally.
 //
 //	fablazing game  <file.csv> [guid]                     print a Viserai game turn by turn
-//	fablazing chain <spec.json> <sets.json> <file.csv>... measure one chain across Viserai sides
+//	fablazing chain [-cap n] <spec.json> <sets.json> <file.csv>... measure one chain across Viserai sides
 //	fablazing aggregate [-json] [-cap n] <file.csv>        the daily rows for one date and format
 //
 // It prints counts and card ids only: never player hashes or anything secret.
@@ -42,7 +42,7 @@ var concession = aggregate.Concession
 
 func main() {
 	if len(os.Args) < 3 {
-		fmt.Fprintln(os.Stderr, "usage: fablazing game <file.csv> [guid] | fablazing chain <spec.json> <sets.json> <file.csv>... | fablazing aggregate [-json] [-cap n] <file.csv>")
+		fmt.Fprintln(os.Stderr, "usage: fablazing game <file.csv> [guid] | fablazing chain [-cap n] <spec.json> <sets.json> <file.csv>... | fablazing aggregate [-json] [-cap n] <file.csv>")
 		os.Exit(2)
 	}
 	var err error
@@ -50,11 +50,7 @@ func main() {
 	case "game":
 		err = printGame(os.Args[2], os.Args[3:])
 	case "chain":
-		if len(os.Args) < 5 {
-			err = fmt.Errorf("chain needs a spec, a sets file and at least one CSV")
-		} else {
-			err = measureChain(os.Args[2], os.Args[3], os.Args[4:])
-		}
+		err = runChain(os.Args[2:])
 	case "aggregate":
 		err = runAggregate(os.Args[2:])
 	default:
@@ -135,7 +131,49 @@ func describe(e game.Event) string {
 	return v + " " + e.Card
 }
 
-func measureChain(specPath, setsPath string, csvs []string) error {
+func runChain(args []string) error {
+	fs := flag.NewFlagSet("chain", flag.ContinueOnError)
+	capN := fs.Int("cap", playerCap, "most sides one player contributes to each CSV, one date and format (0 for no cap)")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	if fs.NArg() < 3 {
+		return fmt.Errorf("chain needs a spec, a sets file and at least one CSV")
+	}
+	return measureChain(fs.Arg(0), fs.Arg(1), fs.Args()[2:], *capN)
+}
+
+// sideCounts counts the detailed Viserai sides a chain run leaves out.
+type sideCounts struct {
+	abandoned int // in abandoned early concessions
+	capped    int // past the player cap
+}
+
+// chainSides calls fn for each detailed Viserai side that counts as a result,
+// applying the player cap as aggregate.Run does for one date and format.
+func chainSides(games []game.Game, capN int, fn func(game.Game, game.Side)) sideCounts {
+	var c sideCounts
+	ordered, kept := aggregate.Counted(games, capN)
+	for i, g := range ordered {
+		abandoned := g.Abandoned(concession)
+		for j, s := range g.Sides {
+			if !game.IsViserai(s.Hero) || !s.Detailed {
+				continue
+			}
+			switch {
+			case !kept[i][j]:
+				c.capped++
+			case abandoned:
+				c.abandoned++
+			default:
+				fn(g, s)
+			}
+		}
+	}
+	return c
+}
+
+func measureChain(specPath, setsPath string, csvs []string, capN int) error {
 	var raw map[string][]string
 	b, err := os.ReadFile(setsPath)
 	if err != nil {
@@ -164,7 +202,7 @@ func measureChain(specPath, setsPath string, csvs []string) error {
 		return fmt.Errorf("chain %q has no expectation yet: write down what it should do before measuring it", spec.ID)
 	}
 
-	sides, abandoned := 0, 0
+	sides, abandoned, capped := 0, 0, 0
 	reached := make([]int, len(spec.Steps)+1)
 	wins := make([]int, len(spec.Steps)+1)
 	gap := map[int]int{} // turns from setup to payoff
@@ -177,56 +215,45 @@ func measureChain(specPath, setsPath string, csvs []string) error {
 		if err != nil {
 			return fmt.Errorf("%s: %w", path, err)
 		}
-		for _, g := range games {
-			if g.Abandoned(concession) {
-				for _, s := range g.Sides {
-					if game.IsViserai(s.Hero) && s.Detailed {
-						abandoned++
-					}
-				}
-				continue
+		c := chainSides(games, capN, func(g game.Game, s game.Side) {
+			sides++
+			r := spec.Match(s.Log)
+			reached[r.Reached]++
+			if s.Won {
+				wins[r.Reached]++
 			}
-			for _, s := range g.Sides {
-				if !game.IsViserai(s.Hero) || !s.Detailed {
-					continue
+			if r.Complete(spec) {
+				gap[r.PayoffTurn-r.SetupTurn]++
+				setupTurns = append(setupTurns, r.SetupTurn)
+				payoffs[r.PayoffCard]++
+				if r.PayoffTurn == r.SetupTurn {
+					sameTurnPayoffs[r.PayoffCard]++
 				}
-				sides++
-				r := spec.Match(s.Log)
-				reached[r.Reached]++
-				if s.Won {
-					wins[r.Reached]++
-				}
-				if r.Complete(spec) {
-					gap[r.PayoffTurn-r.SetupTurn]++
-					setupTurns = append(setupTurns, r.SetupTurn)
-					payoffs[r.PayoffCard]++
-					if r.PayoffTurn == r.SetupTurn {
-						sameTurnPayoffs[r.PayoffCard]++
-					}
-				}
-				if r.Reached == 0 {
-					continue
-				}
-				diff, ok := s.LifeDiffBefore(r.SetupTurn)
-				if !ok {
-					noLife++
-					continue
-				}
-				group := "setup"
-				if spec.Paid(r) {
-					group = "complete"
-				}
-				damage := 0
-				if r.SetupTurn < len(s.TurnStats) {
-					damage = s.TurnStats[r.SetupTurn].DamageDealt
-				}
-				outcomes = append(outcomes, measure.Outcome{Group: group, Bucket: measure.LifeBucket(diff), Won: s.Won, Damage: damage})
 			}
-		}
+			if r.Reached == 0 {
+				return
+			}
+			diff, ok := s.LifeDiffBefore(r.SetupTurn)
+			if !ok {
+				noLife++
+				return
+			}
+			group := "setup"
+			if spec.Paid(r) {
+				group = "complete"
+			}
+			damage := 0
+			if r.SetupTurn < len(s.TurnStats) {
+				damage = s.TurnStats[r.SetupTurn].DamageDealt
+			}
+			outcomes = append(outcomes, measure.Outcome{Group: group, Bucket: measure.LifeBucket(diff), Won: s.Won, Damage: damage})
+		})
+		abandoned += c.abandoned
+		capped += c.capped
 	}
 
 	fmt.Printf("chain %s (%s)\nexpectation: %s\n", spec.ID, spec.Status, spec.Expectation)
-	fmt.Printf("detailed Viserai sides: %d (abandoned early concessions left out: %d)\n", sides, abandoned)
+	fmt.Printf("detailed Viserai sides: %d (abandoned early concessions left out: %d; player cap %d per file, left out: %d)\n", sides, abandoned, capN, capped)
 	fmt.Println("furthest step reached  sides   share  Viserai won   (association, not cause)")
 	for i := range reached {
 		name := "none"

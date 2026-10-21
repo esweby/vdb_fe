@@ -102,7 +102,7 @@ Every expectation below was written and approved by the maintainer **before** th
 
 - **Counted per side.** A side counts as reaching a step if any attempt in its game did.
 - **Win differences** are "with life totals held level": the difference within each life bucket going into the setup turn, weighted by bucket size, with a 95% margin.
-- **The margins are too narrow, if anything.** They treat every side as independent. The cap of 20 games per player per day isn't applied in this tool yet, so heavy players weigh more than they will in the app.
+- **The margins are too narrow, if anything.** They treat every side as independent. The tables below are uncapped; the cap of 20 games per player per day is applied in [With the player cap](#with-the-player-cap), and it changes little.
 - **Interval widths over 30 days:** about ±1–2 points for chains with thousands of sides, ±4–8 for a few hundred, and ±30 for the Crown chain's 9 completions. On one day the same chains gave ±9–12, which is why the first two chains are measured again here.
 
 ### Summary
@@ -137,7 +137,7 @@ The one-day results are above. Over 30 days, against the same expectations:
 **Chain:** Become the Shadow Lord played → a Gate used within 2 turns, with **no other logged Gate maker in between** → a blood debt card played in the same turn as the Gate.
 
 - "Another Gate maker" means an on-play maker played, an on-hit maker hitting, Dam the Shadowake blocking, or a block with Corrupted Crown or Reach of the Abyss.
-- The Gate-maker sets are hand-listed in `chains/sets.json` from `docs/reviews/02-gate-creators.md` until the importer exports them.
+- The Gate-maker sets were hand-listed in `chains/sets.json` from `docs/reviews/02-gate-creators.md` for this measurement. The importer now exports them; see [Card sets from the importer](#card-sets-from-the-importer) for what that changed.
 
 | Furthest step reached | Sides  | Viserai won |
 | --------------------- | ------ | ----------- |
@@ -241,6 +241,46 @@ The one-day results are above. Over 30 days, against the same expectations:
 3. **Result: as expected (within ±5), but not zero.** It's **+3.4 points, ±1.1**. Damage that turn was 7.5 against 7.0.
    - The player said either choice can be right, and a gap this size is consistent with that. Because the interval excludes zero, though, it's worth a look in the simulation.
 
+### With the player cap
+
+Measured 21 Oct 2026 on the same 57 files, with `fablazing chain` applying the plan's cap: each player's earliest 20 sides per day and format, through the same code as the daily aggregates (`aggregate.Counted`). It left out **162 of 27,994 detailed Viserai sides (0.6%)**, so 27,844 remain (1,176 abandoned early concessions left out). The card sets are the hand-listed ones used above, so the only change is the cap. The expectations are unchanged.
+
+| Chain                      | How often, uncapped | How often, capped        | Result, uncapped | Result, capped | Verdict changes? |
+| -------------------------- | ------------------- | ------------------------ | ---------------- | -------------- | ---------------- |
+| bsl-gate-blood-debt        | 47.5% of 13,430     | 47.4% (6,338 of 13,362)  | +2.1 ±1.5        | +2.1 ±1.5      | No               |
+| bsl-descendancy-same-turn  | 14.7% of 13,430     | 14.7% (1,962 of 13,362)  | +4.0 ±2.2        | +4.1 ±2.2      | No               |
+| bsl-gate-no-other-maker    | 45.1% of 13,430     | 45.1% (6,021 of 13,362)  | +1.9 ±1.5        | +2.0 ±1.5      | No               |
+| reach-otg-gate             | 6.9% of 1,281       | 7.0% (89 of 1,271)       | −8.4 ±7.6        | −8.5 ±7.6      | No               |
+| crown-gate-otg             | 4.4% of 204         | 4.4% (9 of 204)          | 9 completions    | 9 completions  | No               |
+| cullingsong-usurp          | 4.8% of 17,336      | 4.7% (812 of 17,245)     | +30.9 ±3.7       | +30.8 ±3.7     | No               |
+| usurp-hits                 | 76.2% of 2,579      | 76.3% (1,949 of 2,556)   | +3.5 ±4.1        | +3.3 ±4.1      | No               |
+| traverse-uses-action-point | 87.1% of 26,072     | 87.2% (22,606 of 25,936) | +8.3 ±1.6        | +8.4 ±1.6      | No               |
+| traverse-flip-back         | 44.3% of 26,072     | 44.4% (11,507 of 25,936) | +3.4 ±1.1        | +3.5 ±1.1      | No               |
+
+The other figures move as little: timings, medians and damage are the same to one decimal place, apart from counts falling by under 1%. Reach's Gate rate after the pairing is still 46 of 89, and Usurp's hit rate after Cullingsong is 654 of 812 (80.5%). Over 30 days, heavy players don't drive any of these results. The margins still treat every side as independent.
+
+### Card sets from the importer
+
+The `gate_maker_*` and `banish_equipment` sets now come from `cardSets` in `packages/importer/src/fablazing.ts` (`npm run fablazing-sets -w @vdb/importer`), not a hand list:
+
+- **Gate makers** are derived from the Gate tokens in our card facts, by the logged event that makes the Gate: the card played, if its play or attack makes it or it grants one to a later attack (`gate_maker_on_play`); its own hit (`gate_maker_on_hit`); its block (`gate_maker_on_block`). Gates made on banish aren't logged, so they're in no set.
+- **`banish_equipment`** (Corrupted Crown, Reach of the Abyss) stays an authored list in the importer: it's the maintainer's judgement that a block with these can make a Gate, and their banishes aren't logged. Base of the Mountain isn't in it: it banishes a card that then defends and goes to the graveyard, so it only keeps a card banished alongside Reach of the Abyss (the maintainer, 21 Oct 2026).
+
+Against the hand list, the derived sets add two cards to `gate_maker_on_play`, and are otherwise identical:
+
+- **Shadowrealm Walker** (all three pitches): its attack makes a Gate if it banished a Shadow card. The hand list came from review batch 2, and Walker is in batch 3, so it was missed.
+- **Become the Shadow Lord**: it makes a Gate when played. In bsl-gate-no-other-maker, a second Become the Shadow Lord before the Gate now ends the earlier attempt, and the later one is matched instead. crown-gate-otg already ruled it out.
+
+Only the two chains that use these sets can change. Measured again with the derived sets (expectations unchanged):
+
+| Chain                   | Sets    | Uncapped                                            | Capped                                              |
+| ----------------------- | ------- | --------------------------------------------------- | --------------------------------------------------- |
+| bsl-gate-no-other-maker | hand    | 6,055 of 13,430 (45.1%); +1.9 ±1.5; same-turn 46.7% | 6,021 of 13,362 (45.1%); +2.0 ±1.5                  |
+| bsl-gate-no-other-maker | derived | 5,977 of 13,430 (44.5%); +2.1 ±1.5; same-turn 50.4% | 5,943 of 13,362 (44.5%); +2.1 ±1.5; same-turn 50.5% |
+| crown-gate-otg          | derived | 9 of 204, unchanged                                 | 9 of 204, unchanged                                 |
+
+With the derived sets, bsl-gate-no-other-maker is within the expected 30–45% and the median setup turn is still 3. Same-turn completions are 50.4% (expected at least 43%), and damage on the setup turn is 6.0 against 4.2. The result, +2.1 ±1.5, is still below the expected 3–12 and about the same as the broader chain's, so the verdict stands: **the Gate's source doesn't matter**.
+
 ### Not in the library
 
 **Traverse timing in general.** The maintainer (21 Oct 2026): "Nobody knows." There's nothing to register an expectation against, so it's left to the simulation (step 5). The two traverse chains above measure a player's habits, not the right timing.
@@ -249,6 +289,6 @@ The one-day results are above. Over 30 days, against the same expectations:
 
 **Next:**
 
-- Apply the player cap in the chain tool, and add the three missing days once FaBlazing serves them.
-- Move the hand-listed `gate_maker_*` and `banish_equipment` sets into the importer's export.
+- Add the three missing days once FaBlazing serves them.
+- Specify the two Open the Gate chains with the maintainer, and register their expectations before measuring them.
 - Use the simulation (step 5) to test the large associations, especially cullingsong-usurp's +30.9 and the Reach pairing's −8.4, as counterfactuals.
