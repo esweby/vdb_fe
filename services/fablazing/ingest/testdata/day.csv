@@ -1,0 +1,5 @@
+game_id,game_name,game_guid,format,deck1_id,deck2_id,deck1_json,deck2_json,created_at,player1_name,player2_name,count_winner_deck,count_loser_deck,is_public,conceded
+1,1,g-vis-first,0,-,-,"{'playerHero': 'viserai_the_forsaken', 'opposingHero': 'fang_dracai_of_blades', 'result': 1, 'turns': 6}","{'playerHero': 'fang_dracai_of_blades', 'opposingHero': 'viserai_the_forsaken', 'result': 0, 'turns': 6}",2026-10-20 10:00:00.0,p1,p2,60,60,True,False
+2,2,g-other,0,-,-,"{'playerHero': 'dorinthea', 'opposingHero': 'bravo', 'result': 1, 'turns': 8}","{'playerHero': 'bravo', 'opposingHero': 'dorinthea', 'result': 0, 'turns': 8}",2026-10-20 11:00:00.0,p3,p4,60,60,True,False
+3,3,g-vis-second,0,-,-,"{'playerHero': 'kano', 'opposingHero': 'viserai_usurper', 'result': 0, 'turns': 4}","{'playerHero': 'viserai_usurper', 'opposingHero': 'kano', 'result': 1, 'turns': 4}",2026-10-20 12:00:00.0,p5,p1,60,60,True,True
+3,3,g-vis-second,0,-,-,"{'playerHero': 'kano', 'opposingHero': 'viserai_usurper', 'result': 0, 'turns': 9}","{'playerHero': 'viserai_usurper', 'opposingHero': 'kano', 'result': 1, 'turns': 9}",2026-10-20 12:30:00.0,p5,p1,60,60,True,False

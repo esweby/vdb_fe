@@ -99,6 +99,8 @@ EventBridge Scheduler, daily 10:00 UTC
 - **Secrets** live in SSM. Deploys use GitHub OIDC. Logs record counts only.
 - FaBlazing is volunteer-funded, so each final day is fetched once, and any backfill is paced as they prefer.
 
+The AWS side (the Lambda, the raw bucket, the schedule, the alarm and the deploy roles) is in `services/fablazing`, with a runbook in [its README](../services/fablazing/README.md).
+
 **Tables** (each with grants, row level security and pgTAP tests):
 
 | Table                     | What it holds                                                                           |

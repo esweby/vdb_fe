@@ -1,0 +1,55 @@
+name: Deploy FaBlazing ingest
+
+# Deploys services/fablazing (template.yaml) to AWS on merge to main. It runs
+# as the vdb-fablazing-deploy role from services/fablazing/infra/bootstrap.yaml,
+# which can change only the vdb-fablazing stack.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - services/fablazing/**
+      - .github/workflows/deploy-fablazing.yml
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-fablazing
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    name: deploy
+    runs-on: ubuntu-latest
+    # Set the repository variable once infra/bootstrap.yaml is deployed.
+    if: vars.AWS_DEPLOY_ROLE_ARN != ''
+    defaults:
+      run:
+        working-directory: services/fablazing
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: services/fablazing/go.mod
+          cache-dependency-path: services/fablazing/go.sum
+      - run: go vet ./...
+      - run: go test ./...
+      - uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: eu-west-1
+      - run: sam build
+      - name: sam deploy
+        run: |
+          account=$(aws sts get-caller-identity --query Account --output text)
+          sam deploy \
+            --s3-bucket "vdb-fablazing-artifacts-$account" \
+            --s3-prefix vdb-fablazing \
+            --role-arn "arn:aws:iam::$account:role/vdb-fablazing-cfn-exec" \
+            --no-progressbar

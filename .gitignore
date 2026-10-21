@@ -137,3 +137,6 @@ dist
 
 # Importer dataset cache
 packages/importer/.cache/
+
+# SAM build output (services/fablazing)
+.aws-sam/
