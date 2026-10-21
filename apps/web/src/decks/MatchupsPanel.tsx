@@ -4,6 +4,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useServices } from "../servicesContext.ts";
 import { Button } from "../ui/index.ts";
+import { RealMatchups } from "../fablazing/RealGames.tsx";
 import type { Hero, Matchup } from "./deckRepository.ts";
 import {
   poolEntries,
@@ -102,6 +103,7 @@ export function MatchupsPanel(props: {
         <p className={styles.muted}>
           Matchup plans are private to the deck's owner.
         </p>
+        <RealMatchups />
       </section>
     );
 
@@ -224,6 +226,8 @@ export function MatchupsPanel(props: {
           sideboard and which go out. Goldfish and scenarios can play a plan.
         </p>
       </header>
+
+      <RealMatchups />
 
       {matchups.length > 0 && (
         <ul aria-label="Planned matchups" className={styles.matchupList}>

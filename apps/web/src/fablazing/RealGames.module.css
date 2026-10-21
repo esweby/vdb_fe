@@ -1,0 +1,55 @@
+.panel {
+  margin-top: 1.25rem;
+}
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.head h2,
+.head h3 {
+  margin: 0;
+}
+.formats {
+  display: flex;
+  gap: 0.25rem;
+}
+.table {
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.table th,
+.table td {
+  padding: 0.3rem 0.9rem 0.3rem 0;
+  text-align: left;
+}
+.table thead th {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+.table tbody th {
+  font-weight: 500;
+}
+.table tbody td {
+  font-weight: 700;
+}
+.table tbody td.mutedCell {
+  font-weight: 400;
+  color: var(--muted);
+}
+/* Wide tables scroll inside themselves on a phone, never the page. */
+.scroll {
+  overflow-x: auto;
+}
+.rate {
+  font-weight: 600;
+}
+.muted,
+.note {
+  margin: 0.4rem 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
