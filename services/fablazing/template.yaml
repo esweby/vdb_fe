@@ -1,0 +1,186 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >-
+  vdb-fablazing: the daily FaBlazing ingest (docs/fablazing-plan.md, "Pipeline").
+  Deployed by GitHub Actions through the roles in infra/bootstrap.yaml, which
+  must be deployed first.
+
+Parameters:
+  ApiKeyParameterName:
+    Type: String
+    Default: /vdb/fablazing/api-key
+    Description: SSM SecureString holding the FaBlazing API key. The maintainer creates it; it's never in the repo.
+  # /vdb/fablazing/db-password (SecureString) is reserved for the Supabase
+  # fablazing_ingest role. The ingest role can already read /vdb/fablazing/*.
+
+Resources:
+  RawBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Sub vdb-fablazing-raw-${AWS::AccountId}
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+            BucketKeyEnabled: true
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      LifecycleConfiguration:
+        Rules:
+          - Id: abort-incomplete-uploads
+            Status: Enabled
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 1
+
+  RawBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref RawBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: DenyInsecureTransport
+            Effect: Deny
+            Principal: "*"
+            Action: s3:*
+            Resource:
+              - !GetAtt RawBucket.Arn
+              - !Sub ${RawBucket.Arn}/*
+            Condition:
+              Bool:
+                aws:SecureTransport: "false"
+
+  IngestLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/vdb-fablazing-ingest
+      RetentionInDays: 30
+
+  # Roles live under /vdb-fablazing-app/ and carry the boundary from
+  # infra/bootstrap.yaml: the CloudFormation role can create no others.
+  IngestRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /vdb-fablazing-app/
+      PermissionsBoundary: !Sub arn:aws:iam::${AWS::AccountId}:policy/vdb-fablazing-boundary
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: ingest
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub ${IngestLogGroup.Arn}
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                Resource: !Sub ${RawBucket.Arn}/raw/*
+              # Lets HeadObject answer 404 rather than 403 for a day not yet stored.
+              - Effect: Allow
+                Action: s3:ListBucket
+                Resource: !GetAtt RawBucket.Arn
+              - Effect: Allow
+                Action: ssm:GetParameter
+                Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/vdb/fablazing/*
+
+  IngestFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x
+    Properties:
+      FunctionName: vdb-fablazing-ingest
+      Description: Fetches yesterday's FaBlazing files and stores the Viserai games in S3.
+      CodeUri: cmd/ingest-lambda/
+      Handler: bootstrap
+      Runtime: provided.al2023
+      Architectures: [arm64]
+      # A 133 MB day peaks at about 430 MB parsed.
+      MemorySize: 1024
+      Timeout: 600
+      Role: !GetAtt IngestRole.Arn
+      LoggingConfig:
+        LogGroup: !Ref IngestLogGroup
+      Environment:
+        Variables:
+          BUCKET: !Ref RawBucket
+          API_KEY_PARAMETER: !Ref ApiKeyParameterName
+      # FaBlazing is volunteer-funded: no automatic retries. A failure alarms,
+      # and a rerun skips the formats already stored.
+      EventInvokeConfig:
+        MaximumRetryAttempts: 0
+      Events:
+        Daily:
+          Type: ScheduleV2
+          Properties:
+            Name: vdb-fablazing-daily
+            Description: Yesterday's final FaBlazing files, mid-morning UTC.
+            ScheduleExpression: cron(0 10 * * ? *)
+            ScheduleExpressionTimezone: UTC
+            RoleArn: !GetAtt SchedulerRole.Arn
+
+  SchedulerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /vdb-fablazing-app/
+      PermissionsBoundary: !Sub arn:aws:iam::${AWS::AccountId}:policy/vdb-fablazing-boundary
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: scheduler.amazonaws.com
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+      Policies:
+        - PolicyName: invoke
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: lambda:InvokeFunction
+                Resource: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:vdb-fablazing-ingest*
+
+  ErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: vdb-fablazing-ingest-errors
+      AlarmDescription: The FaBlazing ingest failed. Check /aws/lambda/vdb-fablazing-ingest, then rerun with {"date":"YYYY-MM-DD"}.
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref IngestFunction
+      Statistic: Sum
+      Period: 3600
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:vdb-fablazing-alarms
+
+Outputs:
+  RawBucketName:
+    Value: !Ref RawBucket
+  IngestFunctionName:
+    Value: !Ref IngestFunction

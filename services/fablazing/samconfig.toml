@@ -1,0 +1,16 @@
+# sam build && sam deploy, from services/fablazing. GitHub Actions passes the
+# account's artifacts bucket and CloudFormation role on the command line
+# (.github/workflows/deploy-fablazing.yml); a manual deploy does the same.
+version = 0.1
+
+[default.global.parameters]
+stack_name = "vdb-fablazing"
+region = "eu-west-1"
+
+[default.build.parameters]
+cached = true
+
+[default.deploy.parameters]
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = false
+fail_on_empty_changeset = false
