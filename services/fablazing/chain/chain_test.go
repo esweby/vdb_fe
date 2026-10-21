@@ -97,3 +97,26 @@ func TestRegisteredNeedsAWrittenExpectation(t *testing.T) {
 		}
 	}
 }
+
+func TestAStepCanMatchSeveralActions(t *testing.T) {
+	spec := `{"id":"x","steps":[
+	  {"name":"setup","action":"M","card":"become_the_shadow_lord_blue"},
+	  {"name":"gate","actions":["M","INSTANT","A"],"card":"gate_to_iarathael","withinTurns":0}]}`
+	s, err := ParseSpec(strings.NewReader(spec), sets)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, action := range []string{"M", "INSTANT", "A"} {
+		log := []game.Event{ev(1, "become_the_shadow_lord_blue", "M"), ev(1, "gate_to_iarathael", action)}
+		if got := s.Match(log); got.Reached != 2 {
+			t.Errorf("a Gate used as %s: got %+v, want both steps", action, got)
+		}
+	}
+	log := []game.Event{ev(1, "become_the_shadow_lord_blue", "M"), ev(1, "gate_to_iarathael", "P")}
+	if got := s.Match(log); got.Reached != 1 {
+		t.Errorf("an action outside the list shouldn't match: %+v", got)
+	}
+	if _, err := ParseSpec(strings.NewReader(`{"id":"x","steps":[{"name":"a","action":"M","actions":["A"],"card":"c"}]}`), sets); err == nil {
+		t.Error("action and actions together should fail")
+	}
+}

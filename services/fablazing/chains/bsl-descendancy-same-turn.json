@@ -1,0 +1,25 @@
+{
+  "id": "bsl-descendancy-same-turn",
+  "status": "line described by the maintainer, 21 Oct 2026; matching unverified",
+  "line": "The maintainer's description (21 Oct 2026): Become the Shadow Lord banishes Arknight Descendancy (blue), creating a Runechant; Descendancy is activated, creating 3 Runechants on banish; it then costs only 2 to play: 1 to activate the Gate, and 1 to make up the cost after the Runechant reduction. Banishing and Runechants aren't logged, so the chain matches the logged parts: Become the Shadow Lord played, a Gate used and Descendancy played, all in the same turn.",
+  "expectation": "TODO: the maintainer writes what this chain should do before it is measured.",
+  "steps": [
+    {
+      "name": "setup",
+      "action": "M",
+      "card": "become_the_shadow_lord_blue"
+    },
+    {
+      "name": "gate",
+      "actions": ["M", "INSTANT", "A"],
+      "card": "gate_to_iarathael",
+      "withinTurns": 0
+    },
+    {
+      "name": "payoff",
+      "actions": ["M", "INSTANT", "A"],
+      "card": "arknight_descendancy_blue",
+      "withinTurns": 0
+    }
+  ]
+}

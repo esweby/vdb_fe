@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 
 	"github.com/esweby/vdb_fe/services/fablazing/game"
@@ -29,11 +30,12 @@ type Spec struct {
 // Step matches one event. WithinTurns limits how many turns after the
 // previous step it may come (0 = the same turn); nil means no limit.
 type Step struct {
-	Name        string `json:"name"`
-	Action      string `json:"action"`
-	Card        string `json:"card,omitempty"`
-	Set         string `json:"set,omitempty"`
-	WithinTurns *int   `json:"withinTurns,omitempty"`
+	Name        string   `json:"name"`
+	Action      string   `json:"action,omitempty"`
+	Actions     []string `json:"actions,omitempty"` // any of these, instead of Action
+	Card        string   `json:"card,omitempty"`
+	Set         string   `json:"set,omitempty"`
+	WithinTurns *int     `json:"withinTurns,omitempty"`
 }
 
 // Result is the furthest a game got through a chain.
@@ -67,6 +69,9 @@ func ParseSpec(r io.Reader, sets Sets) (Spec, error) {
 		if (st.Card == "") == (st.Set == "") {
 			return Spec{}, fmt.Errorf("chain %q step %q needs exactly one of card or set", s.ID, st.Name)
 		}
+		if st.Action != "" && len(st.Actions) > 0 {
+			return Spec{}, fmt.Errorf("chain %q step %q has both action and actions", s.ID, st.Name)
+		}
 		if st.Set != "" && sets[st.Set] == nil {
 			return Spec{}, fmt.Errorf("chain %q step %q uses unknown set %q", s.ID, st.Name, st.Set)
 		}
@@ -77,6 +82,9 @@ func ParseSpec(r io.Reader, sets Sets) (Spec, error) {
 
 func (s Spec) matches(st Step, e game.Event) bool {
 	if st.Action != "" && st.Action != e.Action {
+		return false
+	}
+	if len(st.Actions) > 0 && !slices.Contains(st.Actions, e.Action) {
 		return false
 	}
 	if st.Card != "" {

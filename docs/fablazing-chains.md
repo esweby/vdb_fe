@@ -33,14 +33,17 @@ Turns from setup to payoff, in completed chains: 0 turns in 82, 1 turn in 57, 2 
 
 **What the data says about the proxy:** of the sides that reached the Gate step, 189 of 190 also played a blood debt card in the same turn. That supports reading "Gate used, then a blood debt card" as playing it through the Gate. The chain can't tell whether **the Gate came from Become the Shadow Lord**, though, or from another source such as Open the Gate to i'Arathael. That's a limit of the logs: Gate creation isn't logged.
 
-**For the maintainer:**
+**The maintainer's answer (21 Oct 2026):** same-turn completions are expected. A common line is:
 
-- Are same-turn completions expected? For example, Become the Shadow Lord creates a Gate that's used straight away.
-- Should the chain require that no other Gate maker was played in between?
+1. Become the Shadow Lord banishes Arknight Descendancy (blue), creating a Runechant.
+2. Descendancy is activated, creating 3 Runechants on banish.
+3. Descendancy then costs only 2 to play: 1 to activate the Gate, and 1 to make up the cost after the Runechant reduction.
+
+That line is now its own chain, `bsl-descendancy-same-turn`. Its expectation is written before it's measured.
 
 The expectation stays as written. Any change to the chain becomes a new chain with its own expectation.
 
 **Next:**
 
 - Condition part 3 on life totals at the setup turn.
-- Measure over 30 days, once the backfill is agreed.
+- Measure over 30 days. The backfill is parked for now (the maintainer, 21 Oct 2026).
