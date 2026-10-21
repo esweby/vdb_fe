@@ -128,6 +128,8 @@ export function NeedsReviewPage() {
         ...prev,
         card: cardId,
         variant: undefined,
+        // Closing forgets the pop-over's tab; stepping between cards keeps it.
+        ...(cardId ? {} : { cardTab: undefined }),
       }),
     });
   // After a review the card is done: drop it from the list and move on (or close at the end).

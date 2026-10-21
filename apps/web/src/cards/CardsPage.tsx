@@ -177,6 +177,7 @@ export function CardsPage() {
         ...prev,
         card: undefined,
         variant: undefined,
+        cardTab: undefined,
       }),
     });
 

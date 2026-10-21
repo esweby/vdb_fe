@@ -31,7 +31,7 @@ const repo = () =>
 
 async function open(synergy = repo()) {
   await renderApp({
-    path: `/cards/${BTSL}`,
+    path: `/cards/${BTSL}?tab=synergy`,
     auth: scorer(),
     synergy: synergy.repository,
   });
@@ -53,7 +53,7 @@ const list = (
 describe("related cards", () => {
   it("isn't shown to visitors who can't score", async () => {
     await renderApp({
-      path: `/cards/${BTSL}`,
+      path: `/cards/${BTSL}?tab=synergy`,
       auth: fakeAuthService().service,
     });
     await screen.findByRole("heading", { name: "Become the Shadow Lord" });

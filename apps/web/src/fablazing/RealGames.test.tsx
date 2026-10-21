@@ -28,7 +28,7 @@ const CCC_WINDOW = {
 
 async function cardPage(fablazing = fakeFablazingRepository()) {
   await renderApp({
-    path: "/cards/card-become-the-shadow-lord",
+    path: "/cards/card-become-the-shadow-lord?tab=real-games",
     auth: fakeAuthService().service,
     fablazing,
   });

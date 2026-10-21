@@ -13,6 +13,7 @@ import {
 } from "./auth/authSlice.ts";
 import { SignInPage } from "./auth/SignInPage.tsx";
 import { CardScoringPage } from "./scoring/CardScoringPage.tsx";
+import { isCardTab, type CardTab } from "./scoring/cardTabs.ts";
 import { QuickReviewPage } from "./scoring/QuickReviewPage.tsx";
 import { NeedsReviewPage } from "./scoring/NeedsReviewPage.tsx";
 import { AccountPage } from "./account/AccountPage.tsx";
@@ -90,6 +91,9 @@ const routeTree = rootRoute.addChildren([
   createRoute({
     getParentRoute: () => rootRoute,
     path: "/cards/$cardId",
+    // Unknown tabs are dropped: the page opens on the viewer's default.
+    validateSearch: (search: Record<string, unknown>): { tab?: CardTab } =>
+      isCardTab(search.tab) ? { tab: search.tab } : {},
     component: CardScoringPage,
   }),
   createRoute({
