@@ -2,7 +2,7 @@
 
 Step 5 of [fablazing-plan.md](fablazing-plan.md): checking the TypeScript rules engine (`packages/engine`) against real games from FaBlazing.
 
-Status, 21 Oct 2026: **thresholds drafted, waiting for the maintainer's approval.** Nothing has been compared yet. The observed and simulated distributions aren't computed until these thresholds are approved, and once they're approved they don't change. A divergence is something to investigate (a missing rule, a scripted decision or a difference in the data). It never means moving a threshold.
+Status, 22 Oct 2026: **T1–T5 approved by the maintainer** (21 Oct 2026, as written). **T6 (threatened damage) is drafted and waits for approval.** The observed and simulated distributions were computed only after approval, and the thresholds don't change. A divergence is something to investigate (a missing rule, a scripted decision or a difference in the data). It never means moving a threshold.
 
 Logs show associations, and the simulation tests counterfactuals. Causal words are kept for results where both agree. The game logic here is **unverified** until the maintainer checks it.
 
@@ -61,6 +61,8 @@ Each is checked on turns 1–6 (turn indexes 0–5). A turn is checked only if i
 
 **T5. Chain completion speed.** For `bsl-gate-blood-debt`, investigate if the simulated share of completions at 0, 1 and 2 turns after Become the Shadow Lord differs from the observed shares by more than **10 points** in any bucket. **Not run with the baseline script**, which can't activate a Gate. It runs only with a script the maintainer agrees.
 
+**T6. Threatened damage by turn** (drafted 22 Oct 2026 after the maintainer said threatened damage is important; **waiting for approval**, and drafted before any threatened damage distribution was computed). The same two tests as arcane damage, on the engine's threatened damage (see below) against `damageThreatened`: investigate if the simulated median falls outside the observed central 95% range on any turn (T6a), or if the largest gap between the cumulative distributions is more than **0.15** (T6b).
+
 **Matchups.** The goldfish has no opponent, so the simulation is compared with the pooled logs. For context, each threshold is also checked against every matchup with at least 200 sides on that turn. A divergence is called **robust** if it holds pooled and in most of those matchups, and **matchup-dependent** otherwise.
 
 **Expected direction, written before looking:** the baseline script makes the simulation slower than players at traversing (no Gate activation means no Usurper-side Gate traverse), and incomplete coverage makes it lower on arcane damage. Having no opponent, and so no blocking or arcane prevention, pushes the other way. A divergence in the expected direction is still a divergence and is still investigated.
@@ -77,18 +79,23 @@ Already known from the chain library ([fablazing-chains.md](fablazing-chains.md)
 
 **Not seen:** arcane damage by turn, damage by turn, and the first-traverse turn distribution. Nothing has been simulated.
 
-## Questions for the maintainer
+## The maintainer's answers (21 Oct 2026)
 
-1. **Which deck?** For example your own, or a field-typical list built from the most common cards in the logs.
-2. **A calibration script with Gates?** The baseline never activates a Gate or attacks with a weapon. A second script could add "activate a Gate on a blood debt card when able" and "attack with a weapon when able". That's a scripted decision, so it's yours. Without it, T5 isn't run.
-3. **Threatened damage?** Should the engine count each attack's printed power as damage threatened (no blocking), so damage by turn can be compared with `damageThreatened`? It's a step towards combat, which is out of scope now.
-4. **Approve the thresholds T1–T5** as written, or change them now. After approval they stay fixed.
+1. **Deck:** "Probably my own."
+2. **A script with Gates:** "Sort of." A Gate should be activated on condition, for a card you definitely want out of your banished zone, with some caveats. So the calibration script activates a Gate only on a card from a list the maintainer gives, and **T5 waits for that list and its caveats.**
+3. **Threatened damage:** "Important." The engine gains threatened damage (below), and T6 is drafted for it.
+4. **T1–T5:** approved as written.
+5. **The Cullingsong → Usurp proposal:** agreed.
+
+## Threatened damage in the engine
+
+A goldfish count, not combat: each attack played threatens its printed power, plus 2 when Usurp destroys a Runechant. Weapon attacks count too. Nothing is blocked or prevented. Power bonuses that verified cards note as "combat, out of scope" aren't counted, so it's a **lower bound** on the cards it plays. Arcane damage is kept apart, since whether `damageThreatened` includes arcane damage is unknown.
 
 ## First counterfactual candidate: Cullingsong → Usurp
 
 In the logs, `cullingsong-usurp` was associated with **+30.9 ±3.7 points** (expected 0 to +10). The expectation didn't say what a result above +10 means; the brief's reading is that over +20 suggests win-more. The groups also differ by game stage (median turn 4 for the pair).
 
-**A proposal, not built until the maintainer agrees.** The engine has no combat, so it can't simulate winning. What it can test is whether the pair is **available** early or only late:
+**Agreed by the maintainer (21 Oct 2026).** The engine has no combat, so it can't simulate winning. What it can test is whether the pair is **available** early or only late:
 
 - With the same seeds, run the baseline script against one that holds Usurp until Cullingsong has been played that turn.
 - Compare, by turn, how often the pair is possible at all (both in hand or playable, with the resources), and the Runechants and arcane damage that turn.
