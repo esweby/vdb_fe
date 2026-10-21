@@ -8,9 +8,11 @@ Parameters:
   AlarmEmail:
     Type: String
     Description: Where the ingest's error alarm is emailed. Confirm the subscription from the inbox.
-  GitHubRepo:
+  GitHubSubjectPrefix:
     Type: String
-    Default: esweby/vdb_fe
+    # The repo uses GitHub's immutable OIDC subjects, owner@id/repo@id, which
+    # survive a rename. gh api repos/esweby/vdb_fe/actions/oidc/customization/sub
+    Default: repo:esweby@47914740/vdb_fe@1415983672
   CreateOIDCProvider:
     Type: String
     AllowedValues: ["true", "false"]
@@ -265,7 +267,7 @@ Resources:
             Condition:
               StringEquals:
                 token.actions.githubusercontent.com:aud: sts.amazonaws.com
-                token.actions.githubusercontent.com:sub: !Sub repo:${GitHubRepo}:ref:refs/heads/main
+                token.actions.githubusercontent.com:sub: !Sub ${GitHubSubjectPrefix}:ref:refs/heads/main
       Policies:
         - PolicyName: deploy-vdb-fablazing
           PolicyDocument:
