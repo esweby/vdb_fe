@@ -1,0 +1,15 @@
+{
+  "id": "bsl-gate-blood-debt",
+  "status": "unverified",
+  "expectation": "TODO: the maintainer writes what this chain should do (how often it completes, how fast, and whether completing it should change the result) before it is measured.",
+  "steps": [
+    { "name": "setup", "action": "M", "card": "become_the_shadow_lord_blue" },
+    {
+      "name": "gate",
+      "action": "M",
+      "card": "gate_to_iarathael",
+      "withinTurns": 2
+    },
+    { "name": "payoff", "action": "M", "set": "blood_debt", "withinTurns": 0 }
+  ]
+}

@@ -10,7 +10,7 @@ The design is in [README.md](README.md), and the current plan is in [docs/phase-
 ## Test first
 
 - Write a failing test before writing the code that makes it pass. This applies to every change in behaviour: scoring rules, importer mapping, migrations, row level security and UI logic.
-- Unit tests use Vitest (`npm test`). Database tests (schema, constraints, row level security) use pgTAP in `supabase/tests` (`supabase test db`).
+- Unit tests use Vitest (`npm test`). Database tests (schema, constraints, row level security) use pgTAP in `supabase/tests` (`supabase test db`). The Go data pipeline (`services/fablazing`) uses `go test ./...`.
 - A rule in the README ("Reviews and blank scores", fringe default, scenario contract and so on) isn't implemented until a test covers it.
 - Bug fixes start with a test that reproduces the bug.
 
@@ -27,6 +27,7 @@ The design is in [README.md](README.md), and the current plan is in [docs/phase-
 - `npm test`: unit tests
 - `npm run typecheck`: TypeScript
 - `supabase start` / `supabase test db`: local stack and database tests
+- `go test ./...` in `services/fablazing`: the FaBlazing data pipeline
 
 ## Agents
 
