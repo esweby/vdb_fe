@@ -1,7 +1,10 @@
 package game
 
 import (
+	"encoding/json"
+	"fmt"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -97,5 +100,49 @@ func TestLifeDiffGoingIntoATurn(t *testing.T) {
 	}
 	if _, ok := byGUID(t, readFixture(t), "g-b").Sides[0].LifeDiffBefore(1); ok {
 		t.Error("a side without detail has no life totals")
+	}
+}
+
+func TestPlayerHashesAreReadButNeverShown(t *testing.T) {
+	g := byGUID(t, readFixture(t), "g-a")
+	if g.Sides[0].Player != "p1hash" || g.Sides[1].Player != "p2hash" {
+		t.Fatalf("player1_name belongs to deck1, player2_name to deck2: %q %q", g.Sides[0].Player, g.Sides[1].Player)
+	}
+	b, err := json.Marshal(g)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, out := range []string{fmt.Sprintf("%v", g), fmt.Sprintf("%+v", g), fmt.Sprintf("%#v", g), fmt.Sprint(g.Sides[0].Player), string(b)} {
+		if strings.Contains(out, "p1hash") || strings.Contains(out, "p2hash") {
+			t.Fatalf("a player hash was printed: %s", out)
+		}
+	}
+}
+
+func TestBlindSuffixIsStrippedFromCardIDs(t *testing.T) {
+	const csv = `game_guid,game_id,format,deck1_json,deck2_json,created_at,conceded
+g,1,1,"{'playerHero': 'viserai_usurper', 'turns': 1, 'character': [{'cardId': 'nebula~BLIND'}], 'cardResults': [{'cardId': 'oaken_old_red~BLIND', 'numCopies': 1}], 'turnLog': [[0, 'oaken_old_red~BLIND', 'M']]}","{'playerHero': 'x'}",2026-10-20 10:00:00,False
+`
+	games, err := ReadAll(strings.NewReader(csv))
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := games[0].Sides[0]
+	if s.Character[0] != "nebula" || s.Cards[0].ID != "oaken_old_red" || s.Log[0].Card != "oaken_old_red" {
+		t.Fatalf("~BLIND left in: %v %+v %+v", s.Character, s.Cards, s.Log)
+	}
+}
+
+func TestTurnStatsMarkWhichTurnsWereRecorded(t *testing.T) {
+	const csv = `game_guid,game_id,format,deck1_json,deck2_json,created_at,conceded
+g,1,1,"{'playerHero': 'viserai_usurper', 'turns': 3, 'cardResults': [], 'turnResults': {'turn_0': {'damageDealt': 0}, 'turn_2': {'damageDealt': 4, 'lifeAtTurnEnd': 30, 'opponentLifeAtTurnEnd': 33}}}","{'playerHero': 'x'}",2026-10-20 10:00:00,False
+`
+	games, err := ReadAll(strings.NewReader(csv))
+	if err != nil {
+		t.Fatal(err)
+	}
+	ts := games[0].Sides[0].TurnStats
+	if len(ts) != 3 || !ts[0].Recorded || ts[0].HasLife || ts[1].Recorded || !ts[2].Recorded || !ts[2].HasLife {
+		t.Fatalf("recorded turns: %+v", ts)
 	}
 }

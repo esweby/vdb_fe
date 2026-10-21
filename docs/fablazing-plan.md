@@ -73,7 +73,7 @@ The Go Lambda sends basic aggregates to the app, such as inclusion rates and win
 - **Minimum sample of 50 games** before a number is shown.
 - **Matchup context on every number:** each figure is shown for a matchup, or with the meta share it's averaged over.
 - **Rules-window tags** from step 1.
-- Wilson intervals on every rate; abandoned games left out of results; one player's weight capped per window.
+- Wilson intervals on every rate; abandoned games left out of results; one player's weight capped: each player's earliest 20 games per day and format count, and the rest are left out (the maintainer, 21 Oct 2026). The cap is per day rather than per window so that no player hashes are stored between runs. On 20 Oct heavy players won more than average from their first games, and only in Classic Constructed did they win less after game 20. Recheck that with a month of data before changing the cap.
 
 The first places these appear:
 
