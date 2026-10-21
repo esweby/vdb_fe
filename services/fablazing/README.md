@@ -101,7 +101,7 @@ The maintainer's IAM user, `viserai.decks`, is in the group `vdb-maintainers` an
 It can't change IAM, the bootstrap stack, or anything outside the pipeline. For that, switch to **`vdb-admin`**, a role with `AdministratorAccess` that only `viserai.decks` can assume, only when signed in with MFA, for at most an hour:
 
 - **Console:** the `SwitchRoleUrl` output of `vdb-maintainer`, or account `495599764170`, role `vdb-admin`. CloudShell in that session runs as the admin role.
-- **CLI:** add a profile, then pass `--profile vdb-admin`. The MFA is a passkey, which the CLI can't prompt for, so this works only if the `aws login` session counts as signed in with MFA. If it's refused, use CloudShell.
+- **CLI:** add a profile, then pass `--profile vdb-admin`. An `aws login` session counts as signed in with MFA (checked 21 Oct 2026), so there's no `mfa_serial`. That matters because the MFA is a passkey, which the CLI couldn't prompt for.
 
   ```ini
   [profile vdb-admin]
