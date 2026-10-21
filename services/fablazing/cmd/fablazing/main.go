@@ -268,8 +268,9 @@ func measureChain(specPath, setsPath string, csvs []string) error {
 	return nil
 }
 
-// playerCap is the most sides one player contributes to a day. Provisional:
-// the maintainer hasn't set it yet.
+// playerCap is the most sides one player contributes to a day: their earliest
+// games by created_at. Set by the maintainer on 21 Oct 2026; recheck once
+// there's a month of data (does Classic Constructed play drop after game 20?).
 const playerCap = 20
 
 // minSample is the fewest games before a figure is shown (the plan's guardrail).
