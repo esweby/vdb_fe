@@ -12,11 +12,7 @@
     },
     {
       "name": "usurp",
-      "actions": [
-        "M",
-        "INSTANT",
-        "A"
-      ],
+      "actions": ["M", "INSTANT", "A"],
       "card": "usurp_the_shadow_throne_blue",
       "withinTurns": 0
     },

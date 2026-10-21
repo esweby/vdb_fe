@@ -345,8 +345,5 @@
     "dam_the_shadowake_red",
     "dam_the_shadowake_yellow"
   ],
-  "banish_equipment": [
-    "corrupted_crown",
-    "reach_of_the_abyss"
-  ]
+  "banish_equipment": ["corrupted_crown", "reach_of_the_abyss"]
 }

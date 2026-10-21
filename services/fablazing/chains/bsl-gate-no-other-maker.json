@@ -11,11 +11,7 @@
     },
     {
       "name": "gate",
-      "actions": [
-        "M",
-        "INSTANT",
-        "A"
-      ],
+      "actions": ["M", "INSTANT", "A"],
       "card": "gate_to_iarathael",
       "withinTurns": 2,
       "unless": [
@@ -39,11 +35,7 @@
     },
     {
       "name": "payoff",
-      "actions": [
-        "M",
-        "INSTANT",
-        "A"
-      ],
+      "actions": ["M", "INSTANT", "A"],
       "set": "blood_debt",
       "withinTurns": 0
     }

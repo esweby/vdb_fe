@@ -11,11 +11,7 @@
     },
     {
       "name": "gate",
-      "actions": [
-        "M",
-        "INSTANT",
-        "A"
-      ],
+      "actions": ["M", "INSTANT", "A"],
       "card": "gate_to_iarathael",
       "withinTurns": 1,
       "unless": [
@@ -43,11 +39,7 @@
     },
     {
       "name": "otg",
-      "actions": [
-        "M",
-        "INSTANT",
-        "A"
-      ],
+      "actions": ["M", "INSTANT", "A"],
       "card": "open_the_gate_to_iarathael_red",
       "withinTurns": 0
     }

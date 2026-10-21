@@ -19,11 +19,7 @@
     },
     {
       "name": "gate",
-      "actions": [
-        "M",
-        "INSTANT",
-        "A"
-      ],
+      "actions": ["M", "INSTANT", "A"],
       "card": "gate_to_iarathael",
       "withinTurns": 2
     }
