@@ -10,8 +10,12 @@ Parameters:
     Type: String
     Default: /vdb/fablazing/api-key
     Description: SSM SecureString holding the FaBlazing API key. The maintainer creates it; it's never in the repo.
-  # /vdb/fablazing/db-password (SecureString) is reserved for the Supabase
-  # fablazing_ingest role. The ingest role can already read /vdb/fablazing/*.
+  DbUrlParameterName:
+    Type: String
+    Default: /vdb/fablazing/db-url
+    Description: >-
+      SSM SecureString holding the Postgres URL (Supavisor session pooler) for the Supabase
+      fablazing_ingest role, password included. The maintainer creates it; it's never in the repo.
 
 Resources:
   RawBucket:
@@ -107,7 +111,7 @@ Resources:
       BuildMethod: go1.x
     Properties:
       FunctionName: vdb-fablazing-ingest
-      Description: Fetches yesterday's FaBlazing files and stores the Viserai games in S3.
+      Description: Fetches yesterday's FaBlazing files, writes aggregates to Supabase and stores the Viserai games in S3.
       CodeUri: cmd/ingest-lambda/
       Handler: bootstrap
       Runtime: provided.al2023
@@ -122,6 +126,7 @@ Resources:
         Variables:
           BUCKET: !Ref RawBucket
           API_KEY_PARAMETER: !Ref ApiKeyParameterName
+          DB_URL_PARAMETER: !Ref DbUrlParameterName
       # FaBlazing is volunteer-funded: no automatic retries. A failure alarms,
       # and a rerun skips the formats already stored.
       EventInvokeConfig:

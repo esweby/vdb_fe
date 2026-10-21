@@ -30,8 +30,9 @@ type Store interface {
 	Put(ctx context.Context, key string, body []byte) error
 }
 
-// Aggregator turns one day and format of kept games into aggregates. The
-// Supabase writer plugs in here; until then it's nil and the step is skipped.
+// Aggregator turns one day and format of games into aggregates. It gets every
+// game, not only the Viserai ones: matchups and the run summary cover them all.
+// Supabase is the Aggregator in the Lambda; nil skips the step.
 type Aggregator interface {
 	Aggregate(ctx context.Context, date string, format int, games []game.Game) error
 }
@@ -113,7 +114,7 @@ func (in *Ingester) runFormat(ctx context.Context, date string, format int) (For
 	}
 	r.Games = len(games)
 	keep := map[string]string{} // guid → created_at of the copy ReadAll kept
-	var kept []game.Game
+	kept := 0
 	for _, g := range games {
 		sides := 0
 		for _, s := range g.Sides {
@@ -123,11 +124,11 @@ func (in *Ingester) runFormat(ctx context.Context, date string, format int) (For
 		}
 		if sides > 0 {
 			keep[g.GUID] = g.CreatedAt
-			kept = append(kept, g)
+			kept++
 			r.ViseraiSides += sides
 		}
 	}
-	r.Kept = len(kept)
+	r.Kept = kept
 
 	if _, err := file.Seek(0, io.SeekStart); err != nil {
 		return r, err
@@ -137,13 +138,15 @@ func (in *Ingester) runFormat(ctx context.Context, date string, format int) (For
 		return r, err
 	}
 	r.Rows = rows
-	if err := in.Store.Put(ctx, key, body); err != nil {
-		return r, fmt.Errorf("storing: %w", err)
-	}
+	// Aggregates first: the day is only stored once they're written, so a
+	// failure leaves nothing to skip on a rerun. Replacing a day is idempotent.
 	if in.Aggregator != nil {
-		if err := in.Aggregator.Aggregate(ctx, date, format, kept); err != nil {
+		if err := in.Aggregator.Aggregate(ctx, date, format, games); err != nil {
 			return r, fmt.Errorf("aggregating: %w", err)
 		}
+	}
+	if err := in.Store.Put(ctx, key, body); err != nil {
+		return r, fmt.Errorf("storing: %w", err)
 	}
 	return r, nil
 }

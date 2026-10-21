@@ -286,3 +286,28 @@ func TestOutputHasNoPlayerHashes(t *testing.T) {
 		t.Fatalf("player hash in output: %s", b)
 	}
 }
+
+// The maintainer's decisions of 21 Oct 2026, shared by cmd/fablazing and the Lambda.
+func TestDefaults(t *testing.T) {
+	if PlayerCap != 20 {
+		t.Errorf("PlayerCap = %d, want 20", PlayerCap)
+	}
+	if Concession != (game.ConcessionRule{MaxTurns: 2, MaxLife: 20}) {
+		t.Errorf("Concession = %+v", Concession)
+	}
+}
+
+// fablazing_replace_day reads each row list with jsonb_to_recordset, which
+// fails on a JSON null: an empty list must be [].
+func TestEmptyRowListsAreArraysInJSON(t *testing.T) {
+	r, err := Run(nil, opts())
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, _ := json.Marshal(r)
+	for _, k := range []string{`"cards":[]`, `"matchups":[]`, `"turns":[]`, `"traverses":[]`, `"card_ids":[]`, `"hero_ids":[]`} {
+		if !strings.Contains(string(b), k) {
+			t.Errorf("JSON has no %s: %s", k, b)
+		}
+	}
+}

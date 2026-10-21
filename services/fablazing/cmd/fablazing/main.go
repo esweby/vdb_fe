@@ -38,7 +38,7 @@ func top(m map[string]int, n int) []string {
 	return out
 }
 
-var concession = game.ConcessionRule{MaxTurns: 2, MaxLife: 20} // accepted provisionally by the maintainer, 21 Oct 2026
+var concession = aggregate.Concession
 
 func main() {
 	if len(os.Args) < 3 {
@@ -268,10 +268,7 @@ func measureChain(specPath, setsPath string, csvs []string) error {
 	return nil
 }
 
-// playerCap is the most sides one player contributes to a day: their earliest
-// games by created_at. Set by the maintainer on 21 Oct 2026; recheck once
-// there's a month of data (does Classic Constructed play drop after game 20?).
-const playerCap = 20
+const playerCap = aggregate.PlayerCap
 
 // minSample is the fewest games before a figure is shown (the plan's guardrail).
 const minSample = 50
