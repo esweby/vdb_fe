@@ -939,6 +939,10 @@
   .buildHead {
     position: static;
   }
+  /* Phones: the cards to add first, your core below them (the count stays in the header). */
+  .tray {
+    order: 1;
+  }
   .summary {
     margin-left: 0;
   }
