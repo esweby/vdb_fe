@@ -312,5 +312,41 @@
     "widespread_annihilation_blue",
     "widespread_destruction_yellow",
     "widespread_ruin_red"
+  ],
+  "gate_maker_on_play": [
+    "countdown_to_extinction_blue",
+    "countdown_to_extinction_red",
+    "countdown_to_extinction_yellow",
+    "planar_chaos_red",
+    "pull_from_beyond_blue",
+    "pull_from_beyond_red",
+    "pull_from_beyond_yellow",
+    "rites_of_nightfall_blue",
+    "step_through_realms_blue",
+    "step_through_realms_red",
+    "step_through_realms_yellow",
+    "unbound_by_shadow_red"
+  ],
+  "gate_maker_on_hit": [
+    "breach_flesh_blue",
+    "breach_flesh_red",
+    "breach_flesh_yellow",
+    "corporeal_chasm_blue",
+    "corporeal_chasm_red",
+    "corporeal_chasm_yellow",
+    "harbinger_of_destruction_red",
+    "open_the_gate_to_iarathael_red",
+    "shadowake_gloomblade_blue",
+    "shadowake_gloomblade_red",
+    "shadowake_gloomblade_yellow"
+  ],
+  "gate_maker_on_block": [
+    "dam_the_shadowake_blue",
+    "dam_the_shadowake_red",
+    "dam_the_shadowake_yellow"
+  ],
+  "banish_equipment": [
+    "corrupted_crown",
+    "reach_of_the_abyss"
   ]
 }

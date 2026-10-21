@@ -1,0 +1,52 @@
+{
+  "id": "bsl-gate-no-other-maker",
+  "status": "line chosen by the maintainer, 21 Oct 2026; matching unverified",
+  "line": "The broader chain (Become the Shadow Lord played, a Gate used within 2 turns, a blood debt card played in the same turn as the Gate), but with no other logged Gate maker between Become the Shadow Lord and the Gate use, so the Gate more likely came from Become the Shadow Lord (a proxy). 'Other Gate maker' is every logged trigger (the maintainer, 21 Oct 2026): a card that makes a Gate when played or when it attacks, played (M); a card that makes one on hit, hitting (HIT); Dam the Shadowake blocking (B); and blocking with Corrupted Crown or Reach of the Abyss (B), whose block actions can banish a card such as Open the Gate (the maintainer, 21 Oct 2026). Only the block is logged, not the banish action, so the block is the proxy. Not logged and so not ruled out: Open the Gate banished from hand or deck (for example by Become the Shadow Lord itself), and on-hit Gates from Step through Realms (its play is used as the proxy). Pull from Beyond and Unbound by Shadow only make a Gate conditionally; they're ruled out anyway. The gate_maker_* sets are hand-listed from docs/reviews/02-gate-creators.md until the importer exports them.",
+  "expectation": "Written 21 Oct 2026, before measuring this chain (seen beforehand, from the two measured chains on 20 Oct: 400 sides played Become the Shadow Lord, 189 completed the broader chain (47%), 190 reached its Gate step, 82 completions were same-turn (43%), median setup turn 3, +3.2 \u00b18.8 points, damage 6.0 against 4.3; Descendancy 93 and Open the Gate 51 of the cards played through the Gate; equipment blocks on 20 Oct, all heroes: Corrupted Crown 18, Reach of the Abyss 91; not seen: how many had another Gate maker in between). 1. How often: 30-45% of sides that play Become the Shadow Lord complete it; under 25% means a used Gate usually came from another maker. 2. When: median setup turn 3; at least 43% of completions in a single turn. 3. Result: compared with sides that play Become the Shadow Lord without completing it (which now includes broader-chain completers ruled out by another maker), with life totals held level, completing it wins 3-12 points more often and deals more damage on the setup turn. About +3 (the broader chain) means the Gate's source doesn't matter; clearly higher means the Become the Shadow Lord Gate is the valuable part; lower means the value came from games with several Gate makers.",
+  "steps": [
+    {
+      "name": "setup",
+      "action": "M",
+      "card": "become_the_shadow_lord_blue"
+    },
+    {
+      "name": "gate",
+      "actions": [
+        "M",
+        "INSTANT",
+        "A"
+      ],
+      "card": "gate_to_iarathael",
+      "withinTurns": 2,
+      "unless": [
+        {
+          "action": "M",
+          "set": "gate_maker_on_play"
+        },
+        {
+          "action": "HIT",
+          "set": "gate_maker_on_hit"
+        },
+        {
+          "action": "B",
+          "set": "gate_maker_on_block"
+        },
+        {
+          "action": "B",
+          "set": "banish_equipment"
+        }
+      ]
+    },
+    {
+      "name": "payoff",
+      "actions": [
+        "M",
+        "INSTANT",
+        "A"
+      ],
+      "set": "blood_debt",
+      "withinTurns": 0
+    }
+  ],
+  "expectationBy": "maintainer (drafted by Claude, approved 21 Oct 2026)"
+}

@@ -1,0 +1,56 @@
+{
+  "id": "crown-gate-otg",
+  "status": "line described by the maintainer, 21 Oct 2026; matching unverified",
+  "line": "The maintainer (21 Oct 2026): Corrupted Crown, when it blocks, can banish a card from hand for +2; if that card is Open the Gate to i'Arathael, it creates a Gate. Which card was banished isn't logged, so the proxy is: Corrupted Crown blocks, a Gate is used within 1 turn index, and Open the Gate is played in the same turn as that Gate (so it was in the banished zone). Ruled out (drafted by Claude, for the maintainer to confirm): Become the Shadow Lord played, or another logged Gate maker, between the block and the Gate, since either could have banished Open the Gate or made the Gate. A top-deck banish isn't logged and can't be ruled out.",
+  "expectation": "Written 21 Oct 2026, before measuring this chain (seen beforehand: equipment blocks on 20 Oct, all heroes: Corrupted Crown 18, Reach of the Abyss 91; Open the Gate was played through the Gate in 51 of the broader chain's 189 completions; not seen: any count for this chain). The exclusion list (no Become the Shadow Lord, logged Gate maker or Reach block between the block and the Gate) was approved by the maintainer. 1. How often: rare; 2-10% of sides that block with Corrupted Crown complete it. 2. When: in most completions the Gate is used in the same turn index as the block. 3. Result: compared with Crown blocks that don't lead into the line, with life totals held level, 0 to +10 points. Under 20 completions: not enough data, no verdict.",
+  "steps": [
+    {
+      "name": "crown",
+      "action": "B",
+      "card": "corrupted_crown"
+    },
+    {
+      "name": "gate",
+      "actions": [
+        "M",
+        "INSTANT",
+        "A"
+      ],
+      "card": "gate_to_iarathael",
+      "withinTurns": 1,
+      "unless": [
+        {
+          "action": "M",
+          "card": "become_the_shadow_lord_blue"
+        },
+        {
+          "action": "M",
+          "set": "gate_maker_on_play"
+        },
+        {
+          "action": "HIT",
+          "set": "gate_maker_on_hit"
+        },
+        {
+          "action": "B",
+          "set": "gate_maker_on_block"
+        },
+        {
+          "action": "B",
+          "card": "reach_of_the_abyss"
+        }
+      ]
+    },
+    {
+      "name": "otg",
+      "actions": [
+        "M",
+        "INSTANT",
+        "A"
+      ],
+      "card": "open_the_gate_to_iarathael_red",
+      "withinTurns": 0
+    }
+  ],
+  "expectationBy": "maintainer (drafted by Claude, approved 21 Oct 2026)"
+}
