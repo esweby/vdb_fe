@@ -31,7 +31,7 @@ afterAll(async () => {
 });
 
 const mapped = () => sql`
-  select m.slug, v.external_id as variant, h.external_id as hero
+  select m.slug, v.external_id as variant, h.external_id as hero, m.ignored
     from public.fablazing_card_map m
     left join public.variants v on v.id = m.variant_id
     left join public.heroes h on h.id = m.hero_id
@@ -45,9 +45,24 @@ describe("upsertCardMap", () => {
       { slug: "test_fb_hero", heroExternalId: "test:fb-hero" },
     ]);
     expect(await mapped()).toEqual([
-      { slug: "test_fb_card_blue", variant: "test:fb-card-b", hero: null },
-      { slug: "test_fb_card_red", variant: "test:fb-card-r", hero: null },
-      { slug: "test_fb_hero", variant: null, hero: "test:fb-hero" },
+      {
+        slug: "test_fb_card_blue",
+        variant: "test:fb-card-b",
+        hero: null,
+        ignored: false,
+      },
+      {
+        slug: "test_fb_card_red",
+        variant: "test:fb-card-r",
+        hero: null,
+        ignored: false,
+      },
+      {
+        slug: "test_fb_hero",
+        variant: null,
+        hero: "test:fb-hero",
+        ignored: false,
+      },
     ]);
   });
 
@@ -61,5 +76,17 @@ describe("upsertCardMap", () => {
     expect(rows.find((r) => r.slug === "test_fb_card_red")?.variant).toBe(
       "test:fb-card-b",
     );
+  });
+
+  it("records ignored ids with no target, and can ignore a mapped slug", async () => {
+    await upsertCardMap(sql, [
+      { slug: "test_fb_ignored", ignored: true },
+      { slug: "test_fb_hero", ignored: true },
+    ]);
+    const rows = await mapped();
+    expect(rows.filter((r) => r.ignored)).toEqual([
+      { slug: "test_fb_hero", variant: null, hero: null, ignored: true },
+      { slug: "test_fb_ignored", variant: null, hero: null, ignored: true },
+    ]);
   });
 });

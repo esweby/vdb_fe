@@ -24,4 +24,15 @@ describe("toHeroes", () => {
   it("leaves out young heroes, which are for Blitz", () => {
     expect(toHeroes(fixture).map((h) => h.name)).not.toContain("Viserai");
   });
+
+  it("leaves out Arakni, Marionette, a Living Legend since 19 Oct 2026 (ahead of the dataset)", () => {
+    const marionette = {
+      ...fixture.find((c) => c.name === "Viserai, the Forsaken")!,
+      name: "Arakni, Marionette",
+      types: ["Chaos", "Assassin", "Hero"],
+    };
+    expect(toHeroes([...fixture, marionette]).map((h) => h.name)).toEqual([
+      "Viserai, the Forsaken",
+    ]);
+  });
 });
