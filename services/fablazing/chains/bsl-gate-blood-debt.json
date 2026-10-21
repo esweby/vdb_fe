@@ -1,0 +1,25 @@
+{
+  "id": "bsl-gate-blood-debt",
+  "status": "unverified",
+  "expectation": "Written 21 Oct 2026, before measuring the chain (the card-level counts for Become the Shadow Lord and Gate use had been seen). 1. Completion: of Viserai sides that play Become the Shadow Lord, 30-60% complete the chain; under 20% suggests the Gate step or the proxy is wrong, or Gates are mostly used for something else. 2. Speed: median 1 turn from Become the Shadow Lord to the payoff, 90% within 2 turns; a same-turn payoff should be rare. 3. Result: compared with sides that play Become the Shadow Lord but never reach the payoff, at similar life totals on the setup turn, completing it wins 5-15 percentage points more often. No difference means tempo, not wins, or a wrong proxy; more than 20 points suggests it marks games already being won.",
+  "steps": [
+    {
+      "name": "setup",
+      "action": "M",
+      "card": "become_the_shadow_lord_blue"
+    },
+    {
+      "name": "gate",
+      "action": "M",
+      "card": "gate_to_iarathael",
+      "withinTurns": 2
+    },
+    {
+      "name": "payoff",
+      "action": "M",
+      "set": "blood_debt",
+      "withinTurns": 0
+    }
+  ],
+  "expectationBy": "maintainer (drafted by Claude, approved 21 Oct 2026)"
+}

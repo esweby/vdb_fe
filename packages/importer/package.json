@@ -6,7 +6,8 @@
     "import": "node --env-file-if-exists=.env src/cli.ts",
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "review-sheet": "node src/review-cli.ts",
-    "mock-scores": "node src/mock-cli.ts"
+    "mock-scores": "node src/mock-cli.ts",
+    "fablazing-sets": "node src/fablazing-sets-cli.ts"
   },
   "dependencies": {
     "postgres": "^3.4.9",
