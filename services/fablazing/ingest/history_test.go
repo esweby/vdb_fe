@@ -142,7 +142,13 @@ func TestViseraiOnlyAgainstPostgres(t *testing.T) {
 		t.Fatal(err)
 	}
 	s := &Supabase{Connect: func(context.Context) (DB, error) { return txDB{tx}, nil }, Logger: slog.New(slog.DiscardHandler)}
-	r, err := aggregate.Run(dayGames(t), RunOptions("2026-10-20", 0))
+	// A date no real day has, so rows already in the database don't matter.
+	const date = "2001-01-01"
+	games := dayGames(t)
+	for i := range games {
+		games[i].CreatedAt = strings.Replace(games[i].CreatedAt, "2026-10-20", date, 1)
+	}
+	r, err := aggregate.Run(games, RunOptions(date, 0))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -152,10 +158,10 @@ func TestViseraiOnlyAgainstPostgres(t *testing.T) {
 	}
 	var scope string
 	var others int
-	if err := tx.QueryRow(ctx, "select scope from public.fablazing_runs where date = '2026-10-20' and format = 0").Scan(&scope); err != nil {
+	if err := tx.QueryRow(ctx, "select scope from public.fablazing_runs where date = '2001-01-01' and format = 0").Scan(&scope); err != nil {
 		t.Fatal(err)
 	}
-	if err := tx.QueryRow(ctx, "select count(*) from public.fablazing_matchup_daily where date = '2026-10-20' and format = 0 and hero <> 'viserai'").Scan(&others); err != nil {
+	if err := tx.QueryRow(ctx, "select count(*) from public.fablazing_matchup_daily where date = '2001-01-01' and format = 0 and hero <> 'viserai'").Scan(&others); err != nil {
 		t.Fatal(err)
 	}
 	if scope != ScopeViserai || others != 0 {
@@ -165,10 +171,10 @@ func TestViseraiOnlyAgainstPostgres(t *testing.T) {
 	if err := s.Write(ctx, r); err != nil {
 		t.Fatal(err)
 	}
-	if err := tx.QueryRow(ctx, "select scope from public.fablazing_runs where date = '2026-10-20' and format = 0").Scan(&scope); err != nil {
+	if err := tx.QueryRow(ctx, "select scope from public.fablazing_runs where date = '2001-01-01' and format = 0").Scan(&scope); err != nil {
 		t.Fatal(err)
 	}
-	if err := tx.QueryRow(ctx, "select count(*) from public.fablazing_matchup_daily where date = '2026-10-20' and format = 0 and hero <> 'viserai'").Scan(&others); err != nil {
+	if err := tx.QueryRow(ctx, "select count(*) from public.fablazing_matchup_daily where date = '2001-01-01' and format = 0 and hero <> 'viserai'").Scan(&others); err != nil {
 		t.Fatal(err)
 	}
 	if scope != ScopeAll || others == 0 {
