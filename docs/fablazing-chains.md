@@ -266,6 +266,8 @@ The `gate_maker_*` and `banish_equipment` sets now come from `cardSets` in `pack
 - **Gate makers** are derived from the Gate tokens in our card facts, by the logged event that makes the Gate: the card played, if its play or attack makes it or it grants one to a later attack (`gate_maker_on_play`); its own hit (`gate_maker_on_hit`); its block (`gate_maker_on_block`). Gates made on banish aren't logged, so they're in no set.
 - **`banish_equipment`** (Corrupted Crown, Reach of the Abyss) stays an authored list in the importer: it's the maintainer's judgement that a block with these can make a Gate, and their banishes aren't logged. Base of the Mountain isn't in it: it banishes a card that then defends and goes to the graveyard, so it only keeps a card banished alongside Reach of the Abyss (the maintainer, 21 Oct 2026).
 
+The maintainer checked the cards in these sets in the app and verified them (21 Oct 2026).
+
 Against the hand list, the derived sets add two cards to `gate_maker_on_play`, and are otherwise identical:
 
 - **Shadowrealm Walker** (all three pitches): its attack makes a Gate if it banished a Shadow card. The hand list came from review batch 2, and Walker is in batch 3, so it was missed.
