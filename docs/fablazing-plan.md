@@ -1,6 +1,6 @@
 # FaBlazing game data: plan
 
-Status, 21 Oct 2026: **revised after the council's review**. Step 1 (the data audit) is written up in [fablazing-data-dictionary.md](fablazing-data-dictionary.md), and step 2 (one chain through a command-line tool) has started in `services/fablazing`. The numbers come from one day of data (20 Oct 2026). Any reading of game logic is **unverified** until the maintainer checks it.
+Status, 21 Oct 2026 (evening): steps 1, 2 and 4 are done; step 3's pipeline is live, with its first scheduled run on 22 Oct at 10:00 UTC. What's next, in order, is in **Next steps** below. Any reading of game logic is **unverified** until the maintainer checks it.
 
 ## Decision
 
@@ -44,10 +44,10 @@ Full detail is in [fablazing-data-dictionary.md](fablazing-data-dictionary.md). 
 
 The deliverable is [fablazing-data-dictionary.md](fablazing-data-dictionary.md). It still waits on two things:
 
-- **FaBlazing's answers:** what the action codes mean, why some sides lack detail, why some games appear twice, what `firstPlayer` means, and whether hidden zones could be logged.
+- **FaBlazing's answers (21 Oct 2026):** sides without detail are players who turned off stats; duplicates are probably undo-then-finish, so the latest is kept; `firstPlayer` 1 means went first. What the action codes mean is a question for Talishar's developers and is still open.
 - **From the maintainer:** nothing outstanding. There are no ban or errata changes since Viserai's release.
 
-### 2. Prove one chain through the command line: in progress
+### 2. Prove one chain through the command line: done
 
 The code is in `services/fablazing`, written test first:
 
@@ -65,6 +65,8 @@ The first chain is `chains/bsl-gate-blood-debt.json`: Become the Shadow Lord pla
 - the maintainer has written the expectation for the first chain
 - the card sets (such as `blood_debt`) come from our card facts, exported by the TypeScript importer, rather than a hand list
 - the chain has been measured once on real data, with the results compared against the expectation
+
+All three are met (PR 200). Nine chains have now been measured; see step 4.
 
 ### 3. Quick-win stats
 
@@ -141,17 +143,32 @@ There's no general synergy framework until the chains show what the data actuall
 
 ## Status of steps
 
-| #   | Step                      | State                                                                                                           | Waiting on                       |
-| --- | ------------------------- | --------------------------------------------------------------------------------------------------------------- | -------------------------------- |
-| 1   | Data audit                | Written                                                                                                         | FaBlazing's answers              |
-| 2   | One chain through the CLI | Parser, reader, chain spec and CLI built and tested; measurement locked                                         | The maintainer's expectation     |
-| 3   | Quick-win stats           | Not started                                                                                                     | Step 2                           |
-| 4   | Chain library             | Eleven chains measured on 30 days, with and without the player cap ([fablazing-chains.md](fablazing-chains.md)) | —                                |
-| 5   | Engine calibration        | Not started                                                                                                     | Step 4; thresholds written first |
-| 6   | Expand                    | —                                                                                                               | Evidence from steps 4 and 5      |
+| #   | Step                      | State                                                                                                                                                                                                              | Waiting on                                                       |
+| --- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
+| 1   | Data audit                | Written ([fablazing-data-dictionary.md](fablazing-data-dictionary.md)); FaBlazing answered on 21 Oct                                                                                                               | What the action codes mean: a question for Talishar's developers |
+| 2   | One chain through the CLI | Done (PR 200)                                                                                                                                                                                                      | —                                                                |
+| 3   | Quick-win stats           | **Pipeline live** (PRs 201, 203–206): a Go Lambda daily, raw games in S3, aggregates in Supabase as `fablazing_ingest`. History load (PR 211) and app views (PR 212) are merging; the hosted history load follows. | The first live run's check                                       |
+| 4   | Chain library             | Eleven chains measured on 30 days, with and without the player cap ([fablazing-chains.md](fablazing-chains.md)); card sets come from the importer (PR 209)                                                         | —                                                                |
+| 5   | Engine calibration        | Thresholds drafted (`docs/engine-calibration.md` on its branch), waiting for the maintainer's approval                                                                                                             | The maintainer's approval of thresholds and the deck to simulate |
+| 6   | Expand                    | —                                                                                                                                                                                                                  | Evidence from steps 4 and 5                                      |
+
+## Next steps
+
+In the maintainer's order (21 Oct 2026):
+
+1. **Check the first live run** (22 Oct, after 10:00 UTC): the Lambda logs, the `fablazing_runs` row, the aggregate rows and the S3 object.
+2. **Retry the three missing backfill files:** 18 Oct format 1, and 19 Oct formats 0 and 1. FaBlazing rate-limited us (HTTP 429), so leave a minute between files and back off on a 429.
+3. **Load history into Supabase** from the 30 days we downloaded (`~/.cache/vdb/fablazing/viserai/`). Those files hold only games with Viserai, so they're complete for Viserai's cards, turns, traverses and Viserai's own matchups and meta share. **Other heroes' matchups must not be written from them,** because those would be partial. Full matchups build up from the daily runs.
+4. **Step 3's app views:** "In real games" on card pages; Viserai's real win rates and meta share on matchups; Effect drafts ordered by real plays per game; how fresh the data is. Guardrails: n ≥ 50, matchup context, Wilson intervals.
+5. **Tidy the chain library:** the player cap in the chain tool, card sets moved to the importer's export, and the two Open the Gate chains (expectations first). **Done (PR 209).**
+6. **Step 5, engine calibration:** pass and fail thresholds written before any comparison.
+7. **Housekeeping:** narrow the `viserai.decks` IAM user from AdministratorAccess now that the stack exists. **Done (PR 213):** day-to-day `--profile vdb` is narrowed; admin is `--profile vdb-admin`.
+
+Items 1 and 2 wait for 22 Oct. Items 3 to 7 can run in parallel.
 
 ## Risks
 
+- **Rate limits.** The 30-day backfill hit HTTP 429 and a 500 from FaBlazing. Fetch slowly, and back off on errors.
 - **API changes.** FaBlazing gave permission to use the data on 21 Oct 2026. The API is v1, run by a volunteer, with no licence, so credit them, keep our own filtered history in S3, and version the parser (it already accepts JSON as well as Python literals).
 - **Hidden state.** Chains that depend on the banished zone or Runechants can't be measured from logs. Only the simulation can speak to them.
 - **Small samples for chains by matchup.** Minimum sample sizes and intervals apply, and "not enough data" is shown rather than a number.
