@@ -31,7 +31,8 @@ type Side struct {
 	Player PlayerHash
 	Won    bool
 	Turns  int
-	// FirstPlayer is the raw field (1 or 2). What it refers to is unconfirmed.
+	// FirstPlayer is per side: 1 if this player went first, otherwise 0
+	// (confirmed by FaBlazing, 21 Oct 2026).
 	FirstPlayer int
 	Character   []string // hero, weapons and equipment ids
 	// Detailed is false when the side has only the game summary: no cards,
@@ -91,6 +92,9 @@ func (s Side) LifeDiffBefore(turn int) (diff int, ok bool) {
 	t := s.TurnStats[turn-1]
 	return t.LifeAtEnd - t.OpponentLifeAtEnd, true
 }
+
+// WentFirst reports whether this side took the first turn.
+func (s Side) WentFirst() bool { return s.FirstPlayer == 1 }
 
 // IsViserai reports whether a hero id is Viserai on either side.
 func IsViserai(hero string) bool { return strings.HasPrefix(hero, "viserai_") }

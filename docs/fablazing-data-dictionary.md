@@ -30,7 +30,7 @@ The data audit: step 1 of [fablazing-plan.md](fablazing-plan.md). It's based on 
 | `is_public`                             | Always `True` in this export                                                                 | Confirmed                                                     |
 | `conceded`                              | Whether the game ended by concession (`True` in about 43% of rows)                           | Confirmed                                                     |
 
-**Duplicates.** 78 guids appear twice, always in the same format, with the same players and game id but a different `created_at`. 29 of the pairs have different turn counts, so each looks like a later snapshot of the same game. **Rule: keep the latest `created_at` for each guid** (`game.ReadAll`). Why they're re-recorded is Unknown; it's a question for FaBlazing.
+**Duplicates.** 78 guids appear twice, always in the same format, with the same players and game id but a different `created_at`. 29 of the pairs have different turn counts, so each looks like a later snapshot of the same game. **Rule: keep the latest `created_at` for each guid** (`game.ReadAll`). Why they're re-recorded is Unknown; it's a question for FaBlazing. **FaBlazing (21 Oct 2026):** guids should be unique. A duplicate is probably a player winning, pressing undo and finishing the game a second time, so take the latest `created_at`, which is the rule we already use.
 
 **Consistency (confirmed, no exceptions in 8,213 rows):**
 
@@ -41,24 +41,24 @@ The data audit: step 1 of [fablazing-plan.md](fablazing-plan.md). It's based on 
 
 ## A player-side (`deckN_json`)
 
-| Field                                  | Meaning                                                                                                                          | Status                                 |
-| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
-| `playerHero`                           | **The side the hero ended the game on.** For Viserai it's `viserai_the_forsaken` or `viserai_usurper`: one hero card, two sides. | Confirmed by `TRANSFORM` events        |
-| `opposingHero`                         | The opponent's hero, on the side it ended on                                                                                     | Confirmed                              |
-| `result`                               | 1 won, 0 lost                                                                                                                    | Confirmed                              |
-| `winner`                               | 1 or 2: which side won                                                                                                           | Confirmed                              |
-| `turns`                                | Number of turn indexes (see turn numbering)                                                                                      | Confirmed                              |
-| `firstPlayer`                          | 1 or 2. Which player it refers to is **Unknown**: it doesn't line up cleanly with who acts on turn 0.                            | Unknown                                |
-| `startingLife`, `opponentStartingLife` | 40 in CC                                                                                                                         | Confirmed                              |
-| `character`                            | Hero, weapons and equipment: `cardId`, `cardName`, `numCopies`                                                                   | Confirmed                              |
-| `cardResults`                          | One row per card in the deck (see below). **Missing on about 9% of sides.**                                                      | Confirmed                              |
-| `arenaCardResults`                     | The same fields for equipment, weapons and tokens that were used (for example `gate_to_iarathael`)                               | Confirmed                              |
-| `tokenResults`                         | Always empty for Viserai                                                                                                         | Confirmed                              |
-| `turnResults`                          | Per turn, keyed `turn_0`, `turn_1`, …; see below                                                                                 | Confirmed                              |
-| `turnLog`                              | Ordered actions; see below                                                                                                       | Confirmed                              |
-| `total*`, `average*`                   | About 40 game summaries (damage, life, resources, value), each with a `_NoLast` variant that leaves out the final turn           | Confirmed present; definitions Unknown |
+| Field                                  | Meaning                                                                                                                                                                                 | Status                                           |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| `playerHero`                           | **The side the hero ended the game on.** For Viserai it's `viserai_the_forsaken` or `viserai_usurper`: one hero card, two sides.                                                        | Confirmed by `TRANSFORM` events                  |
+| `opposingHero`                         | The opponent's hero, on the side it ended on                                                                                                                                            | Confirmed                                        |
+| `result`                               | 1 won, 0 lost                                                                                                                                                                           | Confirmed                                        |
+| `winner`                               | 1 or 2: which side won                                                                                                                                                                  | Confirmed                                        |
+| `turns`                                | Number of turn indexes (see turn numbering)                                                                                                                                             | Confirmed                                        |
+| `firstPlayer`                          | Per side: **1 if this player went first, otherwise 0**. The two sides always have 1 and 0. The side with 1 plays on turn 0 in 94% of games (format 1, 20 Oct). `game.Side.WentFirst()`. | Confirmed by FaBlazing and the data, 21 Oct 2026 |
+| `startingLife`, `opponentStartingLife` | 40 in CC                                                                                                                                                                                | Confirmed                                        |
+| `character`                            | Hero, weapons and equipment: `cardId`, `cardName`, `numCopies`                                                                                                                          | Confirmed                                        |
+| `cardResults`                          | One row per card in the deck (see below). **Missing on about 9% of sides.**                                                                                                             | Confirmed                                        |
+| `arenaCardResults`                     | The same fields for equipment, weapons and tokens that were used (for example `gate_to_iarathael`)                                                                                      | Confirmed                                        |
+| `tokenResults`                         | Always empty for Viserai                                                                                                                                                                | Confirmed                                        |
+| `turnResults`                          | Per turn, keyed `turn_0`, `turn_1`, …; see below                                                                                                                                        | Confirmed                                        |
+| `turnLog`                              | Ordered actions; see below                                                                                                                                                              | Confirmed                                        |
+| `total*`, `average*`                   | About 40 game summaries (damage, life, resources, value), each with a `_NoLast` variant that leaves out the final turn                                                                  | Confirmed present; definitions Unknown           |
 
-**Sides without detail.** 82 of the 928 Viserai sides have only `playerHero`, `opposingHero`, `result`, `winner`, `turns`, `firstPlayer`, life, `totalTime`, `arenaCardResults` and `tokenResults`. They have **no `cardResults`, `turnResults` or `turnLog`**. They aren't short games (most ran 6–9 turns), and in 79 of the 82 the opponent's side has full detail. The cause is Unknown. These sides count for matchups and results, but not for card stats or chains.
+**Sides without detail.** 82 of the 928 Viserai sides have only `playerHero`, `opposingHero`, `result`, `winner`, `turns`, `firstPlayer`, life, `totalTime`, `arenaCardResults` and `tokenResults`. They have **no `cardResults`, `turnResults` or `turnLog`**. They aren't short games (most ran 6–9 turns), and in 79 of the 82 the opponent's side has full detail. **The cause (FaBlazing, 21 Oct 2026):** players can turn off stats in Talishar's settings. Nothing about their game then reaches the database except the heroes, which FaBlazing asked Talishar to keep sending. These sides count for matchups and results, but not for card stats or chains.
 
 ### `cardResults` (per card in the deck)
 
@@ -131,10 +131,14 @@ Depth by matchup is enough. Depth for **chains by matchup** depends on how often
 
 The data has **no legality or rules-version field.** Ban-list and errata windows have to come from a dated list that we maintain: each entry has a date, what changed and the affected cards. Every game is tagged by its `created_at`, and aggregates never span a window boundary unless the change doesn't touch Viserai's pool. The last ban and restricted update came before Viserai's release (the maintainer, 21 Oct 2026), so for now there's **one window**, starting from the first day Viserai appears in the data.
 
-## Open questions for FaBlazing
+## Questions and answers
 
-1. What each action code means, especially `M` against `INSTANT` against `A` for a Gate being used.
-2. Why some sides have no detail.
-3. Why some guids are recorded twice.
-4. What `firstPlayer` refers to, and why the largest turn index is sometimes `turns` and sometimes `turns − 1`.
-5. Whether the banished zone, draws or the zone a card was played from could be added to the log.
+Asked on 21 Oct 2026. FaBlazing's answers:
+
+1. **What the action codes mean:** FaBlazing doesn't know. It's a question for Talishar's developers. **Still open**, so our readings above stay "Inferred".
+2. **Sides without detail:** the player turned off stats in Talishar's settings; only the heroes are sent.
+3. **Duplicate guids:** probably undo after a win, then the game finished again. Take the latest `created_at`.
+4. **`firstPlayer`:** 1 means this player went first, the same convention as `result` (1 means won).
+5. Whether hidden zones (banish, draws, the zone a card was played from) could be logged: not asked yet. It would be a question for Talishar.
+
+They're fine about the rate limits we hit during the backfill.
