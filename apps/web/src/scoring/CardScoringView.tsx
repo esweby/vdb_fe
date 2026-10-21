@@ -16,6 +16,7 @@ import { useServices } from "../servicesContext.ts";
 import { Button, LoadError, Loading, Tag } from "../ui/index.ts";
 import type { CommunityRow } from "../ranking/rank.ts";
 import { CommunityPanel } from "./CommunityPanel.tsx";
+import { RealGamesPanel } from "../fablazing/RealGames.tsx";
 import { RelatedCards } from "../synergy/RelatedCards.tsx";
 import { CardText } from "../cards/CardText.tsx";
 import { ReviewDialog } from "./ReviewDialog.tsx";
@@ -402,6 +403,8 @@ export function CardScoringView(props: {
               minRatingCount={community.minRatingCount}
             />
           )}
+          {/* Evidence from real games, kept apart from the scoring group's opinions. */}
+          <RealGamesPanel cardId={cardId} variantId={chosen?.id} />
           {canScore && <RelatedCards cardId={cardId} />}
         </section>
 

@@ -19,6 +19,8 @@ import type { ScenarioRepository } from "../scenarios/scenarioRepository.ts";
 import { fakeScenarioRepository } from "./fakeScenarioRepository.ts";
 import type { DraftReviewRepository } from "../rules/draftReviewRepository.ts";
 import { fakeDraftReviewRepository } from "./fakeDraftReviewRepository.ts";
+import type { FablazingRepository } from "../fablazing/fablazingRepository.ts";
+import { fakeFablazingRepository } from "./fakeFablazingRepository.ts";
 
 /** Renders the whole app at a path, with a fake auth service. */
 export async function renderApp(options: {
@@ -31,6 +33,7 @@ export async function renderApp(options: {
   synergy?: SynergyRepository;
   scenarios?: ScenarioRepository;
   draftReviews?: DraftReviewRepository;
+  fablazing?: FablazingRepository;
 }) {
   const scores = options.scores ?? fakeScoreRepository().repository;
   const cards = options.cards ?? fakeCardRepository();
@@ -40,6 +43,7 @@ export async function renderApp(options: {
   const scenarios = options.scenarios ?? fakeScenarioRepository().repository;
   const draftReviews =
     options.draftReviews ?? fakeDraftReviewRepository().repository;
+  const fablazing = options.fablazing ?? fakeFablazingRepository();
   const store = createStore({ cards });
   listenToAuth(store, options.auth);
   const router = createAppRouter({
@@ -58,6 +62,7 @@ export async function renderApp(options: {
         synergy,
         scenarios,
         draftReviews,
+        fablazing,
       }}
       router={router}
     />,

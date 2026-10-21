@@ -172,3 +172,8 @@ details.section > summary h2 {
 .coverage {
   font-weight: 600;
 }
+.plays {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
