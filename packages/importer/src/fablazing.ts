@@ -12,6 +12,8 @@ const COLOURS: Record<number, string> = {
 
 export function fablazingSlug(name: string, pitch: number | null): string {
   const base = name
+    // Letters NFKD doesn't split into a base letter and an accent.
+    .replace(/ð/gi, "d")
     .normalize("NFKD")
     .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
@@ -80,11 +82,39 @@ export function cardSets(cards: ImportCard[]): Record<string, string[]> {
 
 export type CardMapRow =
   | { slug: string; variantExternalId: string }
-  | { slug: string; heroExternalId: string };
+  | { slug: string; heroExternalId: string }
+  | { slug: string; ignored: true };
 
 /**
- * Rows for fablazing_card_map: every variant by its slug, and every hero side to its own hero
- * row. A slug is mapped once; a hero wins over a card of the same name.
+ * FaBlazing records the hero a side ended the game as, so a hero that transformed shows up as its
+ * Demi-Hero. Each Demi-Hero counts as the hero it came from. The maintainer's call, 21 Oct 2026.
+ */
+const DEMI_HEROES: Record<string, string> = {
+  "Levia, Redeemed": "Levia, Shadowborn Abomination",
+  "Blasmophet, Levia Consumed": "Levia, Shadowborn Abomination",
+  "Teklovossen, the Mechropotent": "Teklovossen, Esteemed Magnate",
+};
+
+/** FaBlazing hero ids left out of matchups and the unmatched list. The maintainer's call, 21 Oct 2026. */
+const IGNORED_SLUGS = [
+  // Arakni, Marionette became a Living Legend on 19 Oct 2026, and its Agents of Chaos with it.
+  "arakni_marionette",
+  "arakni_black_widow",
+  "arakni_funnel_web",
+  "arakni_orb_weaver",
+  "arakni_redback",
+  "arakni_tarantula",
+  "arakni_trap_door",
+  // New, not in the pinned dataset yet: ignored for a few months.
+  "azalea_ace_of_spades",
+  // FaBlazing's id for a hero it couldn't read.
+  "UNKNOWNHERO",
+];
+
+/**
+ * Rows for fablazing_card_map: every variant by its slug, every hero side and Demi-Hero to its
+ * hero row, and the ignored ids. A slug is mapped once; a hero wins over a card of the same name,
+ * and an ignored id wins over both.
  */
 export function cardMapRows(
   cards: ImportCard[],
@@ -101,5 +131,13 @@ export function cardMapRows(
     const slug = fablazingSlug(h.name, null);
     rows.set(slug, { slug, heroExternalId: h.externalId });
   }
+  for (const [demi, heroName] of Object.entries(DEMI_HEROES)) {
+    const hero = heroes.find((h) => h.name === heroName);
+    if (!hero)
+      throw new Error(`${demi} counts as ${heroName}, which isn't imported`);
+    const slug = fablazingSlug(demi, null);
+    rows.set(slug, { slug, heroExternalId: hero.externalId });
+  }
+  for (const slug of IGNORED_SLUGS) rows.set(slug, { slug, ignored: true });
   return [...rows.values()].sort((a, b) => a.slug.localeCompare(b.slug));
 }

@@ -2,7 +2,7 @@
 -- the fablazing_ingest role, replacing a whole date and format at a time; everyone reads them.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(45);
+select plan(47);
 
 select has_table('public', t, t || ' exists')
   from unnest(array['fablazing_runs', 'fablazing_card_map', 'fablazing_card_daily',
@@ -25,7 +25,7 @@ select throws_ok(
   '23P01', null, 'windows never overlap'
 );
 
--- Card map: a slug is our variant or our hero, never both or neither.
+-- Card map: a slug is our variant or our hero, never both or neither, unless it's ignored.
 insert into public.cards (id, external_id, name, type) values
   ('10000000-0000-0000-0000-000000000fb1', 'ext-fb-1', 'FaBlazing Card', 'action');
 insert into public.variants (id, card_id, external_id, pitch) values
@@ -45,6 +45,14 @@ select throws_ok(
   $$insert into public.fablazing_card_map (slug, variant_id, hero_id)
     values ('both', '11000000-0000-0000-0000-000000000fb1', '40000000-0000-0000-0000-000000000fb1')$$,
   '23514', null, 'a slug maps to one thing'
+);
+select lives_ok(
+  $$insert into public.fablazing_card_map (slug, ignored) values ('UNKNOWNHERO', true)$$,
+  'an ignored id maps to nothing'
+);
+select throws_ok(
+  $$insert into public.fablazing_card_map (slug, hero_id, ignored) values ('ignored_hero', '40000000-0000-0000-0000-000000000fb1', true)$$,
+  '23514', null, 'an ignored id maps to nothing else'
 );
 
 -- The ingest role: logs in, has no special powers, and can't be used by the app's roles.
@@ -79,7 +87,7 @@ select lives_ok(
     "run": {"date": "2026-10-20", "format": 0, "games": 4950, "abandoned": 120, "sides": 9900,
             "sides_without_detail": 900, "viserai_sides": 500, "viserai_sides_without_detail": 45, "capped_sides": 12,
             "decks": {"viserai_usurper": {"decks": 300, "result_decks": 290, "wins": 150}},
-            "card_ids": ["fablazing_card_red", "mystery_card_red"], "hero_ids": ["fablazing_hero", "viserai", "fang_dragonbound"]},
+            "card_ids": ["fablazing_card_red", "mystery_card_red"], "hero_ids": ["fablazing_hero", "viserai", "fang_dragonbound", "UNKNOWNHERO"]},
     "cards": [
       {"card": "fablazing_card_red", "side_at_end": "viserai_usurper", "decks": 40, "copies": 120, "result_decks": 38,
        "played": 90, "pitched": 10, "blocked": 5, "hits": 30, "wins": 20},
@@ -114,7 +122,7 @@ select results_eq(
   $$select status, games, decks -> 'viserai_usurper' ->> 'decks', unmatched_slugs
       from public.fablazing_runs where date = '2026-10-20' and format = 0$$,
   $$values ('succeeded'::text, 4950, '300'::text, array['fang_dragonbound', 'mystery_card_red'])$$,
-  'the run is recorded with its counts, and the slugs the card map doesn''t know'
+  'the run is recorded with its counts, and the slugs the card map doesn''t know or ignore'
 );
 
 -- Running the same day again replaces it whole.

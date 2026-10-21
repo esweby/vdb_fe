@@ -106,18 +106,24 @@ export async function upsertCardMap(
 ): Promise<void> {
   await sql.begin(async (tx) => {
     for (const r of rows) {
-      if ("variantExternalId" in r)
+      if ("ignored" in r)
+        await tx`
+          insert into public.fablazing_card_map (slug, variant_id, hero_id, ignored)
+          values (${r.slug}, null, null, true)
+          on conflict (slug) do update set
+            variant_id = null, hero_id = null, ignored = true, updated_at = now()`;
+      else if ("variantExternalId" in r)
         await tx`
           insert into public.fablazing_card_map (slug, variant_id, hero_id)
           select ${r.slug}, id, null from public.variants where external_id = ${r.variantExternalId}
           on conflict (slug) do update set
-            variant_id = excluded.variant_id, hero_id = null, updated_at = now()`;
+            variant_id = excluded.variant_id, hero_id = null, ignored = false, updated_at = now()`;
       else
         await tx`
           insert into public.fablazing_card_map (slug, variant_id, hero_id)
           select ${r.slug}, null, id from public.heroes where external_id = ${r.heroExternalId}
           on conflict (slug) do update set
-            variant_id = null, hero_id = excluded.hero_id, updated_at = now()`;
+            variant_id = null, hero_id = excluded.hero_id, ignored = false, updated_at = now()`;
     }
   });
 }

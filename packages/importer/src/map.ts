@@ -345,6 +345,12 @@ export interface ImportHero {
   imageUrl: string | null;
 }
 
+/** Living Legends the pinned dataset doesn't mark yet. Remove once it does. */
+const LIVING_LEGENDS = new Set([
+  // 19 Oct 2026, from the maintainer.
+  "Arakni, Marionette",
+]);
+
 /** Every adult hero playable in Classic Constructed (young heroes are for Blitz). */
 export function toHeroes(dataset: DatasetCard[]): ImportHero[] {
   return dataset
@@ -352,7 +358,8 @@ export function toHeroes(dataset: DatasetCard[]): ImportHero[] {
       (c) =>
         c.types.includes("Hero") &&
         !c.types.includes("Young") &&
-        isCcPlayable(c),
+        isCcPlayable(c) &&
+        !LIVING_LEGENDS.has(c.name),
     )
     .map((c) => {
       const { classes, talents } = classifyTypes(c.types);
