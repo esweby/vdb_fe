@@ -32,12 +32,16 @@ type Supabase struct {
 }
 
 func (s *Supabase) Aggregate(ctx context.Context, date string, format int, games []game.Game) error {
-	r, err := aggregate.Run(games, aggregate.Options{
-		Date: date, Format: format, Concession: aggregate.Concession, PlayerCap: aggregate.PlayerCap,
-	})
+	r, err := aggregate.Run(games, RunOptions(date, format))
 	if err != nil {
 		return err
 	}
+	return s.Write(ctx, r)
+}
+
+// Write replaces r's date and format with its rows.
+func (s *Supabase) Write(ctx context.Context, r aggregate.Result) error {
+	date, format := r.Run.Date, r.Run.Format
 	payload, err := json.Marshal(r)
 	if err != nil {
 		return err
@@ -50,7 +54,7 @@ func (s *Supabase) Aggregate(ctx context.Context, date string, format int, games
 	if err := db.Exec(ctx, ReplaceDay, date, format, string(payload)); err != nil {
 		return fmt.Errorf("replacing the day: %w", err)
 	}
-	s.Logger.Info("aggregates written", "date", date, "format", format,
+	s.Logger.Info("aggregates written", "date", date, "format", format, "scope", r.Run.Scope,
 		"games", r.Run.Games, "abandoned", r.Run.Abandoned, "sides", r.Run.Sides,
 		"viserai_sides", r.Run.ViseraiSides, "capped_sides", r.Run.CappedSides,
 		"card_rows", len(r.Cards), "matchup_rows", len(r.Matchups),
