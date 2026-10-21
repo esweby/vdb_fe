@@ -1,0 +1,38 @@
+{
+  "id": "otg-hit-gate",
+  "status": "line described by the maintainer, 21 Oct 2026; matching unverified",
+  "line": "Open the Gate to i'Arathael hits, however it was played, then a Gate is used within 1 turn index with no other logged Gate maker in between (as the Gate from that hit; a proxy, since Gate creation isn't logged).",
+  "expectation": "Written 21 Oct 2026, before measuring this chain, and approved by the maintainer. Seen beforehand: card level over 30 days with the player cap, Open the Gate is in 84% of Viserai decks, played 0.93 times a game, and hits on 48% of plays; it was the card played after the Gate in 1,645 of bsl-gate-blood-debt's 6,374 completions (595 same-turn). Not seen: any count for this chain. 1. How often: a Gate is used within 1 turn index after 60-90% of Open the Gate hits; under 50% means the Gate is usually held or unused. 2. Result: reported, not judged.",
+  "steps": [
+    {
+      "name": "hits",
+      "action": "HIT",
+      "card": "open_the_gate_to_iarathael_red"
+    },
+    {
+      "name": "gate",
+      "actions": ["M", "INSTANT", "A"],
+      "card": "gate_to_iarathael",
+      "withinTurns": 1,
+      "unless": [
+        {
+          "action": "M",
+          "set": "gate_maker_on_play"
+        },
+        {
+          "action": "HIT",
+          "set": "gate_maker_on_hit"
+        },
+        {
+          "action": "B",
+          "set": "gate_maker_on_block"
+        },
+        {
+          "action": "B",
+          "set": "banish_equipment"
+        }
+      ]
+    }
+  ],
+  "expectationBy": "maintainer (drafted by Claude, approved 21 Oct 2026)"
+}
