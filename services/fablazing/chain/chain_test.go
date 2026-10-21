@@ -123,3 +123,121 @@ func TestAStepCanMatchSeveralActions(t *testing.T) {
 		t.Error("action and actions together should fail")
 	}
 }
+
+func TestUnlessRulesOutEventsBetweenSteps(t *testing.T) {
+	spec := `{"id":"x","steps":[
+	  {"name":"setup","action":"M","card":"become_the_shadow_lord_blue"},
+	  {"name":"gate","action":"M","card":"gate_to_iarathael","withinTurns":2,
+	   "unless":[{"action":"M","set":"maker_on_play"},{"action":"HIT","card":"open_the_gate_to_iarathael_red"}]},
+	  {"name":"payoff","action":"M","set":"blood_debt","withinTurns":0}]}`
+	s, err := ParseSpec(strings.NewReader(spec), Sets{"blood_debt": {"deadwood_dirge_red": true}, "maker_on_play": {"rites_of_nightfall_blue": true}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	clean := []game.Event{ev(1, "become_the_shadow_lord_blue", "M"), ev(1, "gate_to_iarathael", "M"), ev(1, "deadwood_dirge_red", "M")}
+	if got := s.Match(clean); got.Reached != 3 {
+		t.Fatalf("nothing in between: got %+v, want all 3 steps", got)
+	}
+	for _, between := range []game.Event{ev(1, "rites_of_nightfall_blue", "M"), ev(2, "open_the_gate_to_iarathael_red", "HIT")} {
+		log := []game.Event{ev(1, "become_the_shadow_lord_blue", "M"), between, ev(2, "gate_to_iarathael", "M"), ev(2, "deadwood_dirge_red", "M")}
+		if got := s.Match(log); got.Reached != 1 {
+			t.Errorf("%s %s in between: got %+v, want only the setup", between.Action, between.Card, got)
+		}
+	}
+	// Only the gap before this step counts: a maker after the Gate, or a different action, doesn't rule it out.
+	for _, other := range [][]game.Event{
+		{ev(1, "become_the_shadow_lord_blue", "M"), ev(1, "gate_to_iarathael", "M"), ev(1, "rites_of_nightfall_blue", "M"), ev(1, "deadwood_dirge_red", "M")},
+		{ev(1, "become_the_shadow_lord_blue", "M"), ev(1, "open_the_gate_to_iarathael_red", "M"), ev(1, "gate_to_iarathael", "M"), ev(1, "deadwood_dirge_red", "M")},
+	} {
+		if got := s.Match(other); got.Reached != 3 {
+			t.Errorf("got %+v, want all 3 steps", got)
+		}
+	}
+	if _, err := ParseSpec(strings.NewReader(`{"id":"x","steps":[{"name":"a","action":"M","card":"c","unless":[{"action":"M","set":"nope"}]}]}`), sets); err == nil {
+		t.Error("an unknown set in unless should fail")
+	}
+	if _, err := ParseSpec(strings.NewReader(`{"id":"x","steps":[{"name":"a","action":"M","card":"c","unless":[{"action":"M"}]}]}`), sets); err == nil {
+		t.Error("an unless entry needs a card or a set")
+	}
+}
+
+func TestAnyOrderMatchesEitherSideInTheSameTurn(t *testing.T) {
+	spec := `{"id":"x","steps":[
+	  {"name":"reach","action":"B","card":"reach_of_the_abyss"},
+	  {"name":"otg","action":"B","card":"open_the_gate_to_iarathael_red","withinTurns":0,"anyOrder":true},
+	  {"name":"gate","action":"M","card":"gate_to_iarathael","withinTurns":1}]}`
+	s, err := ParseSpec(strings.NewReader(spec), sets)
+	if err != nil {
+		t.Fatal(err)
+	}
+	after := []game.Event{ev(3, "reach_of_the_abyss", "B"), ev(3, "open_the_gate_to_iarathael_red", "B"), ev(3, "gate_to_iarathael", "M")}
+	before := []game.Event{ev(3, "open_the_gate_to_iarathael_red", "B"), ev(3, "reach_of_the_abyss", "B"), ev(3, "gate_to_iarathael", "M")}
+	for name, log := range map[string][]game.Event{"after": after, "before": before} {
+		if got := s.Match(log); got.Reached != 3 || got.SetupTurn != 3 || got.PayoffTurn != 3 {
+			t.Errorf("Open the Gate blocking %s the Reach: got %+v, want all 3 steps in turn 3", name, got)
+		}
+	}
+	// An earlier turn doesn't count, and the next step still has to follow both.
+	for name, log := range map[string][]game.Event{
+		"earlier turn": {ev(2, "open_the_gate_to_iarathael_red", "B"), ev(3, "reach_of_the_abyss", "B"), ev(3, "gate_to_iarathael", "M")},
+		"gate between": {ev(3, "open_the_gate_to_iarathael_red", "B"), ev(3, "gate_to_iarathael", "M"), ev(3, "reach_of_the_abyss", "B")},
+	} {
+		if got := s.Match(log); got.Reached == 3 {
+			t.Errorf("%s: got %+v, want the chain incomplete", name, got)
+		}
+	}
+	if _, err := ParseSpec(strings.NewReader(`{"id":"x","steps":[{"name":"a","action":"M","card":"c"},{"name":"b","action":"M","card":"d","anyOrder":true}]}`), sets); err == nil {
+		t.Error("anyOrder needs withinTurns 0")
+	}
+}
+
+func TestCompareFromSplitsOnANamedStep(t *testing.T) {
+	spec := `{"id":"x","compareFrom":"gate","steps":[
+	  {"name":"setup","action":"M","card":"become_the_shadow_lord_blue"},
+	  {"name":"gate","action":"M","card":"gate_to_iarathael"},
+	  {"name":"payoff","action":"M","set":"blood_debt","withinTurns":0}]}`
+	s, err := ParseSpec(strings.NewReader(spec), sets)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for reached, want := range map[int]bool{1: false, 2: true, 3: true} {
+		if got := s.Paid(Result{Reached: reached}); got != want {
+			t.Errorf("compareFrom gate, reached %d: Paid = %v, want %v", reached, got, want)
+		}
+	}
+	// Without compareFrom, only a complete chain counts.
+	for reached, want := range map[int]bool{2: false, 3: true} {
+		if got := load(t).Paid(Result{Reached: reached}); got != want {
+			t.Errorf("default, reached %d: Paid = %v, want %v", reached, got, want)
+		}
+	}
+	for _, bad := range []string{"setup", "nope"} {
+		if _, err := ParseSpec(strings.NewReader(`{"id":"x","compareFrom":"`+bad+`","steps":[{"name":"setup","action":"M","card":"c"},{"name":"b","action":"M","card":"d"}]}`), sets); err == nil {
+			t.Errorf("compareFrom %q should fail: it must name a step after the setup", bad)
+		}
+	}
+}
+
+func TestAnyCardMatchesEveryCard(t *testing.T) {
+	spec := `{"id":"x","steps":[
+	  {"name":"traverse","action":"TRANSFORM","card":"viserai_usurper"},
+	  {"name":"plays-after","action":"M","anyCard":true,"withinTurns":0}]}`
+	s, err := ParseSpec(strings.NewReader(spec), sets)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := s.Match([]game.Event{ev(2, "viserai_usurper", "TRANSFORM"), ev(2, "anything_red", "M")}); got.Reached != 2 {
+		t.Errorf("any card played after: got %+v, want both steps", got)
+	}
+	if got := s.Match([]game.Event{ev(2, "viserai_usurper", "TRANSFORM"), ev(2, "anything_red", "P")}); got.Reached != 1 {
+		t.Errorf("the action still has to match: got %+v", got)
+	}
+	for _, bad := range []string{
+		`{"name":"b","action":"M","anyCard":true,"card":"c"}`,
+		`{"name":"b","action":"M","anyCard":true,"set":"blood_debt"}`,
+	} {
+		if _, err := ParseSpec(strings.NewReader(`{"id":"x","steps":[{"name":"a","action":"M","card":"c"},`+bad+`]}`), sets); err == nil {
+			t.Errorf("anyCard with a card or set should fail: %s", bad)
+		}
+	}
+}

@@ -1,0 +1,28 @@
+{
+  "id": "reach-otg-gate",
+  "status": "line described by the maintainer, 21 Oct 2026; matching unverified",
+  "line": "The maintainer (21 Oct 2026): if Open the Gate to i'Arathael blocks on the same combat chain as Reach of the Abyss (not necessarily the same chain link), then when the chain closes it creates a Gate. Combat chains aren't logged; Viserai's blocks in one turn index all come on the opponent's turn, so both blocking in the same turn index (in either order) is the proxy for the same combat chain. It's wrong only when the opponent's turn had more than one combat chain. The Gate step is any Gate used within 2 turn indexes; it can't show which Gate was used. The timing is situational (the maintainer), so the spread of turns to the Gate use is reported, not judged.",
+  "expectation": "Written 21 Oct 2026, before measuring this chain (seen beforehand: equipment blocks on 20 Oct, all heroes: Corrupted Crown 18, Reach of the Abyss 91; Open the Gate was played through the Gate in 51 of the broader chain's 189 completions; not seen: any count for this chain). 1. How often: of sides that block with Reach of the Abyss, 5-20% have Open the Gate block in the same turn index. 2. Gate use: after that pairing, a Gate is used within 2 turn indexes in over 70%, mostly 0 or 1 turns later; under 50% means the Gate is often held or the banish isn't always taken. 3. Result: compared with sides that block with Reach without Open the Gate alongside, with life totals held level, 0 to +10 points; it's defensive, so no extra damage is expected on the block turn. Negative suggests it's used from behind.",
+  "compareFrom": "otg-blocks",
+  "steps": [
+    {
+      "name": "reach",
+      "action": "B",
+      "card": "reach_of_the_abyss"
+    },
+    {
+      "name": "otg-blocks",
+      "action": "B",
+      "card": "open_the_gate_to_iarathael_red",
+      "withinTurns": 0,
+      "anyOrder": true
+    },
+    {
+      "name": "gate",
+      "actions": ["M", "INSTANT", "A"],
+      "card": "gate_to_iarathael",
+      "withinTurns": 2
+    }
+  ],
+  "expectationBy": "maintainer (drafted by Claude, approved 21 Oct 2026)"
+}

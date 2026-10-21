@@ -1,0 +1,20 @@
+{
+  "id": "traverse-flip-back",
+  "status": "a player's habit passed on by the maintainer, 21 Oct 2026; matching unverified",
+  "line": "A player's habit, passed on by the maintainer on 21 Oct 2026 (traverse timing is otherwise an open question: 'nobody knows'): almost always traverse to Usurper to use the additional action point, ideally banishing 1 more card at little or no cost; sometimes flip back immediately, sometimes stay on Forsaken for a while; with about 4 cards in banish, sometimes not flip back. Logged: TRANSFORM to viserai_usurper, then TRANSFORM back to viserai_the_forsaken within 1 turn index. The banished zone isn't logged, so 'about 4 cards in banish' can't be checked. The spread of turns to the flip back is reported, not judged.",
+  "expectation": "Written 21 Oct 2026, before measuring this chain (seen beforehand: only the data dictionary's total of 2,114 TRANSFORM events on 20 Oct, both directions, about 2.5 per side). 1. How often: 30-60% of sides that traverse to Usurper flip back within 1 turn index. 2. When: reported, not judged. 3. Result: flipping back quickly against staying, with life totals held level, no difference (within \u00b15 points); the player says either can be right, so a clear gap either way is for the simulation to look into.",
+  "steps": [
+    {
+      "name": "to-usurper",
+      "action": "TRANSFORM",
+      "card": "viserai_usurper"
+    },
+    {
+      "name": "flip-back",
+      "action": "TRANSFORM",
+      "card": "viserai_the_forsaken",
+      "withinTurns": 1
+    }
+  ],
+  "expectationBy": "maintainer (drafted by Claude, approved 21 Oct 2026)"
+}

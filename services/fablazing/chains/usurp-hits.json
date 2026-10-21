@@ -1,0 +1,20 @@
+{
+  "id": "usurp-hits",
+  "status": "baseline for cullingsong-usurp, 21 Oct 2026; matching unverified",
+  "line": "Baseline for the maintainer's Cullingsong line: Usurp the Shadow Throne played, and whether it hits in the same turn, whatever came before it. It includes the Cullingsong turns, so the rate without Cullingsong is found by subtracting cullingsong-usurp's counts (approximate: each side counts once, at its furthest attempt).",
+  "expectation": "Written 21 Oct 2026, before measuring this chain (seen beforehand: only that the card id appears in the 20 Oct data; no counts). 1. How often: Usurp the Shadow Throne hits in 35-55% of sides that play it. 2. When: the median turn of the first Usurp is 4 or later. 3. Result: hitting against not hitting, with life totals held level, +5 to +20 points; this mostly reflects game state, and is here to frame cullingsong-usurp, not as a claim of its own.",
+  "steps": [
+    {
+      "name": "usurp",
+      "actions": ["M", "INSTANT", "A"],
+      "card": "usurp_the_shadow_throne_blue"
+    },
+    {
+      "name": "usurp-hits",
+      "action": "HIT",
+      "card": "usurp_the_shadow_throne_blue",
+      "withinTurns": 0
+    }
+  ],
+  "expectationBy": "maintainer (drafted by Claude, approved 21 Oct 2026)"
+}

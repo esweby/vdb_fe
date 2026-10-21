@@ -213,7 +213,7 @@ func measureChain(specPath, setsPath string, csvs []string) error {
 					continue
 				}
 				group := "setup"
-				if r.Complete(spec) {
+				if spec.Paid(r) {
 					group = "complete"
 				}
 				damage := 0
@@ -256,6 +256,9 @@ func measureChain(specPath, setsPath string, csvs []string) error {
 	fmt.Println("payoff cards (same-turn completions):", top(sameTurnPayoffs, 6))
 
 	c := measure.Compare(outcomes, "complete", "setup")
+	if spec.CompareFrom != "" {
+		fmt.Printf("\ncompared from step %q: \"completed\" below means reached that step", spec.CompareFrom)
+	}
 	fmt.Printf("\ncompleted v setup without payoff, life totals held level (sides without life data left out: %d)\n", noLife)
 	fmt.Printf("  raw win rate:   completed %.1f%% (n=%d)  v  setup only %.1f%% (n=%d)\n", 100*c.RawA, c.NA, 100*c.RawB, c.NB)
 	fmt.Printf("  adjusted difference: %+.1f points, 95%% margin ±%.1f (over %d sides in buckets with both groups)\n", 100*c.Adjusted, 100*c.Margin, c.Compared)
