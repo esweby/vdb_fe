@@ -303,52 +303,57 @@ export function DeckPage() {
     <>
       <Link to="/decks">← Decks</Link>
       <header className={styles.deckHeader}>
-        <div>
+        <div className={styles.deckTitleRow}>
           <h1>{deck.name}</h1>
-          {canEdit && (
-            <DeckSettings
-              deck={deck}
-              onChange={(patch) => setDeck({ ...deck, ...patch })}
-              onDeleted={() => void navigate({ to: "/decks" })}
-            />
-          )}
-          {!canEdit && (
-            <p className={styles.byline}>
-              <Tag>Read only</Tag>
-              {deck.ownerName && <span>by {deck.ownerName}</span>}
-            </p>
-          )}
-          <p className={styles.meta}>
-            {counts.deck} deck cards · {counts.sideboard} sideboard ·{" "}
-            {counts.pool} in the pool
-          </p>
-          {/* FaBrary's import form, filled in; the player presses Import there. */}
-          <p>
+          <div className={styles.deckActions}>
+            {/* FaBrary's import form, filled in; the player presses Import there. */}
             <a
+              className={styles.fabraryLink}
               href={fabraryImportLink(HERO, deck.name, entries)}
               target="_blank"
               rel="noreferrer"
             >
-              Open in FaBrary
+              Open in FaBrary <span aria-hidden="true">↗</span>
             </a>
-          </p>
+            {canEdit && (
+              <DeckSettings
+                deck={deck}
+                onChange={(patch) => setDeck({ ...deck, ...patch })}
+                onDeleted={() => void navigate({ to: "/decks" })}
+              />
+            )}
+          </div>
         </div>
-        <PitchBar pitch={pitch} />
+        <div className={styles.deckStatusRow}>
+          <p className={styles.deckStatus}>
+            {canEdit ? (
+              <Tag tone={deck.isPublic ? "accent" : "neutral"}>
+                {deck.isPublic ? "Public" : "Private"}
+              </Tag>
+            ) : (
+              <Tag>Read only</Tag>
+            )}
+            {rules && problems.length === 0 && <Tag tone="accent">Legal</Tag>}
+            {!canEdit && deck.ownerName && (
+              <span className={styles.meta}>by {deck.ownerName}</span>
+            )}
+            <span className={styles.meta}>
+              {counts.deck} deck cards · {counts.sideboard} sideboard ·{" "}
+              {counts.pool} in the pool
+            </span>
+          </p>
+          <PitchBar pitch={pitch} />
+        </div>
       </header>
 
       {error && <p role="alert">{error}</p>}
-      {rules &&
-        (problems.length === 0 ? (
-          <p>
-            <Tag tone="accent">Legal</Tag>
-          </p>
-        ) : (
-          <ul className={styles.problems}>
-            {problems.map((p) => (
-              <li key={p}>{p}</li>
-            ))}
-          </ul>
-        ))}
+      {problems.length > 0 && (
+        <ul className={styles.problems}>
+          {problems.map((p) => (
+            <li key={p}>{p}</li>
+          ))}
+        </ul>
+      )}
 
       <div role="tablist" aria-label="Deck views" className={styles.tabs}>
         {TABS.map((t) => (

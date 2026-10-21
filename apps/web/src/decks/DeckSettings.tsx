@@ -2,7 +2,7 @@
 // maintainer, 20 Oct 2026).
 import { useState, type FormEvent } from "react";
 import { useServices } from "../servicesContext.ts";
-import { Button, Dialog, Tag, TextField } from "../ui/index.ts";
+import { Button, Dialog, TextField } from "../ui/index.ts";
 import styles from "./Decks.module.css";
 
 export function DeckSettings(props: {
@@ -57,9 +57,6 @@ export function DeckSettings(props: {
 
   return (
     <div className={styles.deckSettings}>
-      <Tag tone={props.deck.isPublic ? "accent" : "neutral"}>
-        {props.deck.isPublic ? "Public" : "Private"}
-      </Tag>
       <Button variant="ghost" onClick={() => void toggleVisibility()}>
         {props.deck.isPublic ? "Make private" : "Make public"}
       </Button>
@@ -101,7 +98,11 @@ export function DeckSettings(props: {
           Rename
         </Button>
       )}
-      <Button variant="ghost" onClick={() => setConfirming(true)}>
+      <Button
+        variant="ghost"
+        className={styles.deleteDeck}
+        onClick={() => setConfirming(true)}
+      >
         Delete deck
       </Button>
       {error && <p role="alert">{error}</p>}
