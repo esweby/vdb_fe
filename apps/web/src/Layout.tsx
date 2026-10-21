@@ -42,14 +42,14 @@ export function Layout() {
           </Link>
           <nav aria-label="Main" className={styles.nav}>
             <Tab to="/cards">Cards</Tab>
-            <Tab to="/core">Core</Tab>
-            {canScore && <Tab to="/needs-review">Needs review</Tab>}
+            {canScore && <Tab to="/needs-review">Reviews</Tab>}
             <Tab to="/synergies">Synergies</Tab>
+            <Tab to="/core">Build core</Tab>
             <Tab to="/decks">Decks</Tab>
-            {isAdmin && <Tab to="/admin/synergy">Synergy weights</Tab>}
           </nav>
           {/* Apart from the page tabs, so on a phone it stays in view beside the name. */}
           <nav aria-label="Account" className={styles.account}>
+            {isAdmin && <Tab to="/admin/synergy">Synergy weights</Tab>}
             {signedIn && <Tab to="/account">Account</Tab>}
             {signedIn ? (
               <button
