@@ -9,6 +9,8 @@ import {
   sampleCards,
   TEST_POCUS,
 } from "../test/fakeCardRepository.ts";
+import { fakeDeckRepository } from "../test/fakeDeckRepository.ts";
+import type { CardSummary } from "../cards/cardRepository.ts";
 import { draftQueue } from "./draftQueue.ts";
 
 const users = {
@@ -253,5 +255,112 @@ describe("effect drafts page", () => {
     expect(
       within(ready).getByRole("article", { name: "Test Pocus" }),
     ).toHaveTextContent("The card's facts changed since its last verdict.");
+  });
+
+  // Verify one real deck first, not the whole pool (21 Oct 2026).
+  describe("filtered to one deck", () => {
+    const nothing: CardSummary = {
+      ...TEST_POCUS,
+      id: "card-nothing",
+      name: "Nothing Test",
+      variants: [
+        {
+          ...TEST_POCUS.variants[0]!,
+          id: "nt1",
+          attributes: {
+            tokens: [{ token: "runechant", amount: "X", trigger: "on_play" }],
+          },
+        },
+      ],
+    };
+    const decks = () =>
+      fakeDeckRepository([
+        {
+          id: "deck-viserai",
+          name: "Viserai Aggro",
+          updatedAt: "2026-10-20T12:00:00Z",
+          ownerId: "a1",
+          pitchTargets: {},
+          cards: [
+            { variantId: "tp1", quantity: 3, sideboard: false },
+            { variantId: "bsl3", quantity: 1, sideboard: true },
+            { variantId: "nt1", quantity: 2, sideboard: false },
+          ],
+        },
+        {
+          id: "deck-other",
+          name: "Someone else's",
+          updatedAt: "2026-10-20T12:00:00Z",
+          ownerId: "u9",
+          isPublic: true,
+          pitchTargets: {},
+          cards: [],
+        },
+      ]).repository;
+
+    it("lists only the deck's cards, with how many play by verified rules", async () => {
+      await renderApp({
+        path: "/needs-review/effects?deck=deck-viserai",
+        cards: fakeCardRepository([...POOL, nothing]),
+        decks: decks(),
+        auth: signedInAs("a1", "a@test.local"),
+      });
+      expect(
+        await screen.findByText(
+          "1 of 3 cards in this deck play by verified rules",
+        ),
+      ).toBeInTheDocument();
+      expect(screen.getByRole("combobox", { name: "Deck" })).toHaveValue(
+        "deck-viserai",
+      );
+      expect(
+        screen.getByRole("article", { name: "Test Pocus" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("article", { name: "Become the Shadow Lord" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("article", { name: "Hocus Pocus" }),
+      ).not.toBeInTheDocument();
+      const missing = screen.getByRole("list", {
+        name: "What this deck's cards are missing",
+      });
+      expect(missing).toHaveTextContent("X Runechants: 1 card");
+    });
+
+    it("offers only the admin's own decks, and keeps the choice in the URL", async () => {
+      const { router } = await renderApp({
+        path: "/needs-review/effects",
+        cards: fakeCardRepository([...POOL, nothing]),
+        decks: decks(),
+        auth: signedInAs("a1", "a@test.local"),
+      });
+      const picker = await screen.findByRole("combobox", { name: "Deck" });
+      expect(
+        within(picker)
+          .getAllByRole("option")
+          .map((o) => o.textContent),
+      ).toEqual(["All cards", "Viserai Aggro"]);
+      expect(
+        screen.getByRole("article", { name: "Hocus Pocus" }),
+      ).toBeInTheDocument();
+      await userEvent.selectOptions(picker, "Viserai Aggro");
+      await waitFor(() =>
+        expect(router.state.location.search).toEqual({ deck: "deck-viserai" }),
+      );
+      expect(
+        await screen.findByText(
+          "1 of 3 cards in this deck play by verified rules",
+        ),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("article", { name: "Hocus Pocus" }),
+      ).not.toBeInTheDocument();
+      await userEvent.selectOptions(picker, "All cards");
+      await waitFor(() => expect(router.state.location.search).toEqual({}));
+      expect(
+        await screen.findByRole("article", { name: "Hocus Pocus" }),
+      ).toBeInTheDocument();
+    });
   });
 });
