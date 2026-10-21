@@ -86,3 +86,16 @@ func TestAbandoned(t *testing.T) {
 		t.Error("a game without a concession is never abandoned")
 	}
 }
+
+func TestLifeDiffGoingIntoATurn(t *testing.T) {
+	s := byGUID(t, readFixture(t), "g-a").Sides[0]
+	// Turn 0 starts level. Going into turn 3 is the end of turn 2: life 40 v 38.
+	for turn, want := range map[int]int{0: 0, 3: 2} {
+		if got, ok := s.LifeDiffBefore(turn); !ok || got != want {
+			t.Errorf("LifeDiffBefore(%d) = %d, %v; want %d", turn, got, ok, want)
+		}
+	}
+	if _, ok := byGUID(t, readFixture(t), "g-b").Sides[0].LifeDiffBefore(1); ok {
+		t.Error("a side without detail has no life totals")
+	}
+}

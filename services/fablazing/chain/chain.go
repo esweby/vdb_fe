@@ -40,10 +40,11 @@ type Step struct {
 
 // Result is the furthest a game got through a chain.
 type Result struct {
-	Reached    int   // steps matched, 0 to len(Steps)
-	StepTurns  []int // the turn of each matched step
-	SetupTurn  int   // turn of the first step, or -1
-	PayoffTurn int   // turn of the last step if the chain completed, or -1
+	Reached    int    // steps matched, 0 to len(Steps)
+	StepTurns  []int  // the turn of each matched step
+	SetupTurn  int    // turn of the first step, or -1
+	PayoffTurn int    // turn of the last step if the chain completed, or -1
+	PayoffCard string // the card that matched the last step, if completed
 }
 
 // Registered reports whether the chain's expectation has been written down,
@@ -133,6 +134,6 @@ func (s Spec) attempt(log []game.Event, start int) Result {
 		r.Reached++
 		r.StepTurns = append(r.StepTurns, log[at].Turn)
 	}
-	r.PayoffTurn = log[at].Turn
+	r.PayoffTurn, r.PayoffCard = log[at].Turn, log[at].Card
 	return r
 }

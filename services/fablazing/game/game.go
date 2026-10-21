@@ -61,6 +61,23 @@ type TurnStats struct {
 	HasLife                      bool
 }
 
+// LifeDiffBefore is the side's life minus the opponent's going into a turn:
+// level at turn 0 (both start on the same life in Classic Constructed), then
+// the totals at the end of the turn before. ok is false without turn stats.
+func (s Side) LifeDiffBefore(turn int) (diff int, ok bool) {
+	if len(s.TurnStats) == 0 || turn < 0 {
+		return 0, false
+	}
+	if turn == 0 {
+		return 0, true
+	}
+	if turn-1 >= len(s.TurnStats) || !s.TurnStats[turn-1].HasLife {
+		return 0, false
+	}
+	t := s.TurnStats[turn-1]
+	return t.LifeAtEnd - t.OpponentLifeAtEnd, true
+}
+
 // IsViserai reports whether a hero id is Viserai on either side.
 func IsViserai(hero string) bool { return strings.HasPrefix(hero, "viserai_") }
 

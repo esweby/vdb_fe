@@ -15,7 +15,25 @@ import (
 
 	"github.com/esweby/vdb_fe/services/fablazing/chain"
 	"github.com/esweby/vdb_fe/services/fablazing/game"
+	"github.com/esweby/vdb_fe/services/fablazing/measure"
 )
+
+// top lists the n most common keys as "key:count".
+func top(m map[string]int, n int) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool { return m[keys[i]] > m[keys[j]] || (m[keys[i]] == m[keys[j]] && keys[i] < keys[j]) })
+	if len(keys) > n {
+		keys = keys[:n]
+	}
+	out := make([]string, len(keys))
+	for i, k := range keys {
+		out[i] = fmt.Sprintf("%s:%d", k, m[k])
+	}
+	return out
+}
 
 var concession = game.ConcessionRule{MaxTurns: 2, MaxLife: 20} // accepted provisionally by the maintainer, 21 Oct 2026
 
@@ -32,7 +50,7 @@ func main() {
 		if len(os.Args) < 5 {
 			err = fmt.Errorf("chain needs a spec, a sets file and at least one CSV")
 		} else {
-			err = measure(os.Args[2], os.Args[3], os.Args[4:])
+			err = measureChain(os.Args[2], os.Args[3], os.Args[4:])
 		}
 	default:
 		err = fmt.Errorf("unknown command %q", os.Args[1])
@@ -112,7 +130,7 @@ func describe(e game.Event) string {
 	return v + " " + e.Card
 }
 
-func measure(specPath, setsPath string, csvs []string) error {
+func measureChain(specPath, setsPath string, csvs []string) error {
 	var raw map[string][]string
 	b, err := os.ReadFile(setsPath)
 	if err != nil {
@@ -145,6 +163,10 @@ func measure(specPath, setsPath string, csvs []string) error {
 	reached := make([]int, len(spec.Steps)+1)
 	wins := make([]int, len(spec.Steps)+1)
 	gap := map[int]int{} // turns from setup to payoff
+	var setupTurns []int
+	payoffs, sameTurnPayoffs := map[string]int{}, map[string]int{}
+	var outcomes []measure.Outcome
+	noLife := 0
 	for _, path := range csvs {
 		games, err := read(path)
 		if err != nil {
@@ -171,7 +193,29 @@ func measure(specPath, setsPath string, csvs []string) error {
 				}
 				if r.Complete(spec) {
 					gap[r.PayoffTurn-r.SetupTurn]++
+					setupTurns = append(setupTurns, r.SetupTurn)
+					payoffs[r.PayoffCard]++
+					if r.PayoffTurn == r.SetupTurn {
+						sameTurnPayoffs[r.PayoffCard]++
+					}
 				}
+				if r.Reached == 0 {
+					continue
+				}
+				diff, ok := s.LifeDiffBefore(r.SetupTurn)
+				if !ok {
+					noLife++
+					continue
+				}
+				group := "setup"
+				if r.Complete(spec) {
+					group = "complete"
+				}
+				damage := 0
+				if r.SetupTurn < len(s.TurnStats) {
+					damage = s.TurnStats[r.SetupTurn].DamageDealt
+				}
+				outcomes = append(outcomes, measure.Outcome{Group: group, Bucket: measure.LifeBucket(diff), Won: s.Won, Damage: damage})
 			}
 		}
 	}
@@ -202,6 +246,19 @@ func measure(specPath, setsPath string, csvs []string) error {
 	for _, k := range keys {
 		fmt.Printf(" %d:%d", k, gap[k])
 	}
-	fmt.Println()
+	fmt.Printf("\nmedian setup turn (completed): %.1f\n", measure.Median(setupTurns))
+	fmt.Println("payoff cards (completed):", top(payoffs, 6))
+	fmt.Println("payoff cards (same-turn completions):", top(sameTurnPayoffs, 6))
+
+	c := measure.Compare(outcomes, "complete", "setup")
+	fmt.Printf("\ncompleted v setup without payoff, life totals held level (sides without life data left out: %d)\n", noLife)
+	fmt.Printf("  raw win rate:   completed %.1f%% (n=%d)  v  setup only %.1f%% (n=%d)\n", 100*c.RawA, c.NA, 100*c.RawB, c.NB)
+	fmt.Printf("  adjusted difference: %+.1f points, 95%% margin ±%.1f (over %d sides in buckets with both groups)\n", 100*c.Adjusted, 100*c.Margin, c.Compared)
+	fmt.Printf("  damage dealt on the setup turn: completed %.1f  v  setup only %.1f\n", c.DamageA, c.DamageB)
+	fmt.Println("  life going into the setup turn   completed (won/n)   setup only (won/n)")
+	for _, b := range measure.Buckets {
+		t := c.PerBucket[b]
+		fmt.Printf("    %-12s %20s %20s\n", b, fmt.Sprintf("%d/%d", t[0].Wins, t[0].N), fmt.Sprintf("%d/%d", t[1].Wins, t[1].N))
+	}
 	return nil
 }

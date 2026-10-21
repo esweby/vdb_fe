@@ -51,6 +51,9 @@ func TestCompletedChain(t *testing.T) {
 	if got.Reached != 3 || got.SetupTurn != 1 || got.PayoffTurn != 2 {
 		t.Fatalf("got %+v, want all 3 steps, setup turn 1, payoff turn 2", got)
 	}
+	if got.PayoffCard != "deadwood_dirge_red" {
+		t.Fatalf("payoff card %q, want deadwood_dirge_red", got.PayoffCard)
+	}
 }
 
 func TestWindowsAreEnforced(t *testing.T) {
