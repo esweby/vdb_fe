@@ -50,6 +50,7 @@ jobs:
           use-installer: true
       - run: sam validate --lint --region eu-west-1
       - run: sam validate --lint --region eu-west-1 -t infra/bootstrap.yaml
+      - run: sam validate --lint --region eu-west-1 -t infra/maintainer.yaml
 
   db-test:
     name: db-test
