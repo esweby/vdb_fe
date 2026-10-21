@@ -73,9 +73,13 @@
 .pitch3 {
   --pitch: var(--pitch-3);
 }
+.pitch4 {
+  --pitch: var(--pitch-4);
+}
 .pip.pitch1,
 .pip.pitch2,
-.pip.pitch3 {
+.pip.pitch3,
+.pip.pitch4 {
   background: var(--pitch);
   border-color: var(--pitch);
 }
@@ -147,7 +151,8 @@
 }
 .add.pitch1,
 .add.pitch2,
-.add.pitch3 {
+.add.pitch3,
+.add.pitch4 {
   border-color: var(--pitch);
 }
 .quantity button:focus-visible,
@@ -738,13 +743,16 @@
   color: var(--muted);
 }
 .pitch1Edge {
-  border-left-color: var(--pitch-red, #c0392b);
+  border-left-color: var(--pitch-1);
 }
 .pitch2Edge {
-  border-left-color: var(--pitch-yellow, #d4a72c);
+  border-left-color: var(--pitch-2);
 }
 .pitch3Edge {
-  border-left-color: var(--pitch-blue, #2f6fbf);
+  border-left-color: var(--pitch-3);
+}
+.pitch4Edge {
+  border-left-color: var(--pitch-4);
 }
 .fillerTiles {
   display: grid;

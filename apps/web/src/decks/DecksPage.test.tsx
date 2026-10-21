@@ -7,7 +7,11 @@ import {
   type DeckFixture,
 } from "../test/fakeDeckRepository.ts";
 import { renderApp } from "../test/renderApp.tsx";
-import { fakeCardRepository, sampleCards } from "../test/fakeCardRepository.ts";
+import {
+  fakeCardRepository,
+  sampleCards,
+  SOUL_OF_EXISTENCE,
+} from "../test/fakeCardRepository.ts";
 import { fakeScoreRepository } from "../test/fakeScoreRepository.ts";
 import { sampleCommunity } from "../test/sampleCommunity.ts";
 import type { DeckCard, PitchTargets } from "./deckRepository.ts";
@@ -967,6 +971,89 @@ describe("deck analysis", () => {
       // hp1 ×3 (overall 50) and hp3 ×2 (overall 30): average 42, shown out of 10 as 4.2;
       // Nebula Blade is always available
     ).toEqual(["5", "3", "0", "2", "4.2", "1"]);
+  });
+});
+
+describe("purple (pitch 4) cards", () => {
+  const withSoul = () =>
+    fakeCardRepository([...sampleCards, SOUL_OF_EXISTENCE]);
+  const cards: DeckCard[] = [
+    { variantId: "hp1", quantity: 3, sideboard: false },
+    { variantId: "hp3", quantity: 2, sideboard: false },
+    { variantId: "soe4", quantity: 1, sideboard: false },
+  ];
+
+  it("counts them in the decks list's pitch mix", async () => {
+    await renderApp({
+      path: "/decks",
+      auth: auth(),
+      cards: withSoul(),
+      decks: fakeDeckRepository(
+        [
+          {
+            id: "deck-1",
+            name: "Gate tempo",
+            updatedAt: "2026-10-14T10:00:00Z",
+            cards,
+            pitchTargets: {},
+          },
+        ],
+        { userId: "u1" },
+      ).repository,
+    });
+    const tile = within(
+      await screen.findByRole("listitem", { name: "Gate tempo" }),
+    );
+    expect(tile.getByText("6 cards")).toBeInTheDocument();
+    expect(
+      tile.getByRole("img", {
+        name: "Pitch mix: 3 red, 0 yellow, 2 blue, 1 purple",
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("counts them in the deck header's pitch split", async () => {
+    await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      cards: withSoul(),
+      decks: withDeck(cards).repository,
+    });
+    expect(
+      await screen.findByRole("img", {
+        name: "Pitch: 3 red, 0 yellow, 2 blue, 1 purple",
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows a purple row in the stats, without a target, and a purple ratings column", async () => {
+    await renderApp({
+      path: "/decks/deck-1?tab=stats",
+      auth: auth(),
+      cards: withSoul(),
+      decks: withDeck(cards, { 3: 22 }).repository,
+      scores: fakeScoreRepository([], { community: sampleCommunity() })
+        .repository,
+    });
+    const pitch = await screen.findByRole("region", { name: "Pitch" });
+    expect(within(pitch).getByText("Purple 1")).toBeInTheDocument();
+    expect(within(pitch).getByLabelText("Red target")).toBeInTheDocument();
+    expect(within(pitch).queryByLabelText("Purple target")).toBeNull();
+    const table = await screen.findByRole("table", { name: "Ratings" });
+    expect(
+      within(table)
+        .getAllByRole("columnheader")
+        .map((c) => c.textContent),
+    ).toEqual([
+      "Rating",
+      "Cards",
+      "Red",
+      "Yellow",
+      "Blue",
+      "Purple",
+      "Average",
+      "Always available",
+    ]);
   });
 });
 

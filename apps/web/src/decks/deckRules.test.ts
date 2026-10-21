@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { CardSummary } from "../cards/cardRepository.ts";
+import { SOUL_OF_EXISTENCE } from "../test/fakeCardRepository.ts";
 import {
   copyLimitFor,
   deckCounts,
   deckProblems,
   sectionOf,
+  variantName,
   type DeckEntry,
   type FormatRules,
 } from "./deckRules.ts";
@@ -57,6 +59,15 @@ const scepter = card("Scepter", "weapon", ["Scepter", "1H"]);
 const helm = card("Helm", "equipment", ["Head"]);
 const crown = card("Crown", "equipment", ["Head"]);
 const shield = card("Shield", "equipment", ["Off-Hand"]);
+
+describe("variantName", () => {
+  it("names a purple card's pitch", () => {
+    const soul = SOUL_OF_EXISTENCE;
+    expect(variantName(soul, soul.variants[0]!)).toBe(
+      "Soul of Existence (purple)",
+    );
+  });
+});
 
 describe("sectionOf", () => {
   it("puts weapons and equipment apart from cards that are drawn", () => {

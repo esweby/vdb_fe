@@ -5,7 +5,7 @@ import { getRouteApi, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { CardModal } from "../cards/CardModal.tsx";
 import type { CardSummary } from "../cards/cardRepository.ts";
-import { pitchName } from "../cards/pitch.ts";
+import { pitchesShown, pitchName } from "../cards/pitch.ts";
 import { useCards } from "../cards/useCards.ts";
 import type {
   Deck,
@@ -609,7 +609,7 @@ export function RankingPage() {
                 : `${coreTotal} deck cards`}
             </span>
             <span className={styles.miniMix} aria-hidden="true">
-              {[1, 2, 3].map((p) => (
+              {pitchesShown(pitchCounts).map((p) => (
                 <i
                   key={p}
                   style={{
@@ -620,7 +620,7 @@ export function RankingPage() {
               ))}
             </span>
             <span className={styles.mixText}>
-              {[1, 2, 3]
+              {pitchesShown(pitchCounts)
                 .map(
                   (p) => `${pitchCounts[p] ?? 0} ${pitchName(p).toLowerCase()}`,
                 )

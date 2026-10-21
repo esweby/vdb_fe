@@ -23,6 +23,9 @@
 .pitch3 {
   --pitch: var(--pitch-3);
 }
+.pitch4 {
+  --pitch: var(--pitch-4);
+}
 
 .top {
   display: flex;

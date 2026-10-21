@@ -47,4 +47,15 @@ describe("colour tokens", () => {
       });
     expect(offenders).toEqual([]);
   });
+
+  it("gives purple (pitch 4) a style wherever red, yellow and blue have one", () => {
+    const missing = stylesheets(SRC).flatMap((f) => {
+      const css = readFileSync(f, "utf8");
+      const name = f.slice(SRC.length + 1);
+      return [...new Set(css.match(/\.pitch3\w*/g) ?? [])]
+        .filter((cls) => !css.includes(cls.replace("pitch3", "pitch4")))
+        .map((cls) => `${name} ${cls}`);
+    });
+    expect(missing).toEqual([]);
+  });
 });

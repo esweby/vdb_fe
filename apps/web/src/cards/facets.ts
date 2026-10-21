@@ -61,12 +61,12 @@ const TYPE_VALUES: [string, string, string[]][] = [
   ["equipment", "Equipment", ["equipment"]],
 ];
 
-/** Red, yellow, blue, pitch 4 (the rare one), and no pitch (weapons, equipment). */
+/** Red, yellow, blue, purple (pitch 4, Soul of Existence), and no pitch (weapons, equipment). */
 export const PITCH_VALUES: [string, string][] = [
   ["1", "Red"],
   ["2", "Yellow"],
   ["3", "Blue"],
-  ["4", "Pitch 4"],
+  ["4", "Purple"],
   ["none", "No pitch"],
 ];
 export const pitchId = (pitch: number | null) =>

@@ -2,12 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { useScoreData } from "./useScoreData.ts";
 import { formatScore } from "../scoring/scoreFormat.ts";
 import { rankVariants } from "../ranking/rank.ts";
-import { analyseDeck } from "./deckAnalysis.ts";
+import { pitchesShown } from "../cards/pitch.ts";
+import { analyseDeck, type PitchCounts } from "./deckAnalysis.ts";
 import type { PitchTargets } from "./deckRepository.ts";
 import { PITCH_NAMES, type DeckEntry } from "./deckRules.ts";
 import styles from "./Decks.module.css";
 
-const PITCHES = [1, 2, 3] as const;
 const capitalise = (s: string) => s[0]!.toUpperCase() + s.slice(1);
 
 /**
@@ -80,6 +80,7 @@ export function DeckAnalysisPanel(props: {
       detail: `${o.attacks} cards`,
     },
   ];
+  const shown = pitchesShown(analysis.pitch) as (keyof PitchCounts)[];
 
   return (
     <>
@@ -97,20 +98,22 @@ export function DeckAnalysisPanel(props: {
       <div className={styles.analysis}>
         <section aria-label="Pitch" className={styles.pitchMix}>
           <h2>Pitch</h2>
-          {PITCHES.map((p) => (
+          {shown.map((p) => (
             <PitchRow
               key={p}
               pitch={p}
               have={analysis.pitch[p]}
-              target={pitchTargets[p]}
+              target={p === 4 ? undefined : pitchTargets[p]}
               onTarget={
-                onTargetsChange &&
-                ((target) => {
-                  const next = { ...pitchTargets };
-                  if (target === undefined) delete next[p];
-                  else next[p] = target;
-                  onTargetsChange(next);
-                })
+                // Purple has no target: it's one Legendary card, added by hand.
+                p === 4 || !onTargetsChange
+                  ? undefined
+                  : (target) => {
+                      const next = { ...pitchTargets };
+                      if (target === undefined) delete next[p];
+                      else next[p] = target;
+                      onTargetsChange(next);
+                    }
               }
             />
           ))}
@@ -144,6 +147,7 @@ export function DeckAnalysisPanel(props: {
                   <th scope="col">Red</th>
                   <th scope="col">Yellow</th>
                   <th scope="col">Blue</th>
+                  {shown.includes(4) && <th scope="col">Purple</th>}
                   <th scope="col">Average</th>
                   <th scope="col">Always available</th>
                 </tr>
@@ -156,6 +160,7 @@ export function DeckAnalysisPanel(props: {
                     <td>{d.byPitch[1]}</td>
                     <td>{d.byPitch[2]}</td>
                     <td>{d.byPitch[3]}</td>
+                    {shown.includes(4) && <td>{d.byPitch[4]}</td>}
                     <td>{formatScore(d.average)}</td>
                     <td>{d.alwaysAvailable}</td>
                   </tr>
@@ -177,7 +182,7 @@ export function DeckAnalysisPanel(props: {
 }
 
 function PitchRow(props: {
-  pitch: 1 | 2 | 3;
+  pitch: keyof PitchCounts;
   have: number;
   target: number | undefined;
   onTarget?: (target: number | undefined) => void;

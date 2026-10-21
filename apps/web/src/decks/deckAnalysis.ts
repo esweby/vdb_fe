@@ -3,7 +3,7 @@
 import type { Dimension } from "../scoring/scoreRepository.ts";
 import { sectionOf, type DeckEntry } from "./deckRules.ts";
 
-export type PitchCounts = Record<1 | 2 | 3, number>;
+export type PitchCounts = Record<1 | 2 | 3 | 4, number>;
 
 export interface DimensionTotal {
   key: string;
@@ -39,9 +39,9 @@ export interface DeckAnalysis {
   unscored: number;
 }
 
-const emptyPitch = (): PitchCounts => ({ 1: 0, 2: 0, 3: 0 });
-const isPitch = (p: number | null): p is 1 | 2 | 3 =>
-  p === 1 || p === 2 || p === 3;
+const emptyPitch = (): PitchCounts => ({ 1: 0, 2: 0, 3: 0, 4: 0 });
+const isPitch = (p: number | null): p is 1 | 2 | 3 | 4 =>
+  p === 1 || p === 2 || p === 3 || p === 4;
 
 export function analyseDeck(input: {
   entries: DeckEntry[];

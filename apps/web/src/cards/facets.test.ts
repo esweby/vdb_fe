@@ -24,13 +24,13 @@ describe("card facets", () => {
     ]);
   });
 
-  it("filters by pitch (including pitch 4 and no pitch), class and type", () => {
+  it("filters by pitch (including purple and no pitch), class and type", () => {
     expect(
       names({ pitch: { "1": "exclude", "2": "exclude", none: "exclude" } }),
     ).toEqual(["Become the Shadow Lord", "Fate Foreseen", "Hocus Pocus"]);
     expect(
       facets.find((f) => f.id === "pitch")?.values.map((v) => v.label),
-    ).toEqual(["Red", "Yellow", "Blue", "Pitch 4", "No pitch"]);
+    ).toEqual(["Red", "Yellow", "Blue", "Purple", "No pitch"]);
     expect(
       names({ pitch: { "3": "include" }, class: { Shadow: "include" } }),
     ).toEqual(["Become the Shadow Lord"]);
