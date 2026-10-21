@@ -2,7 +2,7 @@
 -- authenticated by default (local stacks do), so every grant must be explicit.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(55);
+select plan(76);
 
 -- Public reference data: readable by everyone
 select table_privs_are('public', t, 'anon', array['SELECT'], 'anon can only read ' || t)
@@ -44,6 +44,22 @@ select table_privs_are('public', 'heroes', 'authenticated', array['SELECT'], 'si
 -- Effect draft reviews (rules engine step 9b): everyone reads; admins write (row level security).
 select table_privs_are('public', 'effect_draft_reviews', 'anon', array['SELECT'], 'anon can only read effect_draft_reviews');
 select table_privs_are('public', 'effect_draft_reviews', 'authenticated', array['SELECT', 'INSERT', 'UPDATE', 'DELETE'], 'signed-in users read effect_draft_reviews (admins write, by row level security)');
+
+-- FaBlazing game data: everyone reads it. Only the fablazing_ingest role (the Go Lambda) writes
+-- the daily tables and runs; the importer (service role) fills the card map; rules windows are
+-- written in migrations.
+select table_privs_are('public', t, 'anon', array['SELECT'], 'anon can only read ' || t)
+  from unnest(array['fablazing_runs', 'fablazing_card_map', 'fablazing_card_daily', 'fablazing_matchup_daily',
+                    'fablazing_turn_daily', 'fablazing_traverse_daily', 'fablazing_rules_windows']) t;
+select table_privs_are('public', t, 'authenticated', array['SELECT'], 'signed-in users can only read ' || t)
+  from unnest(array['fablazing_runs', 'fablazing_card_map', 'fablazing_card_daily', 'fablazing_matchup_daily',
+                    'fablazing_turn_daily', 'fablazing_traverse_daily', 'fablazing_rules_windows']) t;
+select table_privs_are('public', t, 'fablazing_ingest', array['SELECT', 'INSERT', 'DELETE'], 'the ingest role replaces days of ' || t)
+  from unnest(array['fablazing_card_daily', 'fablazing_matchup_daily', 'fablazing_turn_daily',
+                    'fablazing_traverse_daily']) t;
+select table_privs_are('public', 'fablazing_runs', 'fablazing_ingest', array['SELECT', 'INSERT', 'UPDATE'], 'the ingest role records runs');
+select table_privs_are('public', t, 'fablazing_ingest', array['SELECT'], 'the ingest role can only read ' || t)
+  from unnest(array['fablazing_card_map', 'fablazing_rules_windows']) t;
 
 -- Private tables: nothing for anon
 select table_privs_are('public', t, 'anon', array[]::text[], 'anon has no access to ' || t)
