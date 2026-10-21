@@ -17,7 +17,7 @@ import (
 	"github.com/esweby/vdb_fe/services/fablazing/game"
 )
 
-var concession = game.ConcessionRule{MaxTurns: 2, MaxLife: 20} // proposal, for the maintainer to confirm
+var concession = game.ConcessionRule{MaxTurns: 2, MaxLife: 20} // accepted provisionally by the maintainer, 21 Oct 2026
 
 func main() {
 	if len(os.Args) < 3 {

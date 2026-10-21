@@ -34,9 +34,9 @@ Full detail is in [fablazing-data-dictionary.md](fablazing-data-dictionary.md). 
 - **Not logged and can't be reconstructed:** draws, hand, arsenal, the banished zone, which zone a card was played from, Runechants and Blood Debt state. Reconstructing them would need the deck order, which isn't recorded, so the council's reconstruction fallback isn't available.
   - **Consequence:** chains are written only in terms of logged events. Any inference, such as "a blood debt card played right after a Gate was used was played through it", is a **proxy** and is labelled as one. Chains that depend on hidden state are out of scope.
 - **Sample depth is enough by matchup.** Within 30 days, 34 matchups reach 50 or more games, and together they cover every game. Depth for chains by matchup is only known once each chain is measured.
-- **There's no rules-version field.** Ban-list and errata windows come from a dated list that the maintainer supplies. Every game is tagged by date.
+- **There's no rules-version field.** The last ban and restricted update came before Viserai's release (the maintainer, 21 Oct 2026), so all Viserai data so far sits in **one rules window**, starting from the first day Viserai appears in the data. Later changes go into a dated list (`fablazing_rules_windows`), and every game is tagged by date.
 - **About 9% of sides have no detail.** They count for matchups and results only.
-- **Early concessions are almost never high rolls.** Of the 234 early concessions with life data, only 4 conceders were at 20 life or below. The light-touch rule: an early concession counts as a result only if the conceder took real damage (the proposal is life ≤ 20 within 2 turns). Otherwise the game is **abandoned**: kept for decklists, left out of results.
+- **Early concessions are almost never high rolls.** Of the 234 early concessions with life data, only 4 conceders were at 20 life or below. The light-touch rule: an early concession counts as a result only if the conceder took real damage (the proposal is life ≤ 20 within 2 turns). Otherwise the game is **abandoned**: kept for decklists, left out of results. The maintainer accepted this rule provisionally on 21 Oct 2026.
 
 ## Steps
 
@@ -45,7 +45,7 @@ Full detail is in [fablazing-data-dictionary.md](fablazing-data-dictionary.md). 
 The deliverable is [fablazing-data-dictionary.md](fablazing-data-dictionary.md). It still waits on two things:
 
 - **FaBlazing's answers:** what the action codes mean, why some sides lack detail, why some games appear twice, what `firstPlayer` means, and whether hidden zones could be logged.
-- **From the maintainer:** the ban-list and errata dates.
+- **From the maintainer:** nothing outstanding. There are no ban or errata changes since Viserai's release.
 
 ### 2. Prove one chain through the command line: in progress
 
@@ -139,18 +139,18 @@ There's no general synergy framework until the chains show what the data actuall
 
 ## Status of steps
 
-| #   | Step                      | State                                                                   | Waiting on                                                 |
-| --- | ------------------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------- |
-| 1   | Data audit                | Written                                                                 | FaBlazing's answers; ban and errata dates                  |
-| 2   | One chain through the CLI | Parser, reader, chain spec and CLI built and tested; measurement locked | The maintainer's expectation; card sets from the importer  |
-| 3   | Quick-win stats           | Not started                                                             | Step 2; FaBlazing's permission to show aggregates publicly |
-| 4   | Chain library             | Not started                                                             | Step 2                                                     |
-| 5   | Engine calibration        | Not started                                                             | Step 4; thresholds written first                           |
-| 6   | Expand                    | —                                                                       | Evidence from steps 4 and 5                                |
+| #   | Step                      | State                                                                   | Waiting on                                                |
+| --- | ------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------- |
+| 1   | Data audit                | Written                                                                 | FaBlazing's answers                                       |
+| 2   | One chain through the CLI | Parser, reader, chain spec and CLI built and tested; measurement locked | The maintainer's expectation; card sets from the importer |
+| 3   | Quick-win stats           | Not started                                                             | Step 2                                                    |
+| 4   | Chain library             | Not started                                                             | Step 2                                                    |
+| 5   | Engine calibration        | Not started                                                             | Step 4; thresholds written first                          |
+| 6   | Expand                    | —                                                                       | Evidence from steps 4 and 5                               |
 
 ## Risks
 
-- **Permission and API changes.** The API is v1, run by a volunteer, with no licence. Ask first, credit them, keep our own filtered history in S3, and version the parser (it already accepts JSON as well as Python literals).
+- **API changes.** FaBlazing gave permission to use the data on 21 Oct 2026. The API is v1, run by a volunteer, with no licence, so credit them, keep our own filtered history in S3, and version the parser (it already accepts JSON as well as Python literals).
 - **Hidden state.** Chains that depend on the banished zone or Runechants can't be measured from logs. Only the simulation can speak to them.
 - **Small samples for chains by matchup.** Minimum sample sizes and intervals apply, and "not enough data" is shown rather than a number.
 - **Online play isn't tournament play.** Report Competitive CC separately and weight it more heavily.
@@ -162,8 +162,6 @@ There's no general synergy framework until the chains show what the data actuall
 **For the maintainer:**
 
 1. The expectation for the first chain, and the next 4–9 chains.
-2. The early-concession threshold.
-3. Ban and errata dates since the release of the Viserai set.
-4. Soul of Existence's "purple" pitch: what it means, and how it's stored. The decision to store it is made.
+2. Soul of Existence's "purple" pitch: what it means, and how it's stored. The decision to store it is made.
 
-**For FaBlazing:** permission to show aggregates publicly, a backfill pace, and questions 1–5 in the data dictionary.
+**For FaBlazing** (permission to use the data was given on 21 Oct 2026): a backfill pace, and questions 1–5 in the data dictionary.

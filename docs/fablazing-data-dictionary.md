@@ -129,7 +129,7 @@ Depth by matchup is enough. Depth for **chains by matchup** depends on how often
 
 ## Rules versions
 
-The data has **no legality or rules-version field.** Ban-list and errata windows have to come from a dated list that we maintain: each entry has a date, what changed and the affected cards. Every game is tagged by its `created_at`, and aggregates never span a window boundary unless the change doesn't touch Viserai's pool. **The maintainer supplies the dates.** For now the only window is from the release of the Viserai set onwards.
+The data has **no legality or rules-version field.** Ban-list and errata windows have to come from a dated list that we maintain: each entry has a date, what changed and the affected cards. Every game is tagged by its `created_at`, and aggregates never span a window boundary unless the change doesn't touch Viserai's pool. The last ban and restricted update came before Viserai's release (the maintainer, 21 Oct 2026), so for now there's **one window**, starting from the first day Viserai appears in the data.
 
 ## Open questions for FaBlazing
 
