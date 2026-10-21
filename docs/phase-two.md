@@ -53,6 +53,10 @@ Game logic decided by the maintainer, with where it lives. Anything not here is 
 - **Viserai, the Usurper:** traversing to the Usurper gives the turn's first blood debt attack go again, if it doesn't have it already, whichever card made the third Runechant. That includes traversing by hand in goldfish.
 - **Cost reductions:** a cost never goes below 0; Runechants are counted as the card is played, before Usurp destroys one; and only a usurp earlier in the turn counts, not the card's own.
 
+**21 Oct 2026**
+
+- **Base of the Mountain:** "Base of the Mountain banishes a card and then it goes as a defending card and to the graveyard. The only exception to this is when it is paired with the equipment that banishes defending cards when the chainlink closes." A temporary banish isn't a hand banisher, so it doesn't feed Gates, fill the banished zone or link to cards played from banish (it had been asked whether it helps Usurp the Shadow Throne). The exception is Reach of the Abyss, linked by hand. See [synergy-rules.md](synergy-rules.md).
+
 ## Open
 
 **For the maintainer**

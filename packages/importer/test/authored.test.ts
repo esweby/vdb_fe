@@ -45,7 +45,20 @@ describe("authored batches", () => {
     expect(
       batches["04-weapons-and-equipment"]!["Base of the Mountain"]?.card
         ?.supports,
-    ).toEqual([{ target: { group: "triggers_when_banished" } }]);
+    ).toEqual(
+      expect.arrayContaining([{ target: { group: "triggers_when_banished" } }]),
+    );
+  });
+
+  // The maintainer, 21 Oct 2026: its banished cards defend and go to the graveyard, except with
+  // the equipment that banishes defending cards when the chain link closes.
+  it("links Base of the Mountain to Reach of the Abyss, which keeps its defenders banished", () => {
+    expect(
+      batches["04-weapons-and-equipment"]!["Base of the Mountain"]?.card
+        ?.supports,
+    ).toContainEqual(
+      expect.objectContaining({ target: { card: "Reach of the Abyss" } }),
+    );
   });
 });
 

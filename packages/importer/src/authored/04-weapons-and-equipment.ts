@@ -295,9 +295,16 @@ export const weaponsAndEquipment: AuthoredAttributes = {
           temporary: true,
         },
       ],
-      supports: [{ target: { group: "triggers_when_banished" } }],
+      supports: [
+        { target: { group: "triggers_when_banished" } },
+        // The maintainer, 21 Oct 2026: the one way its banished cards stay banished.
+        {
+          target: { card: "Reach of the Abyss" },
+          note: "it banishes the defending cards when the chain link closes, so they stay in your banished zone",
+        },
+      ],
       notes:
-        'Generic. The banished action cards are added to the chain link as defenders, and its defense equals the number of defending action cards. Fires "when banished" effects (Arknight Descendancy, Open the Gate to i\'Arathael) without losing the cards to banish.',
+        "Generic. The banished action cards are added to the chain link as defenders, and its defense equals the number of defending action cards. They then go to the graveyard, so it doesn't fill your banished zone, feed Gates or let cards be played from banish, unless Reach of the Abyss banishes them when the chain link closes (the maintainer, 21 Oct 2026). Fires \"when banished\" effects (Arknight Descendancy, Open the Gate to i'Arathael) without losing the cards to banish.",
     },
   },
 
