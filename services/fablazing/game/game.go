@@ -27,8 +27,10 @@ type Game struct {
 type Side struct {
 	Hero     string // the side the hero ended the game on, e.g. viserai_usurper
 	Opponent string
-	Won      bool
-	Turns    int
+	// Player is the hashed player name, used only to cap one player's weight.
+	Player PlayerHash
+	Won    bool
+	Turns  int
 	// FirstPlayer is the raw field (1 or 2). What it refers to is unconfirmed.
 	FirstPlayer int
 	Character   []string // hero, weapons and equipment ids
@@ -39,6 +41,17 @@ type Side struct {
 	Log       []Event
 	TurnStats []TurnStats // indexed by turn number
 }
+
+// PlayerHash is a hashed player name from the CSV. It's used only for capping
+// one player's weight and never shown: printing or marshalling it hides it.
+type PlayerHash string
+
+const hidden = "[player]"
+
+func (PlayerHash) String() string                { return hidden }
+func (PlayerHash) MarshalJSON() ([]byte, error)  { return []byte(`"` + hidden + `"`), nil }
+func (PlayerHash) MarshalText() ([]byte, error)  { return []byte(hidden), nil }
+func (PlayerHash) Format(f fmt.State, verb rune) { fmt.Fprint(f, hidden) }
 
 // Card is one row of cardResults.
 type Card struct {
@@ -59,6 +72,7 @@ type TurnStats struct {
 	DamageDealt, DamageTaken     int
 	LifeAtEnd, OpponentLifeAtEnd int
 	HasLife                      bool
+	Recorded                     bool // the turn is in turnResults
 }
 
 // LifeDiffBefore is the side's life minus the opponent's going into a turn:
@@ -184,6 +198,7 @@ func parseRow(rec []string, col map[string]int) (Game, error) {
 			return Game{}, fmt.Errorf("%s is not a dict", k)
 		}
 		g.Sides[i] = parseSide(m)
+		g.Sides[i].Player = PlayerHash(get([]string{"player1_name", "player2_name"}[i]))
 	}
 	return g, nil
 }
@@ -194,7 +209,7 @@ func parseSide(m map[string]any) Side {
 		Won: num(m["result"]) == 1, Turns: num(m["turns"]), FirstPlayer: num(m["firstPlayer"]),
 	}
 	for _, c := range list(m["character"]) {
-		s.Character = append(s.Character, str(dict(c)["cardId"]))
+		s.Character = append(s.Character, cardID(dict(c)["cardId"]))
 	}
 	cards, ok := m["cardResults"].([]any)
 	if !ok {
@@ -204,14 +219,14 @@ func parseSide(m map[string]any) Side {
 	for _, c := range cards {
 		d := dict(c)
 		s.Cards = append(s.Cards, Card{
-			ID: str(d["cardId"]), Copies: num(d["numCopies"]), Pitch: num(d["pitchValue"]),
+			ID: cardID(d["cardId"]), Copies: num(d["numCopies"]), Pitch: num(d["pitchValue"]),
 			Played: num(d["played"]), Pitched: num(d["pitched"]), Blocked: num(d["blocked"]),
 			Hits: num(d["hits"]), Discarded: num(d["discarded"]),
 		})
 	}
 	for _, e := range list(m["turnLog"]) {
 		if l := list(e); len(l) >= 3 {
-			s.Log = append(s.Log, Event{Turn: num(l[0]), Card: str(l[1]), Action: str(l[2])})
+			s.Log = append(s.Log, Event{Turn: num(l[0]), Card: cardID(l[1]), Action: str(l[2])})
 		}
 	}
 	turns := dict(m["turnResults"])
@@ -230,11 +245,14 @@ func parseSide(m map[string]any) Side {
 		_, hasLife := d["lifeAtTurnEnd"]
 		s.TurnStats[n] = TurnStats{
 			DamageDealt: num(d["damageDealt"]), DamageTaken: num(d["damageTaken"]),
-			LifeAtEnd: num(d["lifeAtTurnEnd"]), OpponentLifeAtEnd: num(d["opponentLifeAtTurnEnd"]), HasLife: hasLife,
+			LifeAtEnd: num(d["lifeAtTurnEnd"]), OpponentLifeAtEnd: num(d["opponentLifeAtTurnEnd"]), HasLife: hasLife, Recorded: true,
 		}
 	}
 	return s
 }
+
+// cardID drops the ~BLIND suffix Talishar adds to some card ids in the log.
+func cardID(v any) string { return strings.TrimSuffix(str(v), "~BLIND") }
 
 func str(v any) string {
 	switch x := v.(type) {

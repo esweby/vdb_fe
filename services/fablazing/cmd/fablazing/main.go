@@ -2,17 +2,20 @@
 //
 //	fablazing game  <file.csv> [guid]                     print a Viserai game turn by turn
 //	fablazing chain <spec.json> <sets.json> <file.csv>... measure one chain across Viserai sides
+//	fablazing aggregate [-json] [-cap n] <file.csv>        the daily rows for one date and format
 //
 // It prints counts and card ids only: never player hashes or anything secret.
 package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"os"
 	"sort"
 	"strings"
 
+	"github.com/esweby/vdb_fe/services/fablazing/aggregate"
 	"github.com/esweby/vdb_fe/services/fablazing/chain"
 	"github.com/esweby/vdb_fe/services/fablazing/game"
 	"github.com/esweby/vdb_fe/services/fablazing/measure"
@@ -39,7 +42,7 @@ var concession = game.ConcessionRule{MaxTurns: 2, MaxLife: 20} // accepted provi
 
 func main() {
 	if len(os.Args) < 3 {
-		fmt.Fprintln(os.Stderr, "usage: fablazing game <file.csv> [guid] | fablazing chain <spec.json> <sets.json> <file.csv>...")
+		fmt.Fprintln(os.Stderr, "usage: fablazing game <file.csv> [guid] | fablazing chain <spec.json> <sets.json> <file.csv>... | fablazing aggregate [-json] [-cap n] <file.csv>")
 		os.Exit(2)
 	}
 	var err error
@@ -52,6 +55,8 @@ func main() {
 		} else {
 			err = measureChain(os.Args[2], os.Args[3], os.Args[4:])
 		}
+	case "aggregate":
+		err = runAggregate(os.Args[2:])
 	default:
 		err = fmt.Errorf("unknown command %q", os.Args[1])
 	}
@@ -261,4 +266,139 @@ func measureChain(specPath, setsPath string, csvs []string) error {
 		fmt.Printf("    %-12s %20s %20s\n", b, fmt.Sprintf("%d/%d", t[0].Wins, t[0].N), fmt.Sprintf("%d/%d", t[1].Wins, t[1].N))
 	}
 	return nil
+}
+
+// playerCap is the most sides one player contributes to a day. Provisional:
+// the maintainer hasn't set it yet.
+const playerCap = 20
+
+// minSample is the fewest games before a figure is shown (the plan's guardrail).
+const minSample = 50
+
+func runAggregate(args []string) error {
+	fs := flag.NewFlagSet("aggregate", flag.ContinueOnError)
+	asJSON := fs.Bool("json", false, "write every row as JSON instead of a summary")
+	capN := fs.Int("cap", playerCap, "most sides one player contributes (0 for no cap)")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	if fs.NArg() != 1 {
+		return fmt.Errorf("aggregate needs one CSV (one date and format)")
+	}
+	games, err := read(fs.Arg(0))
+	if err != nil {
+		return err
+	}
+	if len(games) == 0 {
+		return fmt.Errorf("no games in %s", fs.Arg(0))
+	}
+	date := games[0].CreatedAt
+	if len(date) > 10 {
+		date = date[:10]
+	}
+	r, err := aggregate.Run(games, aggregate.Options{Date: date, Format: games[0].Format, Concession: concession, PlayerCap: *capN})
+	if err != nil {
+		return err
+	}
+	if *asJSON {
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+		return enc.Encode(r)
+	}
+	printAggregate(r)
+	return nil
+}
+
+// rate prints k of n with its 95% Wilson interval, or "n<50" below the minimum sample.
+func rate(k, n int) string {
+	if n < minSample {
+		return fmt.Sprintf("(n=%d, under %d)", n, minSample)
+	}
+	lo, hi := measure.Wilson(k, n)
+	return fmt.Sprintf("%5.1f%% [%4.1f-%4.1f] n=%d", 100*float64(k)/float64(n), 100*lo, 100*hi, n)
+}
+
+func printAggregate(r aggregate.Result) {
+	s := r.Run
+	fmt.Printf("%s format %d: %d games (%d abandoned early concessions), %d sides (%d without detail), %d left out by the player cap\n",
+		s.Date, s.Format, s.Games, s.Abandoned, s.Sides, s.SidesWithoutDetail, s.CappedSides)
+	fmt.Printf("Viserai: %d sides (%d without detail); %d card ids, %d hero ids seen\n", s.ViseraiSides, s.ViseraiSidesWithoutDetail, len(s.CardIDs), len(s.HeroIDs))
+	fmt.Println("(associations, not causes)")
+
+	fmt.Println("\ndecks by side at end      decks  won (result decks)")
+	for _, side := range sortedSides(s.Decks) {
+		d := s.Decks[side]
+		fmt.Printf("  %-22s %6d  %s\n", side, d.Decks, rate(d.Wins, d.ResultDecks))
+	}
+
+	fmt.Println("\nViserai matchups (results only)        won")
+	var ms []aggregate.MatchupDaily
+	for _, m := range r.Matchups {
+		if m.Hero == aggregate.Viserai {
+			ms = append(ms, m)
+		}
+	}
+	sort.Slice(ms, func(i, j int) bool {
+		return ms[i].Games > ms[j].Games || (ms[i].Games == ms[j].Games && ms[i].Opponent < ms[j].Opponent)
+	})
+	for i, m := range ms {
+		if i == 12 {
+			fmt.Printf("  … and %d more\n", len(ms)-i)
+			break
+		}
+		fmt.Printf("  %-36s %s  (abandoned %d)\n", m.Opponent, rate(m.Wins, m.Games), m.Abandoned)
+	}
+
+	for _, side := range sortedSides(s.Decks) {
+		total := s.Decks[side]
+		var cs []aggregate.CardDaily
+		for _, c := range r.Cards {
+			if c.SideAtEnd == side {
+				cs = append(cs, c)
+			}
+		}
+		sort.Slice(cs, func(i, j int) bool {
+			return cs[i].Decks > cs[j].Decks || (cs[i].Decks == cs[j].Decks && cs[i].Card < cs[j].Card)
+		})
+		fmt.Printf("\ncards ending as %s (%d decks): top by inclusion\n", side, total.Decks)
+		fmt.Println("  card                              in decks  copies/deck  played/game  won when included")
+		for i, c := range cs {
+			if i == 15 {
+				break
+			}
+			perGame := 0.0
+			if c.ResultDecks > 0 {
+				perGame = float64(c.Played) / float64(c.ResultDecks)
+			}
+			fmt.Printf("  %-34s %5.1f%%  %11.2f  %11.2f  %s\n", c.Card, 100*float64(c.Decks)/float64(total.Decks),
+				float64(c.Copies)/float64(c.Decks), perGame, rate(c.Wins, c.ResultDecks))
+		}
+	}
+
+	fmt.Println("\nViserai by turn index   sides  dealt/side  taken/side  life at end")
+	for _, t := range r.Turns {
+		life := "-"
+		if t.LifeSides > 0 {
+			life = fmt.Sprintf("%.1f", float64(t.LifeAtEnd)/float64(t.LifeSides))
+		}
+		fmt.Printf("  %-20d %6d  %10.2f  %10.2f  %11s\n", t.Turn, t.Sides, float64(t.DamageDealt)/float64(t.Sides), float64(t.DamageTaken)/float64(t.Sides), life)
+	}
+
+	fmt.Println("\ntraverses: side at end, first traverse turn, count     won")
+	for _, t := range r.Traverses {
+		first := "never"
+		if t.FirstTraverseTurn >= 0 {
+			first = fmt.Sprintf("turn %d", t.FirstTraverseTurn)
+		}
+		fmt.Printf("  %-22s %-8s x%-3d %s\n", t.SideAtEnd, first, t.Traverses, rate(t.Wins, t.Sides))
+	}
+}
+
+func sortedSides(m map[string]aggregate.DeckTotals) []string {
+	out := make([]string, 0, len(m))
+	for k := range m {
+		out = append(out, k)
+	}
+	sort.Strings(out)
+	return out
 }

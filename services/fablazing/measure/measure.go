@@ -127,3 +127,18 @@ func Median(xs []int) float64 {
 	}
 	return float64(s[m-1]+s[m]) / 2
 }
+
+// Wilson is the 95% Wilson score interval for k successes in n trials. It
+// stays inside 0 to 1 and behaves at small n and rates near 0 or 1, where the
+// normal approximation doesn't. With no trials it's the whole range.
+func Wilson(k, n int) (lo, hi float64) {
+	if n <= 0 {
+		return 0, 1
+	}
+	const z = 1.96
+	p, fn := float64(k)/float64(n), float64(n)
+	d := 1 + z*z/fn
+	centre := (p + z*z/(2*fn)) / d
+	half := z * math.Sqrt(p*(1-p)/fn+z*z/(4*fn*fn)) / d
+	return math.Max(0, centre-half), math.Min(1, centre+half)
+}

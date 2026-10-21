@@ -80,3 +80,21 @@ func TestMedian(t *testing.T) {
 		t.Errorf("empty: %v", got)
 	}
 }
+
+func TestWilson(t *testing.T) {
+	for _, tc := range []struct {
+		k, n   int
+		lo, hi float64
+	}{
+		{5, 10, 0.2366, 0.7634},
+		{0, 10, 0, 0.2775},
+		{10, 10, 0.7225, 1},
+		{50, 100, 0.4038, 0.5962},
+		{0, 0, 0, 1},
+	} {
+		lo, hi := Wilson(tc.k, tc.n)
+		if math.Abs(lo-tc.lo) > 1e-4 || math.Abs(hi-tc.hi) > 1e-4 {
+			t.Errorf("Wilson(%d, %d) = %.4f, %.4f; want %.4f, %.4f", tc.k, tc.n, lo, hi, tc.lo, tc.hi)
+		}
+	}
+}
