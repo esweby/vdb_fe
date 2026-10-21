@@ -4,7 +4,7 @@ import {
   relevantDimensions,
 } from "@vdb/cards";
 import { Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { selectCanScore } from "../auth/authSlice.ts";
 import { TYPE_LABELS } from "../cards/filterCards.ts";
 import { pitchName } from "../cards/pitch.ts";
@@ -18,6 +18,7 @@ import type { CommunityRow } from "../ranking/rank.ts";
 import { CommunityPanel } from "./CommunityPanel.tsx";
 import { RealGamesPanel } from "../fablazing/RealGames.tsx";
 import { RelatedCards } from "../synergy/RelatedCards.tsx";
+import { SynergyNudge } from "../synergy/SynergyNudge.tsx";
 import { CardText } from "../cards/CardText.tsx";
 import { ReviewDialog } from "./ReviewDialog.tsx";
 import type {
@@ -27,6 +28,8 @@ import type {
   ScoreRow,
 } from "./scoreRepository.ts";
 import { ScoreEditor } from "./ScoreEditor.tsx";
+import { CardTabList, panelId, tabId } from "./CardTabList.tsx";
+import { resolveCardTab, type CardTab } from "./cardTabs.ts";
 import { spreadWarnings } from "./spread.ts";
 import styles from "./CardScoringPage.module.css";
 
@@ -50,9 +53,8 @@ const formatDate = (iso: string) =>
   });
 
 /**
- * A card with its details and scoring, side by side: the card on the left, details in the
- * middle, scores on the right (stacked on narrow screens). Used by the card page and the
- * card database's pop-over.
+ * A card beside its tabs (Overview, Scoring, Synergy, In real games), stacked on narrow
+ * screens. Used by the card page and the card database's pop-over.
  */
 export function CardScoringView(props: {
   cardId: string;
@@ -68,6 +70,11 @@ export function CardScoringView(props: {
   onNextCard?: () => void;
   /** Tells the pop-over which pitch is being looked at. */
   onChooseVariant?: (variantId: string) => void;
+  /** The tab asked for (from the URL); anything else opens on the viewer's default. */
+  tab?: unknown;
+  onChooseTab?: (tab: CardTab) => void;
+  /** Shown at the end of the tab row, e.g. the pop-over's "Open full page". */
+  tabsExtra?: (tab: CardTab) => ReactNode;
 }) {
   const { cardId, showTitle, inPopover, onNext } = props;
   const onNextCard = props.onNextCard ?? onNext;
@@ -96,6 +103,8 @@ export function CardScoringView(props: {
   // Which card the ratings are loaded for, so focus moves to them once they're there.
   const [loadedFor, setLoadedFor] = useState<string | null>(null);
   const ratings = useRef<HTMLDivElement>(null);
+  const idPrefix = useId();
+  const tab = resolveCardTab(props.tab, canScore);
 
   const [cardFailed, setCardFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -138,13 +147,14 @@ export function CardScoringView(props: {
     };
   }, [cardId, scores, user, ratingsAttempt]);
 
-  // Fast scoring in the pop-over: each card opens on its first rating.
+  // Fast scoring in the pop-over: each card opens on its first rating (on the Scoring tab).
+  const onScoring = tab === "scoring";
   useEffect(() => {
-    if (!inPopover || loadedFor !== cardId) return;
+    if (!inPopover || loadedFor !== cardId || !onScoring) return;
     ratings.current
       ?.querySelector<HTMLElement>("input[type=range]:not(:disabled)")
       ?.focus();
-  }, [inPopover, loadedFor, cardId]);
+  }, [inPopover, loadedFor, cardId, onScoring]);
 
   // Ctrl+Enter (Cmd+Enter on a Mac): mark reviewed, or the next card once it is. Plain Enter
   // does the same from a rating slider, where it has no other job.
@@ -331,191 +341,231 @@ export function CardScoringView(props: {
           )}
         </section>
 
-        <section aria-label="Details" className={styles.details}>
-          {/* Loosely follows the printed card: pitch and cost, text box, type line, then
-              power and defense in the bottom corners. */}
-          <div className={styles.face}>
-            <div className={styles.faceTop}>
-              <span className={styles.facePitch}>
-                {pitchName(chosen?.pitch ?? null)}
-              </span>
-              {chosen?.cost != null && (
-                <span
-                  className={styles.coin}
-                  role="img"
-                  aria-label={`Cost ${chosen.cost}`}
-                >
-                  {chosen.cost}
-                </span>
-              )}
-            </div>
-            <div className={styles.textBox}>
-              {(card.text ?? chosen?.text ?? "")
-                .split(/\n+/)
-                .filter((line) => line.trim())
-                .map((line, i) => (
-                  <p key={i}>
-                    <CardText text={line} keywords={summary?.keywords} />
-                  </p>
-                ))}
-            </div>
-            <div className={styles.typeLine}>{typeLineOf(card, summary)}</div>
-            <div className={styles.faceBottom}>
-              {chosen?.power != null ? (
-                <span role="img" aria-label={`Power ${chosen.power}`}>
-                  <span aria-hidden="true">⚔ </span>
-                  {chosen.power}
-                </span>
-              ) : (
-                <span />
-              )}
-              {chosen?.defense != null && (
-                <span role="img" aria-label={`Defense ${chosen.defense}`}>
-                  {chosen.defense}
-                  <span aria-hidden="true"> ⛨</span>
-                </span>
-              )}
-            </div>
-          </div>
-
-          {sections.length > 0 && (
-            <>
-              <h2>What it does</h2>
-              {sections.map((section) => (
-                <div key={section.heading} className={styles.section}>
-                  <h3>{section.heading}</h3>
-                  <ul>
-                    {section.lines.map((line) => (
-                      <li key={line}>
-                        <CardText text={line} />
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </>
-          )}
-          {community && (
-            <CommunityPanel
-              rows={community.rows}
-              dimensions={community.dimensions}
-              variantId={chosen?.id}
-              minRatingCount={community.minRatingCount}
+        <div className={styles.tabbed}>
+          <div className={styles.tabsRow}>
+            <CardTabList
+              idPrefix={idPrefix}
+              tab={tab}
+              onChoose={(t) => props.onChooseTab?.(t)}
             />
-          )}
-          {/* Evidence from real games, kept apart from the scoring group's opinions. */}
-          <RealGamesPanel cardId={cardId} variantId={chosen?.id} />
-          {canScore && <RelatedCards cardId={cardId} />}
-        </section>
+            {props.tabsExtra?.(tab)}
+          </div>
+          <div
+            role="tabpanel"
+            id={panelId(idPrefix, tab)}
+            aria-labelledby={tabId(idPrefix, tab)}
+            className={styles.panel}
+          >
+            {tab === "overview" && (
+              <section aria-label="Details" className={styles.details}>
+                {/* Loosely follows the printed card: pitch and cost, text box, type line, then
+                    power and defense in the bottom corners. */}
+                <div className={styles.face}>
+                  <div className={styles.faceTop}>
+                    <span className={styles.facePitch}>
+                      {pitchName(chosen?.pitch ?? null)}
+                    </span>
+                    {chosen?.cost != null && (
+                      <span
+                        className={styles.coin}
+                        role="img"
+                        aria-label={`Cost ${chosen.cost}`}
+                      >
+                        {chosen.cost}
+                      </span>
+                    )}
+                  </div>
+                  <div className={styles.textBox}>
+                    {(card.text ?? chosen?.text ?? "")
+                      .split(/\n+/)
+                      .filter((line) => line.trim())
+                      .map((line, i) => (
+                        <p key={i}>
+                          <CardText text={line} keywords={summary?.keywords} />
+                        </p>
+                      ))}
+                  </div>
+                  <div className={styles.typeLine}>
+                    {typeLineOf(card, summary)}
+                  </div>
+                  <div className={styles.faceBottom}>
+                    {chosen?.power != null ? (
+                      <span role="img" aria-label={`Power ${chosen.power}`}>
+                        <span aria-hidden="true">⚔ </span>
+                        {chosen.power}
+                      </span>
+                    ) : (
+                      <span />
+                    )}
+                    {chosen?.defense != null && (
+                      <span role="img" aria-label={`Defense ${chosen.defense}`}>
+                        {chosen.defense}
+                        <span aria-hidden="true"> ⛨</span>
+                      </span>
+                    )}
+                  </div>
+                </div>
 
-        <section aria-label="Scores" className={styles.scores}>
-          <div className={styles.scoresHeading}>
-            <h2>Your ratings</h2>
-            {user && dimensions.length > 0 && (
-              <span className={styles.progress}>
-                {ratedCount} of {rateable.length} rated
-              </span>
+                {sections.length > 0 && (
+                  <>
+                    <h2>What it does</h2>
+                    {sections.map((section) => (
+                      <div key={section.heading} className={styles.section}>
+                        <h3>{section.heading}</h3>
+                        <ul>
+                          {section.lines.map((line) => (
+                            <li key={line}>
+                              <CardText text={line} />
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </section>
+            )}
+            {tab === "scoring" && (
+              <div className={styles.scoringPanel}>
+                <section aria-label="Scores" className={styles.scores}>
+                  <div className={styles.scoresHeading}>
+                    <h2>Your ratings</h2>
+                    {user && dimensions.length > 0 && (
+                      <span className={styles.progress}>
+                        {ratedCount} of {rateable.length} rated
+                      </span>
+                    )}
+                  </div>
+                  {!user && (
+                    <Link to="/sign-in">Sign in to score this card</Link>
+                  )}
+                  {user && ratingsFailed && (
+                    <LoadError
+                      what="your ratings"
+                      onRetry={() => setRatingsAttempt((n) => n + 1)}
+                    />
+                  )}
+                  {user && dimensions.length > 0 && (
+                    <>
+                      {!inPopover && (
+                        <div className={styles.review}>
+                          {reviewedAt ? (
+                            <Tag tone="accent">
+                              Reviewed {formatDate(reviewedAt)}
+                            </Tag>
+                          ) : (
+                            <Button
+                              variant="primary"
+                              onClick={() => setReviewing(true)}
+                            >
+                              Mark reviewed
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                      <details className={styles.help}>
+                        <summary>
+                          <span aria-hidden="true">ⓘ</span>
+                          <span>About these ratings</span>
+                        </summary>
+                        <p>
+                          Floor: none of its conditions are met, and it's
+                          blocked if it has an on-hit. Ceiling: all of them are
+                          met and it hits. Overall: a typical game on this side.
+                          Leave floor and ceiling blank if they're the same as
+                          overall.
+                        </p>
+                      </details>
+                      {warnings.length > 0 && (
+                        <ul role="status" className={styles.warnings}>
+                          {warnings.map((w) => (
+                            <li key={w}>{w}</li>
+                          ))}
+                        </ul>
+                      )}
+                      {lockedIds.length > 0 && (
+                        <div className={styles.rateAnyway}>
+                          <p className={styles.meta}>
+                            Floor and ceiling are greyed out: this card has no
+                            recorded conditions.
+                          </p>
+                          <Button onClick={() => setRateAnyway(true)}>
+                            Rate floor and ceiling anyway
+                          </Button>
+                        </div>
+                      )}
+                      <div ref={ratings}>
+                        <ScoreEditor
+                          chosenVariantId={chosen?.id}
+                          sidesTogetherByDefault={sidesTogether}
+                          dimensions={dimensions}
+                          locked={{
+                            ids: lockedIds,
+                            reason:
+                              "Same as overall: this card has no conditions.",
+                          }}
+                          variants={card.variants}
+                          rows={rows}
+                          onSet={(key, score) => void onSet(key, score)}
+                        />
+                      </div>
+                      {askingSpread && (
+                        <Button
+                          variant="ghost"
+                          className={styles.sameAsOverall}
+                          onClick={() => void sameAsOverall()}
+                        >
+                          Floor and ceiling same as overall
+                        </Button>
+                      )}
+                    </>
+                  )}
+                </section>
+                {community && (
+                  <CommunityPanel
+                    rows={community.rows}
+                    dimensions={community.dimensions}
+                    variantId={chosen?.id}
+                    minRatingCount={community.minRatingCount}
+                  />
+                )}
+              </div>
+            )}
+            {tab === "synergy" && (
+              <div>
+                <p className={styles.explorer}>
+                  <Link to="/synergies" search={{ card: cardId }}>
+                    See this card in the synergy explorer
+                  </Link>
+                </p>
+                {canScore && <SynergyNudge focus={cardId} />}
+                {canScore && <RelatedCards cardId={cardId} />}
+              </div>
+            )}
+            {/* Evidence from real games, kept apart from the scoring group's opinions. */}
+            {tab === "real-games" && (
+              <RealGamesPanel cardId={cardId} variantId={chosen?.id} />
             )}
           </div>
-          {!user && <Link to="/sign-in">Sign in to score this card</Link>}
-          {user && ratingsFailed && (
-            <LoadError
-              what="your ratings"
-              onRetry={() => setRatingsAttempt((n) => n + 1)}
-            />
-          )}
-          {user && dimensions.length > 0 && (
-            <>
-              {!inPopover && (
-                <div className={styles.review}>
-                  {reviewedAt ? (
-                    <Tag tone="accent">Reviewed {formatDate(reviewedAt)}</Tag>
-                  ) : (
-                    <Button
-                      variant="primary"
-                      onClick={() => setReviewing(true)}
-                    >
-                      Mark reviewed
-                    </Button>
-                  )}
-                </div>
-              )}
-              <ReviewDialog
-                open={reviewing}
-                onClose={() => setReviewing(false)}
-                onConfirm={() => void confirmReview()}
-                onFix={(dimensionId, score) =>
-                  void onSet(
-                    { variantId: null, side: null, dimensionId },
-                    score,
-                  )
-                }
-                rows={rows}
-                dimensions={dimensions}
-                variants={card.variants}
-                hasConditions={hasConditions(
-                  card.attributes,
-                  card.variants.map((v) => v.attributes),
-                )}
-                busy={busy}
-              />
-              <details className={styles.help}>
-                <summary>
-                  <span aria-hidden="true">ⓘ</span>
-                  <span>About these ratings</span>
-                </summary>
-                <p>
-                  Floor: none of its conditions are met, and it's blocked if it
-                  has an on-hit. Ceiling: all of them are met and it hits.
-                  Overall: a typical game on this side. Leave floor and ceiling
-                  blank if they're the same as overall.
-                </p>
-              </details>
-              {warnings.length > 0 && (
-                <ul role="status" className={styles.warnings}>
-                  {warnings.map((w) => (
-                    <li key={w}>{w}</li>
-                  ))}
-                </ul>
-              )}
-              {lockedIds.length > 0 && (
-                <div className={styles.rateAnyway}>
-                  <p className={styles.meta}>
-                    Floor and ceiling are greyed out: this card has no recorded
-                    conditions.
-                  </p>
-                  <Button onClick={() => setRateAnyway(true)}>
-                    Rate floor and ceiling anyway
-                  </Button>
-                </div>
-              )}
-              <div ref={ratings}>
-                <ScoreEditor
-                  chosenVariantId={chosen?.id}
-                  sidesTogetherByDefault={sidesTogether}
-                  dimensions={dimensions}
-                  locked={{
-                    ids: lockedIds,
-                    reason: "Same as overall: this card has no conditions.",
-                  }}
-                  variants={card.variants}
-                  rows={rows}
-                  onSet={(key, score) => void onSet(key, score)}
-                />
-              </div>
-              {askingSpread && (
-                <Button
-                  variant="ghost"
-                  className={styles.sameAsOverall}
-                  onClick={() => void sameAsOverall()}
-                >
-                  Floor and ceiling same as overall
-                </Button>
-              )}
-            </>
-          )}
-        </section>
+        </div>
       </div>
+
+      <ReviewDialog
+        open={reviewing}
+        onClose={() => setReviewing(false)}
+        onConfirm={() => void confirmReview()}
+        onFix={(dimensionId, score) =>
+          void onSet({ variantId: null, side: null, dimensionId }, score)
+        }
+        rows={rows}
+        dimensions={dimensions}
+        variants={card.variants}
+        hasConditions={hasConditions(
+          card.attributes,
+          card.variants.map((v) => v.attributes),
+        )}
+        busy={busy}
+      />
 
       {inPopover && (
         <div className={styles.footer}>

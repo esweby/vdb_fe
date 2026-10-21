@@ -16,7 +16,7 @@ const users = {
 describe("card page", () => {
   it("shows the scoring group's ratings for the card, by side", async () => {
     await renderApp({
-      path,
+      path: `${path}?tab=scoring`,
       auth: fakeAuthService().service,
       scores: fakeScoreRepository([], { community: sampleCommunity() })
         .repository,
@@ -38,7 +38,7 @@ describe("card page", () => {
 
   it("says when the scoring group hasn't rated a card enough yet", async () => {
     await renderApp({
-      path,
+      path: `${path}?tab=scoring`,
       auth: fakeAuthService().service,
       scores: fakeScoreRepository([], {
         community: sampleCommunity(),
@@ -108,7 +108,7 @@ describe("card page", () => {
 
   it("asks signed-out visitors to sign in to score", async () => {
     await renderApp({
-      path,
+      path: `${path}?tab=scoring`,
       auth: fakeAuthService().service,
       scores: fakeScoreRepository().repository,
     });
@@ -238,16 +238,18 @@ describe("card page", () => {
     ).toBeInTheDocument();
   });
 
-  it("lays the card, its details and scoring side by side", async () => {
+  it("lays the card beside its tabs, opening on its details", async () => {
     await renderApp({
       path,
       auth: fakeAuthService().service,
       scores: fakeScoreRepository().repository,
     });
     await screen.findByRole("heading", { name: "Become the Shadow Lord" });
-    for (const name of ["Card", "Details", "Scores"]) {
-      expect(screen.getByRole("region", { name })).toBeInTheDocument();
-    }
+    expect(screen.getByRole("region", { name: "Card" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("tablist", { name: "Card information" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Details" })).toBeInTheDocument();
   });
 
   it("puts overall at the top", async () => {

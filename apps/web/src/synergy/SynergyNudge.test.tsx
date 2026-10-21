@@ -114,13 +114,13 @@ describe("the synergy question", () => {
   });
 
   it("on a card page, asks about that card's links", async () => {
-    const { box } = await open(`/cards/${HOCUS}`);
+    const { box } = await open(`/cards/${HOCUS}?tab=synergy`);
     expect(await within(box).findByText(asks)).toBeInTheDocument();
   });
 
   it("on a card page with no unanswered links, asks nothing", async () => {
     await renderApp({
-      path: "/cards/card-nebula-blade",
+      path: "/cards/card-nebula-blade?tab=synergy",
       auth: auth("s@test.local"),
     });
     await screen.findByRole("heading", { name: "Nebula Blade" });

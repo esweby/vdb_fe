@@ -1,5 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import type { CardSort } from "../cards/filterCards.ts";
+import { isCardTab, type CardTab } from "../scoring/cardTabs.ts";
 import type { FilterState } from "./applyFilters.ts";
 import { fromSearch, toSearch, type FilterSearch } from "./urlState.ts";
 
@@ -13,6 +14,8 @@ export interface ListSearch extends FilterSearch {
   /** The card open in the pop-over, and the pitch that was clicked. */
   card?: string;
   variant?: string;
+  /** The pop-over's tab (see cardTabs.ts). */
+  cardTab?: CardTab;
 }
 
 export type CardView = "small" | "large" | "list";
@@ -45,6 +48,7 @@ export function validateListSearch(
       typeof search.variant === "string" && search.variant
         ? search.variant
         : undefined,
+    cardTab: isCardTab(search.cardTab) ? search.cardTab : undefined,
   };
 }
 

@@ -59,7 +59,7 @@ describe("Mark reviewed", () => {
   it("doesn't run the job for users without a scoring role", async () => {
     const fake = fakeScoreRepository();
     await renderApp({
-      path: "/cards/card-hocus-pocus",
+      path: "/cards/card-hocus-pocus?tab=scoring",
       auth: signedIn("u@test.local"),
       scores: fake.repository,
     });
