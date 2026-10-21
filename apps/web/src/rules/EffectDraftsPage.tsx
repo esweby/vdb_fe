@@ -1,11 +1,13 @@
-import { Link } from "@tanstack/react-router";
+import { getRouteApi, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { selectRole } from "../auth/authSlice.ts";
 import { useCards } from "../cards/useCards.ts";
 import { useAppSelector } from "../hooks.ts";
 import { useServices } from "../servicesContext.ts";
 import { Button, LoadError, Loading, Tag, TextField } from "../ui/index.ts";
+import type { Deck, DeckSummary } from "../decks/deckRepository.ts";
 import type { DraftReview } from "./draftReviewRepository.ts";
+import { deckDrafts } from "./deckDrafts.ts";
 import {
   draftQueue,
   missingFeatures,
@@ -15,6 +17,8 @@ import {
 } from "./draftQueue.ts";
 import { Enlarge } from "../decks/Enlarge.tsx";
 import styles from "./EffectDraftsPage.module.css";
+
+const route = getRouteApi("/needs-review/effects");
 
 /** Folded sections start shut: they aren't for accepting (the maintainer, 20 Oct 2026). */
 const SECTIONS: {
@@ -258,6 +262,28 @@ function DraftCard(props: { entry: DraftEntry; actions?: Actions }) {
   );
 }
 
+function DeckGaps(props: { features: { what: string; cards: number }[] }) {
+  if (props.features.length === 0) return null;
+  return (
+    <>
+      <p className={styles.muted}>
+        Engine features this deck&apos;s cards still need, by how many cards
+        each would unlock:
+      </p>
+      <ul
+        aria-label="What this deck's cards are missing"
+        className={styles.missing}
+      >
+        {props.features.map((m) => (
+          <li
+            key={m.what}
+          >{`${m.what}: ${m.cards} card${m.cards === 1 ? "" : "s"}`}</li>
+        ))}
+      </ul>
+    </>
+  );
+}
+
 /**
  * Effect drafts from card facts (docs/rules-engine.md, step 9b), in plain words beside the printed
  * card, for a player to check. Admins accept or reject each draft; every draft stays unverified
@@ -265,8 +291,14 @@ function DraftCard(props: { entry: DraftEntry; actions?: Actions }) {
  */
 export function EffectDraftsPage() {
   const { status, items, retry } = useCards();
-  const { draftReviews } = useServices();
+  const { draftReviews, decks } = useServices();
   const isAdmin = useAppSelector((s) => selectRole(s) === "admin");
+  const userId = useAppSelector((s) => s.auth.user?.id);
+  const { deck: deckId } = route.useSearch();
+  const navigate = useNavigate();
+  const [myDecks, setMyDecks] = useState<DeckSummary[]>([]);
+  const [deck, setDeck] = useState<Deck | null>(null);
+  const [deckFailed, setDeckFailed] = useState(false);
   const [reviews, setReviews] = useState<DraftReview[] | null>(null);
   const [reviewsFailed, setReviewsFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -283,10 +315,47 @@ export function EffectDraftsPage() {
     };
   }, [draftReviews, attempt]);
 
-  const queue = useMemo(
-    () => draftQueue(items, reviews ?? []),
-    [items, reviews],
+  // The picker offers your own decks; a link can name any deck you can read.
+  useEffect(() => {
+    if (!userId) return;
+    let live = true;
+    decks.listMyDecks(userId).then(
+      (rows) => live && setMyDecks(rows),
+      () => {},
+    );
+    return () => {
+      live = false;
+    };
+  }, [decks, userId]);
+
+  useEffect(() => {
+    setDeck(null);
+    setDeckFailed(false);
+    if (!deckId) return;
+    let live = true;
+    decks.getDeck(deckId).then(
+      (d) => live && (d ? setDeck(d) : setDeckFailed(true)),
+      () => live && setDeckFailed(true),
+    );
+    return () => {
+      live = false;
+    };
+  }, [decks, deckId, attempt]);
+
+  const inDeck = useMemo(
+    () => (deck ? deckDrafts(items, deck.cards) : null),
+    [items, deck],
   );
+  const queue = useMemo(() => {
+    const all = draftQueue(items, reviews ?? []);
+    return inDeck ? all.filter((e) => inDeck.cardIds.has(e.card.id)) : all;
+  }, [items, reviews, inDeck]);
+  const pickDeck = (id: string) =>
+    void navigate({
+      to: ".",
+      replace: true,
+      search: id ? { deck: id } : {},
+    });
   const same = (r: DraftReview, cardId: string, hash: string) =>
     r.cardId === cardId && r.draftHash === hash;
   const actions: Actions | undefined = isAdmin
@@ -317,6 +386,7 @@ export function EffectDraftsPage() {
     );
   if (status !== "loaded") return <Loading label="Loading the cards" />;
   if (!reviews) return <Loading label="Loading the verdicts" />;
+
   return (
     <>
       <p>
@@ -350,52 +420,94 @@ export function EffectDraftsPage() {
           </li>
         </ol>
       </section>
-      {SECTIONS.map((s) => {
-        const entries = queue.filter((e) => e.status === s.status);
-        const heading = (
-          <h2>
-            {s.title} <span className={styles.muted}>({entries.length})</span>
-          </h2>
-        );
-        const body = (
-          <>
-            <p className={styles.muted}>{s.note}</p>
-            {s.status === "undraftable" && entries.length > 0 && (
-              <ul aria-label="What's missing" className={styles.missing}>
-                {missingFeatures(entries).map((m) => (
-                  <li
-                    key={m.what}
-                  >{`${m.what}: ${m.cards} card${m.cards === 1 ? "" : "s"}`}</li>
-                ))}
-              </ul>
-            )}
-            <div className={styles.grid}>
-              {entries.map((e) => (
-                <DraftCard key={e.card.id} entry={e} actions={actions} />
+      {userId && (
+        <section aria-label="Deck" className={styles.section}>
+          <label className={styles.select}>
+            Deck
+            <select
+              value={deckId ?? ""}
+              onChange={(e) => pickDeck(e.target.value)}
+            >
+              <option value="">All cards</option>
+              {myDecks.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name}
+                </option>
               ))}
-            </div>
-          </>
-        );
-        return s.folded ? (
-          <details
-            key={s.status}
-            aria-label={`${s.title} (${entries.length})`}
-            className={styles.section}
-          >
-            <summary>{heading}</summary>
-            {body}
-          </details>
-        ) : (
-          <section
-            key={s.status}
-            aria-label={s.title}
-            className={styles.section}
-          >
-            {heading}
-            {body}
-          </section>
-        );
-      })}
+              {deck && !myDecks.some((d) => d.id === deck.id) && (
+                <option value={deck.id}>{deck.name}</option>
+              )}
+            </select>
+          </label>
+          {inDeck && (
+            <>
+              <p className={styles.coverage}>
+                {`${inDeck.verified} of ${inDeck.total} card${inDeck.total === 1 ? "" : "s"} in this deck play by verified rules`}
+              </p>
+              {/* Partly drafted and reviewed cards count too: a gap holds back any card. */}
+              <DeckGaps
+                features={missingFeatures(queue, [
+                  "partial",
+                  "reviewed",
+                  "undraftable",
+                ])}
+              />
+            </>
+          )}
+        </section>
+      )}
+      {deckFailed ? (
+        <LoadError what="the deck" onRetry={() => setAttempt((n) => n + 1)} />
+      ) : deckId && !inDeck ? (
+        <Loading label="Loading the deck" />
+      ) : (
+        SECTIONS.map((s) => {
+          const entries = queue.filter((e) => e.status === s.status);
+          const heading = (
+            <h2>
+              {s.title} <span className={styles.muted}>({entries.length})</span>
+            </h2>
+          );
+          const body = (
+            <>
+              <p className={styles.muted}>{s.note}</p>
+              {s.status === "undraftable" && entries.length > 0 && (
+                <ul aria-label="What's missing" className={styles.missing}>
+                  {missingFeatures(entries).map((m) => (
+                    <li
+                      key={m.what}
+                    >{`${m.what}: ${m.cards} card${m.cards === 1 ? "" : "s"}`}</li>
+                  ))}
+                </ul>
+              )}
+              <div className={styles.grid}>
+                {entries.map((e) => (
+                  <DraftCard key={e.card.id} entry={e} actions={actions} />
+                ))}
+              </div>
+            </>
+          );
+          return s.folded ? (
+            <details
+              key={s.status}
+              aria-label={`${s.title} (${entries.length})`}
+              className={styles.section}
+            >
+              <summary>{heading}</summary>
+              {body}
+            </details>
+          ) : (
+            <section
+              key={s.status}
+              aria-label={s.title}
+              className={styles.section}
+            >
+              {heading}
+              {body}
+            </section>
+          );
+        })
+      )}
     </>
   );
 }

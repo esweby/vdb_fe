@@ -128,6 +128,11 @@ const routeTree = rootRoute.addChildren([
   createRoute({
     getParentRoute: () => rootRoute,
     path: "/needs-review/effects",
+    // The deck whose cards to list; all cards when missing.
+    validateSearch: (search: Record<string, unknown>): { deck?: string } =>
+      typeof search.deck === "string" && search.deck
+        ? { deck: search.deck }
+        : {},
     beforeLoad: requireScorer,
     component: EffectDraftsPage,
   }),

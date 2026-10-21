@@ -110,15 +110,17 @@ export function draftQueue(
 }
 
 /**
- * What the engine would need to draft the cards it can't, with how many cards each would help:
- * the part of each "not drafted" line before its reason, most common first.
+ * What the engine would need to draft the cards it can't (or, given more statuses, the parts it
+ * can't of partly drafted cards too), with how many cards each would help: the part of each "not
+ * drafted" line before its reason, most common first.
  */
 export function missingFeatures(
   entries: readonly DraftEntry[],
+  statuses: readonly DraftStatus[] = ["undraftable"],
 ): { what: string; cards: number }[] {
   const counts = new Map<string, number>();
   for (const e of entries) {
-    if (e.status !== "undraftable") continue;
+    if (!statuses.includes(e.status)) continue;
     const gaps = new Set(
       e.drafts.flatMap((d) =>
         d.draft.notDrafted.map((line) => line.split(":")[0]!.trim()),
