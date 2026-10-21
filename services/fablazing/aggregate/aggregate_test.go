@@ -311,3 +311,26 @@ func TestEmptyRowListsAreArraysInJSON(t *testing.T) {
 		}
 	}
 }
+
+func TestCountedOrdersGamesAndMarksCappedSides(t *testing.T) {
+	late := g("3", viserai("viserai_usurper", "fang", "p", true), other("fang", "viserai_usurper", "q", false))
+	mid := abandoned(g("2", viserai("viserai_usurper", "fang", "p", true), other("fang", "viserai_usurper", "", false)))
+	early := g("1", other("fang", "viserai_usurper", "p", true), viserai("viserai_usurper", "fang", "", false))
+	ordered, kept := Counted([]game.Game{late, mid, early}, 2)
+	var guids []string
+	for _, x := range ordered {
+		guids = append(guids, x.GUID)
+	}
+	if !reflect.DeepEqual(guids, []string{"1", "2", "3"}) {
+		t.Fatalf("order: %v", guids)
+	}
+	// p's sides: another hero in game 1, an abandoned game in game 2; both count
+	// toward the cap, so p's Viserai side in game 3 is left out.
+	want := [][2]bool{{true, true}, {true, true}, {false, true}}
+	if !reflect.DeepEqual(kept, want) {
+		t.Errorf("kept %v, want %v", kept, want)
+	}
+	if _, kept := Counted([]game.Game{late, mid, early}, 0); !reflect.DeepEqual(kept, [][2]bool{{true, true}, {true, true}, {true, true}}) {
+		t.Errorf("a cap of 0 keeps every side: %v", kept)
+	}
+}

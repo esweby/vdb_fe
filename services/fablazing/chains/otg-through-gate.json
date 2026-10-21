@@ -1,0 +1,52 @@
+{
+  "id": "otg-through-gate",
+  "status": "line described by the maintainer, 21 Oct 2026; matching unverified",
+  "line": "The maintainer (21 Oct 2026): banish Open the Gate to i'Arathael and play it through a Gate in the same turn, so the opponent either lets it hit (and it makes another Gate) or blocks with cards from hand to deny the Gate. Both are intended outcomes. Logged proxy: a Gate used, then Open the Gate played in the same turn (as played through that Gate), then Open the Gate hits in that turn, then a Gate used within 1 turn index with no other logged Gate maker in between (as the Gate from that hit). The banish isn't logged, and neither is what the opponent blocked with: only Viserai's log is read, so a denial shows only as no hit. A side counts as hitting if any of its attempts hit.",
+  "expectation": "Written 21 Oct 2026, before measuring this chain, and approved by the maintainer. Seen beforehand: card level over 30 days with the player cap, Open the Gate is in 84% of Viserai decks, played 0.93 times a game, and hits on 48% of plays; it was the card played after the Gate in 1,645 of bsl-gate-blood-debt's 6,374 completions (595 same-turn). Not seen: any count for this chain. 1. Denial (the main question): through a Gate, Open the Gate hits less often than its overall 48%, because opponents pay to deny it when the Gate matters; 48% or more suggests they usually let it through. 2. After a hit, the new Gate is used within 1 turn index in 60-90%. 3. Result: reported, not judged. Hitting and being blocked are both intended, so the win difference between them (life totals held level) has no expected direction.",
+  "compareBase": "otg",
+  "compareFrom": "hits",
+  "steps": [
+    {
+      "name": "gate",
+      "actions": ["M", "INSTANT", "A"],
+      "card": "gate_to_iarathael"
+    },
+    {
+      "name": "otg",
+      "action": "M",
+      "card": "open_the_gate_to_iarathael_red",
+      "withinTurns": 0
+    },
+    {
+      "name": "hits",
+      "action": "HIT",
+      "card": "open_the_gate_to_iarathael_red",
+      "withinTurns": 0
+    },
+    {
+      "name": "gate-again",
+      "actions": ["M", "INSTANT", "A"],
+      "card": "gate_to_iarathael",
+      "withinTurns": 1,
+      "unless": [
+        {
+          "action": "M",
+          "set": "gate_maker_on_play"
+        },
+        {
+          "action": "HIT",
+          "set": "gate_maker_on_hit"
+        },
+        {
+          "action": "B",
+          "set": "gate_maker_on_block"
+        },
+        {
+          "action": "B",
+          "set": "banish_equipment"
+        }
+      ]
+    }
+  ],
+  "expectationBy": "maintainer (drafted by Claude, approved 21 Oct 2026)"
+}

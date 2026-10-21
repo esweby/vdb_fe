@@ -314,6 +314,7 @@
     "widespread_ruin_red"
   ],
   "gate_maker_on_play": [
+    "become_the_shadow_lord_blue",
     "countdown_to_extinction_blue",
     "countdown_to_extinction_red",
     "countdown_to_extinction_yellow",
@@ -322,6 +323,9 @@
     "pull_from_beyond_red",
     "pull_from_beyond_yellow",
     "rites_of_nightfall_blue",
+    "shadowrealm_walker_blue",
+    "shadowrealm_walker_red",
+    "shadowrealm_walker_yellow",
     "step_through_realms_blue",
     "step_through_realms_red",
     "step_through_realms_yellow",
@@ -345,5 +349,8 @@
     "dam_the_shadowake_red",
     "dam_the_shadowake_yellow"
   ],
-  "banish_equipment": ["corrupted_crown", "reach_of_the_abyss"]
+  "banish_equipment": [
+    "corrupted_crown",
+    "reach_of_the_abyss"
+  ]
 }

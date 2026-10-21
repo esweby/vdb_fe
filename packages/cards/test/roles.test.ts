@@ -220,6 +220,29 @@ describe("rolesOf: Banish engine", () => {
     ).toEqual(["self_banisher"]);
   });
 
+  // The maintainer, 21 Oct 2026: "Base of the Mountain banishes a card and then it goes as a
+  // defending card and to the graveyard." A temporary banish leaves nothing in the banished zone.
+  it("a card whose banishes from hand are all temporary isn't a hand banisher", () => {
+    const banishesOwn = [
+      {
+        from: "hand" as const,
+        amount: "any" as const,
+        which: "action" as const,
+        trigger: "on_defend" as const,
+        optional: true,
+        temporary: true,
+      },
+    ];
+    expect(
+      rolesOf(
+        card(
+          { banishesOwn, groups: attributeGroups({ banishesOwn }) },
+          "equipment",
+        ),
+      ),
+    ).not.toContain("hand_banisher");
+  });
+
   it("playing from banish, caring what was banished, and triggering when banished are payoffs", () => {
     expect(rolesOf(card({ playableFromBanish: {} }))).toEqual([
       "plays_from_banish",

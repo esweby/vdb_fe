@@ -22,6 +22,16 @@ export function fablazingSlug(name: string, pitch: number | null): string {
   return colour ? `${base}_${colour}` : base;
 }
 
+/**
+ * Equipment that banishes your own cards when it blocks, so a block with it can make a Gate (by
+ * banishing Open the Gate to i'Arathael). The maintainer's judgement, 21 Oct 2026, not derived:
+ * the banish actions aren't logged, only the blocks.
+ */
+const BANISH_EQUIPMENT = ["Corrupted Crown", "Reach of the Abyss"];
+
+type Attributes = ImportCard["attributes"];
+type Token = NonNullable<Attributes["tokens"]>[number];
+
 /** Named groups of FaBlazing ids that chain specs refer to, from our card facts. */
 export function cardSets(cards: ImportCard[]): Record<string, string[]> {
   const slugs = (keep: (c: ImportCard) => boolean) =>
@@ -29,9 +39,42 @@ export function cardSets(cards: ImportCard[]): Record<string, string[]> {
       .filter(keep)
       .flatMap((c) => c.variants.map((v) => fablazingSlug(c.name, v.pitch)))
       .sort();
+  // By pitch, since a pitch's attributes can replace the card's tokens.
+  const gateMakers = (keep: (t: Token) => boolean) =>
+    cards
+      .flatMap((c) =>
+        c.variants
+          .filter((v) =>
+            ({ ...c.attributes, ...v.attributes }).tokens?.some(
+              (t) => t.token === "gate" && keep(t),
+            ),
+          )
+          .map((v) => fablazingSlug(c.name, v.pitch)),
+      )
+      .sort();
+  const named = (names: string[]) => {
+    const missing = names.filter((n) => !cards.some((c) => c.name === n));
+    if (missing.length)
+      throw new Error(`Card sets name ${missing.join(", ")}, not imported`);
+    return slugs((c) => names.includes(c.name));
+  };
   return {
     blood_debt: slugs((c) => c.attributes.hasBloodDebt === true),
     gate_target: slugs((c) => c.attributes.isGateTarget === true),
+    // Each set is a logged event: the card played (its play or attack makes the Gate, or grants
+    // one to a later attack whose hit isn't tied to it), its own hit, or its block. Gates made on
+    // banish aren't logged.
+    gate_maker_on_play: gateMakers(
+      (t) =>
+        t.grantedTo !== undefined ||
+        t.trigger === "on_play" ||
+        t.trigger === "on_attack",
+    ),
+    gate_maker_on_hit: gateMakers(
+      (t) => t.grantedTo === undefined && t.trigger === "on_hit",
+    ),
+    gate_maker_on_block: gateMakers((t) => t.trigger === "on_defend"),
+    banish_equipment: named(BANISH_EQUIPMENT),
   };
 }
 

@@ -27,7 +27,11 @@ type Spec struct {
 	// CompareFrom names the step that splits the comparison: sides reaching
 	// it against sides that set up but don't. Empty means the last step.
 	CompareFrom string `json:"compareFrom,omitempty"`
+	// CompareBase names the step every compared side must reach, so the
+	// comparison is among sides that got that far. Empty means the setup.
+	CompareBase string `json:"compareBase,omitempty"`
 	paidAt      int    // steps that must be reached to count as paid
+	baseAt      int    // steps that must be reached to be compared
 	sets        Sets
 }
 
@@ -86,6 +90,10 @@ func (r Result) Complete(s Spec) bool { return r.Reached == len(s.Steps) }
 // it reached the CompareFrom step, or completed the chain by default.
 func (s Spec) Paid(r Result) bool { return r.Reached >= s.paidAt }
 
+// Compared reports whether a side is in the comparison at all: it reached the
+// CompareBase step, or the setup by default.
+func (s Spec) Compared(r Result) bool { return r.Reached >= s.baseAt }
+
 // ParseSpec reads a chain and checks it against the known card sets.
 func ParseSpec(r io.Reader, sets Sets) (Spec, error) {
 	var s Spec
@@ -118,6 +126,14 @@ func ParseSpec(r io.Reader, sets Sets) (Spec, error) {
 			return Spec{}, fmt.Errorf("chain %q: compareFrom %q must name a step after the setup", s.ID, s.CompareFrom)
 		}
 		s.paidAt = i + 1
+	}
+	s.baseAt = 1
+	if s.CompareBase != "" {
+		i := slices.IndexFunc(s.Steps, func(st Step) bool { return st.Name == s.CompareBase })
+		if i < 0 || i+1 >= s.paidAt {
+			return Spec{}, fmt.Errorf("chain %q: compareBase %q must name a step before the paid step", s.ID, s.CompareBase)
+		}
+		s.baseAt = i + 1
 	}
 	s.sets = sets
 	return s, nil

@@ -23,7 +23,8 @@ describe("fablazingSlug", () => {
 function card(
   name: string,
   pitches: (number | null)[],
-  attributes: Partial<ImportCard["attributes"]> = {},
+  // Loosely typed so tests can write tokens as plain objects.
+  attributes: object = {},
 ): ImportCard {
   return {
     name,
@@ -40,6 +41,8 @@ describe("cardSets", () => {
     }),
     card("Shadow Instant", [1], { hasBloodDebt: true, isGateTarget: false }),
     card("Malefic Incantation", [1, 2, 3], { hasBloodDebt: false }),
+    card("Corrupted Crown", [null]),
+    card("Reach of the Abyss", [null]),
   ]);
 
   it("lists every pitch of every blood debt card", () => {
@@ -57,6 +60,68 @@ describe("cardSets", () => {
       "deadwood_dirge_red",
       "deadwood_dirge_yellow",
     ]);
+  });
+});
+
+describe("cardSets: Gate makers", () => {
+  const gate = (trigger: string, extra: object = {}) => ({
+    tokens: [{ token: "gate", amount: 1, trigger, ...extra }],
+  });
+  const sets = cardSets([
+    card("Rites of Nightfall", [3], gate("on_play")),
+    card("Countdown to Extinction", [1, 3], gate("on_attack")),
+    card(
+      "Step through Realms",
+      [1],
+      gate("on_hit", { grantedTo: "next_shadow_attack" }),
+    ),
+    card("Breach Flesh", [1, 2], gate("on_hit")),
+    card("Dam the Shadowake", [1], gate("on_defend")),
+    card("Open the Gate to i'Arathael", [1], {
+      tokens: [
+        { token: "gate", amount: 1, trigger: "on_hit" },
+        { token: "gate", amount: 1, trigger: "on_banished" },
+      ],
+    }),
+    card("Runic Card", [1], {
+      tokens: [{ token: "runechant", amount: 1, trigger: "on_play" }],
+    }),
+    card("Corrupted Crown", [null]),
+    card("Reach of the Abyss", [null]),
+  ]);
+
+  it("lists cards whose Gate comes when they're played or attack, including Gates granted to a later attack", () => {
+    expect(sets.gate_maker_on_play).toEqual([
+      "countdown_to_extinction_blue",
+      "countdown_to_extinction_red",
+      "rites_of_nightfall_blue",
+      "step_through_realms_red",
+    ]);
+  });
+
+  it("lists cards whose own hit makes a Gate", () => {
+    expect(sets.gate_maker_on_hit).toEqual([
+      "breach_flesh_red",
+      "breach_flesh_yellow",
+      "open_the_gate_to_iarathael_red",
+    ]);
+  });
+
+  it("lists cards that make a Gate when they defend", () => {
+    expect(sets.gate_maker_on_block).toEqual(["dam_the_shadowake_red"]);
+  });
+
+  it("keeps the maintainer's banishing equipment", () => {
+    expect(sets.banish_equipment).toEqual([
+      "corrupted_crown",
+      "reach_of_the_abyss",
+    ]);
+  });
+
+  it("refuses an authored set naming a card that isn't imported", () => {
+    expect(() => cardSets([card("Corrupted Crown", [null])])).toThrow(
+      /Reach of the Abyss/,
+    );
   });
 });
 

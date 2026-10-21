@@ -1,0 +1,194 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  vdb-maintainer: the maintainer's day-to-day access to the account, and a way
+  back to admin. The maintainer deploys this by hand with the vdb-admin role
+  (see services/fablazing/README.md, "The maintainer's access"). GitHub can't
+  change it.
+
+Parameters:
+  MaintainerUserName:
+    Type: String
+    Default: viserai.decks
+
+Resources:
+  # What the maintainer needs day to day: run and watch the ingest, read its
+  # raw records, manage its secrets and deploy the app stack the way GitHub
+  # does. Nothing here can change IAM or the bootstrap stack.
+  MaintainerPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: vdb-maintainer
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: Ingest
+            Effect: Allow
+            Action:
+              - lambda:InvokeFunction
+              - lambda:GetFunction
+              - lambda:GetFunctionConfiguration
+              - lambda:GetFunctionEventInvokeConfig
+              - lambda:GetPolicy
+              - lambda:ListTags
+              - lambda:ListVersionsByFunction
+            Resource: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:vdb-fablazing-*
+          - Sid: IngestLogs
+            Effect: Allow
+            Action:
+              - logs:FilterLogEvents
+              - logs:GetLogEvents
+              - logs:DescribeLogStreams
+              - logs:GetLogGroupFields
+              - logs:StartLiveTail
+              - logs:StartQuery
+            Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/vdb-fablazing-*
+          - Sid: QueriesAndMetrics
+            Effect: Allow
+            Action:
+              - logs:GetQueryResults
+              - logs:StopQuery
+              - logs:DescribeQueries
+              - logs:StopLiveTail
+              - cloudwatch:DescribeAlarms
+              - cloudwatch:DescribeAlarmHistory
+              - cloudwatch:GetMetricData
+              - cloudwatch:GetMetricStatistics
+              - cloudwatch:ListMetrics
+            Resource: "*"
+          - Sid: Schedule
+            Effect: Allow
+            Action: scheduler:GetSchedule
+            Resource: !Sub arn:aws:scheduler:${AWS::Region}:${AWS::AccountId}:schedule/default/vdb-fablazing-*
+          - Sid: ReadRawRecords
+            Effect: Allow
+            Action:
+              - s3:GetObject
+              - s3:ListBucket
+              - s3:GetBucketLocation
+            Resource:
+              - !Sub arn:aws:s3:::vdb-fablazing-raw-${AWS::AccountId}
+              - !Sub arn:aws:s3:::vdb-fablazing-raw-${AWS::AccountId}/*
+          # SecureStrings use the AWS managed aws/ssm key, whose key policy
+          # already lets anyone in the account with SSM access use it.
+          - Sid: Secrets
+            Effect: Allow
+            Action:
+              - ssm:GetParameter
+              - ssm:GetParameters
+              - ssm:GetParametersByPath
+              - ssm:GetParameterHistory
+              - ssm:PutParameter
+            Resource:
+              - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/vdb/fablazing
+              - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/vdb/fablazing/*
+          - Sid: ReadStacks
+            Effect: Allow
+            Action:
+              - cloudformation:Describe*
+              - cloudformation:List*
+              - cloudformation:GetTemplate
+              - cloudformation:GetTemplateSummary
+              - cloudformation:ValidateTemplate
+            Resource: "*"
+          # sam deploy, with the same rights as GitHub's deploy role in
+          # bootstrap.yaml: change sets only through the CloudFormation role.
+          - Sid: ChangeSetsThroughTheCloudFormationRole
+            Effect: Allow
+            Action: cloudformation:CreateChangeSet
+            Resource:
+              - !Sub arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/vdb-fablazing/*
+              - !Sub arn:aws:cloudformation:${AWS::Region}:aws:transform/Serverless-2016-10-31
+            Condition:
+              StringEquals:
+                cloudformation:RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/vdb-fablazing-cfn-exec
+          - Sid: AppStackChangeSets
+            Effect: Allow
+            Action:
+              - cloudformation:ExecuteChangeSet
+              - cloudformation:DeleteChangeSet
+            Resource: !Sub arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/vdb-fablazing/*
+          - Sid: UploadBuilds
+            Effect: Allow
+            Action:
+              - s3:PutObject
+              - s3:GetObject
+              - s3:ListBucket
+              - s3:GetBucketLocation
+            Resource:
+              - !Sub arn:aws:s3:::vdb-fablazing-artifacts-${AWS::AccountId}
+              - !Sub arn:aws:s3:::vdb-fablazing-artifacts-${AWS::AccountId}/*
+          - Sid: PassTheCloudFormationRole
+            Effect: Allow
+            Action: iam:PassRole
+            Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/vdb-fablazing-cfn-exec
+            Condition:
+              StringEquals:
+                iam:PassedToService: cloudformation.amazonaws.com
+          - Sid: OwnLogin
+            Effect: Allow
+            Action:
+              - iam:GetUser
+              - iam:GetLoginProfile
+              - iam:ChangePassword
+              - iam:ListMFADevices
+              - iam:EnableMFADevice
+              - iam:ResyncMFADevice
+            Resource: !Sub arn:aws:iam::${AWS::AccountId}:user/${!aws:username}
+          - Sid: OwnMFADevice
+            Effect: Allow
+            Action: iam:CreateVirtualMFADevice
+            Resource: !Sub arn:aws:iam::${AWS::AccountId}:mfa/*
+          - Sid: PasswordRules
+            Effect: Allow
+            Action: iam:GetAccountPasswordPolicy
+            Resource: "*"
+          - Sid: BreakGlass
+            Effect: Allow
+            Action: sts:AssumeRole
+            Resource: !GetAtt AdminRole.Arn
+
+  MaintainersGroup:
+    Type: AWS::IAM::Group
+    Properties:
+      GroupName: vdb-maintainers
+      ManagedPolicyArns:
+        - !Ref MaintainerPolicy
+        # aws login
+        - arn:aws:iam::aws:policy/SignInLocalDevelopmentAccess
+        # Bills, budgets and free tier usage, read only.
+        - arn:aws:iam::aws:policy/AWSBillingReadOnlyAccess
+        # Lists and describes across the console, without reading any contents.
+        - arn:aws:iam::aws:policy/job-function/ViewOnlyAccess
+
+  MaintainerInGroup:
+    Type: AWS::IAM::UserToGroupAddition
+    Properties:
+      GroupName: !Ref MaintainersGroup
+      Users: [!Ref MaintainerUserName]
+
+  # The way back to admin: the console's Switch role, or the vdb-admin CLI
+  # profile. Only the maintainer's user, signed in with MFA, for an hour.
+  AdminRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: vdb-admin
+      MaxSessionDuration: 3600
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub arn:aws:iam::${AWS::AccountId}:user/${MaintainerUserName}
+            Action: sts:AssumeRole
+            Condition:
+              Bool:
+                aws:MultiFactorAuthPresent: "true"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+
+Outputs:
+  AdminRoleArn:
+    Description: For the console's Switch role and the vdb-admin CLI profile.
+    Value: !GetAtt AdminRole.Arn
+  SwitchRoleUrl:
+    Value: !Sub https://signin.aws.amazon.com/switchrole?account=${AWS::AccountId}&roleName=vdb-admin&displayName=vdb-admin
