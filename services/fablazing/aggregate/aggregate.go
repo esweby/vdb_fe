@@ -67,6 +67,9 @@ type Summary struct {
 	Decks   map[string]DeckTotals `json:"decks"`
 	CardIDs []string              `json:"card_ids"` // every card id in Cards, for mapping slugs
 	HeroIDs []string              `json:"hero_ids"` // every hero id in the counted sides, as written
+	// Scope is "viserai" for a day built from Viserai's games only; Run
+	// leaves it empty, which fablazing_replace_day takes as every game.
+	Scope string `json:"scope,omitempty"`
 }
 
 // DeckTotals counts Viserai's detailed sides on one side at end.

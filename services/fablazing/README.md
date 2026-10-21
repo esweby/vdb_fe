@@ -2,14 +2,15 @@
 
 The FaBlazing data pipeline in Go. The plan is [docs/fablazing-plan.md](../../docs/fablazing-plan.md), and the data is described in [docs/fablazing-data-dictionary.md](../../docs/fablazing-data-dictionary.md).
 
-| Package             | What it does                                                           |
-| ------------------- | ---------------------------------------------------------------------- |
-| `pyliteral`         | parses FaBlazing's Python literal text, and JSON too                   |
-| `game`              | reads a day's CSV into games and player-sides                          |
-| `chain`, `measure`  | chain specs, matching and measurement                                  |
-| `ingest`            | fetches a final day, keeps the Viserai games, stores their raw records |
-| `cmd/fablazing`     | the local CLI                                                          |
-| `cmd/ingest-lambda` | the daily AWS Lambda around `ingest`                                   |
+| Package              | What it does                                                           |
+| -------------------- | ---------------------------------------------------------------------- |
+| `pyliteral`          | parses FaBlazing's Python literal text, and JSON too                   |
+| `game`               | reads a day's CSV into games and player-sides                          |
+| `chain`, `measure`   | chain specs, matching and measurement                                  |
+| `ingest`             | fetches a final day, keeps the Viserai games, stores their raw records |
+| `cmd/fablazing`      | the local CLI                                                          |
+| `cmd/ingest-lambda`  | the daily AWS Lambda around `ingest`                                   |
+| `cmd/fablazing-load` | loads days from local CSVs into Supabase, such as the history          |
 
 `go test ./...` runs the tests. Supabase is a fake in them. To also call the real `fablazing_replace_day` against the local stack (`supabase start`), inside a transaction that's rolled back, set `FABLAZING_TEST_DATABASE_URL=postgres://postgres:postgres@127.0.0.1:54322/postgres`. If the local database doesn't have the fablazing migration yet, add `FABLAZING_TEST_MIGRATION=<path to it>` too. The test refuses any host that isn't local.
 
@@ -35,6 +36,25 @@ aws lambda invoke --profile vdb --region eu-west-1 --function-name vdb-fablazing
 ```
 
 A date that hasn't ended in UTC is refused, because it isn't final.
+
+## Loading history
+
+The daily ingest began on 21 Oct 2026. The 30 days before it (21 Sep to 20 Oct) were fetched by hand into `~/.cache/vdb/fablazing/viserai/`, keeping only the games with Viserai on either side. `cmd/fablazing-load` writes them with the same aggregator options and `fablazing_replace_day` as the Lambda:
+
+```bash
+go run ./cmd/fablazing-load -scope viserai -dry-run
+```
+
+- **`-scope viserai`**: every game in the files must have Viserai on a side. The day gets Viserai's card, turn and traverse rows and Viserai's own matchups, never another hero's, since those would be partial. `fablazing_runs.scope` records it as `viserai`, and its `games` and `sides` count only Viserai's games. A day that already has every game is kept, not replaced (the function refuses with `FB001` and the loader reports it).
+- **`-scope all`**: FaBlazing's whole day, written whole like the Lambda. 20 Oct was loaded this way from the full files in `~/.cache/vdb/fablazing/`.
+- A later run with every game for the same date (the Lambda, or `-scope all`) replaces a Viserai-only day whole.
+- **The player cap is approximate on Viserai-only days**: a player's games without Viserai aren't in the files, so they don't count towards the cap of 20. On 20 Oct, where both kinds of file exist, Competitive CC came out the same and Classic Constructed counted 3 more of 548 Viserai decks.
+
+The URL comes from `DB_URL`. Only a local host is used unless `-yes-remote` is given, and the loader stops if the database doesn't have `fablazing_runs.scope` yet. Locally, act as the ingest role with `DB_URL='postgres://postgres:postgres@127.0.0.1:54322/postgres?options=-c%20role%3Dfablazing_ingest'`. For the hosted project, as the maintainer:
+
+```bash
+(source ~/.config/vdb/fablazing.env && export DB_URL && go run ./cmd/fablazing-load -scope all -dir <a folder holding only the full 20 Oct files> -yes-remote && go run ./cmd/fablazing-load -scope viserai -yes-remote)
+```
 
 ## AWS
 
