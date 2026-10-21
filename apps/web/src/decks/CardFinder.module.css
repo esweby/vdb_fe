@@ -300,6 +300,14 @@
   .actions {
     background: none;
   }
+  /* Pitch toggles big enough to hit with a thumb. */
+  .pip {
+    width: 1.6rem;
+    height: 1.6rem;
+  }
+  .chips button {
+    padding: 0.35rem 0.65rem;
+  }
 }
 .action {
   width: 2.1rem;

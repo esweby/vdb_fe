@@ -123,9 +123,11 @@
   box-sizing: border-box;
 }
 @media (max-width: 800px) {
+  /* Stacked: the deck first, Add cards below it, so opening a deck shows the deck. */
   .finder {
     position: static;
     height: auto;
+    order: 1;
   }
 }
 .results li {
@@ -714,7 +716,7 @@
 }
 .gapCards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(20rem, 100%), 1fr));
   gap: 1rem;
   align-items: start;
 }

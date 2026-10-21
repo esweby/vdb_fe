@@ -1170,7 +1170,7 @@
 /* A deck's scenarios: tighter rows, two across (the maintainer, 20 Oct 2026). */
 .compact .scenarioList {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(24rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(24rem, 100%), 1fr));
   column-gap: 2rem;
 }
 .compact .scenarioList li {

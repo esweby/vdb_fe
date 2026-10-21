@@ -103,13 +103,15 @@
     overflow-x: auto;
     scrollbar-width: none;
     margin: 0 -0.5rem;
+    gap: 0;
   }
   .nav::-webkit-scrollbar {
     display: none;
   }
+  /* Tight enough that all five page tabs fit a 360px phone without scrolling. */
   .tab,
   .signOut {
-    padding: 0.6rem 0.6rem;
+    padding: 0.6rem 0.45rem;
     font-size: 0.9rem;
     white-space: nowrap;
   }
