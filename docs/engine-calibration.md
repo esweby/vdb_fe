@@ -102,3 +102,21 @@ In the logs, `cullingsong-usurp` was associated with **+30.9 ±3.7 points** (exp
 - If the pair is rarely possible before turn 4 in the simulation, the logs' +30.9 is consistent with a late-game, win-more association rather than a line that wins games. If it's often possible early and players don't take it, that points to a decision worth looking at.
 
 Needs: both cards verified (Cullingsong Gloomblade is; **Usurp the Shadow Throne isn't yet**, so its effect draft comes first) and an "if" check for "Cullingsong played this turn", which the script vocabulary may need adding.
+
+## How to run it
+
+Observed side (about 6 seconds for 30 days):
+
+```bash
+cd services/fablazing && go run ./cmd/fablazing-observed -out observed.json ~/.cache/vdb/fablazing/viserai/*.csv
+```
+
+Simulated side and the comparison, with the deck as a plain list (`3 Cullingsong Gloomblade (red)` per line, the main deck plus weapons and equipment; a `Sideboard` heading ends it). Cards come from the local Supabase:
+
+```bash
+SUPABASE_ANON_KEY=<local anon key> node --experimental-transform-types apps/web/scripts/calibrate.ts --deck deck.txt --observed observed.json --out result.json
+```
+
+It checks T1–T4 with both turn mappings, pooled and for every matchup with at least 200 sides, and says which divergences are robust. `--t6` adds T6 once it's approved.
+
+**Observed, 30 days** (computed 22 Oct 2026, after T1–T5 were approved): 31,632 Viserai sides in 31,023 games; 24,789 kept. Left out: 1,290 abandoned, 2,348 without detail, 3,079 shorter than 4 turn indexes and 126 past the player cap. 17,069 in format 0 and 7,720 in format 1; 12,702 went first.

@@ -18,6 +18,14 @@ describe("rulesCardOf", () => {
     expect(card.effects).toBeDefined();
   });
 
+  it("carries the variant's printed power, for threatened damage", () => {
+    const attack = sampleCards.find((c) =>
+      c.variants.some((v) => (v.power ?? 0) > 0),
+    )!;
+    const variant = attack.variants.find((v) => (v.power ?? 0) > 0)!;
+    expect(rulesCardOf(attack, variant).power).toBe(variant.power);
+  });
+
   it("leaves a card with no verified rules unmodelled", () => {
     // Hocus Pocus is verified now (20 Oct 2026); its unverified copy isn't.
     expect(
