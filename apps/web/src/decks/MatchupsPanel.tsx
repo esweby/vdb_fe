@@ -51,6 +51,12 @@ export function MatchupsPanel(props: {
   const [plan, setPlan] = useState<Map<string, number>>(new Map());
   const [error, setError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">(
+    "idle",
+  );
+
+  // A confirmation belongs to the plan as saved: editing it or opening another clears it.
+  useEffect(() => setSaveState("idle"), [plan, heroId]);
 
   useEffect(() => {
     if (!props.canEdit) return;
@@ -115,6 +121,7 @@ export function MatchupsPanel(props: {
 
   async function save() {
     if (!heroId) return;
+    setSaveState("saving");
     try {
       const saved = await decks.saveMatchup(
         props.deckId,
@@ -123,7 +130,9 @@ export function MatchupsPanel(props: {
       );
       setMatchups((ms) => [...ms.filter((m) => m.id !== saved.id), saved]);
       setError(null);
+      setSaveState("saved");
     } catch {
+      setSaveState("idle");
       setError("Couldn't save the plan.");
     }
   }
@@ -321,12 +330,19 @@ export function MatchupsPanel(props: {
             </section>
           </div>
           <div className={styles.matchupActions}>
-            <Button variant="primary" onClick={() => void save()}>
-              Save plan
+            <Button
+              variant="primary"
+              disabled={saveState === "saving"}
+              onClick={() => void save()}
+            >
+              {saveState === "saving" ? "Saving…" : "Save plan"}
             </Button>
             <Button variant="ghost" onClick={() => void remove()}>
               Delete plan
             </Button>
+            <span role="status" className={styles.saved}>
+              {saveState === "saved" && "Plan saved"}
+            </span>
           </div>
         </section>
       )}

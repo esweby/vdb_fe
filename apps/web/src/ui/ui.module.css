@@ -7,6 +7,12 @@
   color: var(--fg);
   cursor: pointer;
 }
+.button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--fg) 8%, transparent);
+}
+.button:active:not(:disabled) {
+  transform: translateY(1px);
+}
 .button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
@@ -21,6 +27,10 @@
   background: var(--accent);
   border-color: var(--accent);
   color: var(--accent-fg);
+}
+.primary:hover:not(:disabled) {
+  background: var(--accent);
+  filter: brightness(1.12);
 }
 .ghost {
   border-color: transparent;
