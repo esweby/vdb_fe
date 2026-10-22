@@ -36,6 +36,7 @@ const engagement = fakeEngagementRepository(
     },
   ],
   [{ day: "2026-10-22", area: "Card scoring", people: 2, items: 12 }],
+  { users: 31, usersLast7d: 5, decks: 47, publicDecks: 9 },
 );
 
 describe("user analytics page", () => {
@@ -46,6 +47,23 @@ describe("user analytics page", () => {
       engagement,
     });
     await waitFor(() => expect(router.state.location.pathname).toBe("/"));
+  });
+
+  it("shows the site totals above the tables", async () => {
+    await renderApp({
+      path: "/admin/analytics",
+      auth: auth("a@test.local"),
+      engagement,
+    });
+    const totals = within(
+      await screen.findByRole("group", { name: "Site totals" }),
+    );
+    expect(totals.getByText("Users").nextSibling).toHaveTextContent("31");
+    expect(totals.getByText("Joined in 7 days").nextSibling).toHaveTextContent(
+      "5",
+    );
+    expect(totals.getByText("Decks built").nextSibling).toHaveTextContent("47");
+    expect(totals.getByText("Public decks").nextSibling).toHaveTextContent("9");
   });
 
   it("shows each area's people and items, and the daily counts", async () => {

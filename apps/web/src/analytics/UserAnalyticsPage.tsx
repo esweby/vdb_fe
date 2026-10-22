@@ -4,6 +4,7 @@ import { LoadError, Loading, Table } from "../ui/index.ts";
 import type {
   AreaEngagement,
   DailyEngagement,
+  SiteTotals,
 } from "./engagementRepository.ts";
 import styles from "./UserAnalyticsPage.module.css";
 
@@ -17,14 +18,19 @@ export function UserAnalyticsPage() {
   const [data, setData] = useState<{
     areas: AreaEngagement[];
     daily: DailyEngagement[];
+    totals: SiteTotals;
   } | null>(null);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let live = true;
-    Promise.all([engagement.listAreas(), engagement.listDaily(DAYS)]).then(
-      ([areas, daily]) => live && setData({ areas, daily }),
+    Promise.all([
+      engagement.listAreas(),
+      engagement.listDaily(DAYS),
+      engagement.getTotals(),
+    ]).then(
+      ([areas, daily, totals]) => live && setData({ areas, daily, totals }),
       () => live && setFailed(true),
     );
     return () => {
@@ -51,6 +57,21 @@ export function UserAnalyticsPage() {
         Admins are left out. Counts each item once, on the day it was last
         changed; Quick review vs card page isn't recorded.
       </p>
+      <dl className={styles.totals} role="group" aria-label="Site totals">
+        {(
+          [
+            ["Users", data.totals.users],
+            ["Joined in 7 days", data.totals.usersLast7d],
+            ["Decks built", data.totals.decks],
+            ["Public decks", data.totals.publicDecks],
+          ] as const
+        ).map(([label, n]) => (
+          <div key={label} className={styles.total}>
+            <dt>{label}</dt>
+            <dd>{n}</dd>
+          </div>
+        ))}
+      </dl>
       <Table<AreaEngagement>
         caption="Engagement by area"
         rows={data.areas}
