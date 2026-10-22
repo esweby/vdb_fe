@@ -2,7 +2,7 @@
 -- is left out. Counts are compared with a baseline, as the local database may hold real rows.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(11);
+select plan(12);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-0000000023a1', 'eng-admin@test.local'),
@@ -87,6 +87,12 @@ select ok(
   not has_function_privilege('anon', 'public.admin_review_engagement()', 'EXECUTE')
   and has_function_privilege('authenticated', 'public.admin_review_engagement()', 'EXECUTE'),
   'only signed-in users can call it (admins, by the check inside)'
+);
+
+select ok(
+  not has_function_privilege('anon', 'public.admin_review_engagement_daily(int)', 'EXECUTE')
+  and has_function_privilege('authenticated', 'public.admin_review_engagement_daily(int)', 'EXECUTE'),
+  'the same for the daily figures'
 );
 
 select * from finish();
