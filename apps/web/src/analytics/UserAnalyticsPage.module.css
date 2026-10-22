@@ -6,3 +6,8 @@
   color: var(--muted);
   max-width: 48rem;
 }
+
+/* Space between the tables (each is wrapped in a div). */
+.page > div + div {
+  margin-top: 2.5rem;
+}
