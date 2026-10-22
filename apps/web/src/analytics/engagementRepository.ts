@@ -20,7 +20,16 @@ export interface DailyEngagement {
   items: number;
 }
 
+/** Counts of non-admin people and their decks (admin_site_totals). */
+export interface SiteTotals {
+  users: number;
+  usersLast7d: number;
+  decks: number;
+  publicDecks: number;
+}
+
 export interface EngagementRepository {
+  getTotals(): Promise<SiteTotals>;
   listAreas(): Promise<AreaEngagement[]>;
   listDaily(days: number): Promise<DailyEngagement[]>;
 }
@@ -40,6 +49,17 @@ export function supabaseEngagementRepository(
   client: SupabaseClient,
 ): EngagementRepository {
   return {
+    async getTotals() {
+      const { data, error } = await client.rpc("admin_site_totals");
+      if (error) throw error;
+      const r = (data as Record<string, number>[])[0]!;
+      return {
+        users: Number(r.users),
+        usersLast7d: Number(r.users_last_7d),
+        decks: Number(r.decks),
+        publicDecks: Number(r.public_decks),
+      };
+    },
     async listAreas() {
       const { data, error } = await client.rpc("admin_review_engagement");
       if (error) throw error;
