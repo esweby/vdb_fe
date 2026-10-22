@@ -23,6 +23,7 @@ import { RankingPage } from "./ranking/RankingPage.tsx";
 import { CardsPage } from "./cards/CardsPage.tsx";
 import { DeckPage } from "./decks/DeckPage.tsx";
 import { DecksPage } from "./decks/DecksPage.tsx";
+import { UserAnalyticsPage } from "./analytics/UserAnalyticsPage.tsx";
 import { SynergyWeightsPage } from "./synergy/SynergyWeightsPage.tsx";
 import { SynergyQueuePage } from "./synergy/SynergyQueuePage.tsx";
 import { EffectDraftsPage } from "./rules/EffectDraftsPage.tsx";
@@ -215,6 +216,12 @@ const routeTree = rootRoute.addChildren([
     path: "/admin/synergy",
     beforeLoad: requireAdmin,
     component: SynergyWeightsPage,
+  }),
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/analytics",
+    beforeLoad: requireAdmin,
+    component: UserAnalyticsPage,
   }),
   createRoute({
     getParentRoute: () => rootRoute,

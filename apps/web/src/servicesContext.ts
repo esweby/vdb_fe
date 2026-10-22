@@ -9,6 +9,7 @@ import type { ScenarioRepository } from "./scenarios/scenarioRepository.ts";
 import type { SynergyRepository } from "./synergy/synergyRepository.ts";
 import type { DraftReviewRepository } from "./rules/draftReviewRepository.ts";
 import type { FablazingRepository } from "./fablazing/fablazingRepository.ts";
+import type { EngagementRepository } from "./analytics/engagementRepository.ts";
 
 export interface Services {
   auth: AuthService;
@@ -20,6 +21,7 @@ export interface Services {
   scenarios: ScenarioRepository;
   draftReviews: DraftReviewRepository;
   fablazing: FablazingRepository;
+  engagement: EngagementRepository;
 }
 
 export const ServicesContext = createContext<Services | null>(null);

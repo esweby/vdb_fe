@@ -132,20 +132,54 @@ describe("navigation", () => {
     ).toEqual(["Cards", "Reviews", "Synergies", "Build core", "Decks"]);
   });
 
-  it("puts Synergy weights beside Account, for admins", async () => {
+  const asAdmin = () =>
+    fakeAuthService({
+      users,
+      signedIn: { id: "a1", email: "admin@test.local" },
+    }).service;
+
+  it("shows no Admin menu to anyone but admins", async () => {
     await renderApp({
       path: "/",
       auth: fakeAuthService({
         users,
-        signedIn: { id: "a1", email: "admin@test.local" },
+        signedIn: { id: "s1", email: "scorer@test.local" },
       }).service,
     });
-    await account().findByRole("link", { name: "Synergy weights" });
+    await nav().findByRole("link", { name: "Reviews" });
+    expect(account().queryByRole("button", { name: "Admin" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Synergy weights" })).toBeNull();
+  });
+
+  it("opens an Admin menu with Synergy weights and User analytics, beside Account", async () => {
+    await renderApp({ path: "/", auth: asAdmin() });
+    const user = userEvent.setup();
+    const button = await account().findByRole("button", { name: "Admin" });
+    expect(button).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByRole("link", { name: "Synergy weights" })).toBeNull();
+    await user.click(button);
+    expect(button).toHaveAttribute("aria-expanded", "true");
     expect(
-      account()
-        .getAllByRole("link")
-        .map((l) => l.textContent),
-    ).toEqual(["Synergy weights", "Account"]);
-    expect(nav().queryByRole("link", { name: "Synergy weights" })).toBeNull();
+      account().getByRole("link", { name: "Synergy weights" }),
+    ).toHaveAttribute("href", "/admin/synergy");
+    expect(
+      account().getByRole("link", { name: "User analytics" }),
+    ).toHaveAttribute("href", "/admin/analytics");
+  });
+
+  it("closes the Admin menu on Escape, on an outside click and after choosing a page", async () => {
+    await renderApp({ path: "/", auth: asAdmin() });
+    const user = userEvent.setup();
+    const button = await account().findByRole("button", { name: "Admin" });
+    await user.click(button);
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("link", { name: "User analytics" })).toBeNull();
+    expect(button).toHaveFocus();
+    await user.click(button);
+    await user.click(document.body);
+    expect(screen.queryByRole("link", { name: "User analytics" })).toBeNull();
+    await user.click(button);
+    await user.click(screen.getByRole("link", { name: "User analytics" }));
+    expect(screen.queryByRole("link", { name: "User analytics" })).toBeNull();
   });
 });
