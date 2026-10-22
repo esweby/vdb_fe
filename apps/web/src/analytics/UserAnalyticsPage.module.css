@@ -1,0 +1,8 @@
+.page {
+  max-width: 72rem;
+}
+
+.intro {
+  color: var(--muted);
+  max-width: 48rem;
+}

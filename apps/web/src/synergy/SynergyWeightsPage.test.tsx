@@ -35,9 +35,9 @@ describe("synergy weights page", () => {
 
   it("lists every rule with its default weight, linked from the navigation for admins", async () => {
     await renderApp({ path: "/", auth: auth("a@test.local") });
-    await userEvent
-      .setup()
-      .click(await screen.findByRole("link", { name: "Synergy weights" }));
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("button", { name: "Admin" }));
+    await user.click(screen.getByRole("link", { name: "Synergy weights" }));
     for (const rule of SYNERGY_RULES) {
       const r = await row(rule.id);
       expect(within(r).getByText(rule.description)).toBeInTheDocument();
