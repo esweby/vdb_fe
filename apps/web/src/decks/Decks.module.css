@@ -978,3 +978,15 @@
   background: var(--bg);
   color: var(--fg);
 }
+
+.matchupActions {
+  align-items: center;
+}
+/* Confirmation after Save plan; a live region, so the text appears on save. */
+.saved {
+  color: var(--accent);
+  font-weight: 600;
+}
+.saved:not(:empty)::before {
+  content: "✓ ";
+}

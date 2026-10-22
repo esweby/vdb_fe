@@ -113,6 +113,20 @@ describe("matchups", () => {
     );
   });
 
+  // The maintainer, 22 Oct 2026: Save plan gave no sign it had worked.
+  it("confirms a saved plan, until the plan changes again", async () => {
+    const { panel, user } = await open();
+    await user.selectOptions(panel.getByLabelText("Plan against"), "h1");
+    const plan = within(panel.getByRole("region", { name: "vs Example Hero" }));
+    expect(plan.queryByText("Plan saved")).toBeNull();
+    await user.click(plan.getByRole("button", { name: "Save plan" }));
+    expect(await plan.findByText("Plan saved")).toBeInTheDocument();
+    await user.click(
+      plan.getByRole("button", { name: "Board out a Hocus Pocus (red)" }),
+    );
+    expect(plan.queryByText("Plan saved")).toBeNull();
+  });
+
   // Bug (the maintainer, 20 Oct 2026): "Matchups dont allow me to create a matchup". With no
   // heroes imported, the hero list was empty and said nothing.
   it("says so when there are no heroes to plan against", async () => {
