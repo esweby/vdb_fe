@@ -24,13 +24,22 @@ A deck analysis site for Flesh and Blood, focused on Viserai. A React app (`apps
 
 ## Commands
 
-Run these from the repo root before opening a pull request. CI runs the same, plus `npm run build -w @vdb/web`.
+Choose local checks from the PR's changes and what depends on them. Start with the affected tests; include callers when shared code or interfaces change. Run commands from the repo root unless noted below.
 
-- `npm run format:check` (Prettier; `npm run format` fixes it)
-- `npm run typecheck`
-- `npm test` (Vitest). One file: `npx vitest run path/to/file.test.ts`
-- `supabase test db` (pgTAP, needs `supabase start`)
-- `go test ./...`, `go vet ./...` and `gofmt -l .` in `services/fablazing`
+| PR changes                                          | Local checks before opening the PR                                                                                                                                                                                 |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Docs or comments only                               | Check formatting on the changed files with `npx prettier --check <files>`. No application tests are needed.                                                                                                        |
+| TypeScript or React behaviour                       | Run the affected Vitest files with `npx vitest run <test-files>` and `npm run typecheck`. For web app or build changes, also run `npm run build -w @vdb/web`.                                                      |
+| Database migrations, policies or database functions | Run `supabase test db` (pgTAP, needs `supabase start`) and follow the database checklist below. Run importer integration tests with `npm run test:integration -w @vdb/importer` when the change affects importing. |
+| Go pipeline                                         | In `services/fablazing`, run `go test` and `go vet` for the affected packages, and `gofmt -l` on changed Go files. Use `./...` when shared pipeline code changes.                                                  |
+| SAM templates or infrastructure                     | In `services/fablazing`, run `sam validate --lint --region eu-west-1 -t <template>` for each changed SAM template.                                                                                                 |
+| Dependencies, shared configuration or CI            | Run the checks the change can affect. Use the full relevant suite when the impact is broad or unclear.                                                                                                             |
+
+For mixed PRs, combine the relevant rows. Check formatting on changed files that Prettier supports. `npm run format:check`, `npm test`, and `go test ./...` are available for broader checks when needed; a whole-repo format check is not required for every local edit.
+
+Keep the test-first rules above for behaviour changes. Once the relevant checks pass, repeat or broaden them only after further changes, failures or an unresolved concern. In the PR, list the checks run and any relevant check that could not be run, with the reason.
+
+CI still runs the full checks in `.github/workflows/ci.yml` on every PR, including the web build, database and importer integration tests, Go checks and SAM validation. All CI checks must pass before asking to merge.
 
 Don't run `supabase db reset` without asking: it wipes the maintainer's local decks, and the cards need re-importing after it. Don't run anything with `--yes-remote` or against the hosted project: the maintainer does that.
 
