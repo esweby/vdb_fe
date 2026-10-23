@@ -65,6 +65,29 @@
   background: none;
   cursor: pointer;
 }
+.menu {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+.menuList {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 10;
+  min-width: 11rem;
+  display: flex;
+  flex-direction: column;
+  background: var(--brand);
+  border: 1px solid rgb(255 255 255 / 0.18);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.3);
+}
+.menuList .tab {
+  padding: 0.7rem 0.85rem;
+  border-bottom: none;
+  white-space: nowrap;
+}
+
 .tab:hover,
 .signOut:hover {
   opacity: 1;

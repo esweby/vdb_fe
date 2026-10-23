@@ -136,10 +136,8 @@ Resources:
           Type: ScheduleV2
           Properties:
             Name: vdb-fablazing-daily
-            Description: Yesterday's final FaBlazing files, 17:30 UTC for 22 Oct only.
-            # 17:30 UTC on 22 Oct 2026 only, so the first run falls outside the 24 hours after our
-            # 21 Oct backfill (FaBlazing's egress alert). Back to cron(0 10 * * ? *) after that run.
-            ScheduleExpression: cron(30 17 * * ? *)
+            Description: Yesterday's final FaBlazing files, mid-morning UTC.
+            ScheduleExpression: cron(0 10 * * ? *)
             ScheduleExpressionTimezone: UTC
             RoleArn: !GetAtt SchedulerRole.Arn
 

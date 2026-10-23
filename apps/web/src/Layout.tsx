@@ -1,5 +1,5 @@
 import { Link, Outlet } from "@tanstack/react-router";
-import type { ComponentProps } from "react";
+import { useEffect, useRef, useState, type ComponentProps } from "react";
 import { useSelector } from "react-redux";
 import {
   selectCanScore,
@@ -18,6 +18,52 @@ function Tab(props: ComponentProps<typeof Link>) {
       className={styles.tab}
       activeProps={{ "aria-current": "page", className: styles.tabActive }}
     />
+  );
+}
+
+/** Admin-only pages in a dropdown; closes on Escape, an outside click or choosing a page. */
+function AdminMenu() {
+  const [open, setOpen] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+  const button = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const outside = (e: MouseEvent) => {
+      if (!root.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const escape = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setOpen(false);
+      button.current?.focus();
+    };
+    document.addEventListener("mousedown", outside);
+    document.addEventListener("keydown", escape);
+    return () => {
+      document.removeEventListener("mousedown", outside);
+      document.removeEventListener("keydown", escape);
+    };
+  }, [open]);
+
+  return (
+    <div className={styles.menu} ref={root}>
+      <button
+        type="button"
+        ref={button}
+        className={styles.signOut}
+        aria-expanded={open}
+        aria-haspopup="true"
+        onClick={() => setOpen((o) => !o)}
+      >
+        Admin <span aria-hidden="true">▾</span>
+      </button>
+      {open && (
+        <div className={styles.menuList} onClick={() => setOpen(false)}>
+          <Tab to="/admin/synergy">Synergy weights</Tab>
+          <Tab to="/admin/analytics">User analytics</Tab>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -42,14 +88,14 @@ export function Layout() {
           </Link>
           <nav aria-label="Main" className={styles.nav}>
             <Tab to="/cards">Cards</Tab>
-            <Tab to="/core">Core</Tab>
-            {canScore && <Tab to="/needs-review">Needs review</Tab>}
+            {canScore && <Tab to="/needs-review">Reviews</Tab>}
             <Tab to="/synergies">Synergies</Tab>
+            <Tab to="/core">Build core</Tab>
             <Tab to="/decks">Decks</Tab>
-            {isAdmin && <Tab to="/admin/synergy">Synergy weights</Tab>}
           </nav>
           {/* Apart from the page tabs, so on a phone it stays in view beside the name. */}
           <nav aria-label="Account" className={styles.account}>
+            {isAdmin && <AdminMenu />}
             {signedIn && <Tab to="/account">Account</Tab>}
             {signedIn ? (
               <button

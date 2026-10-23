@@ -24,4 +24,52 @@ describe("toHeroes", () => {
   it("leaves out young heroes, which are for Blitz", () => {
     expect(toHeroes(fixture).map((h) => h.name)).not.toContain("Viserai");
   });
+
+  it("leaves out Arakni, Marionette, a Living Legend since 19 Oct 2026 (ahead of the dataset)", () => {
+    const marionette = {
+      ...fixture.find((c) => c.name === "Viserai, the Forsaken")!,
+      name: "Arakni, Marionette",
+      types: ["Chaos", "Assassin", "Hero"],
+    };
+    expect(toHeroes([...fixture, marionette]).map((h) => h.name)).toEqual([
+      "Viserai, the Forsaken",
+    ]);
+  });
+
+  it.each([
+    "Arakni, Marionette",
+    "Aurora, Shooting Star",
+    "Azalea, Ace in the Hole",
+    "Bravo, Star of the Show",
+    "Briar, Warden of Thorns",
+    "Chane, Bound by Shadow",
+    "Dash I/O",
+    "Dash, Inventor Extraordinaire",
+    "Dromai, Ash Artist",
+    "Enigma, Ledger of Ancestry",
+    "Fai, Rising Rebellion",
+    "Florian, Rotwood Harbinger",
+    "Iyslander, Stormbind",
+    "Kayo, Armed and Dangerous",
+    "Kano, Dracai of Aether",
+    "Kassai of the Golden Sand",
+    "Lexi, Livewire",
+    "Nuu, Alluring Desire",
+    "Oldhim, Grandfather of Eternity",
+    "Oscilio, Constella Intelligence",
+    "Prism, Awakener of Sol",
+    "Prism, Sculptor of Arc Light",
+    "Verdance, Thorn of the Rose",
+    "Victor Goldmane, High and Mighty",
+    "Viserai, Rune Blood",
+    "Zen, Tamer of Purpose",
+  ])("leaves out %s, a Living Legend (the maintainer, 21 Oct 2026)", (name) => {
+    const hero = {
+      ...fixture.find((c) => c.name === "Viserai, the Forsaken")!,
+      name,
+    };
+    expect(toHeroes([...fixture, hero]).map((h) => h.name)).toEqual([
+      "Viserai, the Forsaken",
+    ]);
+  });
 });

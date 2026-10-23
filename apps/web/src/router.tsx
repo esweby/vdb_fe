@@ -13,6 +13,7 @@ import {
 } from "./auth/authSlice.ts";
 import { SignInPage } from "./auth/SignInPage.tsx";
 import { CardScoringPage } from "./scoring/CardScoringPage.tsx";
+import { isCardTab, type CardTab } from "./scoring/cardTabs.ts";
 import { QuickReviewPage } from "./scoring/QuickReviewPage.tsx";
 import { NeedsReviewPage } from "./scoring/NeedsReviewPage.tsx";
 import { AccountPage } from "./account/AccountPage.tsx";
@@ -22,6 +23,7 @@ import { RankingPage } from "./ranking/RankingPage.tsx";
 import { CardsPage } from "./cards/CardsPage.tsx";
 import { DeckPage } from "./decks/DeckPage.tsx";
 import { DecksPage } from "./decks/DecksPage.tsx";
+import { UserAnalyticsPage } from "./analytics/UserAnalyticsPage.tsx";
 import { SynergyWeightsPage } from "./synergy/SynergyWeightsPage.tsx";
 import { SynergyQueuePage } from "./synergy/SynergyQueuePage.tsx";
 import { EffectDraftsPage } from "./rules/EffectDraftsPage.tsx";
@@ -90,6 +92,9 @@ const routeTree = rootRoute.addChildren([
   createRoute({
     getParentRoute: () => rootRoute,
     path: "/cards/$cardId",
+    // Unknown tabs are dropped: the page opens on the viewer's default.
+    validateSearch: (search: Record<string, unknown>): { tab?: CardTab } =>
+      isCardTab(search.tab) ? { tab: search.tab } : {},
     component: CardScoringPage,
   }),
   createRoute({
@@ -211,6 +216,12 @@ const routeTree = rootRoute.addChildren([
     path: "/admin/synergy",
     beforeLoad: requireAdmin,
     component: SynergyWeightsPage,
+  }),
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/analytics",
+    beforeLoad: requireAdmin,
+    component: UserAnalyticsPage,
   }),
   createRoute({
     getParentRoute: () => rootRoute,

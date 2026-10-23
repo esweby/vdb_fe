@@ -21,6 +21,8 @@ import type { DraftReviewRepository } from "../rules/draftReviewRepository.ts";
 import { fakeDraftReviewRepository } from "./fakeDraftReviewRepository.ts";
 import type { FablazingRepository } from "../fablazing/fablazingRepository.ts";
 import { fakeFablazingRepository } from "./fakeFablazingRepository.ts";
+import type { EngagementRepository } from "../analytics/engagementRepository.ts";
+import { fakeEngagementRepository } from "./fakeEngagementRepository.ts";
 
 /** Renders the whole app at a path, with a fake auth service. */
 export async function renderApp(options: {
@@ -34,6 +36,7 @@ export async function renderApp(options: {
   scenarios?: ScenarioRepository;
   draftReviews?: DraftReviewRepository;
   fablazing?: FablazingRepository;
+  engagement?: EngagementRepository;
 }) {
   const scores = options.scores ?? fakeScoreRepository().repository;
   const cards = options.cards ?? fakeCardRepository();
@@ -44,6 +47,7 @@ export async function renderApp(options: {
   const draftReviews =
     options.draftReviews ?? fakeDraftReviewRepository().repository;
   const fablazing = options.fablazing ?? fakeFablazingRepository();
+  const engagement = options.engagement ?? fakeEngagementRepository();
   const store = createStore({ cards });
   listenToAuth(store, options.auth);
   const router = createAppRouter({
@@ -63,6 +67,7 @@ export async function renderApp(options: {
         scenarios,
         draftReviews,
         fablazing,
+        engagement,
       }}
       router={router}
     />,

@@ -10,6 +10,7 @@ import { supabaseStrategyRepository } from "./strategy/strategyRepository.ts";
 import { supabaseSynergyRepository } from "./synergy/synergyRepository.ts";
 import { supabaseScenarioRepository } from "./scenarios/scenarioRepository.ts";
 import { supabaseDraftReviewRepository } from "./rules/draftReviewRepository.ts";
+import { supabaseEngagementRepository } from "./analytics/engagementRepository.ts";
 import { supabaseFablazingRepository } from "./fablazing/fablazingRepository.ts";
 import { supabase } from "./lib/supabase.ts";
 import { createAppRouter } from "./router.tsx";
@@ -25,6 +26,7 @@ const synergy = supabaseSynergyRepository(supabase);
 const scenarios = supabaseScenarioRepository(supabase);
 const draftReviews = supabaseDraftReviewRepository(supabase);
 const fablazing = supabaseFablazingRepository(supabase);
+const engagement = supabaseEngagementRepository(supabase);
 const store = createStore({ cards });
 listenToAuth(store, auth);
 const router = createAppRouter({ store });
@@ -43,6 +45,7 @@ createRoot(document.getElementById("root")!).render(
         scenarios,
         draftReviews,
         fablazing,
+        engagement,
       }}
       router={router}
     />

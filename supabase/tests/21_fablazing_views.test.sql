@@ -3,7 +3,7 @@
 -- Sums only; the app works out rates and Wilson intervals.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(17);
+select plan(18);
 
 select has_view('public', v, v || ' exists')
   from unnest(array['fablazing_window', 'fablazing_viserai_baseline', 'fablazing_card_stats',
@@ -117,6 +117,23 @@ select results_eq(
   $$values ('2026-10-01'::date, '2026-10-30'::date)$$,
   'each matchup row carries its window'
 );
+
+-- FaBlazing records the hero a side ended as: a transformed hero's id maps to the hero row it came
+-- from and counts as that opponent. Ignored ids aren't shown but still count toward total_games.
+insert into public.fablazing_card_map (slug, hero_id) values
+  ('view_hero_transformed', '40000000-0000-0000-0000-000000000fc1');
+insert into public.fablazing_card_map (slug, ignored) values ('view_ignored', true);
+insert into public.fablazing_matchup_daily (date, format, hero, opponent, games, wins, abandoned) values
+  ('2026-10-30', 0, 'viserai', 'view_hero_transformed', 10, 5, 1),
+  ('2026-10-30', 0, 'viserai', 'view_ignored', 30, 10, 0);
+select results_eq(
+  $$select opponent, hero_id, games, wins, abandoned, total_games
+      from public.fablazing_viserai_matchups where format = 0 order by opponent$$,
+  $$values ('unknown_hero', null::uuid, 40::bigint, 20::bigint, 0::bigint, 140::bigint),
+           ('view_hero', '40000000-0000-0000-0000-000000000fc1'::uuid, 70::bigint, 35::bigint, 5::bigint, 140::bigint)$$,
+  'a hero''s forms count as one opponent, and ignored ids are left out'
+);
+delete from public.fablazing_matchup_daily where opponent in ('view_hero_transformed', 'view_ignored');
 
 -- A rules change on 20 Oct starts a new window, so older days drop out.
 update public.fablazing_rules_windows set ends_on = '2026-10-20' where ends_on is null;

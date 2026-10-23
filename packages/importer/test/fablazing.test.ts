@@ -15,6 +15,7 @@ describe("fablazingSlug", () => {
     ["Riches of Trōpal-Dhani", 2, "riches_of_tropal_dhani_yellow"],
     ["Soul of Existence", 4, "soul_of_existence_purple"],
     ["Even Bigger Than That!", 1, "even_bigger_than_that_red"],
+    ["Jarl Vetreiði", null, "jarl_vetreidi"],
   ])("%s, pitch %s → %s", (name, pitch, slug) => {
     expect(fablazingSlug(name, pitch)).toBe(slug);
   });
@@ -142,16 +143,26 @@ describe("cardMapRows", () => {
   const heroes = [
     { externalId: "h-forsaken", name: "Viserai, the Forsaken" },
     { externalId: "h-usurper", name: "Viserai, Usurper" },
+    { externalId: "h-levia", name: "Levia, Shadowborn Abomination" },
+    { externalId: "h-teklo", name: "Teklovossen, Esteemed Magnate" },
   ] as unknown as ImportHero[];
 
   it("maps every variant, and each hero side to its hero row", () => {
-    expect(cardMapRows(cards, heroes)).toEqual([
-      { slug: "deadwood_dirge_blue", variantExternalId: "dd-b" },
-      { slug: "deadwood_dirge_red", variantExternalId: "dd-r" },
-      { slug: "seven_sin_nebula", variantExternalId: "ssn" },
-      { slug: "viserai_the_forsaken", heroExternalId: "h-forsaken" },
-      { slug: "viserai_usurper", heroExternalId: "h-usurper" },
-    ]);
+    expect(cardMapRows(cards, heroes)).toEqual(
+      [
+        { slug: "deadwood_dirge_blue", variantExternalId: "dd-b" },
+        { slug: "deadwood_dirge_red", variantExternalId: "dd-r" },
+        { slug: "seven_sin_nebula", variantExternalId: "ssn" },
+        { slug: "viserai_the_forsaken", heroExternalId: "h-forsaken" },
+        { slug: "viserai_usurper", heroExternalId: "h-usurper" },
+        { slug: "levia_shadowborn_abomination", heroExternalId: "h-levia" },
+        { slug: "levia_redeemed", heroExternalId: "h-levia" },
+        { slug: "blasmophet_levia_consumed", heroExternalId: "h-levia" },
+        { slug: "teklovossen_esteemed_magnate", heroExternalId: "h-teklo" },
+        { slug: "teklovossen_the_mechropotent", heroExternalId: "h-teklo" },
+        ...IGNORED.map((slug) => ({ slug, ignored: true })),
+      ].sort((a, b) => a.slug.localeCompare(b.slug)),
+    );
   });
 
   it("maps a slug once, preferring the hero", () => {
@@ -161,8 +172,62 @@ describe("cardMapRows", () => {
         variants: [{ externalId: "c", pitch: null }],
       },
     ] as unknown as ImportCard[];
-    expect(cardMapRows(clash, heroes.slice(1))).toEqual([
-      { slug: "viserai_usurper", heroExternalId: "h-usurper" },
-    ]);
+    expect(
+      cardMapRows(clash, heroes.slice(1)).find(
+        (r) => r.slug === "viserai_usurper",
+      ),
+    ).toEqual({ slug: "viserai_usurper", heroExternalId: "h-usurper" });
+  });
+});
+
+// FaBlazing records the hero a side ended the game as, so a hero that transformed shows up as its
+// Demi-Hero. The maintainer's calls, 21 Oct 2026.
+const IGNORED = [
+  // Arakni, Marionette's Agents of Chaos: Marionette became a Living Legend on 19 Oct 2026.
+  "arakni_black_widow",
+  "arakni_funnel_web",
+  "arakni_marionette",
+  "arakni_orb_weaver",
+  "arakni_redback",
+  "arakni_tarantula",
+  "arakni_trap_door",
+  // New, not in the dataset yet; ignored for a few months.
+  "azalea_ace_of_spades",
+  "UNKNOWNHERO",
+];
+
+describe("cardMapRows: heroes FaBlazing ends games as", () => {
+  const heroes = [
+    { externalId: "h-levia", name: "Levia, Shadowborn Abomination" },
+    { externalId: "h-teklo", name: "Teklovossen, Esteemed Magnate" },
+    { externalId: "h-marionette", name: "Arakni, Marionette" },
+  ] as unknown as ImportHero[];
+  const rows = cardMapRows([], heroes);
+  const target = (slug: string) => rows.find((r) => r.slug === slug);
+
+  it("counts each Demi-Hero as the hero that transformed into it", () => {
+    expect(target("levia_redeemed")).toEqual({
+      slug: "levia_redeemed",
+      heroExternalId: "h-levia",
+    });
+    expect(target("blasmophet_levia_consumed")).toEqual({
+      slug: "blasmophet_levia_consumed",
+      heroExternalId: "h-levia",
+    });
+    expect(target("teklovossen_the_mechropotent")).toEqual({
+      slug: "teklovossen_the_mechropotent",
+      heroExternalId: "h-teklo",
+    });
+  });
+
+  it("marks the ids the maintainer ignores, even over a hero row", () => {
+    for (const slug of IGNORED)
+      expect(target(slug)).toEqual({ slug, ignored: true });
+  });
+
+  it("fails if a Demi-Hero's hero isn't imported", () => {
+    expect(() => cardMapRows([], heroes.slice(1))).toThrow(
+      /Levia, Shadowborn Abomination/,
+    );
   });
 });

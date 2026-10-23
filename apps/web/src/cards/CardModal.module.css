@@ -17,3 +17,8 @@
     font-size: 0.8rem;
   }
 }
+.fullPage {
+  font-size: 0.88rem;
+  padding-bottom: 0.45rem;
+  white-space: nowrap;
+}

@@ -567,6 +567,7 @@ export function RankingPage() {
         ...prev,
         card: undefined,
         variant: undefined,
+        cardTab: undefined,
       }),
     });
 

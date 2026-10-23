@@ -148,10 +148,10 @@ describe("cards page", () => {
     expect(router.state.location.search).toMatchObject({
       card: "card-hocus-pocus",
     });
-    // Side by side: the card, its details, and scoring
-    for (const name of ["Card", "Details", "Scores"]) {
-      expect(within(dialog).getByRole("region", { name })).toBeInTheDocument();
-    }
+    // The card beside the card page's tabs.
+    expect(
+      within(dialog).getByRole("tablist", { name: "Card information" }),
+    ).toBeInTheDocument();
     expect(
       within(within(dialog).getByRole("region", { name: "Card" })).getByRole(
         "article",

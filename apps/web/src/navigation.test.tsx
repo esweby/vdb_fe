@@ -7,6 +7,7 @@ import { renderApp } from "./test/renderApp.tsx";
 const users = {
   "scorer@test.local": { id: "s1", password: "pw", role: "scorer" as const },
   "user@test.local": { id: "u1", password: "pw", role: "user" as const },
+  "admin@test.local": { id: "a1", password: "pw", role: "admin" as const },
 };
 const nav = () => within(screen.getByRole("navigation", { name: "Main" }));
 // Account, Sign in and Sign out sit apart from the page tabs, so they stay in view on a phone.
@@ -17,7 +18,7 @@ describe("navigation", () => {
   it("shows public pages and Sign in when signed out", async () => {
     await renderApp({ path: "/", auth: fakeAuthService().service });
     expect(nav().getByRole("link", { name: "Cards" })).toBeInTheDocument();
-    expect(nav().getByRole("link", { name: "Core" })).toBeInTheDocument();
+    expect(nav().getByRole("link", { name: "Build core" })).toBeInTheDocument();
     expect(
       account().getByRole("link", { name: "Sign in" }),
     ).toBeInTheDocument();
@@ -36,7 +37,7 @@ describe("navigation", () => {
     );
   });
 
-  it("shows Needs review only to scorers", async () => {
+  it("shows Reviews only to scorers", async () => {
     await renderApp({
       path: "/",
       auth: fakeAuthService({
@@ -45,12 +46,12 @@ describe("navigation", () => {
       }).service,
     });
     expect(
-      await nav().findByRole("link", { name: "Needs review" }),
+      await nav().findByRole("link", { name: "Reviews" }),
     ).toBeInTheDocument();
     expect(nav().getByRole("link", { name: "Decks" })).toBeInTheDocument();
   });
 
-  it("keeps regular users out of Needs review", async () => {
+  it("keeps regular users out of Reviews", async () => {
     const { router } = await renderApp({
       path: "/needs-review",
       auth: fakeAuthService({
@@ -60,7 +61,7 @@ describe("navigation", () => {
     });
     await waitFor(() => expect(router.state.location.pathname).toBe("/"));
     expect(
-      nav().queryByRole("link", { name: "Needs review" }),
+      nav().queryByRole("link", { name: "Reviews" }),
     ).not.toBeInTheDocument();
   });
 
@@ -106,12 +107,79 @@ describe("navigation", () => {
       "aria-current",
       "page",
     );
-    expect(nav().getByRole("link", { name: "Core" })).not.toHaveAttribute(
+    expect(nav().getByRole("link", { name: "Build core" })).not.toHaveAttribute(
       "aria-current",
     );
     const banner = within(screen.getByRole("banner"));
     expect(
       banner.getByRole("link", { name: "Viserai Deck Builder, home" }),
     ).toHaveAttribute("href", "/");
+  });
+
+  it("orders the page tabs Cards, Reviews, Synergies, Build core, Decks", async () => {
+    await renderApp({
+      path: "/",
+      auth: fakeAuthService({
+        users,
+        signedIn: { id: "a1", email: "admin@test.local" },
+      }).service,
+    });
+    await nav().findByRole("link", { name: "Reviews" });
+    expect(
+      nav()
+        .getAllByRole("link")
+        .map((l) => l.textContent),
+    ).toEqual(["Cards", "Reviews", "Synergies", "Build core", "Decks"]);
+  });
+
+  const asAdmin = () =>
+    fakeAuthService({
+      users,
+      signedIn: { id: "a1", email: "admin@test.local" },
+    }).service;
+
+  it("shows no Admin menu to anyone but admins", async () => {
+    await renderApp({
+      path: "/",
+      auth: fakeAuthService({
+        users,
+        signedIn: { id: "s1", email: "scorer@test.local" },
+      }).service,
+    });
+    await nav().findByRole("link", { name: "Reviews" });
+    expect(account().queryByRole("button", { name: "Admin" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Synergy weights" })).toBeNull();
+  });
+
+  it("opens an Admin menu with Synergy weights and User analytics, beside Account", async () => {
+    await renderApp({ path: "/", auth: asAdmin() });
+    const user = userEvent.setup();
+    const button = await account().findByRole("button", { name: "Admin" });
+    expect(button).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByRole("link", { name: "Synergy weights" })).toBeNull();
+    await user.click(button);
+    expect(button).toHaveAttribute("aria-expanded", "true");
+    expect(
+      account().getByRole("link", { name: "Synergy weights" }),
+    ).toHaveAttribute("href", "/admin/synergy");
+    expect(
+      account().getByRole("link", { name: "User analytics" }),
+    ).toHaveAttribute("href", "/admin/analytics");
+  });
+
+  it("closes the Admin menu on Escape, on an outside click and after choosing a page", async () => {
+    await renderApp({ path: "/", auth: asAdmin() });
+    const user = userEvent.setup();
+    const button = await account().findByRole("button", { name: "Admin" });
+    await user.click(button);
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("link", { name: "User analytics" })).toBeNull();
+    expect(button).toHaveFocus();
+    await user.click(button);
+    await user.click(document.body);
+    expect(screen.queryByRole("link", { name: "User analytics" })).toBeNull();
+    await user.click(button);
+    await user.click(screen.getByRole("link", { name: "User analytics" }));
+    expect(screen.queryByRole("link", { name: "User analytics" })).toBeNull();
   });
 });

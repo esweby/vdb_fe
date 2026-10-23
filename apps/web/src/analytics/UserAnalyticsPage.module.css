@@ -1,0 +1,29 @@
+.page {
+  max-width: 72rem;
+}
+
+.intro {
+  color: var(--muted);
+  max-width: 48rem;
+}
+
+/* Space between the tables (each is wrapped in a div). */
+.page > div + div {
+  margin-top: 2.5rem;
+}
+
+.totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 2rem;
+  margin: 1rem 0 2rem;
+}
+.total dt {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.total dd {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 600;
+}

@@ -10,13 +10,10 @@
   margin-top: 0;
 }
 
-/* Card | details | scores, side by side on desktop; stacked on narrow screens. */
+/* The card beside its tabs on desktop; stacked on narrow screens. */
 .columns {
   display: grid;
-  grid-template-columns: minmax(13rem, 16rem) minmax(0, 1fr) minmax(
-      19rem,
-      1.15fr
-    );
+  grid-template-columns: minmax(13rem, 16rem) minmax(0, 1fr);
   gap: 2rem;
   align-items: start;
   margin-top: 1rem;
@@ -251,8 +248,7 @@
   margin-bottom: 0.35rem;
 }
 
-/* On a phone: a compact row with a small card and its pitch switch, the card text full
-   width, then the ratings (the reason for being here), and What it does last. */
+/* On a phone: a compact row with a small card and its pitch switch, then the tabs. */
 @media (max-width: 640px) {
   .columns {
     grid-template-columns: minmax(0, 1fr);
@@ -275,20 +271,8 @@
     justify-content: flex-start;
     margin-top: 0;
   }
-  .details {
-    display: contents;
-  }
-  /* Card face, then your ratings, then everything else in Details (what it does, the
-     scoring group, related cards). */
-  .details > * {
-    order: 3;
-  }
   .face {
-    order: 1;
     font-size: 0.92rem;
-  }
-  .scores {
-    order: 2;
   }
   .footer {
     padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
@@ -355,4 +339,93 @@
 }
 .rateAnyway .meta {
   margin: 0;
+}
+
+/* The card's tabs, like the deck page's. */
+.tabbed {
+  container-type: inline-size;
+  min-width: 0;
+}
+.tabsRow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1.25rem;
+}
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+}
+.tab {
+  font: inherit;
+  padding: 0.45rem 1rem;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 0.4rem 0.4rem 0 0;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  margin-bottom: -1px;
+}
+.tab[aria-selected="true"] {
+  color: var(--fg);
+  background: var(--bg, transparent);
+  border-color: var(--border);
+  font-weight: 600;
+}
+.tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.panel > section:first-child h2:first-child,
+.panel > section:first-child > :first-child {
+  margin-top: 0;
+}
+/* Scoring: your ratings and the scoring group's side by side when there's room. */
+.scoringPanel {
+  display: grid;
+  gap: 2rem;
+  align-items: start;
+}
+@container (min-width: 46rem) {
+  .scoringPanel {
+    grid-template-columns: minmax(19rem, 1.15fr) minmax(0, 1fr);
+  }
+}
+.scoringPanel .community h2 {
+  margin-top: 0;
+}
+.explorer {
+  margin: 0 0 1rem;
+}
+/* Phone width: the tabs stay on one line (scrolling sideways if the pop-over is very narrow)
+   rather than push the page wide, the selected one underlined. */
+@media (max-width: 40rem) {
+  .tabsRow {
+    flex-wrap: wrap;
+  }
+  .tabs {
+    gap: 0;
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tab {
+    padding: 0.45rem 0.5rem;
+    font-size: 0.92rem;
+    border: none;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    white-space: nowrap;
+  }
+  .tab[aria-selected="true"] {
+    border-bottom-color: var(--accent);
+    background: none;
+  }
+}
+/* Overview reads like the printed card: a comfortable measure rather than the full width. */
+.panel > .details {
+  max-width: 44rem;
 }
