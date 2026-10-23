@@ -101,6 +101,7 @@ function needOf(condition: Condition, banishesFromHand: boolean): Need | null {
 }
 
 export interface AvailabilityScenario {
+  cardId: string;
   cardName: string;
   condition: Condition;
   plain: string;
@@ -139,6 +140,7 @@ export function availabilityScenarios(entries: DeckEntry[]): {
         continue;
       }
       scenarios.push({
+        cardId: e.card.id,
         cardName: e.card.name,
         condition,
         plain,
