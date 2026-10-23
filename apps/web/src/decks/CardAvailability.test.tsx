@@ -39,7 +39,9 @@ describe("condition availability in the card list", () => {
   it("isn't worked out until asked, then shows on a card with a condition", async () => {
     const { deck } = await open("list");
     expect(deck.queryByText(/available \d+%/)).not.toBeInTheDocument();
-    expect(screen.getByRole("combobox", { name: "Sort the deck" })).toBeDisabled();
+    expect(
+      screen.getByRole("combobox", { name: "Sort the deck" }),
+    ).toBeDisabled();
 
     await userEvent
       .setup()
@@ -71,7 +73,9 @@ describe("condition availability in the card list", () => {
 
     // Three copies in 60 cards: another Shadow card is rarely in hand with it.
     await user.click(
-      screen.getByRole("checkbox", { name: /Only rarely available \(under 25%\)/ }),
+      screen.getByRole("checkbox", {
+        name: /Only rarely available \(under 25%\)/,
+      }),
     );
     expect(names()).toEqual(["Become the Shadow Lord"]);
   });

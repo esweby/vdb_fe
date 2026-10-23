@@ -10,6 +10,13 @@ import { analyseDeck, type PitchCounts } from "./deckAnalysis.ts";
 import { CardFinder } from "./CardFinder.tsx";
 import { CardTile } from "./CardTile.tsx";
 import { DeckAnalysisPanel } from "./DeckAnalysisPanel.tsx";
+import {
+  rarelyAvailable,
+  RARELY_BELOW,
+  sortByAvailability,
+  type CardAvailability,
+} from "./cardAvailability.ts";
+import { useCardAvailability } from "./useCardAvailability.ts";
 import { ConditionAvailabilityPanel } from "./ConditionAvailabilityPanel.tsx";
 import { DeckGapsPanel } from "./DeckGapsPanel.tsx";
 import { DeckScenarios } from "./DeckScenarios.tsx";
@@ -247,6 +254,10 @@ export function DeckPage() {
     () => analyseDeck({ entries, dimensions: [], scores: new Map() }).pitch,
     [entries],
   );
+
+  const availability = useCardAvailability(entries);
+  const [sortBy, setSortBy] = useState<"pitch" | "availability">("pitch");
+  const [onlyRarely, setOnlyRarely] = useState(false);
 
   if (loadFailed && deck === undefined)
     return (
@@ -508,6 +519,39 @@ export function DeckPage() {
                   </button>
                 ))}
               </div>
+              <div className={styles.viewToggle}>
+                <button
+                  type="button"
+                  disabled={availability.running || !availability.canRun}
+                  onClick={availability.start}
+                >
+                  {availability.running
+                    ? "Working it out…"
+                    : "Work out availability"}
+                </button>
+                <select
+                  aria-label="Sort the deck"
+                  disabled={!availability.byCard}
+                  value={availability.byCard ? sortBy : "pitch"}
+                  onChange={(ev) =>
+                    setSortBy(ev.target.value as "pitch" | "availability")
+                  }
+                >
+                  <option value="pitch">Pitch, then name</option>
+                  <option value="availability">
+                    Availability, lowest first
+                  </option>
+                </select>
+                <label>
+                  <input
+                    type="checkbox"
+                    disabled={!availability.byCard}
+                    checked={!!availability.byCard && onlyRarely}
+                    onChange={(ev) => setOnlyRarely(ev.target.checked)}
+                  />{" "}
+                  {`Only rarely available (under ${RARELY_BELOW * 100}%)`}
+                </label>
+              </div>
               <div
                 className={
                   view === "tiles" ? styles.tileColumns : styles.columns
@@ -526,7 +570,13 @@ export function DeckPage() {
                 <PoolSection
                   title="Deck"
                   heading={`Deck ${counts.deck}`}
-                  entries={ofSection("deck")}
+                  entries={
+                    availability.byCard && onlyRarely
+                      ? rarelyAvailable(ofSection("deck"), availability.byCard)
+                      : ofSection("deck")
+                  }
+                  availability={availability.byCard ?? undefined}
+                  byAvailability={sortBy === "availability"}
                   limitOf={limitOf}
                   view={view}
                   onSet={onSet}
@@ -599,6 +649,10 @@ function PoolSection(props: {
   view: View;
   /** "pitch": red, yellow, blue, then no pitch. "gear": weapons, then equipment by slot. */
   order?: "pitch" | "gear";
+  /** Worked-out availability, shown on each card that has a condition. */
+  availability?: Map<string, CardAvailability>;
+  /** Sort by availability, lowest first, instead of by pitch. */
+  byAvailability?: boolean;
   /** Changes a card; without it (someone else's deck) the section is read only. */
   onSet?: (card: DeckCard) => void;
   /** Moves one copy between the deck and the sideboard. */
@@ -614,9 +668,25 @@ function PoolSection(props: {
         : SLOTS.indexOf(slotOf(e.card) ?? "Off-Hand")
       : (e.variant.pitch ?? 99);
   // Alphabetical within each pitch (or slot).
-  const sorted = [...entries].sort(
-    (a, b) => rank(a) - rank(b) || a.card.name.localeCompare(b.card.name),
-  );
+  const sorted =
+    props.byAvailability && props.availability
+      ? sortByAvailability(entries, props.availability)
+      : [...entries].sort(
+          (a, b) => rank(a) - rank(b) || a.card.name.localeCompare(b.card.name),
+        );
+  const badge = (e: DeckEntry) => {
+    const a = props.availability?.get(e.card.id);
+    return a ? (
+      <span
+        className={styles.muted}
+        title={a.conditions
+          .map((c) => `${c.plain}: ${Math.round(c.rate * 100)}%`)
+          .join("\n")}
+      >
+        {`available ${Math.round(a.rate * 100)}%`}
+      </span>
+    ) : null;
+  };
   const total = entries.reduce((n, e) => n + e.quantity, 0);
 
   const controls = (e: DeckEntry) => {
@@ -700,6 +770,7 @@ function PoolSection(props: {
                   <span className={styles.tileControls}>{controls(e)}</span>
                 )}
               </CardTile>
+              {badge(e)}
             </li>
           ))}
         </ul>
@@ -733,6 +804,7 @@ function PoolSection(props: {
                 {(slot || hands) && (
                   <span className={styles.muted}>{slot ?? hands}</span>
                 )}
+                {badge(e)}
                 {onSet && (
                   <span className={styles.controls}>{controls(e)}</span>
                 )}
