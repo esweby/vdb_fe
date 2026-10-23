@@ -1,6 +1,6 @@
 # FaBlazing game data: plan
 
-Status, 21 Oct 2026 (evening): steps 1, 2 and 4 are done; step 3's pipeline is live, with its first scheduled run on 22 Oct at 10:00 UTC. What's next, in order, is in **Next steps** below. Any reading of game logic is **unverified** until the maintainer checks it.
+Status, 23 Oct 2026: steps 1, 2 and 4 are done; step 3's pipeline is live. Step 5 has compared T1–T4 on the maintainer's deck, with incomplete coverage. T1–T5 were approved on 21 Oct; T5 waits for the Gate-target list and T6 remains a draft. See [engine-calibration.md](engine-calibration.md) for the results and next steps. The operational checklist below dates from 21 Oct; items without a recorded outcome remain to be checked. Any reading of game logic is **unverified** until the maintainer checks it.
 
 ## Decision
 
@@ -143,14 +143,14 @@ There's no general synergy framework until the chains show what the data actuall
 
 ## Status of steps
 
-| #   | Step                      | State                                                                                                                                                                                                              | Waiting on                                                       |
-| --- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
-| 1   | Data audit                | Written ([fablazing-data-dictionary.md](fablazing-data-dictionary.md)); FaBlazing answered on 21 Oct                                                                                                               | What the action codes mean: a question for Talishar's developers |
-| 2   | One chain through the CLI | Done (PR 200)                                                                                                                                                                                                      | —                                                                |
-| 3   | Quick-win stats           | **Pipeline live** (PRs 201, 203–206): a Go Lambda daily, raw games in S3, aggregates in Supabase as `fablazing_ingest`. History load (PR 211) and app views (PR 212) are merging; the hosted history load follows. | The first live run's check                                       |
-| 4   | Chain library             | Eleven chains measured on 30 days, with and without the player cap ([fablazing-chains.md](fablazing-chains.md)); card sets come from the importer (PR 209)                                                         | —                                                                |
-| 5   | Engine calibration        | Thresholds drafted (`docs/engine-calibration.md` on its branch), waiting for the maintainer's approval                                                                                                             | The maintainer's approval of thresholds and the deck to simulate |
-| 6   | Expand                    | —                                                                                                                                                                                                                  | Evidence from steps 4 and 5                                      |
+| #   | Step                      | State                                                                                                                                                                                                              | Waiting on                                                                              |
+| --- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
+| 1   | Data audit                | Written ([fablazing-data-dictionary.md](fablazing-data-dictionary.md)); FaBlazing answered on 21 Oct                                                                                                               | What the action codes mean: a question for Talishar's developers                        |
+| 2   | One chain through the CLI | Done (PR 200)                                                                                                                                                                                                      | —                                                                                       |
+| 3   | Quick-win stats           | **Pipeline live** (PRs 201, 203–206): a Go Lambda daily, raw games in S3, aggregates in Supabase as `fablazing_ingest`. History load (PR 211) and app views (PR 212) are merging; the hosted history load follows. | The first live run's check                                                              |
+| 4   | Chain library             | Eleven chains measured on 30 days, with and without the player cap ([fablazing-chains.md](fablazing-chains.md)); card sets come from the importer (PR 209)                                                         | —                                                                                       |
+| 5   | Engine calibration        | T1–T5 approved; T1–T4 compared on the maintainer's deck. Coverage is incomplete (54% of copies). Results in [engine-calibration.md](engine-calibration.md).                                                        | More verified cards; Gate targets and caveats for T5; weapon policy; approve or drop T6 |
+| 6   | Expand                    | —                                                                                                                                                                                                                  | Evidence from steps 4 and 5                                                             |
 
 ## Next steps
 
@@ -161,7 +161,7 @@ In the maintainer's order (21 Oct 2026):
 3. **Load history into Supabase** from the 30 days we downloaded (`~/.cache/vdb/fablazing/viserai/`). Those files hold only games with Viserai, so they're complete for Viserai's cards, turns, traverses and Viserai's own matchups and meta share. **Other heroes' matchups must not be written from them,** because those would be partial. Full matchups build up from the daily runs.
 4. **Step 3's app views:** "In real games" on card pages; Viserai's real win rates and meta share on matchups; Effect drafts ordered by real plays per game; how fresh the data is. Guardrails: n ≥ 50, matchup context, Wilson intervals.
 5. **Tidy the chain library:** the player cap in the chain tool, card sets moved to the importer's export, and the two Open the Gate chains (expectations first). **Done (PR 209).**
-6. **Step 5, engine calibration:** pass and fail thresholds written before any comparison.
+6. **Step 5, engine calibration:** thresholds written and T1–T5 approved before comparison; T1–T4 results recorded on 23 Oct. Next: raise card coverage, agree the Gate and weapon policy, decide T6 and run again on the same seed. Thresholds stay fixed.
 7. **Housekeeping:** narrow the `viserai.decks` IAM user from AdministratorAccess now that the stack exists. **Done (PR 213):** day-to-day `--profile vdb` is narrowed; admin is `--profile vdb-admin`.
 
 Items 1 and 2 wait for 22 Oct. Items 3 to 7 can run in parallel.

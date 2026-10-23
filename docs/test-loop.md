@@ -1,6 +1,6 @@
 # The test loop
 
-A plan for testing a deck the way a player does: write the strategy down, export a version, play it on Talishar, upload the game, and see whether the plan happened. Drafted 22 Oct 2026 from a conversation with the maintainer and a review by the council of LLMs. Nothing here is built yet.
+A plan for testing a deck the way a player does: write the strategy down, export a version, play it on Talishar, upload the game, and see whether the plan happened. Drafted 22 Oct 2026 from a conversation with the maintainer and a review by the council of LLMs. On 23 Oct, the standalone CSV parser is in review ([PR #228](https://github.com/esweby/vdb_fe/pull/228)); the report and the rest of the loop are not built yet.
 
 ## Why
 
@@ -37,6 +37,8 @@ From the maintainer's export of 22 Oct 2026 (`game-stats-<timestamp>.csv`, one p
 
 The format is Talishar's and can change without notice, so the parser is tested against real files, starting with this one.
 
+**Self-loss and blood debt (the maintainer, 23 Oct):** total self-loss gives us a starting point, and blood debt can be worked out and tracked. The export records `Total Life Self-Lost` as −18 in this game. Keep that sign when parsing. Use the total as a check on the losses tracked through the game, rather than treating it as an amount that cannot be placed by turn. The report needs to state the inputs used to track blood debt and any other self-loss. Where those inputs leave the timing uncertain, label that part Assumed; do not silently spread the total across turns or call it all blood debt.
+
 ### FaBlazing, the next day
 
 The same game is usually in the next day's FaBlazing import, unless the player turned stats off. The CSV's card counts, turns, first player and result should pick out one game, and we already know the version's list. A match adds the turn log (the order of plays, so the flip turn and the chains), the opponent's hero and life by turn. **Unverified:** that the match is unique enough. The first test is finding the maintainer's game of 22 Oct.
@@ -49,16 +51,18 @@ What neither source records: when you flipped (until FaBlazing fills it in), wha
 
 Each measure carries its evidence label (the council's rule): **Observed** in the CSV or the log, **Assumed** where it relies on a model or a proxy, **Extrapolated** beyond what the games cover.
 
-| Measure                                                                                                                   | Source                            | Label                                                                                |
-| ------------------------------------------------------------------------------------------------------------------------- | --------------------------------- | ------------------------------------------------------------------------------------ |
-| Life by turn                                                                                                              | CSV (damage taken, starting life) | Observed, except life lost to yourself, which is only a total                        |
-| Share of life lost to yourself                                                                                            | CSV                               | Observed                                                                             |
-| Blocking by turn, and **entering the blender**: the turn life falls low enough that the deck blocks with most of its hand | CSV                               | The blocking is Observed; the threshold is Assumed until the population data sets it |
-| Damage dealt by turn N                                                                                                    | CSV                               | Observed                                                                             |
-| Flip turn                                                                                                                 | FaBlazing log, or the note        | Observed from the log; the note's is the player's word                               |
-| Plan chains (a Gate and a blood debt card in one turn, and so on)                                                         | FaBlazing log                     | Assumed (they're proxies; see [fablazing-chains.md](fablazing-chains.md))            |
+| Measure                                                                                                                   | Source                                                                                  | Label                                                                                |
+| ------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Life by turn                                                                                                              | Starting life, CSV damage taken and life gained, tracked self-loss including blood debt | Observed inputs; any timing that relies on a model or proxy is Assumed               |
+| Share of life lost to yourself                                                                                            | CSV                                                                                     | Observed                                                                             |
+| Blocking by turn, and **entering the blender**: the turn life falls low enough that the deck blocks with most of its hand | CSV                                                                                     | The blocking is Observed; the threshold is Assumed until the population data sets it |
+| Damage dealt by turn N                                                                                                    | CSV                                                                                     | Observed                                                                             |
+| Flip turn                                                                                                                 | FaBlazing log, or the note                                                              | Observed from the log; the note's is the player's word                               |
+| Plan chains (a Gate and a blood debt card in one turn, and so on)                                                         | FaBlazing log                                                                           | Assumed (they're proxies; see [fablazing-chains.md](fablazing-chains.md))            |
 
 A version's results are reported as counts ("7 of 10"), not percentages, and few games are called **promising** or **inconclusive**, never proven. A step the plan relies on that nobody else plays isn't a reason to drop it: finding those is the point.
+
+The CSV's self-loss total is Observed. Working out blood debt from tracked state is a separate calculation; document its inputs and check it against that total. A matched FaBlazing game's end-of-turn life totals are Observed too and can check the life curve.
 
 ### Where the FaBlazing population fits
 
@@ -67,6 +71,8 @@ A version's results are reported as counts ("7 of 10"), not percentages, and few
 - **Outliers:** a player whose results beat their deck may have found something.
 
 ## What to build, in order
+
+The immediate implementation order is in [AGENTS.md](../AGENTS.md): the standalone CSV parser, a report from its typed record, then deck versions. The list below describes the wider loop; upload and comparison follow the maintainer's review of those first pieces.
 
 1. **Deck versions.** Today a deck keeps only its current list (`deck_cards`). Opening a deck in FaBrary saves the list as a version. FaBrary's import link sends the cards and nothing comes back, so the FaBrary deck id isn't known; the player can paste the FaBrary link onto the version if they want to. A new table needs grants and an entry in `06_privileges.test.sql`.
 2. **Upload a game.** A CSV dropped onto a version, parsed and stored with the note. The CSV's cards are checked against the version's list; on a mismatch the site warns and suggests the version that fits.
@@ -82,5 +88,6 @@ Later, if wanted: once a match finds a player's hashed FaBlazing id, their games
 
 - **For the maintainer:** what "the blender" threshold is to a player, before the data sets it, and the first deck plan to test.
 - **Unverified (game logic):** that life lost to yourself is mostly blood debt.
+- **Before the report:** agree which inputs track blood debt and other self-loss by turn, and how to show any timing they do not determine. The maintainer confirmed that self-loss can be tracked; the CSV alone does not list it by turn.
 - Whether Talishar offers the CSV when stats are turned off.
 - Whether the council should see a draft of steps 4 and 5: how to compare versions fairly on 10 to 20 games each, and how to weigh the player's note against the logs.
