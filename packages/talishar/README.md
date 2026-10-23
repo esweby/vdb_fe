@@ -17,3 +17,35 @@ opponent's stats need real exports and tests before they are supported.
 Parsing does not infer card copies, the opponent, hero sides, starting life or life
 by turn. It does not reconcile card totals with turn totals or interpret self-loss
 as blood debt. Those belong to later analysis, with their evidence labelled.
+
+## Single-game report
+
+```ts
+import { createGameReport, parseGameStats } from "@vdb/talishar";
+
+const report = createGameReport(parseGameStats(csv), {
+  startingLife: 40,
+  startingLifeSource: "Viserai: 40, confirmed by the maintainer on 23 Oct 2026",
+});
+```
+
+The pure report returns life, cards blocked, damage dealt and cumulative damage
+for each CSV turn, plus the share of gross life lost to yourself (a fraction,
+or `null` when there was no loss). Each measure has a value, an evidence label
+and a source. Starting life is required and is labelled Assumed as an external
+input. The report does not infer a starting life from the hero name.
+
+Talishar's Total Value includes signed self-loss. The report recovers it by
+subtracting damage threatened, damage blocked, damage prevented and life gained.
+It checks the result against the observed signed game total, and rejects a
+mismatch or a positive recovered loss with `TalisharReportError`. Recovered
+self-loss and life remain Assumed because the export formula is a dependency.
+Calculated life is not clamped to zero: a negative balance remains visible.
+See the [real worked example and source evidence](report-example.md).
+
+The cause of self-loss remains unknown unless `selfLossBreakdown` supplies a
+turn's `bloodDebt` and `otherSelfLost`. Each is a signed non-positive integer
+measure with its own evidence and source, and their sum must match that turn's
+recovered loss. Breakdowns can cover selected turns; missing ones remain `null`.
+Amounts are resolved losses supplied by the caller, not an inferred banish state.
+The report does not change the parsed record.

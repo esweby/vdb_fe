@@ -1,3 +1,13 @@
+export { createGameReport, TalisharReportError } from "./report.ts";
+export type {
+  Evidence,
+  Measure,
+  SelfLossBreakdown,
+  ReportInputs,
+  TurnReport,
+  GameReport,
+} from "./report.ts";
+
 /** The single-player layout observed in the maintainer's 22 Oct 2026 export. */
 export interface GameStats {
   player: 1;
