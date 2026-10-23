@@ -87,6 +87,8 @@ const TRIGGER_EVENT_TEXT: Record<string, string> = {
   attacking: "When this attacks",
   played: "When you play an attack action card",
   lifeLost: "When you lose life",
+  arcaneDamage: "When Runechants deal arcane damage",
+  damageNoted: "When you note damage dealt to the defending hero",
 };
 
 const slug = (name: string) =>
@@ -296,12 +298,37 @@ export function draftEffects(
 
   // Conditional go again.
   if (a.goAgain) {
-    const { check, missing } = checksFor(a.goAgain.conditions, bound);
-    if (missing || !check)
+    if (
+      a.goAgain.conditions.length === 1 &&
+      a.goAgain.conditions[0] === "dealt_damage_to_defending_hero_this_turn"
+    ) {
+      // UNVERIFIED draft. The maintainer confirmed on 23 Oct 2026 that damage from its own
+      // Runechants or hit counts. Combat damage is noted by hand; the goldfish has no prevention.
+      for (const event of ["played", "arcaneDamage", "damageNoted"] as const)
+        triggers.push({
+          id: `${slug(card.name)}-go-again-${event}`,
+          on: { event, ...(event === "played" ? { self: true } : {}) },
+          effects: [
+            {
+              op: "if",
+              check: {
+                all: [{ latestAttack: "self" }, { damageDealtThisTurn: 1 }],
+              },
+              then: [{ op: "grantGoAgain", target: "self" }],
+            },
+          ],
+        });
       note(
-        `Go again if ${CONDITION_PLAIN[missing ?? a.goAgain.conditions[0]!]}: the engine can't check that yet`,
+        "Damage from this attack's hit must be noted by hand: combat is out of scope",
       );
-    else effects.push({ op: "if", check, then: [{ op: "gainActionPoint" }] });
+    } else {
+      const { check, missing } = checksFor(a.goAgain.conditions, bound);
+      if (missing || !check)
+        note(
+          `Go again if ${CONDITION_PLAIN[missing ?? a.goAgain.conditions[0]!]}: the engine can't check that yet`,
+        );
+      else effects.push({ op: "if", check, then: [{ op: "gainActionPoint" }] });
+    }
   }
 
   // Everything else the facts record, noted rather than guessed.

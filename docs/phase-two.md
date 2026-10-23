@@ -27,6 +27,8 @@ Phase two is largely built. What's left is less building than feeding the engine
 
 The first batch (24 cards) went in on 20 Oct 2026, with the sinchants. The second (62 cards, mostly equipment, potions and amulets whose activated ability is otherwise out of scope) went in the same evening; a played item now stays in the arena, so it can be activated. The third (5 cards) followed: Amplify the Arknight, Ninth Blade of the Blood Oath, Reduce to Runechant and Rune Flash, which cost less for each Runechant, and Dimenxxional Crossroads. The hosted cards need re-importing after any change to card facts: `npm run import -w @vdb/importer -- --yes-remote`, run from an up-to-date `main`.
 
+Bloodfrenzy Gloomblade's effect draft now covers its conditional go again, for all three pitches, and waits for review on the effects page. The draft is **unverified** and has not been added to the verified card rules. The goldfish assumes Runechant damage is not prevented; damage from a hit is noted by hand. Tests check that overlapping sources of go again return only one action point.
+
 ## Decisions (the maintainer)
 
 Game logic decided by the maintainer, with where it lives. Anything not here is still marked UNVERIFIED in code.
@@ -59,6 +61,7 @@ Game logic decided by the maintainer, with where it lives. Anything not here is 
 
 **23 Oct 2026**
 
+- **Bloodfrenzy Gloomblade:** with two Runechants, one is usurped and the other can deal damage. Damage from that Runechant or from Bloodfrenzy's own hit can give Bloodfrenzy go again.
 - **Sideboard plans:** a plan can have a custom name without an opposing hero. Hero-specific plans still work. The Matchups tab keeps saved plans in a compact sidebar beside the editor. Card rows are the default; Pictures remains an option. Weapons and equipment, and population matchup statistics, are folded away. Goldfish and scenarios can play a named plan. Exported versions keep the plans as saved at export time.
 
 ## Open
