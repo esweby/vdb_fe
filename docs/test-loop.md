@@ -1,6 +1,6 @@
 # The test loop
 
-A plan for testing a deck the way a player does: write the strategy down, export a version, play it on Talishar, upload the game, and see whether the plan happened. Drafted 22 Oct 2026 from a conversation with the maintainer and a review by the council of LLMs. On 23 Oct, the standalone CSV parser is in review ([PR #228](https://github.com/esweby/vdb_fe/pull/228)); the report and the rest of the loop are not built yet.
+A plan for testing a deck the way a player does: write the strategy down, export a version, play it on Talishar, upload the game, and see whether the plan happened. Drafted 22 Oct 2026 from a conversation with the maintainer and a review by the council of LLMs. On 23 Oct, the standalone CSV parser is merged ([PR #228](https://github.com/esweby/vdb_fe/pull/228)) and the pure TypeScript report is in review ([PR #231](https://github.com/esweby/vdb_fe/pull/231)); the rest of the loop is not built yet.
 
 ## Why
 
@@ -35,6 +35,8 @@ From the maintainer's export of 22 Oct 2026 (`game-stats-<timestamp>.csv`, one p
 
 **Not in the CSV:** the order of plays (so which turn a card was played, and when the hero flipped), the opponent's hero, life lost to yourself by turn, copies of each card, banishes and Runechants.
 
+Self-loss has no separate turn column, but can be recovered from Total Value using the inspected export formula: subtract damage threatened, damage blocked, damage prevented and life gained. These signed per-row losses are **Assumed**, checked against the **Observed** signed game total. The summary averages also support the total, allowing for rounding; neither check proves the timing. See the [worked example and pinned source](../packages/talishar/report-example.md). The CSV row numbers are positions in the export, not confirmed game-turn numbers.
+
 The format is Talishar's and can change without notice, so the parser is tested against real files, starting with this one.
 
 **Self-loss and blood debt (the maintainer, 23 Oct):** total self-loss gives us a starting point, and blood debt can be worked out and tracked. The export records `Total Life Self-Lost` as −18 in this game. Keep that sign when parsing. Use the total as a check on the losses tracked through the game, rather than treating it as an amount that cannot be placed by turn. The report needs to state the inputs used to track blood debt and any other self-loss. Where those inputs leave the timing uncertain, label that part Assumed; do not silently spread the total across turns or call it all blood debt.
@@ -54,7 +56,7 @@ Each measure carries its evidence label (the council's rule): **Observed** in th
 | Measure                                                                                                                   | Source                                                                                  | Label                                                                                |
 | ------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | Life by turn                                                                                                              | Starting life, CSV damage taken and life gained, tracked self-loss including blood debt | Observed inputs; any timing that relies on a model or proxy is Assumed               |
-| Share of life lost to yourself                                                                                            | CSV                                                                                     | Observed                                                                             |
+| Share of life lost to yourself                                                                                            | CSV damage taken and signed self-loss total                                             | Assumed: adding these observed inputs relies on them not overlapping                 |
 | Blocking by turn, and **entering the blender**: the turn life falls low enough that the deck blocks with most of its hand | CSV                                                                                     | The blocking is Observed; the threshold is Assumed until the population data sets it |
 | Damage dealt by turn N                                                                                                    | CSV                                                                                     | Observed                                                                             |
 | Flip turn                                                                                                                 | FaBlazing log, or the note                                                              | Observed from the log; the note's is the player's word                               |
@@ -62,7 +64,7 @@ Each measure carries its evidence label (the council's rule): **Observed** in th
 
 A version's results are reported as counts ("7 of 10"), not percentages, and few games are called **promising** or **inconclusive**, never proven. A step the plan relies on that nobody else plays isn't a reason to drop it: finding those is the point.
 
-The CSV's self-loss total is Observed. Working out blood debt from tracked state is a separate calculation; document its inputs and check it against that total. A matched FaBlazing game's end-of-turn life totals are Observed too and can check the life curve.
+The CSV's self-loss total is Observed. Gross life lost and its self-loss share are Assumed because the calculation relies on damage taken excluding self-loss. Independently known final life can check that calculation; a result of “Loser” alone does not establish zero life. Working out blood debt from tracked state is a separate calculation; document its inputs and check it against the recovered row losses and the observed total. A matched FaBlazing game's end-of-turn life totals are Observed too and can check the life curve.
 
 ### Where the FaBlazing population fits
 
@@ -88,6 +90,6 @@ Later, if wanted: once a match finds a player's hashed FaBlazing id, their games
 
 - **For the maintainer:** what "the blender" threshold is to a player, before the data sets it, and the first deck plan to test.
 - **Unverified (game logic):** that life lost to yourself is mostly blood debt.
-- **Before the report:** agree which inputs track blood debt and other self-loss by turn, and how to show any timing they do not determine. The maintainer confirmed that self-loss can be tracked; the CSV alone does not list it by turn.
+- **Self-loss attribution:** agree which inputs separate blood debt from other self-loss in each CSV row. The report recovers signed self-loss timing from Total Value as Assumed, checked against the observed total; assigning its cause still needs evidence. The maintainer confirmed that self-loss can be tracked.
 - Whether Talishar offers the CSV when stats are turned off.
 - Whether the council should see a draft of steps 4 and 5: how to compare versions fairly on 10 to 20 games each, and how to weigh the player's note against the logs.
