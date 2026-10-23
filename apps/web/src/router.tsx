@@ -174,6 +174,7 @@ const routeTree = rootRoute.addChildren([
       fixed?: string;
       /** Goldfish and scenarios: play the deck's plan against this hero (matchups). */
       vs?: string;
+      plan?: string;
       /** Scenarios: creating one rather than running them. */
       mode?: "create";
     } => ({
@@ -197,6 +198,9 @@ const routeTree = rootRoute.addChildren([
         ? { fixed: search.fixed }
         : {}),
       ...(typeof search.vs === "string" && search.vs ? { vs: search.vs } : {}),
+      ...(typeof search.plan === "string" && search.plan
+        ? { plan: search.plan }
+        : {}),
       ...(search.mode === "create" ? { mode: "create" as const } : {}),
       ...(typeof search.log === "string" && search.log
         ? { log: search.log }

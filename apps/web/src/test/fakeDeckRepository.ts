@@ -80,7 +80,7 @@ export function fakeDeckRepository(
             .filter((matchup) => matchup.deckId === deckId)
             .map((matchup) => ({
               id: matchup.id,
-              name: "Matchup",
+              name: matchup.name,
               isDefault: false,
               opponentHeroId: matchup.heroId,
               opponentHeroName:
@@ -163,20 +163,22 @@ export function fakeDeckRepository(
     getFormatRules: async () => sampleRules,
     listHeroes: async () => [...(options.heroes ?? [])],
     listMatchups: async (deckId) => matchups.filter((m) => m.deckId === deckId),
-    async saveMatchup(deckId, heroId, cards) {
-      const kept = cards.filter((c) => c.quantity > 0);
+    async saveMatchup(deckId, plan) {
+      const { heroId } = plan;
+      const kept = plan.cards.filter((c) => c.quantity > 0);
       saved.push(
-        `matchup ${deckId} ${heroId} ${[...kept]
+        `matchup ${deckId} ${heroId ?? "custom"} ${[...kept]
           .sort((a, b) => a.variantId.localeCompare(b.variantId))
           .map((c) => `${c.variantId}:${c.quantity}`)
           .join(",")}`,
       );
       const existing = matchups.find(
-        (m) => m.deckId === deckId && m.heroId === heroId,
+        (m) => m.deckId === deckId && m.id === plan.id,
       );
       const matchup: Matchup = {
         id: existing?.id ?? `matchup-${++nextMatchup}`,
         deckId,
+        name: plan.name.trim(),
         heroId,
         cards: kept,
       };

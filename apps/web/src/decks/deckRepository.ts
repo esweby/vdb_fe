@@ -40,11 +40,12 @@ export interface Hero {
   imageUrl: string | null;
 }
 
-/** A deck's plan against a hero: the cards it plays in that matchup (a loadout). */
+/** A named sideboard plan, optionally tied to an opposing hero. */
 export interface Matchup {
   id: string;
   deckId: string;
-  heroId: string;
+  name: string;
+  heroId: string | null;
   cards: { variantId: string; quantity: number }[];
 }
 
@@ -105,11 +106,10 @@ export interface DeckRepository {
   listHeroes(): Promise<Hero[]>;
   /** The deck's matchup plans (its owner's only). */
   listMatchups(deckId: string): Promise<Matchup[]>;
-  /** Creates or replaces the deck's plan against a hero. */
+  /** Saves the plan and its cards together. */
   saveMatchup(
     deckId: string,
-    heroId: string,
-    cards: Matchup["cards"],
+    plan: Omit<Matchup, "id" | "deckId"> & { id?: string },
   ): Promise<Matchup>;
   deleteMatchup(id: string): Promise<void>;
   listVersions(deckId: string): Promise<DeckVersion[]>;
@@ -270,52 +270,26 @@ export function supabaseDeckRepository(client: SupabaseClient): DeckRepository {
       const { data, error } = await client
         .from("deck_loadouts")
         .select(
-          "id, deckId:deck_id, heroId:opponent_hero_id, cards:loadout_cards(variantId:variant_id, quantity)",
+          "id, deckId:deck_id, name, heroId:opponent_hero_id, cards:loadout_cards(variantId:variant_id, quantity)",
         )
         .eq("deck_id", deckId)
-        .not("opponent_hero_id", "is", null);
+        .eq("is_default", false)
+        .order("name");
       if (error) throw error;
       return data as Matchup[];
     },
-    async saveMatchup(deckId, heroId, cards) {
-      const { data: found, error: findError } = await client
-        .from("deck_loadouts")
-        .select("id")
-        .eq("deck_id", deckId)
-        .eq("opponent_hero_id", heroId)
-        .maybeSingle();
-      if (findError) throw findError;
-      let id = found?.id as string | undefined;
-      if (!id) {
-        const { data, error } = await client
-          .from("deck_loadouts")
-          .insert({
-            deck_id: deckId,
-            name: "Matchup",
-            opponent_hero_id: heroId,
-          })
-          .select("id")
-          .single();
-        if (error) throw error;
-        id = data.id as string;
-      }
-      const { error: clearError } = await client
-        .from("loadout_cards")
-        .delete()
-        .eq("loadout_id", id);
-      if (clearError) throw clearError;
-      const rows = cards
-        .filter((c) => c.quantity > 0)
-        .map((c) => ({
-          loadout_id: id,
-          variant_id: c.variantId,
-          quantity: c.quantity,
-        }));
-      if (rows.length) {
-        const { error } = await client.from("loadout_cards").insert(rows);
-        if (error) throw error;
-      }
-      return { id, deckId, heroId, cards: cards.filter((c) => c.quantity > 0) };
+    async saveMatchup(deckId, plan) {
+      const cards = plan.cards.filter((card) => card.quantity > 0);
+      const name = plan.name.trim();
+      const { data, error } = await client.rpc("save_matchup", {
+        target_deck_id: deckId,
+        plan_name: name,
+        opponent_id: plan.heroId,
+        plan_cards: cards,
+        target_loadout_id: plan.id ?? null,
+      });
+      if (error) throw error;
+      return { id: data as string, deckId, name, heroId: plan.heroId, cards };
     },
     async deleteMatchup(id) {
       const { error } = await client
