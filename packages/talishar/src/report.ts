@@ -17,7 +17,14 @@ export interface SelfLossBreakdown {
 export interface ReportInputs {
   startingLife: number;
   startingLifeSource?: string;
+  finalLife?: Measure<number>;
   selfLossBreakdown?: readonly SelfLossBreakdown[];
+}
+
+export interface ReportCheck {
+  expected: Measure<number>;
+  calculated: Measure<number | null>;
+  matches: boolean | null;
 }
 
 export interface TurnReport {
@@ -43,6 +50,11 @@ export interface GameReport {
   };
   totalLifeLost: Measure<number>;
   selfLossShare: Measure<number | null>;
+  checks: {
+    averageValuePerTurn: ReportCheck;
+    averageCombatValuePerTurn: ReportCheck;
+    finalLife: ReportCheck | null;
+  };
 }
 
 export class TalisharReportError extends Error {
@@ -66,15 +78,44 @@ function signedLoss(value: number, label: string): number {
   return value === 0 ? 0 : value;
 }
 
+function validateEvidence(value: Measure<number>, label: string) {
+  if (
+    !["Observed", "Assumed", "Extrapolated"].includes(value.evidence) ||
+    !value.source.trim()
+  )
+    throw new TalisharReportError(`${label} needs evidence and a source`);
+}
+
 function validateBreakdownLoss(loss: Measure<number>, turn: number) {
   signedLoss(loss.value, `turn ${turn} breakdown loss`);
-  if (
-    !["Observed", "Assumed", "Extrapolated"].includes(loss.evidence) ||
-    !loss.source.trim()
-  )
+  validateEvidence(loss, `turn ${turn} breakdown`);
+}
+
+function averageCheck(
+  total: number,
+  rows: number,
+  expected: number,
+  label: string,
+  source: string,
+): ReportCheck {
+  if (!Number.isSafeInteger(total))
     throw new TalisharReportError(
-      `turn ${turn} breakdown needs evidence and a source`,
+      "summary totals exceed safe integer precision",
     );
+  const average = rows === 0 ? null : total / rows;
+  const rounded =
+    average === null
+      ? null
+      : ((average < 0 ? -1 : 1) * Math.round(Math.abs(average) * 100)) / 100;
+  return {
+    expected: measure(expected, "Observed", `CSV ${label}`),
+    calculated: measure(
+      rounded,
+      "Assumed",
+      `${source} / CSV row count, rounded to two decimal places; assumes the summary covers the same rows. No rows gives no comparison.`,
+    ),
+    matches: rounded === null ? null : rounded === expected,
+  };
 }
 
 /**
@@ -88,6 +129,11 @@ export function createGameReport(
 ): GameReport {
   if (!Number.isSafeInteger(inputs.startingLife) || inputs.startingLife <= 0)
     throw new TalisharReportError("starting life must be a positive integer");
+  if (inputs.finalLife) {
+    if (!Number.isSafeInteger(inputs.finalLife.value))
+      throw new TalisharReportError("final life must be an integer");
+    validateEvidence(inputs.finalLife, "final life");
+  }
 
   const recordedLoss = signedLoss(
     game.statistics.totalLifeSelfLost,
@@ -190,6 +236,10 @@ export function createGameReport(
     throw new TalisharReportError(
       "total life lost exceeds safe integer precision",
     );
+  if (inputs.finalLife && life !== inputs.finalLife.value)
+    throw new TalisharReportError(
+      `calculated final life ${life} does not match supplied final life ${inputs.finalLife.value}`,
+    );
   return {
     startingLife: measure(
       inputs.startingLife,
@@ -213,13 +263,43 @@ export function createGameReport(
     },
     totalLifeLost: measure(
       totalLifeLost,
-      "Observed",
-      "Sum of CSV Damage Taken - signed Total Life Self-Lost; gross losses, before healing.",
+      "Assumed",
+      "Sum of CSV Damage Taken - signed Total Life Self-Lost; gross losses, before healing. Assumes damage taken excludes self-loss, as in the inspected Talishar source.",
     ),
     selfLossShare: measure(
       totalLifeLost === 0 ? null : -recordedLoss / totalLifeLost,
-      "Observed",
-      "Magnitude of CSV Total Life Self-Lost / total gross life lost; null when no life was lost.",
+      "Assumed",
+      "Magnitude of CSV Total Life Self-Lost / total gross life lost; assumes damage taken and self-loss do not overlap. Null when no life was lost.",
     ),
+    checks: {
+      averageValuePerTurn: averageCheck(
+        game.turns.reduce((total, turn) => total + turn.totalValue, 0),
+        game.turns.length,
+        game.statistics.averageValuePerTurn,
+        "Avg Value per Turn",
+        "Sum of CSV Total Value",
+      ),
+      averageCombatValuePerTurn: averageCheck(
+        game.turns.reduce(
+          (total, turn) => total + turn.damageThreatened + turn.damageBlocked,
+          0,
+        ),
+        game.turns.length,
+        game.statistics.averageCombatValuePerTurn,
+        "Avg Combat Value per Turn",
+        "Sum of CSV Damage Threatened + Damage Blocked",
+      ),
+      finalLife: inputs.finalLife
+        ? {
+            expected: { ...inputs.finalLife },
+            calculated: measure(
+              life,
+              "Assumed",
+              "Final calculated life; depends on supplied starting life and the inspected Talishar formula.",
+            ),
+            matches: true,
+          }
+        : null,
+    },
   };
 }

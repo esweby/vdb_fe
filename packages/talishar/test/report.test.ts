@@ -71,8 +71,8 @@ describe("single-game report", () => {
     healed.turns[1]!.totalValue += 5;
     healed.statistics.totalLifeGained = 5;
     expect(createGameReport(healed, { startingLife: 40 })).toMatchObject({
-      totalLifeLost: { value: 40, evidence: "Observed" },
-      selfLossShare: { value: 0.45, evidence: "Observed" },
+      totalLifeLost: { value: 40, evidence: "Assumed" },
+      selfLossShare: { value: 0.45, evidence: "Assumed" },
       turns: [{ life: { value: 38 } }, { life: { value: 30 } }, {}, {}, {}, {}],
     });
   });
@@ -163,7 +163,7 @@ describe("single-game report", () => {
         turn.lifeGained;
     });
     expect(createGameReport(untouched, { startingLife: 40 })).toMatchObject({
-      selfLossShare: { value: null, evidence: "Observed" },
+      selfLossShare: { value: null, evidence: "Assumed" },
     });
   });
 
@@ -175,6 +175,147 @@ describe("single-game report", () => {
       );
     },
   );
+
+  it("checks the rounded summary averages without claiming they establish timing", () => {
+    expect(createGameReport(game, { startingLife: 40 })).toMatchObject({
+      checks: {
+        averageValuePerTurn: {
+          expected: { value: 10.67, evidence: "Observed" },
+          calculated: { value: 10.67, evidence: "Assumed" },
+          matches: true,
+        },
+        averageCombatValuePerTurn: {
+          expected: { value: 13.67, evidence: "Observed" },
+          calculated: { value: 13.67, evidence: "Assumed" },
+          matches: true,
+        },
+        finalLife: null,
+      },
+      totalLifeLost: { value: 40, evidence: "Assumed" },
+      selfLossShare: { value: 0.45, evidence: "Assumed" },
+    });
+  });
+
+  it("surfaces inconsistent summary averages separately from self-loss reconciliation", () => {
+    const changed = structuredClone(game);
+    changed.statistics.averageValuePerTurn = 10.68;
+    changed.statistics.averageCombatValuePerTurn = 13.68;
+    expect(createGameReport(changed, { startingLife: 40 })).toMatchObject({
+      checks: {
+        averageValuePerTurn: { matches: false },
+        averageCombatValuePerTurn: { matches: false },
+      },
+    });
+  });
+
+  it("does not treat matching summary checks as proof of self-loss timing", () => {
+    const redistributed = structuredClone(game);
+    redistributed.turns[0]!.totalValue++;
+    redistributed.turns[1]!.totalValue--;
+    const report = createGameReport(redistributed, { startingLife: 40 });
+    expect(report.checks.averageValuePerTurn.matches).toBe(true);
+    expect(report.checks.averageCombatValuePerTurn.matches).toBe(true);
+    expect(report.turns[0]!.selfLost).toMatchObject({
+      value: -1,
+      evidence: "Assumed",
+    });
+    expect(report.turns[0]!.life).toMatchObject({
+      value: 39,
+      evidence: "Assumed",
+    });
+    expect(report.selfLoss.recovered.value).toBe(-18);
+  });
+
+  it("checks independent final life without automatically upgrading the derived labels", () => {
+    expect(
+      createGameReport(game, {
+        startingLife: 40,
+        finalLife: {
+          value: 0,
+          evidence: "Observed",
+          source: "Independent example game log",
+        },
+      }),
+    ).toMatchObject({
+      checks: {
+        finalLife: {
+          expected: {
+            value: 0,
+            evidence: "Observed",
+            source: "Independent example game log",
+          },
+          calculated: { value: 0, evidence: "Assumed" },
+          matches: true,
+        },
+      },
+      totalLifeLost: { evidence: "Assumed" },
+      selfLossShare: { evidence: "Assumed" },
+    });
+  });
+
+  it("rejects a discrepancy with independently supplied final life", () => {
+    expect(() =>
+      createGameReport(game, {
+        startingLife: 40,
+        finalLife: {
+          value: 18,
+          evidence: "Observed",
+          source: "Independent example game log",
+        },
+      }),
+    ).toThrow(/calculated final life 0.*18/i);
+  });
+
+  it("does not infer zero final life or reject a concession from the result", () => {
+    const conceded = structuredClone(game);
+    conceded.turns[1]!.damageTaken -= 5;
+    expect(
+      createGameReport(conceded, {
+        startingLife: 40,
+        finalLife: {
+          value: 5,
+          evidence: "Observed",
+          source: "Example concession with life remaining",
+        },
+      }),
+    ).toMatchObject({ checks: { finalLife: { matches: true } } });
+    expect(createGameReport(conceded, { startingLife: 40 })).toMatchObject({
+      checks: { finalLife: null },
+    });
+  });
+
+  it("has no defined summary-average comparison when there are no rows", () => {
+    const empty = structuredClone(game);
+    empty.turns = [];
+    empty.summary.turns = 0;
+    empty.statistics.totalLifeSelfLost = 0;
+    expect(createGameReport(empty, { startingLife: 40 })).toMatchObject({
+      checks: {
+        averageValuePerTurn: { calculated: { value: null }, matches: null },
+        averageCombatValuePerTurn: {
+          calculated: { value: null },
+          matches: null,
+        },
+      },
+    });
+  });
+
+  it.each([
+    { value: NaN, evidence: "Observed", source: "Log" },
+    { value: 0, evidence: "Observed", source: "" },
+    { value: 0, evidence: "Unknown", source: "Log" },
+  ])("rejects unsupported final-life evidence: %j", (finalLife) => {
+    expect(() =>
+      createGameReport(game, {
+        startingLife: 40,
+        finalLife: finalLife as {
+          value: number;
+          evidence: "Observed";
+          source: string;
+        },
+      }),
+    ).toThrow(/final life/i);
+  });
 
   it("rejects a value formula that does not reconcile instead of inventing timing", () => {
     const changed = structuredClone(game);

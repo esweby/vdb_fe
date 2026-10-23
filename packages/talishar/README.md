@@ -40,8 +40,21 @@ subtracting damage threatened, damage blocked, damage prevented and life gained.
 It checks the result against the observed signed game total, and rejects a
 mismatch or a positive recovered loss with `TalisharReportError`. Recovered
 self-loss and life remain Assumed because the export formula is a dependency.
+Gross life lost and its self-loss share are also Assumed: they depend on Damage
+Taken and self-loss not overlapping. The signed self-loss total remains Observed.
 Calculated life is not clamped to zero: a negative balance remains visible.
 See the [real worked example and source evidence](report-example.md).
+
+`checks` compares the reported value and combat-value averages with the row
+totals divided by row count, rounded to two decimal places. A mismatch is shown
+as `matches: false`; no rows gives a `null` calculated average and comparison.
+These comparisons check totals, not self-loss timing.
+
+An optional `finalLife` measure supplies independently known final life, with
+its evidence and source. The report rejects a discrepancy with calculated final
+life and returns the comparison under `checks.finalLife`. Without that input,
+the check is `null`: a result of “Loser” does not establish zero final life.
+Successful checks do not automatically upgrade the derived labels.
 
 The cause of self-loss remains unknown unless `selfLossBreakdown` supplies a
 turn's `bloodDebt` and `otherSelfLost`. Each is a signed non-positive integer

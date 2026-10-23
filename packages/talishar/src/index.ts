@@ -4,6 +4,7 @@ export type {
   Measure,
   SelfLossBreakdown,
   ReportInputs,
+  ReportCheck,
   TurnReport,
   GameReport,
 } from "./report.ts";
