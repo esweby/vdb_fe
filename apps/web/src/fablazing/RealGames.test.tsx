@@ -179,6 +179,12 @@ async function matchupsTab(signedIn: boolean, extra: MatchupStat[] = []) {
       ],
     }),
   });
+  if (signedIn)
+    await userEvent
+      .setup()
+      .click(
+        screen.getByText("Matchups in real games", { selector: "summary" }),
+      );
   return within(
     await screen.findByRole("region", { name: "Viserai in real games" }),
   );

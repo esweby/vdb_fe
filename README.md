@@ -530,7 +530,8 @@ synergy_feedback (user_id, rule_id, from_card_id, to_card_id, verdict, weight nu
 decks            (id, user_id, name, ...)
 deck_cards       (deck_id, variant_id, quantity, sideboard boolean default false)
                  -- the card pool, incl. weapons and equipment
-deck_loadouts    (id, deck_id, name, is_default)
+deck_loadouts    (id, deck_id, name, is_default, opponent_hero_id null)
+                 -- named sideboard plans; an opposing hero is optional
 loadout_cards    (loadout_id, variant_id, quantity)
                  -- main deck + weapons + equipment for one game; a subset of the pool
 deck_versions    (id, deck_id, number, created_at, snapshot jsonb, fabrary_url null)

@@ -57,6 +57,10 @@ Game logic decided by the maintainer, with where it lives. Anything not here is 
 
 - **Base of the Mountain:** "Base of the Mountain banishes a card and then it goes as a defending card and to the graveyard. The only exception to this is when it is paired with the equipment that banishes defending cards when the chainlink closes." A temporary banish isn't a hand banisher, so it doesn't feed Gates, fill the banished zone or link to cards played from banish (it had been asked whether it helps Usurp the Shadow Throne). The exception is Reach of the Abyss, linked by hand (the maintainer thinks it is the only one). It doesn't care whether the banished cards are Shadow or Runeblade, so it isn't linked to banish-type payoffs. It does help "when banished" cards: banishing Arknight Descendancy offers its 3 life for 3 Runechants without leaving it stuck in arsenal. No other card shares the pattern. See [synergy-rules.md](synergy-rules.md).
 
+**23 Oct 2026**
+
+- **Sideboard plans:** a plan can have a custom name without an opposing hero. Hero-specific plans still work. The Matchups tab keeps saved plans in a compact sidebar beside the editor. Card rows are the default; Pictures remains an option. Weapons and equipment, and population matchup statistics, are folded away. Goldfish and scenarios can play a named plan. Exported versions keep the plans as saved at export time.
+
 ## Open
 
 **For the maintainer**

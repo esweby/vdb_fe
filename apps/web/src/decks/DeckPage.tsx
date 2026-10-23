@@ -97,6 +97,7 @@ export function DeckPage() {
     log,
     fixed,
     vs,
+    plan: planId,
     mode,
   } = route.useSearch();
   const navigate = useNavigate();
@@ -332,7 +333,11 @@ export function DeckPage() {
   // Only the owner changes a deck; anyone else sees a public one read only.
   const canEdit = user?.id === deck.ownerId;
   // The plan being played, if any: its cards are the main deck for goldfish and scenarios.
-  const playing = vs ? plans.matchups.find((m) => m.heroId === vs) : undefined;
+  const playing = planId
+    ? plans.matchups.find((matchup) => matchup.id === planId)
+    : vs
+      ? plans.matchups.find((matchup) => matchup.heroId === vs)
+      : undefined;
   const playEntries = playing
     ? entriesForMatchup(entries, playing.cards)
     : entries;
@@ -355,6 +360,9 @@ export function DeckPage() {
         // The matchup being played carries between goldfish and scenarios.
         ...(vs && (next.tab === "goldfish" || next.tab === "scenarios")
           ? { vs }
+          : {}),
+        ...(planId && (next.tab === "goldfish" || next.tab === "scenarios")
+          ? { plan: planId }
           : {}),
       },
     });
@@ -465,7 +473,7 @@ export function DeckPage() {
             <label>
               <span>Playing</span>
               <select
-                value={playing?.heroId ?? ""}
+                value={playing?.id ?? ""}
                 onChange={(e) =>
                   void navigate({
                     to: ".",
@@ -475,15 +483,15 @@ export function DeckPage() {
                       tab,
                       // The same shuffle, with or without the plan, to compare.
                       ...(seed !== undefined ? { seed } : {}),
-                      ...(e.target.value ? { vs: e.target.value } : {}),
+                      ...(e.target.value ? { plan: e.target.value } : {}),
                     },
                   })
                 }
               >
                 <option value="">{`Main deck · ${deckCount(entries)} cards`}</option>
                 {plans.matchups.map((m) => (
-                  <option key={m.id} value={m.heroId}>
-                    {`vs ${plans.heroes.find((h) => h.id === m.heroId)?.name ?? "an unknown hero"} · ${deckCount(entriesForMatchup(entries, m.cards))} cards`}
+                  <option key={m.id} value={m.id}>
+                    {`${m.name} · ${deckCount(entriesForMatchup(entries, m.cards))} cards`}
                   </option>
                 ))}
               </select>
@@ -527,6 +535,7 @@ export function DeckPage() {
                 search: {
                   tab: "scenarios",
                   ...(vs ? { vs } : {}),
+                  ...(planId ? { plan: planId } : {}),
                   ...(next === "create" ? { mode: "create" as const } : {}),
                 },
               })

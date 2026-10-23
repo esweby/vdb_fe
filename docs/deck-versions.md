@@ -13,8 +13,8 @@ The server takes a copy of the saved deck in one database statement. It includes
 - Every main deck and sideboard row, including weapons and equipment, with its quantity
   and sideboard flag. A card split between the two keeps both rows.
 - Each card's variant id, external id, name, pitch, type and subtypes at export time.
-- Every loadout, including the default and matchup plans: name, default flag, opposing
-  hero id and name where present, and card quantities.
+- Every loadout, including the default, hero-specific and custom named sideboard plans: name, default flag, opposing
+  hero id and name where present, and card quantities. A custom plan needs no hero.
 
 The FaBrary link is built from that saved copy. It sends the hero and the whole pool,
 as the existing import link does. FaBrary does not receive the split or the loadouts.

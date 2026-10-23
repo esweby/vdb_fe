@@ -822,7 +822,6 @@
   gap: 1rem;
 }
 .matchups > header,
-.matchupList,
 .matchupPick {
   max-width: 56rem;
 }
@@ -842,10 +841,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: 0.5rem;
-  background: var(--surface);
+  min-width: 0;
 }
 .matchupPick {
   display: grid;
@@ -863,10 +859,7 @@
 .matchupPlan {
   display: grid;
   gap: 0.6rem;
-  padding: 1rem;
-  border: 1px solid var(--border);
-  border-radius: 0.6rem;
-  background: var(--surface);
+  min-width: 0;
 }
 .matchupPlan h3,
 .matchupPlan p {
@@ -895,14 +888,12 @@
    arrow, shown on hover or focus, boards one copy across (the maintainer, 20 Oct 2026). */
 .matchupBoard {
   display: grid;
-  grid-template-columns: 3fr 2fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
   align-items: start;
 }
 .matchupSide {
-  padding: 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: 0.6rem;
+  min-width: 0;
 }
 .matchupSide h4 {
   margin: 0 0 0.5rem;
@@ -980,7 +971,153 @@
 
 .matchupActions {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 0.5rem;
+}
+
+.matchupWorkspace {
+  display: grid;
+  grid-template-columns: 13rem minmax(0, 1fr);
+  align-items: start;
+  gap: 1.5rem;
+}
+.matchupNav {
+  display: grid;
+  gap: 0.75rem;
+  padding-right: 1rem;
+  border-right: 1px solid var(--border);
+  min-width: 0;
+}
+.matchupList button {
+  width: 100%;
+  padding: 0.65rem;
+  display: grid;
+  gap: 0.2rem;
+  text-align: left;
+  font: inherit;
+  color: var(--fg);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 0.4rem;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.matchupList button[aria-pressed="true"] {
+  border-color: var(--border);
+  background: var(--surface);
+}
+.matchupList small {
+  color: var(--muted);
+}
+.matchupEditorHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.matchupFields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.matchupFields .matchupPick {
+  max-width: none;
+  align-content: start;
+}
+.matchupFields select {
+  min-width: 0;
+  padding: 0.55rem 0.6rem;
+}
+.matchupChanges {
+  border-left: 2px solid var(--accent);
+  padding-left: 0.75rem;
+  overflow-wrap: anywhere;
+}
+.matchupView {
+  display: flex;
+  gap: 0.4rem;
+}
+.matchupView button[aria-pressed="true"] {
+  background: var(--surface);
+}
+.matchupGear,
+.matchupPopulation {
+  padding-block: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+.matchupGear summary,
+.matchupPopulation summary {
+  cursor: pointer;
+}
+.matchupGear .matchupBoard {
+  margin-top: 0.75rem;
+}
+.matchupWarning {
+  color: var(--muted);
+}
+.matchupCards[data-view="rows"] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+.matchupCards[data-view="rows"] li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-block: 0.55rem;
+  border-bottom: 1px solid var(--border);
+}
+.matchupCardName {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.matchupCards[data-view="rows"] .matchupCount {
+  position: static;
+  padding: 0;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+}
+.matchupCards[data-view="rows"] .matchupMove {
+  position: static;
+  flex-shrink: 0;
+  opacity: 1;
+  padding: 0.3rem 0.4rem;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--fg);
+  font: inherit;
+}
+@media (max-width: 65rem) {
+  .matchupWorkspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .matchupNav {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+    padding: 0 0 0.75rem;
+  }
+  .matchupList {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .matchupList button {
+    padding: 0.35rem 0.5rem;
+  }
+  .matchupList small {
+    display: none;
+  }
+  .matchupNav > button {
+    justify-self: start;
+  }
+}
+@media (max-width: 40rem) {
+  .matchupFields {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /* Goldfish and scenarios: which list is being played (main deck or a matchup plan). */
