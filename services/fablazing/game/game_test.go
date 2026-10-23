@@ -147,6 +147,22 @@ g,1,1,"{'playerHero': 'viserai_usurper', 'turns': 3, 'cardResults': [], 'turnRes
 	}
 }
 
+// Engine calibration (docs/engine-calibration.md) compares the engine's
+// Runechant damage with arcaneDamageDealt, and keeps damage before blocks.
+func TestTurnStatsReadArcaneAndThreatenedDamage(t *testing.T) {
+	const csv = `game_guid,game_id,format,deck1_json,deck2_json,created_at,conceded
+g,1,1,"{'playerHero': 'viserai_usurper', 'turns': 1, 'cardResults': [], 'turnResults': {'turn_0': {'damageDealt': 6, 'damageThreatened': 10, 'arcaneDamageDealt': 2}}}","{'playerHero': 'x'}",2026-10-20 10:00:00,False
+`
+	games, err := ReadAll(strings.NewReader(csv))
+	if err != nil {
+		t.Fatal(err)
+	}
+	ts := games[0].Sides[0].TurnStats[0]
+	if ts.DamageThreatened != 10 || ts.ArcaneDealt != 2 || ts.DamageDealt != 6 {
+		t.Fatalf("turn stats: %+v", ts)
+	}
+}
+
 func TestWentFirst(t *testing.T) {
 	// FaBlazing (21 Oct 2026): firstPlayer is per side, 1 = this player went first.
 	if !(Side{FirstPlayer: 1}).WentFirst() {

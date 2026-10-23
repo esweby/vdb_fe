@@ -1,5 +1,5 @@
 // The app's cards as the rules engine sees them (docs/rules-engine.md, step 7b): the counting
-// engine's card, plus the variant's cost, natural go again, and the card's verified rules by name.
+// engine's card, plus the variant's cost and printed power, natural go again, and the card's verified rules by name.
 // A card with no verified rules stays unmodelled: the engine can pitch or hold it, not play it.
 import { cardWithRules, type RulesCard } from "@vdb/engine/rules";
 import type { CardSummary, VariantSummary } from "../cards/cardRepository.ts";
@@ -12,6 +12,7 @@ export function rulesCardOf(
   return cardWithRules({
     ...engineCardOf(card, variant),
     cost: variant.cost,
+    power: variant.power,
     goAgain: card.attributes.hasGoAgain,
   });
 }
