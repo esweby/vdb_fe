@@ -3,8 +3,10 @@ import type {
   DeckRepository,
   Hero,
   Matchup,
+  DeckVersion,
 } from "../decks/deckRepository.ts";
 import type { FormatRules } from "../decks/deckRules.ts";
+import { sampleCards } from "./fakeCardRepository.ts";
 
 export const sampleRules: FormatRules = {
   copyLimit: 3,
@@ -20,8 +22,14 @@ export type DeckFixture = Omit<Deck, "isPublic" | "ownerId"> &
 /** An in-memory DeckRepository; `saved` records every write. New decks belong to `userId`. */
 export function fakeDeckRepository(
   initial: DeckFixture[] = [],
-  options: { userId?: string; heroes?: Hero[]; matchups?: Matchup[] } = {},
+  options: {
+    userId?: string;
+    heroes?: Hero[];
+    matchups?: Matchup[];
+    versions?: DeckVersion[];
+  } = {},
 ) {
+  let versions: DeckVersion[] = [...(options.versions ?? [])];
   let matchups = [...(options.matchups ?? [])];
   let nextMatchup = 0;
   let decks: Deck[] = initial.map((d) => ({
@@ -33,6 +41,64 @@ export function fakeDeckRepository(
   const summary = ({ pitchTargets: _, ...d }: Deck) => d;
   const saved: string[] = [];
   const repository: DeckRepository = {
+    listVersions: async (deckId) =>
+      versions
+        .filter((v) => v.deckId === deckId)
+        .sort((a, b) => b.number - a.number),
+    async saveVersion(deckId) {
+      saved.push(`version ${deckId}`);
+      const deck = decks.find((d) => d.id === deckId)!;
+      const version: DeckVersion = {
+        id: `version-${versions.length + 1}`,
+        deckId,
+        number: versions.filter((v) => v.deckId === deckId).length + 1,
+        createdAt: "2026-10-23T12:00:00Z",
+        fabraryUrl: null,
+        snapshot: {
+          schemaVersion: 1,
+          name: deck.name,
+          hero: "Viserai, the Forsaken",
+          format: "Classic Constructed",
+          pitchTargets: { ...deck.pitchTargets },
+          cards: deck.cards.map((entry) => {
+            const card = sampleCards.find((card) =>
+              card.variants.some((variant) => variant.id === entry.variantId),
+            )!;
+            const variant = card.variants.find(
+              (variant) => variant.id === entry.variantId,
+            )!;
+            return {
+              ...entry,
+              externalId: entry.variantId,
+              name: card.name,
+              pitch: variant.pitch,
+              type: card.type,
+              subtypes: [...card.subtypes],
+            };
+          }),
+          loadouts: matchups
+            .filter((matchup) => matchup.deckId === deckId)
+            .map((matchup) => ({
+              id: matchup.id,
+              name: "Matchup",
+              isDefault: false,
+              opponentHeroId: matchup.heroId,
+              opponentHeroName:
+                options.heroes?.find((hero) => hero.id === matchup.heroId)
+                  ?.name ?? null,
+              cards: matchup.cards.map((card) => ({ ...card })),
+            })),
+        },
+      };
+      versions = [version, ...versions];
+      return version;
+    },
+    async setVersionLink(id, url) {
+      saved.push(`version link ${id} ${url ?? ""}`);
+      versions = versions.map((v) =>
+        v.id === id ? { ...v, fabraryUrl: url } : v,
+      );
+    },
     listMyDecks: async (userId) =>
       decks.filter((d) => d.ownerId === userId).map(summary),
     listPublicDecks: async () => decks.filter((d) => d.isPublic).map(summary),

@@ -533,6 +533,8 @@ deck_cards       (deck_id, variant_id, quantity, sideboard boolean default false
 deck_loadouts    (id, deck_id, name, is_default)
 loadout_cards    (loadout_id, variant_id, quantity)
                  -- main deck + weapons + equipment for one game; a subset of the pool
+deck_versions    (id, deck_id, number, created_at, snapshot jsonb, fabrary_url null)
+                 -- private export copies; only the optional FaBrary link can be edited
 scenarios        (id, user_id, name, definition jsonb, definition_version,
                   visibility default 'private')
                  -- visibility: private | link | library (library set by curators only)

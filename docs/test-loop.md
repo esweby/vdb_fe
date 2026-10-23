@@ -76,7 +76,7 @@ The CSV's self-loss total is Observed. Gross life lost and its self-loss share a
 
 The immediate implementation order is in [AGENTS.md](../AGENTS.md): the standalone CSV parser, a report from its typed record, then deck versions. The list below describes the wider loop; upload and comparison follow the maintainer's review of those first pieces.
 
-1. **Deck versions.** Today a deck keeps only its current list (`deck_cards`). Opening a deck in FaBrary saves the list as a version. FaBrary's import link sends the cards and nothing comes back, so the FaBrary deck id isn't known; the player can paste the FaBrary link onto the version if they want to. A new table needs grants and an entry in `06_privileges.test.sql`.
+1. **Deck versions.** Opening a deck in FaBrary saves the list as a version. [Snapshot contents, repeat exports, ownership and deletion](deck-versions.md) are documented separately. FaBrary's import link sends the cards and nothing comes back, so the FaBrary deck id isn't known; the player can paste the FaBrary link onto the version if they want to. A new table needs grants and an entry in `06_privileges.test.sql`.
 2. **Upload a game.** A CSV dropped onto a version, parsed and stored with the note. The CSV's cards are checked against the version's list; on a mismatch the site warns and suggests the version that fits.
 3. **A report per game.** Life by turn, blocking, the blender, life lost to yourself, damage dealt.
 4. **The deck's plan.** Turn goals written on the deck, carried across versions, each with the measure that checks it.
