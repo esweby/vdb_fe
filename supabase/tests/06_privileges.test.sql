@@ -2,7 +2,13 @@
 -- authenticated by default (local stacks do), so every grant must be explicit.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(84);
+select plan(87);
+
+select table_privs_are('public', 'deck_versions', 'anon', array[]::text[], 'anon has no access to deck versions');
+select table_privs_are('public', 'deck_versions', 'authenticated', array['SELECT'], 'owners read versions, with only column updates');
+select ok(has_column_privilege('authenticated', 'public.deck_versions', 'fabrary_url', 'UPDATE')
+  and not has_column_privilege('authenticated', 'public.deck_versions', 'snapshot', 'UPDATE'),
+  'only the optional FaBrary link can be updated');
 
 -- Public reference data: readable by everyone
 select table_privs_are('public', t, 'anon', array['SELECT'], 'anon can only read ' || t)

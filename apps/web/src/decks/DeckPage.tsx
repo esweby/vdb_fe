@@ -1,5 +1,5 @@
 import { getRouteApi, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { CardSummary, VariantSummary } from "../cards/cardRepository.ts";
 import { useCards } from "../cards/useCards.ts";
 import { useAppSelector } from "../hooks.ts";
@@ -21,6 +21,7 @@ import { ConditionAvailabilityPanel } from "./ConditionAvailabilityPanel.tsx";
 import { DeckGapsPanel } from "./DeckGapsPanel.tsx";
 import { DeckScenarios } from "./DeckScenarios.tsx";
 import { DeckSettings } from "./DeckSettings.tsx";
+import { DeckVersions } from "./DeckVersions.tsx";
 import { MatchupsPanel } from "./MatchupsPanel.tsx";
 import { entriesForMatchup } from "./matchupEntries.ts";
 import { Goldfish } from "./Goldfish.tsx";
@@ -32,6 +33,7 @@ import type {
   Hero,
   Matchup,
   PitchTargets,
+  DeckVersion,
 } from "./deckRepository.ts";
 import {
   deckCounts,
@@ -104,6 +106,11 @@ export function DeckPage() {
   const [rules, setRules] = useState<FormatRules | null>(null);
   const [error, setError] = useState<string | null>(null);
   const user = useAppSelector((s) => s.auth.user);
+  const [latestVersion, setLatestVersion] = useState<DeckVersion | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const exportInFlight = useRef(false);
+  const [pendingWrites, setPendingWrites] = useState(0);
+  const writesInFlight = useRef(0);
   // Matchup plans and their heroes, for "Playing" on goldfish and scenarios. Row level
   // security returns only the owner's plans.
   const [plans, setPlans] = useState<{ matchups: Matchup[]; heroes: Hero[] }>({
@@ -178,11 +185,16 @@ export function DeckPage() {
       cards = card.quantity > 0 ? [...others, card] : others;
     }
     setDeck({ ...deck, cards });
+    writesInFlight.current += 1;
+    setPendingWrites(writesInFlight.current);
     try {
       for (const card of changes) await decks.setCard(deck.id, card);
     } catch (e) {
       setDeck(previous);
       setError(`Couldn't save: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      writesInFlight.current -= 1;
+      setPendingWrites(writesInFlight.current);
     }
   }
   const setCard = (card: DeckCard) => setCards(card);
@@ -191,11 +203,49 @@ export function DeckPage() {
     if (!deck) return;
     const previous = deck;
     setDeck({ ...deck, pitchTargets: targets });
+    writesInFlight.current += 1;
+    setPendingWrites(writesInFlight.current);
     try {
       await decks.setPitchTargets(deck.id, targets);
     } catch (e) {
       setDeck(previous);
       setError(`Couldn't save: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      writesInFlight.current -= 1;
+      setPendingWrites(writesInFlight.current);
+    }
+  }
+
+  async function openInFabrary() {
+    if (!deck || user?.id !== deck.ownerId) return;
+    if (exportInFlight.current || writesInFlight.current > 0) return;
+    const popup = window.open("about:blank", "_blank");
+    if (!popup) {
+      setError("Allow a new tab to open in FaBrary, then try again.");
+      return;
+    }
+    popup.opener = null;
+    exportInFlight.current = true;
+    setExporting(true);
+    setError(null);
+    try {
+      const version = await decks.saveVersion(deck.id);
+      setLatestVersion(version);
+      popup.location.href = fabraryImportLink(
+        version.snapshot.hero,
+        version.snapshot.name,
+        version.snapshot.cards.map((card) => ({
+          card: { name: card.name },
+          variant: { pitch: card.pitch },
+          quantity: card.quantity,
+        })),
+      );
+    } catch {
+      popup.close();
+      setError("Couldn't save a version. Try opening in FaBrary again.");
+    } finally {
+      exportInFlight.current = false;
+      setExporting(false);
     }
   }
 
@@ -319,14 +369,26 @@ export function DeckPage() {
           <h1>{deck.name}</h1>
           <div className={styles.deckActions}>
             {/* FaBrary's import form, filled in; the player presses Import there. */}
-            <a
-              className={styles.fabraryLink}
-              href={fabraryImportLink(HERO, deck.name, entries)}
-              target="_blank"
-              rel="noreferrer"
-            >
-              Open in FaBrary <span aria-hidden="true">↗</span>
-            </a>
+            {canEdit ? (
+              <button
+                type="button"
+                className={styles.fabraryLink}
+                disabled={exporting || pendingWrites > 0}
+                onClick={() => void openInFabrary()}
+              >
+                {exporting ? "Saving version…" : "Open in FaBrary"}{" "}
+                <span aria-hidden="true">↗</span>
+              </button>
+            ) : (
+              <a
+                className={styles.fabraryLink}
+                href={fabraryImportLink(HERO, deck.name, entries)}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open in FaBrary <span aria-hidden="true">↗</span>
+              </a>
+            )}
             {canEdit && (
               <DeckSettings
                 deck={deck}
@@ -359,6 +421,13 @@ export function DeckPage() {
       </header>
 
       {error && <p role="alert">{error}</p>}
+      {canEdit && (
+        <DeckVersions
+          key={deck.id}
+          deckId={deck.id}
+          latest={latestVersion?.deckId === deck.id ? latestVersion : null}
+        />
+      )}
       {problems.length > 0 && (
         <ul className={styles.problems}>
           {problems.map((p) => (

@@ -48,6 +48,38 @@ export interface Matchup {
   cards: { variantId: string; quantity: number }[];
 }
 
+export interface DeckSnapshot {
+  schemaVersion: 1;
+  name: string;
+  hero: string;
+  format: string;
+  pitchTargets: PitchTargets;
+  cards: (DeckCard & {
+    externalId: string;
+    name: string;
+    pitch: number | null;
+    type: string;
+    subtypes: string[];
+  })[];
+  loadouts: {
+    id: string;
+    name: string;
+    isDefault: boolean;
+    opponentHeroId: string | null;
+    opponentHeroName: string | null;
+    cards: { variantId: string; quantity: number }[];
+  }[];
+}
+
+export interface DeckVersion {
+  id: string;
+  deckId: string;
+  number: number;
+  createdAt: string;
+  snapshot: DeckSnapshot;
+  fabraryUrl: string | null;
+}
+
 export interface DeckRepository {
   /** The user's own decks, public and private, most recently changed first. */
   listMyDecks(userId: string): Promise<DeckSummary[]>;
@@ -80,11 +112,16 @@ export interface DeckRepository {
     cards: Matchup["cards"],
   ): Promise<Matchup>;
   deleteMatchup(id: string): Promise<void>;
+  listVersions(deckId: string): Promise<DeckVersion[]>;
+  saveVersion(deckId: string): Promise<DeckVersion>;
+  setVersionLink(versionId: string, url: string | null): Promise<void>;
 }
 
 const INVALID_UUID = "22P02";
 const SUMMARY =
   "id, name, updatedAt:updated_at, isPublic:is_public, ownerId:user_id, cards:deck_cards(variantId:variant_id, quantity, sideboard)";
+const VERSION =
+  "id, deckId:deck_id, number, createdAt:created_at, snapshot, fabraryUrl:fabrary_url";
 
 export function supabaseDeckRepository(client: SupabaseClient): DeckRepository {
   /** Adds each owner's username, read through public.usernames() (profiles stay private). */
@@ -108,6 +145,30 @@ export function supabaseDeckRepository(client: SupabaseClient): DeckRepository {
   }
 
   return {
+    async listVersions(deckId) {
+      const { data, error } = await client
+        .from("deck_versions")
+        .select(VERSION)
+        .eq("deck_id", deckId)
+        .order("number", { ascending: false });
+      if (error) throw error;
+      return data as DeckVersion[];
+    },
+    async saveVersion(deckId) {
+      const { data, error } = await client
+        .rpc("save_deck_version", { target_deck_id: deckId })
+        .select(VERSION)
+        .single();
+      if (error) throw error;
+      return data as DeckVersion;
+    },
+    async setVersionLink(versionId, url) {
+      const { error } = await client
+        .from("deck_versions")
+        .update({ fabrary_url: url })
+        .eq("id", versionId);
+      if (error) throw error;
+    },
     async listMyDecks(userId) {
       // Public decks are readable too, so filter by owner.
       const { data, error } = await client

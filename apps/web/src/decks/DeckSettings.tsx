@@ -122,8 +122,8 @@ export function DeckSettings(props: {
         }
       >
         <p>
-          This deletes the deck, its cards, matchup plans and scenario results.
-          It can&apos;t be undone.
+          This deletes the deck, its cards, versions, matchup plans and scenario
+          results. It can&apos;t be undone.
         </p>
       </Dialog>
     </div>

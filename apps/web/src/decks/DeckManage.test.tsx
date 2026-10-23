@@ -2,7 +2,7 @@
 // able to be renamed. It should be able to be deleted with a confirmation."
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { fakeAuthService } from "../test/fakeAuthService.ts";
 import { fakeDeckRepository } from "../test/fakeDeckRepository.ts";
 import { renderApp } from "../test/renderApp.tsx";
@@ -32,8 +32,190 @@ async function open(ownerId = "u1", isPublic = false) {
 }
 
 describe("opening a deck in FaBrary", () => {
+  it("saves a version before navigating, using the saved snapshot for the link", async () => {
+    const { fake, user } = await open();
+    const original = fake.repository.saveVersion;
+    vi.spyOn(fake.repository, "saveVersion").mockImplementation(async (id) => {
+      const version = await original(id);
+      return {
+        ...version,
+        snapshot: {
+          ...version.snapshot,
+          name: "Saved name",
+          cards: version.snapshot.cards.map((card) => ({
+            ...card,
+            name: "Saved card",
+            pitch: 3,
+            quantity: 1,
+          })),
+        },
+      };
+    });
+    const popup = { location: { href: "" }, close: vi.fn(), opener: {} };
+    const openWindow = vi
+      .spyOn(window, "open")
+      .mockReturnValue(popup as unknown as Window);
+    try {
+      await user.click(screen.getByRole("button", { name: "Open in FaBrary" }));
+      await waitFor(() => expect(fake.saved).toContain("version deck-1"));
+      expect(popup.location.href).toContain("https://fabrary.net/decks?");
+      const url = new URL(popup.location.href);
+      expect(url.searchParams.get("name")).toBe("Saved name");
+      expect(url.searchParams.get("cards")).toBe(
+        "viserai-the-forsaken,saved-card-blue",
+      );
+      expect(popup.opener).toBeNull();
+      expect(await screen.findByText("Version 1")).toBeInTheDocument();
+    } finally {
+      openWindow.mockRestore();
+    }
+  });
+
+  it("keeps the tab blank until saving finishes and prevents a second export while saving", async () => {
+    const { fake, user } = await open();
+    const original = fake.repository.saveVersion;
+    let finish!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+    const save = vi
+      .spyOn(fake.repository, "saveVersion")
+      .mockImplementation(async (id) => {
+        await gate;
+        return original(id);
+      });
+    const popup = { location: { href: "" }, close: vi.fn(), opener: {} };
+    const openWindow = vi
+      .spyOn(window, "open")
+      .mockReturnValue(popup as unknown as Window);
+    try {
+      await user.click(screen.getByRole("button", { name: "Open in FaBrary" }));
+      expect(popup.location.href).toBe("");
+      expect(
+        screen.getByRole("button", { name: "Saving version…" }),
+      ).toBeDisabled();
+      await user.click(screen.getByRole("button", { name: "Saving version…" }));
+      expect(save).toHaveBeenCalledTimes(1);
+      finish();
+      await waitFor(() =>
+        expect(popup.location.href).toContain("https://fabrary.net/"),
+      );
+      await user.click(screen.getByRole("button", { name: "Open in FaBrary" }));
+      expect(await screen.findByText("Version 2")).toBeInTheDocument();
+    } finally {
+      finish();
+      openWindow.mockRestore();
+    }
+  });
+
+  it("closes the blank tab on save failure and lets the player try again", async () => {
+    const { fake, user } = await open();
+    vi.spyOn(fake.repository, "saveVersion").mockRejectedValueOnce(
+      new Error("offline"),
+    );
+    const popup = { location: { href: "" }, close: vi.fn(), opener: {} };
+    const openWindow = vi
+      .spyOn(window, "open")
+      .mockReturnValue(popup as unknown as Window);
+    try {
+      await user.click(screen.getByRole("button", { name: "Open in FaBrary" }));
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "Couldn't save a version",
+      );
+      expect(popup.close).toHaveBeenCalledOnce();
+      expect(popup.location.href).toBe("");
+      await user.click(screen.getByRole("button", { name: "Open in FaBrary" }));
+      expect(await screen.findByText("Version 1")).toBeInTheDocument();
+    } finally {
+      openWindow.mockRestore();
+    }
+  });
+
+  it("does not save a version when the browser blocks the new tab", async () => {
+    const { fake, user } = await open();
+    const openWindow = vi.spyOn(window, "open").mockReturnValue(null);
+    try {
+      await user.click(screen.getByRole("button", { name: "Open in FaBrary" }));
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "Allow a new tab",
+      );
+      expect(fake.saved).not.toContain("version deck-1");
+    } finally {
+      openWindow.mockRestore();
+    }
+  });
+
+  it("waits for card edits to save before allowing an export", async () => {
+    const { fake, user } = await open();
+    const original = fake.repository.setCard;
+    let finish!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+    vi.spyOn(fake.repository, "setCard").mockImplementation(
+      async (id, card) => {
+        await gate;
+        return original(id, card);
+      },
+    );
+    try {
+      await user.click(
+        screen.getByRole("button", { name: "One fewer Hocus Pocus (red)" }),
+      );
+      expect(
+        screen.getByRole("button", { name: "Open in FaBrary" }),
+      ).toBeDisabled();
+      finish();
+      await waitFor(() =>
+        expect(
+          screen.getByRole("button", { name: "Open in FaBrary" }),
+        ).toBeEnabled(),
+      );
+    } finally {
+      finish();
+    }
+  });
+
+  it("saves, replaces and clears an optional FaBrary link, rejecting other sites", async () => {
+    const { fake, user } = await open();
+    const openWindow = vi.spyOn(window, "open").mockReturnValue({
+      location: { href: "" },
+      close: vi.fn(),
+      opener: {},
+    } as unknown as Window);
+    try {
+      await user.click(screen.getByRole("button", { name: "Open in FaBrary" }));
+      await user.click(await screen.findByText("Versions (1)"));
+      await user.click(screen.getByText("Version 1"));
+      const field = screen.getByRole("textbox", {
+        name: "FaBrary link for version 1",
+      });
+      await user.type(field, "https://other.example/decks/1");
+      await user.click(screen.getByRole("button", { name: "Save link" }));
+      expect(fake.saved).toEqual(["version deck-1"]);
+      expect(screen.getByText(/Use a FaBrary deck link/)).toBeInTheDocument();
+      await user.clear(field);
+      await user.type(field, "https://fabrary.net/decks/first");
+      await user.click(screen.getByRole("button", { name: "Save link" }));
+      expect(fake.saved).toContain(
+        "version link version-1 https://fabrary.net/decks/first",
+      );
+      await user.clear(field);
+      await user.type(field, "https://fabrary.net/decks/second");
+      await user.click(screen.getByRole("button", { name: "Save link" }));
+      expect(fake.saved).toContain(
+        "version link version-1 https://fabrary.net/decks/second",
+      );
+      await user.clear(field);
+      await user.click(screen.getByRole("button", { name: "Save link" }));
+      expect(fake.saved).toContain("version link version-1 ");
+    } finally {
+      openWindow.mockRestore();
+    }
+  });
+
   it("links to FaBrary's import form filled in with the hero and every copy", async () => {
-    await open();
+    await open("u2", true);
     const link = screen.getByRole("link", { name: "Open in FaBrary" });
     const url = new URL(link.getAttribute("href") ?? "");
     expect(url.searchParams.get("name")).toBe("Gate tempo");
@@ -44,10 +226,12 @@ describe("opening a deck in FaBrary", () => {
   });
 
   it("is there on someone else's public deck too", async () => {
-    await open("u2", true);
+    const { fake } = await open("u2", true);
     expect(
       screen.getByRole("link", { name: "Open in FaBrary" }),
     ).toBeInTheDocument();
+    expect(screen.queryByText(/Versions \(/)).not.toBeInTheDocument();
+    expect(fake.saved).toEqual([]);
   });
 });
 
