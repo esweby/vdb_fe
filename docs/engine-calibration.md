@@ -8,16 +8,17 @@ Logs show associations, and the simulation tests counterfactuals. Causal words a
 
 ## What the engine can and can't be compared on
 
-The engine is a goldfish: it plays Viserai's own turns with no opponent, and attack resolution, blocking and damage to a hero are out of scope ([rules-engine.md](rules-engine.md), "Scope"). So it **has no attack damage to compare.** What it does produce:
+The engine is a goldfish: it plays Viserai's own turns with no opponent, and attack resolution, blocking and damage to a hero are out of scope ([rules-engine.md](rules-engine.md), "Scope"). It now counts threatened attack damage as described below, but does not resolve attacks. What it produces:
 
-| Engine output (per turn)                  | Observed counterpart (per turn index)                     | Comparable?                                                                                                          |
-| ----------------------------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| Arcane damage from Runechants             | `arcaneDamageDealt`                                       | **Yes.** The closest like-for-like number. The opponent can prevent arcane damage in a real game; the goldfish can't |
-| The first traverse to the Usurper         | The first `TRANSFORM` to `viserai_usurper`                | **Yes.** A logged event against an engine event                                                                      |
-| A Gate made, a Gate activated, BSL played | The chain library's steps                                 | **Only with a script that activates Gates.** The app's baseline script never does (see "The simulated side")         |
-| No attack power at all                    | `damageDealt` (after blocks), `damageThreatened` (before) | **No.** Reported observed only, as context                                                                           |
+| Engine output (per turn)                  | Observed counterpart (per turn index)      | Comparable?                                                                                                          |
+| ----------------------------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| Arcane damage from Runechants             | `arcaneDamageDealt`                        | **Yes.** The closest like-for-like number. The opponent can prevent arcane damage in a real game; the goldfish can't |
+| The first traverse to the Usurper         | The first `TRANSFORM` to `viserai_usurper` | **Yes.** A logged event against an engine event                                                                      |
+| A Gate made, a Gate activated, BSL played | The chain library's steps                  | **Only with a script that activates Gates.** The app's baseline script never does (see "The simulated side")         |
+| Threatened attack damage (a lower bound)  | `damageThreatened`                         | **Draft T6.** Reported separately, pending approval; whether the observed total includes arcane damage is unknown    |
+| No resolved attack damage                 | `damageDealt` (after blocks)               | **No.** Reported observed only, as context                                                                           |
 
-**Damage dealt by turn** is still produced on the observed side, as the brief asks, but it has no simulated counterpart. Comparing it would need the engine to count each attack's printed power as "threatened damage", which is a step towards combat. That's a decision for the maintainer (question 3), not part of this pass.
+**Damage dealt by turn** is still produced on the observed side, as the brief asks, but it has no simulated counterpart. The maintainer agreed to counting threatened damage on 21 Oct; that count is built and its draft T6 results are reported below. It does not model damage after blocks or prevention.
 
 ## The observed side
 
@@ -28,9 +29,9 @@ From `~/.cache/vdb/fablazing/viserai/*.csv`: 57 daily files, 21 Sep to 20 Oct 20
 - Viserai sides with detail (`turnResults` and `turnLog`), from games of **4 or more turn indexes**
 - abandoned early concessions left out, using the accepted rule (conceded within 2 turns at life above 20)
 - the player cap applied: each player's earliest 20 sides per day and format
-- reported pooled, by format, and by going first or second, since `firstPlayer`'s meaning is unknown ([data dictionary](fablazing-data-dictionary.md))
+- reported pooled, by format, and by going first or second. FaBlazing confirmed on 21 Oct that `firstPlayer` is 1 when this player went first, otherwise 0 ([data dictionary](fablazing-data-dictionary.md))
 
-**Turn numbering:** a turn index is a round, starting at 0. The engine's turn N is compared with turn index N − 1. Because which half of the round comes first is unknown, every comparison is also run with turn N against index N. **If a verdict changes between the two mappings, that's recorded as a data difference, not as within threshold.**
+**Turn numbering:** a turn index is a round, starting at 0. The engine's turn N is compared with turn index N − 1. Knowing who went first does not settle the mapping between an engine turn and the logged round, so the pre-registered check against index N is kept too. **If a verdict changes between the two mappings, that's recorded as a data difference, not as within threshold.**
 
 **Distributions written** (JSON, from a new Go command, `services/fablazing/cmd/fablazing-observed`):
 
