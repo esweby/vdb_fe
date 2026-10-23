@@ -7,10 +7,11 @@ the next worker. Maintainer decisions are quoted from 23 Oct.
 
 - **60 is the full deck.** A deck under 60 is measured as if padded to 60 with blanks
   (`FULL_DECK` in `apps/web/src/decks/useCardAvailability.ts`). That is a stopgap.
-- **Cutoff reading.** The maintainer's view is that a card you can't use inside 4 turns is
-  useless. The current measure is the opening hand of 4 (`RARELY_BELOW` = 25%, in
-  `cardAvailability.ts`), which is not the same thing. Both stay UNVERIFIED until the maintainer
-  or an experienced player settles them. Don't change the number on a guess.
+- **Cutoff reading.** The maintainer's example of a useless card was one that can't be used
+  inside 4 turns. It was an illustration, not a decision. The current measure is the opening
+  hand of 4 (`RARELY_BELOW` = 25%, in `cardAvailability.ts`), which is not the same thing. Both
+  stay UNVERIFIED until the maintainer or an experienced player settles them. Don't change the
+  number on a guess.
 
 ## To do
 

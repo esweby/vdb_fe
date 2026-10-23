@@ -9,9 +9,10 @@ a test covers it, and every answer is a player's reading, not a verified rule.
 Source: the Cards tab availability (`apps/web/src/decks/cardAvailability.ts`,
 `useCardAvailability.ts`).
 
-1. **When is a card too hard to use?** The maintainer's view: if a card can't be used inside
-   the first 4 turns, it is useless. Ask whether other players agree, and whether the line
-   moves by card type (an engine piece versus a one-off payoff).
+1. **When is a card too hard to use?** The maintainer gave one example of a useless card: one
+   that can't be used inside the first 4 turns. It was an illustration, not a settled
+   threshold. Ask players where their own line is, and whether it moves by card type (an
+   engine piece versus a one-off payoff).
 2. **Is "rarely available" 1 in 4?** `RARELY_BELOW` is 25%, a round number. Ask players what
    rate makes them cut a card.
 3. **Hand or turns?** Availability is measured on the opening hand of 4, hand only. The
