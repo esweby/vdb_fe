@@ -2,6 +2,7 @@ import { RouterProvider } from "@tanstack/react-router";
 import { Provider } from "react-redux";
 import type { createAppRouter } from "./router.tsx";
 import { ServicesProvider, type Services } from "./services.tsx";
+import { CommunityRecalculationProvider } from "./scoring/CommunityRecalculationProvider.tsx";
 import type { AppStore } from "./store.ts";
 
 export function App(props: {
@@ -12,7 +13,9 @@ export function App(props: {
   return (
     <Provider store={props.store}>
       <ServicesProvider services={props.services}>
-        <RouterProvider router={props.router} />
+        <CommunityRecalculationProvider>
+          <RouterProvider router={props.router} />
+        </CommunityRecalculationProvider>
       </ServicesProvider>
     </Provider>
   );

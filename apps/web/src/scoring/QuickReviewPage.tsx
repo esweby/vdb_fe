@@ -12,6 +12,7 @@ import { useCards } from "../cards/useCards.ts";
 import { useAppSelector } from "../hooks.ts";
 import { useServices } from "../servicesContext.ts";
 import { LoadError, Loading } from "../ui/index.ts";
+import { useCommunityRecalculation } from "./CommunityRecalculationProvider.tsx";
 import type { Dimension, ScoreKey } from "./scoreRepository.ts";
 import styles from "./QuickReviewPage.module.css";
 
@@ -21,8 +22,6 @@ const PROMPT: Record<Step, string> = {
   floor: "Floor",
   ceiling: "Ceiling",
 };
-/** Community scores are recalculated every so many cards, and when you finish or leave. */
-const JOB_EVERY = 10;
 
 interface Rated {
   card: CardSummary;
@@ -97,6 +96,7 @@ export function QuickReviewPage() {
 function Session(props: { queue: CardSummary[]; dimensions: Dimension[] }) {
   const { queue } = props;
   const { scores } = useServices();
+  const recalculation = useCommunityRecalculation();
   const idOf = useCallback(
     (key: string) => props.dimensions.find((d) => d.key === key)?.id,
     [props.dimensions],
@@ -118,16 +118,14 @@ function Session(props: { queue: CardSummary[]; dimensions: Dimension[] }) {
       );
     });
   }, []);
-  const unsent = useRef(0);
-  const sendJob = useCallback(() => {
-    if (unsent.current === 0) return;
-    unsent.current = 0;
-    run(() => scores.runCommunityJob().catch(() => {}));
-  }, [run, scores]);
-  useEffect(() => () => sendJob(), [sendJob]);
+  const flush = useCallback(() => {
+    // The provider outlives this route. Finish the save chain before requesting aggregates.
+    void chain.current.then(() => recalculation.flush());
+  }, [recalculation]);
+  useEffect(() => () => flush(), [flush]);
   useEffect(() => {
-    if (done) sendJob();
-  }, [done, sendJob]);
+    if (done) flush();
+  }, [done, flush]);
 
   const finish = useCallback(
     (ratings: Partial<Record<Step, number>>) => {
@@ -147,15 +145,14 @@ function Session(props: { queue: CardSummary[]; dimensions: Dimension[] }) {
         for (const [i, key] of keys.entries())
           await scores.saveScore(card.id, key, values[i]!);
         await scores.markReviewed(card.id);
+        recalculation.changed();
       });
-      unsent.current += 1;
-      if (unsent.current >= JOB_EVERY) sendJob();
       setHistory((h) => [...h, { card, overall: ratings.overall!, keys }]);
       setIndex((i) => i + 1);
       setStep("overall");
       setPending({});
     },
-    [card, run, scores, sendJob, idOf],
+    [card, run, scores, recalculation, idOf],
   );
 
   const rate = useCallback(
@@ -195,11 +192,12 @@ function Session(props: { queue: CardSummary[]; dimensions: Dimension[] }) {
     run(async () => {
       for (const key of last.keys) await scores.clearScore(last.card.id, key);
       await scores.unmarkReviewed(last.card.id);
+      recalculation.changed();
+      if (done) recalculation.flush();
     });
-    unsent.current = Math.max(0, unsent.current - 1);
     setHistory((h) => h.slice(0, -1));
     setIndex(queue.indexOf(last.card));
-  }, [step, history, run, scores, queue]);
+  }, [step, history, run, scores, queue, recalculation, done]);
 
   const skip = useCallback(() => {
     setIndex((i) => i + 1);

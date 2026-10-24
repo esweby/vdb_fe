@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from "@testing-library/react";
+import { act, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { fakeAuthService } from "../test/fakeAuthService.ts";
@@ -122,5 +122,37 @@ describe("quick review", () => {
       await review.findByText("All done: 4 cards rated."),
     ).toBeInTheDocument();
     expect(saved).toContain("job");
+  });
+});
+
+describe("Quick review save ordering", () => {
+  it("leaving waits for the pending save chain before requesting recalculation", async () => {
+    const fake = fakeScoreRepository();
+    const save = fake.repository.saveScore;
+    let finish!: () => void;
+    const pending = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+    fake.repository.saveScore = async (...args) => {
+      await pending;
+      await save(...args);
+    };
+    const { router } = await renderApp({
+      path: "/needs-review/quick",
+      auth: auth(),
+      scores: fake.repository,
+    });
+    const user = userEvent.setup();
+    await waitFor(() => expect(current()).toBe("Become the Shadow Lord"));
+    await user.keyboard("5{Enter}{Enter}");
+    await act(() => router.navigate({ to: "/needs-review" }));
+    expect(fake.saved).toEqual([]);
+    await act(async () => {
+      finish();
+    });
+    await waitFor(() => expect(fake.saved.at(-1)).toBe("job"));
+    expect(
+      fake.saved.indexOf("review card-become-the-shadow-lord"),
+    ).toBeLessThan(fake.saved.indexOf("job"));
   });
 });

@@ -1,6 +1,12 @@
-import { screen, waitFor, within } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { fakeAuthService } from "../test/fakeAuthService.ts";
 import { fakeScoreRepository } from "../test/fakeScoreRepository.ts";
 import { renderApp } from "../test/renderApp.tsx";
@@ -11,6 +17,11 @@ const users = {
 };
 const signedIn = (email: "s@test.local" | "u@test.local") =>
   fakeAuthService({ users, signedIn: { id: users[email].id, email } }).service;
+
+afterEach(() => {
+  vi.clearAllTimers();
+  vi.useRealTimers();
+});
 
 describe("Mark reviewed", () => {
   it("shows the summary before confirming, highlighting blanks that count as 0", async () => {
@@ -37,7 +48,7 @@ describe("Mark reviewed", () => {
     );
   });
 
-  it("records the review and runs the community score job for scorers", async () => {
+  it("records the review immediately and debounces community recalculation", async () => {
     const fake = fakeScoreRepository();
     await renderApp({
       path: "/cards/card-hocus-pocus",
@@ -48,10 +59,16 @@ describe("Mark reviewed", () => {
     await user.click(
       await screen.findByRole("button", { name: "Mark reviewed" }),
     );
-    await user.click(screen.getByRole("button", { name: "Confirm review" }));
-    await waitFor(() =>
-      expect(fake.saved).toEqual(["review card-hocus-pocus", "job"]),
-    );
+    vi.useFakeTimers();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Confirm review" }));
+    });
+    expect(fake.saved).toEqual(["review card-hocus-pocus"]);
+    await act(() => vi.advanceTimersByTimeAsync(29_999));
+    expect(fake.saved).not.toContain("job");
+    await act(() => vi.advanceTimersByTimeAsync(1));
+    expect(fake.saved).toEqual(["review card-hocus-pocus", "job"]);
+    vi.useRealTimers();
     expect(await screen.findByText(/^Reviewed/)).toBeInTheDocument();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
@@ -153,4 +170,39 @@ describe("Mark reviewed", () => {
     });
     expect(await screen.findByText("Reviewed 14 Oct 2026")).toBeInTheDocument();
   });
+});
+
+describe("changes affecting community scores", () => {
+  it.each([
+    { reviewed: false, fails: false, expected: false },
+    { reviewed: true, fails: false, expected: true },
+    { reviewed: true, fails: true, expected: false },
+  ])(
+    "schedules only successful edits to reviewed cards: %j",
+    async ({ reviewed, fails, expected }) => {
+      const fake = fakeScoreRepository([], {
+        reviewedAt: reviewed ? "2026-10-14T10:00:00Z" : null,
+      });
+      if (fails)
+        fake.repository.saveScore = async () => {
+          throw new Error("offline");
+        };
+      await renderApp({
+        path: "/cards/card-hocus-pocus?tab=scoring",
+        auth: signedIn("s@test.local"),
+        scores: fake.repository,
+      });
+      const group = await screen.findByRole("group", { name: "Overall" });
+      vi.useFakeTimers();
+      await act(async () => {
+        fireEvent.click(
+          within(group).getByRole("button", { name: "Not relevant" }),
+        );
+      });
+      expect(fake.saved).not.toContain("job");
+      await act(() => vi.advanceTimersByTimeAsync(30_000));
+      expect(fake.saved.includes("job")).toBe(expected);
+      vi.useRealTimers();
+    },
+  );
 });

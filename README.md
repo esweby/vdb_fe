@@ -161,7 +161,7 @@ A **review** means "I have looked at this whole card": every dimension, every va
 
 Before confirming, **Mark reviewed** shows a summary of what every variant and side will resolve to on every dimension, with the source of each value: set, inherited from the level above, "not relevant", or blank (counts as 0). Zeros that come from a blank are highlighted. This catches the common trap where a scorer rates the red variant 80, leaves yellow and blue blank, and never set a card-level score, so yellow and blue would count as 0. The summary offers a one-click fix: copy a score to the other variants, set a card-level score for them to inherit, or confirm the zeros.
 
-After a card is reviewed, changes to its scores apply immediately, and the card stays reviewed.
+After a card is reviewed, changes to its scores apply immediately, and the card stays reviewed. Scores and reviews save straight away. The app requests refreshed scoring group averages after 30 seconds without further changes to reviewed cards. Finishing or leaving Quick review requests an update sooner. Scores remain saved if that update has to wait.
 
 Scores can be given at four levels, from most specific to least:
 
