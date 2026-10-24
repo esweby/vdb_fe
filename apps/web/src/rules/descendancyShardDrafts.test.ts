@@ -1,4 +1,4 @@
-// UNVERIFIED drafts, built from recorded facts for the maintainer's next pair of reviews.
+// Drafts matched to the blue rules approved by the maintainer on 24 Oct 2026.
 import { describe, expect, it } from "vitest";
 import { parseTriggers, verifiedRulesFor } from "@vdb/engine/rules";
 import type { CardSummary } from "../cards/cardRepository.ts";
@@ -36,16 +36,18 @@ const shard: CardSummary = {
 
 describe("the next Runechant draft pair", () => {
   it.each([descendant, shard])(
-    "makes $name ready to check but not verified",
+    "marks $name verified with rules matching the accepted draft",
     (card) => {
       const entry = draftQueue([card])[0]!;
-      expect(entry.status).toBe("complete");
-      expect(entry.verified).toBe(false);
+      expect(entry.status).toBe("verified");
+      expect(entry.verified).toBe(true);
       expect(entry.drafts[0]!.draft.notDrafted).toEqual([]);
       expect(() =>
         parseTriggers(entry.drafts[0]!.draft.rules.triggers),
       ).not.toThrow();
-      expect(verifiedRulesFor(card.name, 3)).toBeUndefined();
+      expect(verifiedRulesFor(card.name, 3)).toEqual(
+        entry.drafts[0]!.draft.rules,
+      );
     },
   );
 
