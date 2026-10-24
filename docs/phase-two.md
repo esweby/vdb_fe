@@ -29,6 +29,8 @@ The first batch (24 cards) went in on 20 Oct 2026, with the sinchants. The secon
 
 Bloodfrenzy Gloomblade's rules were approved by the maintainer on 24 Oct 2026 and added to the verified card rules for all three pitches. They cover Usurp, play from banish and go again after damage dealt that turn, including its remaining Runechants or its own hit. The goldfish assumes Runechant damage is not prevented; damage from a hit is noted by hand. Tests check that overlapping sources of go again return only one action point.
 
+The next pair for review is blue Arknight Descendancy and Arknight Shard (24 Oct). Both drafts are **unverified** and are not added to the verified card rules. Descendancy offers a choice of paying 0–3 life when banished face up, creating that many Runechants, and retains its cost reduction. Shard creates a Runechant when pitched. Descendancy's new `lifePaidUpTo` fact needs a card re-import before the hosted effects page can show the completed draft; the maintainer runs the hosted import. Goldfish asks for the payment and records it for undo, redo and replay. Scripts pay zero unless `choices.lifePayment` explicitly selects another offered amount. This is not the calibration's tactical life policy: the engine records life lost but does not model an opponent or immediate danger.
+
 ## Decisions (the maintainer)
 
 Game logic decided by the maintainer, with where it lives. Anything not here is still marked UNVERIFIED in code.
@@ -63,6 +65,10 @@ Game logic decided by the maintainer, with where it lives. Anything not here is 
 
 - **Bloodfrenzy Gloomblade:** with two Runechants, one is usurped and the other can deal damage. Damage from that Runechant or from Bloodfrenzy's own hit can give Bloodfrenzy go again.
 - **Sideboard plans:** a plan can have a custom name without an opposing hero. Hero-specific plans still work. The Matchups tab keeps saved plans in a compact sidebar beside the editor. Card rows are the default; Pictures remains an option. Weapons and equipment, and population matchup statistics, are folded away. Goldfish and scenarios can play a named plan. Exported versions keep the plans as saved at export time.
+
+**24 Oct 2026**
+
+- **Become the Shadow Lord and Descendancy:** one Runechant from BSL's banish, then three from paying life for Descendancy, cause two top-deck banishes and one traverse, ending on Usurper. A queued Forsaken trigger must not traverse back after the first has traversed. The interaction test continues through a Gate, Descendancy and a legal Seven Sin Nebula swing.
 
 ## Open
 

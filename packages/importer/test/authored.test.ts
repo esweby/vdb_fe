@@ -3,6 +3,14 @@ import { describe, expect, it } from "vitest";
 import { allAuthored, batches } from "../src/authored/index.ts";
 
 describe("authored batches", () => {
+  it("records Descendancy's three-life limit as a fact, not just a note", () => {
+    expect(allAuthored()["Arknight Descendancy"]?.card?.tokens).toContainEqual({
+      token: "runechant",
+      amount: "X",
+      trigger: "on_banished",
+      lifePaidUpTo: 3,
+    });
+  });
   it("has no card in more than one batch", () => {
     expect(() => allAuthored()).not.toThrow();
   });

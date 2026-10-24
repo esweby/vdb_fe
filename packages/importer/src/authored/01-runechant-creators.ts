@@ -32,7 +32,14 @@ export const runechantCreators: AuthoredAttributes = {
     verified: true,
     card: {
       costReducedPerRunechant: true,
-      tokens: [{ token: "runechant", amount: "X", trigger: "on_banished" }],
+      tokens: [
+        {
+          token: "runechant",
+          amount: "X",
+          trigger: "on_banished",
+          lifePaidUpTo: 3,
+        },
+      ],
       notes: "Banished from anywhere; X is the life paid, up to 3.",
     },
   },

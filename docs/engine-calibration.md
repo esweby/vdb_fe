@@ -6,6 +6,8 @@ Status, 24 Oct 2026: **T1–T4 compared** on the maintainer's deck on 23 Oct; re
 
 Latest coverage, after verifying blue Usurp the Shadow Throne on 24 Oct: **40 of 54 copies (74%), still incomplete**. The latest same-seed baseline rerun is recorded at the end of this document.
 
+The maintainer's target is now **100% coverage, reviewing a couple of cards at a time** (24 Oct). The next draft pair is blue Arknight Descendancy (two copies in this deck) and Arknight Shard (one). They remain unverified. Accepting and registering both would bring coverage to 43 of 54 copies (79.6%), still below the 80% requirement; reaching that requirement is not the stopping point.
+
 Logs show associations, and the simulation tests counterfactuals. Causal words are kept for results where both agree. The game logic here is **unverified** until the maintainer checks it.
 
 ## Coverage update (24 Oct 2026)
