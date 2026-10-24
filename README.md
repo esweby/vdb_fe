@@ -485,7 +485,7 @@ Edge Functions run on Deno, so how they import a workspace package (bundling, an
   - User decks
   - User scoring
   - Row level security: users can only write their own scores, curators can set fringe flags and library scenarios, and `rating_weight` can be read and written by admins only
-  - **Community score job**: a Supabase Edge Function (TypeScript) that recalculates the `community_scores` table on scoring requests, with daily fallback runs at 03:00 and 03:15 UTC. It runs on the server because it needs the hidden `rating_weight` values, which must never reach the browser. It uses `packages/scoring`, the same score resolution module as the frontend, so the review and blank rules are written once. User-triggered runs share a 30-second cooldown. Every run holds a 60-second lease, and both aggregate writes reject an expired or replaced lease. Scheduled runs bypass the cooldown, but never a running job.
+  - **Community score job**: a Supabase Edge Function (TypeScript) that recalculates the `community_scores` table on scoring requests, with daily fallback runs at 03:00 and 03:15 UTC. It runs on the server because it needs the hidden `rating_weight` values, which must never reach the browser. It uses `packages/scoring`, the same score resolution module as the frontend, so the review and blank rules are written once. User-triggered runs share a 30-second cooldown. Every run holds a 60-second lease, and both aggregate writes reject an expired or replaced lease. Scheduled runs bypass the cooldown, but never a running job. See [Sign-in and community updates](docs/security.md) for the request flow, retry rules and maintenance notes.
 
 ### Tables
 
