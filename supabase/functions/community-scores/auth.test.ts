@@ -24,7 +24,7 @@ const check = (authorization: string | null, jobToken: string | null = null) =>
   });
 
 describe("authorizeJobCaller", () => {
-  it("allows the server (the daily schedule)", async () => {
+  it("allows a server key without claiming the scheduled bypass", async () => {
     expect(await check("Bearer server-secret")).toEqual({
       ok: true,
       caller: "server",
@@ -75,7 +75,7 @@ describe("authorizeJobCaller", () => {
   it("allows the daily job with a valid single-use token, once", async () => {
     expect(await check(null, "valid-job-token")).toEqual({
       ok: true,
-      caller: "server",
+      caller: "scheduled",
     });
     expect(await check(null, "valid-job-token")).toEqual({
       ok: false,

@@ -6,6 +6,7 @@
   },
   "include": [
     "supabase/functions/*/auth*.ts",
+    "supabase/functions/community-scores/runJob*.ts",
     "packages/*/src",
     "packages/*/test",
     "packages/*/*.config.ts",

@@ -6,7 +6,8 @@
 const SCORING_ROLES = new Set(["scorer", "curator", "admin"]);
 
 export type JobAuthorization =
-  { ok: true; caller: "server" | "user" } | { ok: false; status: 401 | 403 };
+  | { ok: true; caller: "scheduled" | "server" | "user" }
+  | { ok: false; status: 401 | 403 };
 
 export async function authorizeJobCaller(input: {
   /** The request's Authorization header. */
@@ -22,7 +23,7 @@ export async function authorizeJobCaller(input: {
 }): Promise<JobAuthorization> {
   if (input.jobToken) {
     return (await input.consumeJobToken(input.jobToken))
-      ? { ok: true, caller: "server" }
+      ? { ok: true, caller: "scheduled" }
       : { ok: false, status: 401 };
   }
 

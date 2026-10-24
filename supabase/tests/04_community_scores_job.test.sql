@@ -2,6 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 select plan(6);
+select public.acquire_community_job(true);
 
 insert into public.cards (id, external_id, name, type)
   values ('10000000-0000-0000-0000-0000000000c1', 'job-card-1', 'Job Card', 'action');
@@ -16,13 +17,13 @@ insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000e1
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000e1","role":"authenticated"}', true);
 select throws_ok(
-  $$select public.replace_community_scores('[]'::jsonb, 2)$$,
+  $$select public.replace_community_scores('[]'::jsonb, 2, null)$$,
   '42501', null, 'signed-in users cannot run the job'
 );
 reset role;
 set local role anon;
 select throws_ok(
-  $$select public.replace_community_scores('[]'::jsonb, 2)$$,
+  $$select public.replace_community_scores('[]'::jsonb, 2, null)$$,
   '42501', null, 'anonymous visitors cannot run the job'
 );
 reset role;
@@ -31,7 +32,7 @@ reset role;
 set local role service_role;
 select lives_ok(
   format(
-    $$select public.replace_community_scores(%L::jsonb, 2)$$,
+    $$select public.replace_community_scores(%L::jsonb, 2, (select token from public.community_job_gate))$$,
     json_build_array(json_build_object(
       'cardId', '10000000-0000-0000-0000-0000000000c1',
       'variantId', '20000000-0000-0000-0000-0000000000c1',
