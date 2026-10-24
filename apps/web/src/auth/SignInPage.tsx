@@ -1,5 +1,5 @@
 import { getRouteApi, useNavigate } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { useServices } from "../servicesContext.ts";
 import { Button, TextField } from "../ui/index.ts";
 import { USERNAME_PATTERN, USERNAME_TAKEN } from "./authService.ts";
@@ -23,8 +23,12 @@ export function SignInPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  const submitting = useRef(false);
+
   async function submit(event: FormEvent) {
     event.preventDefault();
+    if (submitting.current) return;
+    submitting.current = true;
     setError(null);
     setBusy(true);
     try {
@@ -54,6 +58,7 @@ export function SignInPage() {
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
     } finally {
+      submitting.current = false;
       setBusy(false);
     }
   }
@@ -125,6 +130,7 @@ export function SignInPage() {
       </form>
       <Button
         variant="ghost"
+        disabled={busy}
         className={styles.switch}
         onClick={() => {
           setMode(mode === "signIn" ? "signUp" : "signIn");

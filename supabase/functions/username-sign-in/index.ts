@@ -29,33 +29,27 @@ Deno.serve(async (request) => {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  // The caller's address, as the platform passes it on (the first entry is the client).
+  // The address supplied by the gateway. The independent account budget still applies
+  // if this header is missing or an attacker manages to vary it.
   const ip =
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-  const since = () => new Date(Date.now() - 15 * 60 * 1000).toISOString();
+    request.headers
+      .get("x-forwarded-for")
+      ?.split(",")[0]
+      ?.trim()
+      .slice(0, 64) || "unknown";
 
   const result = await signInWithUsername(
     await request.json().catch(() => null),
     {
       ip,
-      recentFailures: async (username, from) => {
-        const { count } = await admin
-          .from("sign_in_failures")
-          .select("id", { count: "exact", head: true })
-          .eq("username", username.toLowerCase())
-          .eq("ip", from)
-          .gte("failed_at", since());
-        return count ?? 0;
-      },
-      recordFailure: async (username, from) => {
-        await admin
-          .from("sign_in_failures")
-          .insert({ username: username.toLowerCase(), ip: from });
-        // Keep the table small: nothing older than a day matters.
-        await admin
-          .from("sign_in_failures")
-          .delete()
-          .lt("failed_at", new Date(Date.now() - 86_400_000).toISOString());
+      reserveAttempt: async (username, from) => {
+        const { data, error } = await admin.rpc("reserve_sign_in_attempt", {
+          p_username: username,
+          p_ip: from,
+        });
+        if (error || typeof data !== "boolean")
+          throw new Error("Cannot reserve a sign-in attempt");
+        return data;
       },
       findEmail: async (username) => {
         const { data } = await admin

@@ -10,19 +10,15 @@ export interface Session {
 
 export type SignInResult =
   | { ok: true; session: Session }
-  | { ok: false; status: 400 | 401 | 429; error: string };
-
-/** Wrong passwords allowed per username and address within the window (see the migration). */
-export const MAX_FAILURES = 5;
+  | { ok: false; status: 400 | 401 | 429 | 503; error: string };
 
 export async function signInWithUsername(
   body: unknown,
   deps: {
     /** The caller's address, for limiting guesses. */
     ip: string;
-    /** Wrong passwords for this username (any case) from this address in the last 15 minutes. */
-    recentFailures: (username: string, ip: string) => Promise<number>;
-    recordFailure: (username: string, ip: string) => Promise<void>;
+    /** Atomically reserves an account and address attempt before any password check. */
+    reserveAttempt: (username: string, ip: string) => Promise<boolean>;
     /** The email of the account with this username (any case), or null. */
     findEmail: (username: string) => Promise<string | null>;
     /** Signs in with Supabase Auth; null when the password is wrong. */
@@ -48,9 +44,19 @@ export async function signInWithUsername(
     status: 401,
     error: "Wrong username or password.",
   } as const;
-  // Sign-ins all reach Supabase from this function, so its per-address limit can't tell
-  // guessers apart: limit them here, per username and caller address.
-  if ((await deps.recentFailures(username, deps.ip)) >= MAX_FAILURES)
+  // Reserve first so concurrent requests cannot pass the same count. A storage failure
+  // must not turn off the limit. Successful sign-ins consume an attempt too.
+  let allowed: boolean;
+  try {
+    allowed = await deps.reserveAttempt(username.toLowerCase(), deps.ip);
+  } catch {
+    return {
+      ok: false,
+      status: 503,
+      error: "Sign-in is temporarily unavailable. Try again shortly.",
+    };
+  }
+  if (!allowed)
     return {
       ok: false,
       status: 429,
@@ -59,6 +65,5 @@ export async function signInWithUsername(
   const email = await deps.findEmail(username);
   const session = email ? await deps.signIn(email, password) : null;
   if (session) return { ok: true, session };
-  await deps.recordFailure(username, deps.ip);
   return wrong;
 }

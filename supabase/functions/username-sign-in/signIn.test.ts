@@ -1,18 +1,23 @@
 // Signing in with a username (maintainer, 16 Oct 2026). The server looks up the account's email
 // and signs in with it, so emails never reach the browser.
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { signInWithUsername } from "./signIn.ts";
 
 const accounts: Record<string, { email: string; password: string }> = {
   edd_99: { email: "edd@test.local", password: "right" },
 };
-const failures: string[] = [];
+const attempts = new Map<string, number>();
+beforeEach(() => attempts.clear());
 const deps = {
   ip: "203.0.113.7",
-  recentFailures: async (username: string, ip: string) =>
-    failures.filter((f) => f === `${username.toLowerCase()}|${ip}`).length,
-  recordFailure: async (username: string, ip: string) => {
-    failures.push(`${username.toLowerCase()}|${ip}`);
+  reserveAttempt: async (username: string, ip: string) => {
+    const account = `account:${username.toLowerCase()}`;
+    const address = `address:${ip}`;
+    if ((attempts.get(account) ?? 0) >= 5 || (attempts.get(address) ?? 0) >= 30)
+      return false;
+    attempts.set(account, (attempts.get(account) ?? 0) + 1);
+    attempts.set(address, (attempts.get(address) ?? 0) + 1);
+    return true;
   },
   findEmail: async (username: string) =>
     accounts[username.toLowerCase()]?.email ?? null,
@@ -73,8 +78,8 @@ describe("signInWithUsername", () => {
 
   // Security review, 16 Oct 2026: sign-ins arrive from this function's address, so Supabase's
   // per-address limit can't tell guessers apart. This limits them per username and address.
-  it("refuses more guesses after 5 wrong passwords for a username from one address", async () => {
-    failures.length = 0;
+  it("refuses more guesses after 5 attempts for an account, across addresses", async () => {
+    attempts.clear();
     for (let i = 0; i < 5; i++)
       await signInWithUsername({ username: "edd_99", password: "guess" }, deps);
     const blocked = {
@@ -86,7 +91,7 @@ describe("signInWithUsername", () => {
     expect(
       await signInWithUsername({ username: "EDD_99", password: "right" }, deps),
     ).toEqual(blocked);
-    // Someone else, elsewhere, isn't affected.
+    // Changing addresses does not bypass the account budget.
     expect(
       (
         await signInWithUsername(
@@ -94,6 +99,61 @@ describe("signInWithUsername", () => {
           { ...deps, ip: "198.51.100.2" },
         )
       ).ok,
-    ).toBe(true);
+    ).toBe(false);
+  });
+});
+
+describe("attempt reservation", () => {
+  it("reserves an attempt before looking up an account or checking its password", async () => {
+    attempts.clear();
+    const calls: string[] = [];
+    const watching = {
+      ...deps,
+      reserveAttempt: async () => {
+        calls.push("reserve");
+        return true;
+      },
+      findEmail: async () => {
+        calls.push("lookup");
+        return "edd@test.local";
+      },
+      signIn: async () => {
+        calls.push("password");
+        return null;
+      },
+    };
+    await signInWithUsername(
+      { username: "edd_99", password: "guess" },
+      watching,
+    );
+    expect(calls).toEqual(["reserve", "lookup", "password"]);
+  });
+
+  it("does not check a password when reservation fails or storage is unavailable", async () => {
+    attempts.clear();
+    for (const [reserveAttempt, status] of [
+      [async () => false, 429],
+      [
+        async () => {
+          throw new Error("database unavailable");
+        },
+        503,
+      ],
+    ] as const) {
+      let looked = false;
+      const result = await signInWithUsername(
+        { username: "edd_99", password: "guess" },
+        {
+          ...deps,
+          reserveAttempt,
+          findEmail: async () => {
+            looked = true;
+            return "edd@test.local";
+          },
+        },
+      );
+      expect(result).toMatchObject({ ok: false, status });
+      expect(looked).toBe(false);
+    }
   });
 });
