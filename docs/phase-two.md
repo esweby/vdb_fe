@@ -31,6 +31,8 @@ Bloodfrenzy Gloomblade's rules were approved by the maintainer on 24 Oct 2026 an
 
 Blue Arknight Descendancy and Arknight Shard were approved by the maintainer and added to the verified rules on 24 Oct. Descendancy offers a choice of paying 0–3 life when banished face up, creating that many Runechants, and retains its cost reduction. Shard creates a Runechant when pitched. Descendancy's new `lifePaidUpTo` fact still needs a card re-import to keep the hosted effects draft in step with its verified rules; the maintainer runs the hosted import. Goldfish asks for the payment and records it for undo, redo and replay. Scripts pay zero unless `choices.lifePayment` explicitly selects another offered amount. This is not the calibration's tactical life policy: the engine records life lost but does not model an opponent or immediate danger.
 
+Yellow Embrace Sin and red Sinspeaker Gloomblade are the next review pair. Their drafts are **UNVERIFIED**, not registered card rules. Embrace grants one play of an aura with Runechant in its name from banish that turn, at its normal cost; a separate permission does not spend it. Its next-attack +2 remains outside the engine's scope and is shown in the draft's notes. Sinspeaker's optional search is offered only when it attacks after being played from banish. It puts the chosen aura directly into the arena, without playing it, then shuffles. Declining the ability does not shuffle; searching without finding a card does. Both drafts work from the existing local card facts; this pair adds no new facts to import.
+
 ## Decisions (the maintainer)
 
 Game logic decided by the maintainer, with where it lives. Anything not here is still marked UNVERIFIED in code.

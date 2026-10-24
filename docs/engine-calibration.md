@@ -257,3 +257,7 @@ Coverage rises to **43 of 54 copies (79.6%)**, and 17 of 21 distinct cards. It r
 All threshold verdicts remain unchanged from the Usurp rerun, with every pooled divergence robust in the matchup checks. With the primary turn mapping, 11.57% have traversed by turn 3 (previously 9.41%; observed 76.03%), and 20.15% by turn 6 (previously 16.11%; observed 95.51%). Turn 3 mean arcane damage is 0.2208 (previously 0.1899), and mean threatened attack damage is 4.0607 (previously 3.8658). These changes do not establish calibration.
 
 The raw report is saved locally at `/private/tmp/vdb-calibration-20261024/baseline-descendancy-shard.json`. All previous reports are preserved. No batch uses unverified rules, and the Cullingsong → Usurp counterfactual remains separate.
+
+## Next review pair (24 Oct 2026)
+
+Yellow Embrace Sin and red Sinspeaker Gloomblade now have complete, **UNVERIFIED** drafts. Neither is registered for simulation. The private deck has three copies of each: approving and registering both would bring coverage to 49 of 54 copies (90.7%), leaving Cull and Scar for a Scar. The current verified coverage remains 43 of 54; there is no new calibration run. Embrace's next-attack +2 remains outside the engine's scope, so verified card coverage would not mean every damage effect is modelled.

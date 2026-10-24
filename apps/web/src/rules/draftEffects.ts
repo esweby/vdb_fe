@@ -419,11 +419,37 @@ export function draftEffects(
         `Cost reductions if ${CONDITION_PLAIN[r.conditions?.[0] as Condition] ?? "something else"}: not drafted yet`,
       );
   }
-  if (a.tutors?.length) note("Searching the deck: not drafted yet");
-  if (a.enablesPlayFromBanish?.length)
-    note(
-      "Letting other cards be played from the banished zone: not drafted yet",
-    );
+  for (const tutor of a.tutors ?? []) {
+    if (
+      "group" in tutor.target &&
+      tutor.target.group === "runechant_aura" &&
+      tutor.to === "arena" &&
+      tutor.trigger === "on_attack" &&
+      tutor.conditions?.length === 1 &&
+      tutor.conditions[0] === "played_from_banish"
+    )
+      triggers.push({
+        id: `${slug(card.name)}-search`,
+        on: { event: "attacking", self: true },
+        condition: { playedFromBanish: "self" },
+        ...(tutor.optional ? { optional: true } : {}),
+        effects: [{ op: "searchRunechantAura" }],
+      });
+    else note("Searching the deck: not drafted yet");
+  }
+  for (const enabler of a.enablesPlayFromBanish ?? []) {
+    if (
+      "group" in enabler.target &&
+      enabler.target.group === "runechant_aura" &&
+      !enabler.from &&
+      !enabler.conditions?.length
+    )
+      effects.push({ op: "allowRunechantAuraPlay" });
+    else
+      note(
+        "Letting other cards be played from the banished zone: not drafted yet",
+      );
+  }
   if (a.turnsBanishedFaceDown?.length)
     note("Turning banished cards face down: not drafted yet");
   if (a.instantSpeed) note("Playing it as an instant: not drafted yet");
@@ -478,7 +504,7 @@ export function draftEffects(
       ...triggers.flatMap((t) =>
         describeEffects(t.effects).map(
           (line) =>
-            `${TRIGGER_EVENT_TEXT[t.on.event] ?? "When you play an attack action card"}: ${line[0]!.toLowerCase()}${line.slice(1)}`,
+            `${TRIGGER_EVENT_TEXT[t.on.event] ?? "When you play an attack action card"}${t.condition && "playedFromBanish" in t.condition ? ", if this was played from the banished zone" : ""}: ${t.optional ? "you may " : ""}${line[0]!.toLowerCase()}${line.slice(1)}`,
         ),
       ),
       ...(rules.usurp ? ["Usurp."] : []),
