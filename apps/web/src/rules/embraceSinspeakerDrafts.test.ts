@@ -1,4 +1,4 @@
-// UNVERIFIED drafts for the maintainer's next two-card review.
+// Drafts approved by the maintainer on 24 Oct 2026.
 import { describe, expect, it } from "vitest";
 import {
   parseEffects,
@@ -51,19 +51,31 @@ const sinspeaker: CardSummary = {
 
 describe("Embrace and Sinspeaker's draft pair", () => {
   it.each([embrace, sinspeaker])(
-    "makes $name ready to check without registering it",
+    "marks $name verified with rules matching the accepted draft",
     (card) => {
       const entry = draftQueue([card])[0]!;
-      expect(entry.status).toBe("complete");
-      expect(entry.verified).toBe(false);
+      expect(entry.status).toBe("verified");
+      expect(entry.verified).toBe(true);
       const draft = entry.drafts[0]!.draft;
       expect(draft.notDrafted).toEqual([]);
       expect(() => parseEffects(draft.rules.effects)).not.toThrow();
       if (draft.rules.triggers)
         expect(() => parseTriggers(draft.rules.triggers)).not.toThrow();
-      expect(
-        verifiedRulesFor(card.name, card.variants[0]!.pitch),
-      ).toBeUndefined();
+      expect(verifiedRulesFor(card.name, card.variants[0]!.pitch)).toEqual(
+        draft.rules,
+      );
+    },
+  );
+
+  it.each([
+    ["Embrace Sin", 1],
+    ["Embrace Sin", 3],
+    ["Sinspeaker Gloomblade", 2],
+    ["Sinspeaker Gloomblade", 3],
+  ] as const)(
+    "does not verify the unreviewed pitch of %s (%s)",
+    (name, pitch) => {
+      expect(verifiedRulesFor(name, pitch)).toBeUndefined();
     },
   );
 
