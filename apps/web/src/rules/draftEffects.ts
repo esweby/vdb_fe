@@ -86,6 +86,8 @@ const TRIGGER_PLAIN: Record<string, string> = {
 
 /** How a drafted trigger's event reads. */
 const TRIGGER_EVENT_TEXT: Record<string, string> = {
+  pitched: "When this is pitched",
+  moved: "When this is banished",
   attacking: "When this attacks",
   played: "When you play an attack action card",
   lifeLost: "When you lose life",
@@ -250,6 +252,20 @@ export function draftEffects(
     }
     const amount = t.amount;
     if (amount === "X") {
+      if (
+        t.trigger === "on_banished" &&
+        t.lifePaidUpTo &&
+        !t.conditions?.length
+      ) {
+        triggers.push({
+          id: `${slug(card.name)}-banished`,
+          on: { event: "moved", to: "banished", self: true },
+          effects: [
+            { op: "payLifeForToken", token: t.token, maximum: t.lifePaidUpTo },
+          ],
+        });
+        continue;
+      }
       note(`X ${label}: the engine needs a number`);
       continue;
     }
@@ -268,6 +284,15 @@ export function draftEffects(
       { op: "createToken", token: t.token, amount },
     ]);
     if (t.trigger === "on_play") effects.push(...make);
+    else if (t.trigger === "on_pitch" || t.trigger === "on_banished")
+      triggers.push({
+        id: `${slug(card.name)}-${t.trigger === "on_pitch" ? "pitched" : "banished"}`,
+        on:
+          t.trigger === "on_pitch"
+            ? { event: "pitched", self: true }
+            : { event: "moved", to: "banished", self: true },
+        effects: make,
+      });
     else if (activation && t.trigger === "activated") activated.push(...make);
     else if (t.trigger === "on_attack") attackTriggerEffects.push(...make);
     else if (t.trigger === "your_attack_action_played")

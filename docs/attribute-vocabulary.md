@@ -74,6 +74,8 @@ This page defines what we record about each card. Every hand-authored entry has 
 
 ## Pitch variants
 
+For variable token creation, `lifePaidUpTo` records the maximum optional life payment. It requires `amount: "X"`. Arknight Descendancy records `lifePaidUpTo: 3`: pay up to three life when banished, then create that many Runechants. This is a card fact, not a rule for choosing how much to pay.
+
 Card-level attributes apply to every pitch. A variant can **replace** any attribute for its pitch. For example, Arcane Cussing's red, yellow and blue variants each have their own `tokens` (3, 2 and 1 Runechants). Replacing is per attribute, not a deep merge, so a variant that overrides `tokens` must list all of that variant's tokens.
 
 ## Worked example

@@ -152,13 +152,18 @@ export const disruptionSchema = z.discriminatedUnion("action", [
   }),
 ]);
 
-export const tokenCreationSchema = z.strictObject({
-  token: z.enum(TOKENS),
-  amount,
-  trigger,
-  conditions,
-  grantedTo,
-});
+export const tokenCreationSchema = z
+  .strictObject({
+    token: z.enum(TOKENS),
+    amount,
+    trigger,
+    conditions,
+    grantedTo,
+    lifePaidUpTo: z.number().int().min(1).max(20).optional(),
+  })
+  .refine((token) => token.lifePaidUpTo === undefined || token.amount === "X", {
+    message: "A life payment requires a variable token amount.",
+  });
 
 export const ownBanishSchema = z.strictObject({
   from: z.enum(BANISH_ZONES),

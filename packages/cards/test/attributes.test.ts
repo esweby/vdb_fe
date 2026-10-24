@@ -2,6 +2,45 @@ import { describe, expect, it } from "vitest";
 import { authoredAttributesSchema } from "../src/attributes.ts";
 
 describe("authoredAttributesSchema", () => {
+  it("records a bounded life payment for variable token creation", () => {
+    expect(
+      authoredAttributesSchema.safeParse({
+        tokens: [
+          {
+            token: "runechant",
+            amount: 1,
+            trigger: "on_banished",
+            lifePaidUpTo: 3,
+          },
+        ],
+      }).success,
+    ).toBe(false);
+    expect(
+      authoredAttributesSchema.safeParse({
+        tokens: [
+          {
+            token: "runechant",
+            amount: "X",
+            trigger: "on_banished",
+            lifePaidUpTo: 3,
+          },
+        ],
+      }).success,
+    ).toBe(true);
+    for (const lifePaidUpTo of [0, -1, 1.5, 21])
+      expect(
+        authoredAttributesSchema.safeParse({
+          tokens: [
+            {
+              token: "runechant",
+              amount: "X",
+              trigger: "on_banished",
+              lifePaidUpTo,
+            },
+          ],
+        }).success,
+      ).toBe(false);
+  });
   it("accepts Become the Shadow Lord", () => {
     const result = authoredAttributesSchema.safeParse({
       banishesOwn: [{ from: "hand", trigger: "on_play" }],
