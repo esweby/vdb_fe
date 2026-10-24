@@ -10,7 +10,7 @@ Logs show associations, and the simulation tests counterfactuals. Causal words a
 
 The maintainer approved Bloodfrenzy Gloomblade's rules for all three pitches: Usurp, play from banish and go again after damage dealt that turn, including its remaining Runechants or its own hit. Overlapping sources of go again return only one action point.
 
-With those rules added, the same deck would have 38 of 54 copies verified (70%), and 14 of 21 distinct cards. Coverage is still incomplete. This is a coverage update, not a new simulation result: the 23 Oct results below are preserved. T1–T5 stay fixed; T5 still waits for Gate targets and caveats.
+With those rules added, the same deck has 38 of 54 copies verified (70%), and 14 of 21 distinct cards. Coverage is still incomplete. A new baseline run is recorded below; the 23 Oct results are preserved. T1–T5 stay fixed; T5 still waits for an agreed script.
 
 ## Script guidance (24 Oct 2026)
 
@@ -205,3 +205,23 @@ The likely causes, in order. All are **UNVERIFIED** readings for the maintainer 
 - run again on the same seed
 
 The Cullingsong → Usurp counterfactual also waits on Usurp the Shadow Throne being verified.
+
+## Bloodfrenzy baseline rerun (24 Oct 2026)
+
+The same private deck, observed file, baseline script, seed `20261021`, 10,000 runs and eight turns were used again, with Bloodfrenzy's approved rules. Cards came from local Supabase. All 10,000 runs completed. Engine version is `0.1.0`, rules data `88d7bfcb` (previously `d4293622`). T6 was included following approval; no threshold changed.
+
+Coverage is **incomplete**: 38 of 54 copies (70%), 14 of 21 distinct cards. The baseline still never activates Gates or attacks with weapons. This measures the card-coverage change, not the proposed policy.
+
+| Threshold | Verdict with turn index N − 1 | Detail                                                                                                                  |
+| --------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| T1        | Within, turns 1–6             | Arcane median remains zero.                                                                                             |
+| T2        | Investigate, turns 2–6        | Distribution gaps 0.35–0.46; robust in every matchup with enough data.                                                  |
+| T3        | Investigate, turns 2–6        | By turn 3, 9.41% traversed against 76.03% observed; by turn 6, 16.11% against 95.51%. Robust in every eligible matchup. |
+| T4        | Within                        | Conditional median first-traverse turn is 4; compared with observed index 3.                                            |
+| T5        | Not run                       | No Gate script yet.                                                                                                     |
+| T6a       | Within, turns 1–6             | Threatened-damage medians are 3, 4, 4, 4, 4 and 3.                                                                      |
+| T6b       | Investigate, turns 1–6        | Distribution gaps 0.52–0.74; robust in every eligible matchup.                                                          |
+
+With the other turn mapping, both T2 and T3 also investigate on turn 1. Those changes in verdict are recorded as a data difference. There are 16 investigate verdicts and 15 within with the first mapping; 18 investigate and 13 within with the other. No check lacks sufficient data.
+
+The engine is still not calibrated. Threatened damage no longer falls to a median of zero on turns 5 and 6, but arcane damage and traverse timing still diverge. Lower or slower results remain listed under coverage first. The original `result.json` was left untouched; the new raw report is saved locally at `/private/tmp/vdb-calibration-20261024/baseline-bloodfrenzy.json`. The private deck list is not committed.
