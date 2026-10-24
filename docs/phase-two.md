@@ -27,7 +27,7 @@ Phase two is largely built. What's left is less building than feeding the engine
 
 The first batch (24 cards) went in on 20 Oct 2026, with the sinchants. The second (62 cards, mostly equipment, potions and amulets whose activated ability is otherwise out of scope) went in the same evening; a played item now stays in the arena, so it can be activated. The third (5 cards) followed: Amplify the Arknight, Ninth Blade of the Blood Oath, Reduce to Runechant and Rune Flash, which cost less for each Runechant, and Dimenxxional Crossroads. The hosted cards need re-importing after any change to card facts: `npm run import -w @vdb/importer -- --yes-remote`, run from an up-to-date `main`.
 
-Bloodfrenzy Gloomblade's effect draft now covers its conditional go again, for all three pitches, and waits for review on the effects page. The draft is **unverified** and has not been added to the verified card rules. The goldfish assumes Runechant damage is not prevented; damage from a hit is noted by hand. Tests check that overlapping sources of go again return only one action point.
+Bloodfrenzy Gloomblade's rules were approved by the maintainer on 24 Oct 2026 and added to the verified card rules for all three pitches. They cover Usurp, play from banish and go again after damage dealt that turn, including its remaining Runechants or its own hit. The goldfish assumes Runechant damage is not prevented; damage from a hit is noted by hand. Tests check that overlapping sources of go again return only one action point.
 
 ## Decisions (the maintainer)
 

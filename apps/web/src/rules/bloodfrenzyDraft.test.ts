@@ -1,5 +1,4 @@
-// UNVERIFIED effect draft, for review on the effects page. The maintainer confirmed on
-// 23 Oct 2026 that either its Runechant damage or its own hit can give Bloodfrenzy go again.
+// Bloodfrenzy's draft and verified rules, approved by the maintainer on 24 Oct 2026.
 import { describe, expect, it } from "vitest";
 import {
   playCard,
@@ -74,10 +73,10 @@ const noteDamage = (state: RulesState, amount: number) =>
   applySessionAction(state, { type: "damage", delta: amount });
 
 describe("Bloodfrenzy's proposed draft", () => {
-  it("offers one complete, still unverified draft for all three pitches", () => {
+  it("marks the approved draft as verified for all three pitches", () => {
     const entry = draft();
-    expect(entry.status).toBe("complete");
-    expect(entry.verified).toBe(false);
+    expect(entry.status).toBe("verified");
+    expect(entry.verified).toBe(true);
     expect(entry.drafts).toHaveLength(1);
     expect(entry.drafts[0]!.pitches).toEqual([1, 2, 3]);
     expect(entry.drafts[0]!.draft.notDrafted).toEqual([]);
@@ -92,7 +91,9 @@ describe("Bloodfrenzy's proposed draft", () => {
       "damage to the defending hero this turn",
     );
     for (const pitch of [1, 2, 3])
-      expect(verifiedRulesFor(bloodfrenzy.name, pitch)).toBeUndefined();
+      expect(verifiedRulesFor(bloodfrenzy.name, pitch)).toEqual(
+        entry.drafts[0]!.draft.rules,
+      );
   });
 
   it("usurps one of two Runechants; the other deals damage and gives go again", () => {
