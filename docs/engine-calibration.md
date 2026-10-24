@@ -4,6 +4,8 @@ Step 5 of [fablazing-plan.md](fablazing-plan.md): checking the TypeScript rules 
 
 Status, 24 Oct 2026: **T1–T4 compared** on the maintainer's deck on 23 Oct; results below. T1–T5 were approved by the maintainer on 21 Oct 2026, before anything was compared, and haven't moved. **T6 (threatened damage) was approved as written on 24 Oct**, after its draft results had been reported separately. T5 waits for the Gate-target list. A divergence is something to investigate (a missing rule, a scripted decision or a difference in the data). It never means moving a threshold.
 
+Latest coverage, after verifying blue Usurp the Shadow Throne on 24 Oct: **40 of 54 copies (74%), still incomplete**. The latest same-seed baseline rerun is recorded at the end of this document.
+
 Logs show associations, and the simulation tests counterfactuals. Causal words are kept for results where both agree. The game logic here is **unverified** until the maintainer checks it.
 
 ## Coverage update (24 Oct 2026)
@@ -129,7 +131,7 @@ In the logs, `cullingsong-usurp` was associated with **+30.9 ±3.7 points** (exp
 - Compare, by turn, how often the pair is possible at all (both in hand or playable, with the resources), and the Runechants and arcane damage that turn.
 - If the pair is rarely possible before turn 4 in the simulation, the logs' +30.9 is consistent with a late-game, win-more association rather than a line that wins games. If it's often possible early and players don't take it, that points to a decision worth looking at.
 
-Needs: both cards verified (Cullingsong Gloomblade is; **Usurp the Shadow Throne isn't yet**, so its effect draft comes first) and an "if" check for "Cullingsong played this turn", which the script vocabulary may need adding.
+Both cards are now verified: the maintainer accepted blue Usurp the Shadow Throne on 24 Oct, and its rules have been added to the engine. The separate counterfactual still needs an "if" check for "Cullingsong played this turn", which the script vocabulary may need adding. This calibration work does not run that comparison.
 
 ## How to run it
 
@@ -204,7 +206,7 @@ The likely causes, in order. All are **UNVERIFIED** readings for the maintainer 
 - decide whether the script attacks with weapons
 - run again on the same seed
 
-The Cullingsong → Usurp counterfactual also waits on Usurp the Shadow Throne being verified.
+At the time of the 23 Oct run, the Cullingsong → Usurp counterfactual also waited on Usurp the Shadow Throne being verified.
 
 ## Bloodfrenzy baseline rerun (24 Oct 2026)
 
@@ -225,3 +227,17 @@ Coverage is **incomplete**: 38 of 54 copies (70%), 14 of 21 distinct cards. The 
 With the other turn mapping, both T2 and T3 also investigate on turn 1. Those changes in verdict are recorded as a data difference. There are 16 investigate verdicts and 15 within with the first mapping; 18 investigate and 13 within with the other. No check lacks sufficient data.
 
 The engine is still not calibrated. Threatened damage no longer falls to a median of zero on turns 5 and 6, but arcane damage and traverse timing still diverge. Lower or slower results remain listed under coverage first. The original `result.json` was left untouched; the new raw report is saved locally at `/private/tmp/vdb-calibration-20261024/baseline-bloodfrenzy.json`. The private deck list is not committed.
+
+## Usurp baseline rerun (24 Oct 2026)
+
+The maintainer accepted blue Usurp the Shadow Throne's draft. Its verified rules cover the six-resource discount and permission to play from banish after an earlier usurp that turn. The card does not have Usurp itself. Its on-hit effect remains outside the engine's scope.
+
+The same private deck, observed file, baseline script, seed `20261021`, 10,000 runs and eight turns were used again, with cards from local Supabase. All 10,000 completed. Engine version is `0.1.0`, rules data `072b83eb`. T1–T6 are unchanged, T5 still cannot run with the baseline, and no tactical script or counterfactual is introduced.
+
+Coverage rises from 38 to **40 of 54 copies (74%)**, and from 14 to 15 of 21 distinct cards. It remains incomplete: four more copies need verified rules to reach the 80% requirement.
+
+The threshold verdicts remain as in the Bloodfrenzy rerun: T1, T4 and T6a are within; T2 and T3 investigate on turns 2–6 with the primary mapping, and T6b investigates on turns 1–6. The other mapping also investigates T2 and T3 on turn 1. Every pooled divergence is robust in the matchup checks.
+
+The numerical changes are small. On turn 3, mean arcane damage is 0.1899 (previously 0.1900), mean threatened attack damage is 3.8658 (previously 3.8628), and 9.41% have traversed (unchanged). By turn 6, 16.11% have traversed (unchanged). This is not evidence that the engine is calibrated; coverage and the baseline's Gate and weapon omissions remain limitations.
+
+The new raw report is saved locally at `/private/tmp/vdb-calibration-20261024/baseline-usurp.json`. Both earlier reports and the private deck list are preserved. The Cullingsong → Usurp counterfactual remains a separate follow-up.
