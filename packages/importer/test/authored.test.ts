@@ -3,9 +3,9 @@ import { describe, expect, it } from "vitest";
 import { allAuthored, batches } from "../src/authored/index.ts";
 
 describe("authored batches", () => {
-  it("records Scar's life comparison instead of natural go again, pending review", () => {
+  it("records Scar's approved life comparison instead of natural go again", () => {
     expect(allAuthored()["Scar for a Scar"]).toMatchObject({
-      verified: false,
+      verified: true,
       card: { goAgain: { conditions: ["less_life_than_opposing_hero"] } },
     });
   });
