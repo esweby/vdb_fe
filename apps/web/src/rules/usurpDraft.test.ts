@@ -1,4 +1,4 @@
-// UNVERIFIED effect draft: the maintainer must approve it before the card gains verified rules.
+// Usurp the Shadow Throne's draft, accepted by the maintainer on 24 Oct 2026.
 import { describe, expect, it } from "vitest";
 import { verifiedRulesFor } from "@vdb/engine/rules";
 import type { CardSummary } from "../cards/cardRepository.ts";
@@ -22,10 +22,10 @@ const throne: CardSummary = {
 };
 
 describe("Usurp the Shadow Throne's draft", () => {
-  it("is ready to check, with its conditional permission and cost reduction", () => {
+  it("matches the verified blue rules, with conditional permission and cost reduction", () => {
     const entry = draftQueue([throne])[0]!;
-    expect(entry.status).toBe("complete");
-    expect(entry.verified).toBe(false);
+    expect(entry.status).toBe("verified");
+    expect(entry.verified).toBe(true);
     const draft = entry.drafts[0]!.draft;
     expect(draft.notDrafted).toEqual([]);
     expect(draft.rules).toMatchObject({
@@ -36,7 +36,7 @@ describe("Usurp the Shadow Throne's draft", () => {
     expect(draft.description).toContain(
       "It can be played from the banished zone if you've usurped this turn.",
     );
-    expect(verifiedRulesFor(throne.name, 3)).toBeUndefined();
+    expect(verifiedRulesFor(throne.name, 3)).toEqual(draft.rules);
   });
 
   it("keeps other conditions and combinations incomplete", () => {
