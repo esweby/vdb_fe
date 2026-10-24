@@ -2,7 +2,7 @@
 -- authenticated by default (local stacks do), so every grant must be explicit.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(87);
+select plan(89);
 
 select table_privs_are('public', 'deck_versions', 'anon', array[]::text[], 'anon has no access to deck versions');
 select table_privs_are('public', 'deck_versions', 'authenticated', array['SELECT'], 'owners read versions, with only column updates');
@@ -105,6 +105,9 @@ select ok(
   and not has_column_privilege('authenticated', 'public.cards', 'name', 'UPDATE'),
   'signed-in users can only update the fringe column of cards (row level security limits it to curators)'
 );
+
+select table_privs_are('public', 'sign_in_limits', 'anon', array[]::text[], 'anon has no access to sign-in budgets');
+select table_privs_are('public', 'sign_in_limits', 'authenticated', array[]::text[], 'signed-in users have no access to sign-in budgets');
 
 select * from finish();
 rollback;

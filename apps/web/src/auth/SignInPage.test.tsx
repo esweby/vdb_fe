@@ -1,6 +1,6 @@
-import { screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { fakeAuthService } from "../test/fakeAuthService.ts";
 import { renderApp } from "../test/renderApp.tsx";
 
@@ -127,5 +127,37 @@ describe("sign-in page", () => {
     await user.click(screen.getByRole("button", { name: "Sign in" }));
     await waitFor(() => expect(router.state.location.pathname).toBe("/cards"));
     expect(fake.calls).toEqual(["signIn:edd_99"]);
+  });
+});
+
+describe("pending sign-in", () => {
+  it("allows only one pending request, including repeated form submissions", async () => {
+    let reject!: (error: Error) => void;
+    const signIn = vi.fn(
+      () =>
+        new Promise<void>((_resolve, no) => {
+          reject = no;
+        }),
+    );
+    const fake = fakeAuthService();
+    await renderApp({ path: "/sign-in", auth: { ...fake.service, signIn } });
+    const user = userEvent.setup();
+    const identifier = screen.getByLabelText("Username or email");
+    await user.type(identifier, "player");
+    await user.type(screen.getByLabelText("Password"), "password");
+    const form = identifier.closest("form")!;
+    fireEvent.submit(form);
+    fireEvent.submit(form);
+    expect(signIn).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("button", { name: "Sign in" })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Create an account instead" }),
+    ).toBeDisabled();
+    await act(async () => reject(new Error("Try again")));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Try again");
+    expect(screen.getByRole("button", { name: "Sign in" })).toBeEnabled();
+    fireEvent.submit(form);
+    expect(signIn).toHaveBeenCalledTimes(2);
+    await act(async () => reject(new Error("Try again")));
   });
 });
