@@ -4,9 +4,9 @@ Step 5 of [fablazing-plan.md](fablazing-plan.md): checking the TypeScript rules 
 
 Status, 24 Oct 2026: **T1–T4 compared** on the maintainer's deck on 23 Oct; results below. T1–T5 were approved by the maintainer on 21 Oct 2026, before anything was compared, and haven't moved. **T6 (threatened damage) was approved as written on 24 Oct**, after its draft results had been reported separately. T5 waits for the Gate-target list. A divergence is something to investigate (a missing rule, a scripted decision or a difference in the data). It never means moving a threshold.
 
-Latest coverage, after verifying blue Usurp the Shadow Throne on 24 Oct: **40 of 54 copies (74%), still incomplete**. The latest same-seed baseline rerun is recorded at the end of this document.
+Latest coverage, after verifying blue Arknight Descendancy and Arknight Shard on 24 Oct: **43 of 54 copies (79.6%), still incomplete**. The latest same-seed baseline rerun is recorded at the end of this document.
 
-The maintainer's target is now **100% coverage, reviewing a couple of cards at a time** (24 Oct). The next draft pair is blue Arknight Descendancy (two copies in this deck) and Arknight Shard (one). They remain unverified. Accepting and registering both would bring coverage to 43 of 54 copies (79.6%), still below the 80% requirement; reaching that requirement is not the stopping point.
+The maintainer's target is now **100% coverage, reviewing a couple of cards at a time** (24 Oct). The first pair, blue Arknight Descendancy (two copies in this deck) and Arknight Shard (one), is approved and registered. Coverage is still below the 80% requirement; reaching that requirement is not the stopping point.
 
 Logs show associations, and the simulation tests counterfactuals. Causal words are kept for results where both agree. The game logic here is **unverified** until the maintainer checks it.
 
@@ -243,3 +243,17 @@ The threshold verdicts remain as in the Bloodfrenzy rerun: T1, T4 and T6a are wi
 The numerical changes are small. On turn 3, mean arcane damage is 0.1899 (previously 0.1900), mean threatened attack damage is 3.8658 (previously 3.8628), and 9.41% have traversed (unchanged). By turn 6, 16.11% have traversed (unchanged). This is not evidence that the engine is calibrated; coverage and the baseline's Gate and weapon omissions remain limitations.
 
 The new raw report is saved locally at `/private/tmp/vdb-calibration-20261024/baseline-usurp.json`. Both earlier reports and the private deck list are preserved. The Cullingsong → Usurp counterfactual remains a separate follow-up.
+
+## Descendancy and Shard baseline rerun (24 Oct 2026)
+
+The maintainer approved both blue drafts, now registered as verified rules. Tests use those registered rules for pitching Shard, banishing Descendancy from hand, deck and graveyard, choosing 0–3 life, ignoring face-down copies and replaying choices. The full BSL → Gate → Descendancy → Nebula interaction uses the verified Descendancy rules.
+
+The same private deck, observed file, seed `20261021`, 10,000 runs and eight turns were used again, with cards from local Supabase. All 10,000 completed. Engine version is `0.1.0`, rules data `253b52ee`. This run also includes the queued-Forsaken correction from PR 244, so changes from the Usurp rerun are not attributed solely to the two cards.
+
+The script remains the baseline: no Gate activations or weapon attacks, and no `choices.lifePayment` setting, so it pays zero when Descendancy is banished. This is not a test of the proposed tactical line or its life threshold. No threshold changed; T5 still cannot run.
+
+Coverage rises to **43 of 54 copies (79.6%)**, and 17 of 21 distinct cards. It remains incomplete. The four remaining cards are red Cull, Scar for a Scar and Sinspeaker Gloomblade, and yellow Embrace Sin: 11 copies in total. The target remains 100%, in review pairs.
+
+All threshold verdicts remain unchanged from the Usurp rerun, with every pooled divergence robust in the matchup checks. With the primary turn mapping, 11.57% have traversed by turn 3 (previously 9.41%; observed 76.03%), and 20.15% by turn 6 (previously 16.11%; observed 95.51%). Turn 3 mean arcane damage is 0.2208 (previously 0.1899), and mean threatened attack damage is 4.0607 (previously 3.8658). These changes do not establish calibration.
+
+The raw report is saved locally at `/private/tmp/vdb-calibration-20261024/baseline-descendancy-shard.json`. All previous reports are preserved. No batch uses unverified rules, and the Cullingsong → Usurp counterfactual remains separate.
