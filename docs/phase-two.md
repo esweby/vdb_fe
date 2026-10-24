@@ -75,7 +75,7 @@ Game logic decided by the maintainer, with where it lives. Anything not here is 
 **Engine features, most cards unlocked first**
 
 1. ~~An **activate** action~~: built (20 Oct 2026).
-2. ~~**Cost reductions**~~: built (20 Oct 2026). Per Runechant, from the banished zone and after a usurp are drafted and wait for the maintainer's check. Reductions given to a later card (Bequest the Vast Beyond, Sonata Dystopia) aren't drafted yet.
+2. ~~**Cost reductions**~~: built (20 Oct 2026). Per Runechant, from the banished zone and after a usurp are drafted and wait for the maintainer's check. Usurp the Shadow Throne's draft also covers play from banish after an earlier usurp that turn (24 Oct). It is **unverified**, ready to check on the effects page, and has not been added to the verified card rules. Its on-hit effect remains outside the engine's scope. Reductions given to a later card (Bequest the Vast Beyond, Sonata Dystopia) aren't drafted yet.
 3. **Opt reordering:** choosing the order of the cards kept on top.
 4. **Counts as a Runechant** (sinchants), and usurping them.
 
