@@ -261,3 +261,15 @@ The raw report is saved locally at `/private/tmp/vdb-calibration-20261024/baseli
 ## Next review pair (24 Oct 2026)
 
 Yellow Embrace Sin and red Sinspeaker Gloomblade now have complete, **UNVERIFIED** drafts. Neither is registered for simulation. The private deck has three copies of each: approving and registering both would bring coverage to 49 of 54 copies (90.7%), leaving Cull and Scar for a Scar. The current verified coverage remains 43 of 54; there is no new calibration run. Embrace's next-attack +2 remains outside the engine's scope, so verified card coverage would not mean every damage effect is modelled.
+
+## Embrace and Sinspeaker baseline rerun (24 Oct 2026)
+
+The maintainer approved yellow Embrace Sin and red Sinspeaker Gloomblade, now registered as verified rules. Tests use the registered cards for Embrace's one-resource play and banish permission, and Sinspeaker's conditional, optional search, including declining, failing to find and replaying choices. Other pitches remain unverified. Embrace's next-attack +2 is still not modelled.
+
+Local Supabase was replaced with a copy of the hosted database before this run. An unchanged-rules control on the restored database completed all 10,000 runs and reproduced the previous run's simulated distributions, coverage and comparisons exactly. Its rules-data hash is `3faad417` rather than `253b52ee`; the input data changed, but those results did not. The control is saved locally at `/private/tmp/vdb-calibration-20261024/baseline-descendancy-shard-restored-db-control.json`.
+
+The new run uses the same private deck, observed file, seed `20261021`, baseline script, 10,000 runs and eight turns. All runs completed. Engine version is `0.1.0`, rules data `c5c97003`. Coverage is **49 of 54 copies (90.7%)**, and 19 of 21 distinct cards. This clears the 80% minimum, so the report's `incomplete` flag is false; it does not mean 100% coverage or calibration. Red Cull and Scar for a Scar are the final review pair, with five copies between them.
+
+All threshold verdicts remain unchanged: 16 investigate and 15 within with the primary turn mapping; 18 investigate and 13 within with the other. Every pooled divergence remains robust in the matchup checks. By turn 3, 10.21% have traversed (previously 11.57%; observed 76.03%); by turn 6, 20.82% have traversed (previously 20.15%; observed 95.51%). Turn 3 mean arcane damage is 0.1944 (previously 0.2208), and mean threatened attack damage is 4.0073 (previously 4.0607). More coverage does not make every figure rise under the same script.
+
+The baseline still never activates a Gate or attacks with a weapon, and still pays zero for Descendancy's banish trigger. The search preference is the existing unverified default, not a new tactical policy. No threshold changed; T5 and the Cullingsong → Usurp counterfactual remain separate follow-ups. The new report is saved locally at `/private/tmp/vdb-calibration-20261024/baseline-embrace-sinspeaker.json`; all previous reports and the private deck list are preserved.
