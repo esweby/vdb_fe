@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { DatasetCard } from "../src/classify.ts";
+import { allAuthored } from "../src/authored/index.ts";
 import {
   activationFromText,
   optsFromText,
@@ -31,6 +32,32 @@ describe("parseStat", () => {
 });
 
 describe("toImportCards", () => {
+  it("does not import Scar's conditional keyword as natural go again", () => {
+    const source: DatasetCard = {
+      unique_id: "scar-red",
+      name: "Scar for a Scar",
+      pitch: "1",
+      cost: "0",
+      power: "4",
+      defense: "2",
+      types: ["Generic", "Action", "Attack"],
+      card_keywords: ["Go again"],
+      functional_text_plain:
+        "When this is played, if you have less {h} than an opposing hero, it gets go again.",
+      type_text: "Generic Action - Attack",
+      cc_legal: true,
+      cc_banned: false,
+    };
+    const authored = allAuthored()[source.name];
+    const [imported] = toImportCards(
+      [source],
+      authored ? { [source.name]: authored } : {},
+    );
+    expect(imported!.attributes.hasGoAgain).toBe(false);
+    expect(imported!.attributes.goAgain).toEqual({
+      conditions: ["less_life_than_opposing_hero"],
+    });
+  });
   it("imports only legal cards, one per name", () => {
     expect(cards.map((c) => c.name).sort()).toHaveLength(9);
   });

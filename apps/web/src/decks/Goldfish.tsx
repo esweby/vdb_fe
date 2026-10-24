@@ -799,12 +799,18 @@ export function Goldfish(props: {
               ? (CONFIRM_TEXT[request.source ?? ""] ?? request.prompt)
               : request.prompt}
           </h3>
-          {request.kind === "confirm" ? (
+          {request.kind === "confirm" || request.kind === "condition" ? (
             <div className={styles.deckActions}>
               <Button variant="primary" onClick={() => answer(["yes"])}>
                 Yes
               </Button>
-              <Button onClick={() => answer([])}>No</Button>
+              <Button
+                onClick={() =>
+                  answer(request.kind === "condition" ? ["no"] : [])
+                }
+              >
+                No
+              </Button>
             </div>
           ) : (
             <div className={styles.deckActions}>

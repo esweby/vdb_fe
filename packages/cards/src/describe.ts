@@ -54,6 +54,7 @@ const CONDITION_TEXT: Record<Condition, string> = {
     "the banished or revealed card matches this card's colour",
   destroyed_own_aura: "you destroyed an aura you control",
   hero_lost_life_this_turn: "a hero has lost life this turn",
+  less_life_than_opposing_hero: "you have less life than an opposing hero",
   dealt_damage_to_defending_hero_this_turn:
     "you've dealt damage to the defending hero this turn",
   dealt_arcane_damage_to_opponent_this_turn:

@@ -3,6 +3,12 @@ import { describe, expect, it } from "vitest";
 import { allAuthored, batches } from "../src/authored/index.ts";
 
 describe("authored batches", () => {
+  it("records Scar's life comparison instead of natural go again, pending review", () => {
+    expect(allAuthored()["Scar for a Scar"]).toMatchObject({
+      verified: false,
+      card: { goAgain: { conditions: ["less_life_than_opposing_hero"] } },
+    });
+  });
   it("records Descendancy's three-life limit as a fact, not just a note", () => {
     expect(allAuthored()["Arknight Descendancy"]?.card?.tokens).toContainEqual({
       token: "runechant",

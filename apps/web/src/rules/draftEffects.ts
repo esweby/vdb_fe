@@ -16,6 +16,8 @@ import { CONDITION_PLAIN } from "../decks/conditionAvailability.ts";
 
 export interface DraftRules {
   effects: Effect[];
+  goAgain?: boolean;
+  instantWhen?: RulesCard["instantWhen"];
   triggers?: Trigger[];
   usurp?: boolean;
   playableFromBanish?: boolean;
@@ -142,6 +144,7 @@ export function draftEffects(
   } as CardSummary["attributes"] & Partial<AuthoredCardAttributes>;
   const effects: Effect[] = [];
   const triggers: Trigger[] = [];
+  let manualGoAgain = false;
   const notDrafted: string[] = [];
   const outOfScope: string[] = [];
   const leftOut: string[] = [];
@@ -327,6 +330,22 @@ export function draftEffects(
   if (a.goAgain) {
     if (
       a.goAgain.conditions.length === 1 &&
+      a.goAgain.conditions[0] === "less_life_than_opposing_hero"
+    ) {
+      manualGoAgain = true;
+      triggers.push({
+        id: `${slug(card.name)}-go-again`,
+        on: { event: "played", self: true },
+        effects: [
+          {
+            op: "ifAnswered",
+            condition: "less_life_than_opposing_hero",
+            then: [{ op: "grantGoAgain", target: "self" }],
+          },
+        ],
+      });
+    } else if (
+      a.goAgain.conditions.length === 1 &&
       a.goAgain.conditions[0] === "dealt_damage_to_defending_hero_this_turn"
     ) {
       // UNVERIFIED draft. The maintainer confirmed on 23 Oct 2026 that damage from its own
@@ -361,12 +380,25 @@ export function draftEffects(
   // Everything else the facts record, noted rather than guessed.
   if (a.arcaneDamage?.length)
     note("Arcane damage: damage to an opponent is out of scope");
-  for (const d of a.disrupts ?? [])
-    note(
-      d.target === "each_hero"
-        ? `Each hero ${d.action === "discard" ? "discards" : `${d.action}s`}: not drafted yet`
-        : "Disrupting an opponent: out of scope",
-    );
+  for (const d of a.disrupts ?? []) {
+    if (
+      d.target === "each_hero" &&
+      d.action === "banish" &&
+      d.from === "hand" &&
+      d.amount === 1 &&
+      d.trigger === "on_play" &&
+      !d.conditions?.length &&
+      !d.optional
+    ) {
+      effects.push({ op: "banish", from: "hand", amount: 1 });
+      note("Banishing cards from opposing heroes' hands: out of scope");
+    } else
+      note(
+        d.target === "each_hero"
+          ? `Each hero ${d.action === "discard" ? "discards" : `${d.action}s`}: not drafted yet`
+          : "Disrupting an opponent: out of scope",
+      );
+  }
   // Banishing itself (20 Oct 2026): instead of the graveyard is drafted; combat timings are out
   // of scope; activated abilities and the rest aren't drafted yet.
   let graveyardToBanish = false;
@@ -452,7 +484,13 @@ export function draftEffects(
   }
   if (a.turnsBanishedFaceDown?.length)
     note("Turning banished cards face down: not drafted yet");
-  if (a.instantSpeed) note("Playing it as an instant: not drafted yet");
+  const instantWhen =
+    a.instantSpeed?.conditions.length === 1 &&
+    a.instantSpeed.conditions[0] === "hero_lost_life_this_turn"
+      ? ("hero_lost_life_this_turn" as const)
+      : undefined;
+  if (a.instantSpeed && !instantWhen)
+    note("Playing it as an instant: not drafted yet");
   if (a.grantsGoAgain) note("Go again given to a later card: not drafted yet");
   // A note says what the facts couldn't: it's read before accepting, but doesn't hold the draft
   // back (the maintainer, 20 Oct 2026). It stays among what's left out, so the hash, and the
@@ -478,6 +516,8 @@ export function draftEffects(
     );
   const rules: DraftRules = {
     effects,
+    ...(manualGoAgain ? { goAgain: false } : {}),
+    ...(instantWhen ? { instantWhen } : {}),
     ...(activation
       ? {
           activate: {
@@ -504,10 +544,15 @@ export function draftEffects(
       ...triggers.flatMap((t) =>
         describeEffects(t.effects).map(
           (line) =>
-            `${TRIGGER_EVENT_TEXT[t.on.event] ?? "When you play an attack action card"}${t.condition && "playedFromBanish" in t.condition ? ", if this was played from the banished zone" : ""}: ${t.optional ? "you may " : ""}${line[0]!.toLowerCase()}${line.slice(1)}`,
+            `${t.on.event === "played" && t.on.self ? "When this is played" : (TRIGGER_EVENT_TEXT[t.on.event] ?? "When you play an attack action card")}${t.condition && "playedFromBanish" in t.condition ? ", if this was played from the banished zone" : ""}: ${t.optional ? "you may " : ""}${line[0]!.toLowerCase()}${line.slice(1)}`,
         ),
       ),
       ...(rules.usurp ? ["Usurp."] : []),
+      ...(rules.instantWhen
+        ? [
+            "You may play this as an instant if a hero has lost life this turn (the player answers).",
+          ]
+        : []),
       ...(rules.playableFromBanish
         ? ["It can be played from the banished zone."]
         : []),
