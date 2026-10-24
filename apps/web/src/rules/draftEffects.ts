@@ -9,6 +9,7 @@ import {
   type CostReduction,
   type Effect,
   type Trigger,
+  type RulesCard,
 } from "@vdb/engine/rules";
 import type { CardSummary, VariantSummary } from "../cards/cardRepository.ts";
 import { CONDITION_PLAIN } from "../decks/conditionAvailability.ts";
@@ -18,6 +19,7 @@ export interface DraftRules {
   triggers?: Trigger[];
   usurp?: boolean;
   playableFromBanish?: boolean;
+  playableFromBanishWhen?: RulesCard["playableFromBanishWhen"];
   /** "If this would be put into your graveyard from anywhere, instead banish it." */
   graveyardToBanish?: boolean;
   /** What makes it cost less (docs/phase-two.md, engine features, 2). */
@@ -409,7 +411,12 @@ export function draftEffects(
   const playableFromBanish =
     !!a.playableFromBanish &&
     (a.playableFromBanish.conditions?.length ?? 0) === 0;
-  if (a.playableFromBanish && !playableFromBanish)
+  const playableFromBanishWhen =
+    a.playableFromBanish?.conditions?.length === 1 &&
+    a.playableFromBanish.conditions[0] === "usurped_this_turn"
+      ? ("usurpedThisTurn" as const)
+      : undefined;
+  if (a.playableFromBanish && !playableFromBanish && !playableFromBanishWhen)
     note(
       "Playing it from the banished zone under a condition: not drafted yet",
     );
@@ -433,6 +440,7 @@ export function draftEffects(
     ...(triggers.length ? { triggers } : {}),
     ...(a.hasUsurp ? { usurp: true } : {}),
     ...(playableFromBanish ? { playableFromBanish: true } : {}),
+    ...(playableFromBanishWhen ? { playableFromBanishWhen } : {}),
     ...(graveyardToBanish ? { graveyardToBanish: true } : {}),
     ...(costReductions.length ? { costReductions } : {}),
   };
@@ -451,6 +459,11 @@ export function draftEffects(
       ...(rules.usurp ? ["Usurp."] : []),
       ...(rules.playableFromBanish
         ? ["It can be played from the banished zone."]
+        : []),
+      ...(rules.playableFromBanishWhen === "usurpedThisTurn"
+        ? [
+            "It can be played from the banished zone if you've usurped this turn.",
+          ]
         : []),
       ...(rules.graveyardToBanish
         ? ["If it would go to the graveyard, it's banished instead."]
