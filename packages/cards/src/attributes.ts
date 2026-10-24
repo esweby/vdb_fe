@@ -45,6 +45,7 @@ export const CONDITIONS = [
   "top_card_matches_pitch",
   "destroyed_own_aura",
   "hero_lost_life_this_turn",
+  "less_life_than_opposing_hero",
   "dealt_damage_to_defending_hero_this_turn",
   "dealt_arcane_damage_to_opponent_this_turn",
   "created_3_or_more_runechants",
