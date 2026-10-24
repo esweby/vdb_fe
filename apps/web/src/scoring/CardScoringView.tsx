@@ -15,6 +15,7 @@ import { useAppSelector } from "../hooks.ts";
 import { useServices } from "../servicesContext.ts";
 import { Button, LoadError, Loading, Tag } from "../ui/index.ts";
 import type { CommunityRow } from "../ranking/rank.ts";
+import { useCommunityRecalculation } from "./CommunityRecalculationProvider.tsx";
 import { CommunityPanel } from "./CommunityPanel.tsx";
 import { RealGamesPanel } from "../fablazing/RealGames.tsx";
 import { RelatedCards } from "../synergy/RelatedCards.tsx";
@@ -90,6 +91,7 @@ export function CardScoringView(props: {
     setRateAnyway(false);
   }, [cardId]);
   const { scores } = useServices();
+  const recalculation = useCommunityRecalculation();
   const user = useAppSelector((s) => s.auth.user);
   const canScore = useAppSelector(selectCanScore);
   const [card, setCard] = useState<CardDetail | null | undefined>(undefined);
@@ -207,6 +209,7 @@ export function CardScoringView(props: {
     try {
       if (score === null) await scores.clearScore(cardId, key);
       else await scores.saveScore(cardId, key, score);
+      if (reviewedAt) recalculation.changed();
     } catch (e) {
       setRows(previous);
       setError(`Couldn't save: ${e instanceof Error ? e.message : String(e)}`);
@@ -218,9 +221,7 @@ export function CardScoringView(props: {
     try {
       setReviewedAt(await scores.markReviewed(cardId));
       setReviewing(false);
-      // Scorers' reviews count toward community scores: recalculate now.
-      // The daily job catches anything this misses.
-      if (canScore) await scores.runCommunityJob().catch(() => {});
+      recalculation.changed();
       // In the pop-over, reviewing moves on to the next card.
       if (inPopover) onNextCard?.();
     } catch (e) {

@@ -1,5 +1,6 @@
 // Card details, score dimensions and the signed-in user's scores.
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { CommunityJobResult } from "./communityRecalculation.ts";
 import { redFirst } from "../cards/pitch.ts";
 import type { AuthoredCardAttributes, CardAttributes } from "@vdb/cards";
 import type { Side } from "@vdb/scoring";
@@ -57,8 +58,8 @@ export interface ScoreRepository {
   markReviewed(cardId: string): Promise<string>;
   /** Takes the signed-in user's review off a card (Undo in Quick review). */
   unmarkReviewed(cardId: string): Promise<void>;
-  /** Asks the community score job to recalculate (scorers only; the function checks). */
-  runCommunityJob(): Promise<void>;
+  /** Requests recalculation; the server can defer it with a retry delay. */
+  runCommunityJob(): Promise<CommunityJobResult>;
   listMyReviewedCardIds(userId: string): Promise<string[]>;
   getPreferences(userId: string): Promise<Preferences>;
   savePreferences(userId: string, preferences: Preferences): Promise<void>;
@@ -264,10 +265,31 @@ export function supabaseScoreRepository(
       return Number(data?.value ?? 2);
     },
     async runCommunityJob() {
-      const { error } = await client.functions.invoke("community-scores", {
-        method: "POST",
-      });
+      const { data, error } = await client.functions.invoke(
+        "community-scores",
+        {
+          method: "POST",
+        },
+      );
       if (error) throw error;
+      if (
+        data?.status === "deferred" &&
+        (data.reason === "running" || data.reason === "cooldown") &&
+        Number.isFinite(data.retryAfter) &&
+        data.retryAfter > 0
+      )
+        return {
+          status: "deferred",
+          reason: data.reason,
+          retryAfter: data.retryAfter,
+        };
+      // Accept the previous successful response shape while server and web deploy separately.
+      if (
+        data?.status === "completed" ||
+        (typeof data?.rows === "number" && typeof data?.version === "number")
+      )
+        return { status: "completed" };
+      throw new Error("Unexpected community update response");
     },
     async clearScore(cardId, key) {
       let query = client

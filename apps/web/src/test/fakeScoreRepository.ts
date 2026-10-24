@@ -154,6 +154,7 @@ export function fakeScoreRepository(
     },
     async runCommunityJob() {
       saved.push("job");
+      return { status: "completed" };
     },
     async unmarkReviewed(cardId) {
       saved.push(`unreview ${cardId}`);
