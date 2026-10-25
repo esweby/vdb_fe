@@ -34,7 +34,19 @@ The selector is deliberately narrow, not a general playing policy:
 - Bloodfrenzy requires an explicit `traverseBack: true` or `false`. No momentum decision is inferred.
 - Sword-only matches require `otherPlaysFinished: true` and a card played from banish in the current turn. A spare-resource match needs exactly one resource and either an empty hand or blue BSL with `reserveBsl: true`. The spare-Shard match needs exactly zero resources, only blue Shard and blue BSL in hand, and both `spareShard: true` and `reserveBsl: true`.
 
-The caller can run a returned fragment with `runScriptFromState(state, example.script)`. Missing decisions or different hands do not gain a guessed fallback. This selector is not connected to the calibration batch runner or the default script yet, and no new population result is claimed.
+The caller can run a returned fragment with `runScriptFromState(state, example.script)`. Missing decisions or different hands do not gain a guessed fallback. The default script is unchanged. The opt-in batch connection is described below.
+
+## Opt-in batches
+
+`runGateWeaponBatch(setup, options)` in `apps/web/src/calibration/gateWeaponBatch.ts` supports `baseline`, `gates`, `weapons` and `both`. It uses the same seed generator and report summaries as `runBatch`. With `baseline`, it returns the existing baseline report without adding policy metadata. No page or worker enables it by default.
+
+**UNVERIFIED scheduling and ablation:** the exact lines are approved, but checking for them before each of the baseline's ten play attempts and before its end-turn step is an experimental batch policy. Gates-only enables the three Gate-related fragments without their Nebula swings. Weapons-only enables the two spare-resource or spare-Shard fragments, not a sword extracted from a line that first needs a Gate. Both enables the full fragments. These are controlled comparisons, not separately verified optimal strategies.
+
+The runner keeps the baseline's card choices, including explicit Cull and Scar answers. Missing answers still raise errors. A fragment that already ends the turn replaces that turn's remaining baseline attempts and end-turn step; it cannot end the turn twice. Every run records counts for all five fragments, including zero counts. The batch report keeps counts on failed runs separate from completed-run summaries; do not count those as successful matches.
+
+The policy inputs record `reviewed-gate-weapon-v1`, the mode and all supplied decision flags under **Assumed**. An optional explicit `startingLife` gives goldfish life as starting life minus the engine's self-loss. This assumes no incoming damage, prevention or life gain; it is not an observed opponent interaction. Without starting life, Descendancy's life guard does not match. No default life or reservation/traverse decisions are invented. Cull and Scar's fixed condition answers remain in the recorded script.
+
+The original private deck does not contain Open the Gate, so the exact Descendancy comparator hand cannot match that deck. A zero count is useful evidence of this narrow selector's reach, not proof that Descendancy or Gates are unhelpful. Extending the target list, hand shapes, resource bounds or life range needs review rather than silently widening the guards.
 
 ## What these lines do not establish
 
@@ -42,9 +54,9 @@ The caller can run a returned fragment with `runScriptFromState(state, example.s
 - **Nebula makes a Runechant on hit, not just for attacking.** Hits are not resolved by this engine. None of these examples awards an on-hit Runechant or treats ending on one as guaranteed. A chance to end on one cannot yet be scored as a known outcome.
 - **Life and danger are not inferred.** The comfort check requires explicit life and payment inputs. The below-25 pressure exception, an opponent's blocks and immediate danger are not implemented.
 - **Retaining BSL and pitching Shard is not a general rule.** The maintainer approved that exact hand: Usurper, one action point, zero resources, unused Nebula, a card already played from banish, and blue Shard plus blue BSL in hand. The examples do not classify slower hands, choose pitch stacks or judge momentum.
-- **No T5 or population rerun is claimed.** Guarded selection covers only the reviewed positions, not a general Gate-target list or batch policy. The four fixed Cull/Scar cases and their thresholds are untouched.
+- **T5 still needs its chain measurement.** The batch runner can apply the reviewed Gate fragments, but the comparison module does not yet measure the BSL → Gate → blood debt chain's completion buckets. Policy-match counts are not T5. The four fixed Cull/Scar cases and their thresholds are untouched.
 
 ## Next decisions
 
 1. Define when a traverse back is wanted and which other Gate targets to try. The approved traverse-back example takes that decision explicitly; it does not infer momentum. Spending a Gate without being able to play the target is not made automatic here.
-2. Connect guarded selection to an opt-in batch policy, recording how often a reviewed position matches and keeping missing decisions explicit. Then compare baseline, Gates only, weapons only and both on the same inputs. Keep the Cull/Scar assumptions explicit and run T5 alongside the unchanged other checks. An exact-position selector alone is not evidence that a broader policy has been calibrated.
+2. Compare baseline, Gates only, weapons only and both on the same inputs, recording match counts and keeping the Cull/Scar assumptions explicit. Add the T5 chain measurement before claiming a T5 result. An exact-position selector alone is not evidence that a broader policy has been calibrated.

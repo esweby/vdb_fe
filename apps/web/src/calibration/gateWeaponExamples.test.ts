@@ -7,6 +7,7 @@ import {
   parseScript,
   playCard,
   RUNECHANT,
+  runBatch,
   runScriptFromState,
   setUp,
   VISERAI,
@@ -16,6 +17,8 @@ import {
 import { GATE_WEAPON_EXAMPLES } from "./gateWeaponExamples.ts";
 import * as examples from "./gateWeaponExamples.ts";
 import * as selection from "./gateWeaponSelection.ts";
+import * as policyBatch from "./gateWeaponBatch.ts";
+import { baselineScript } from "../ranking/scenarioRuns.ts";
 
 const fact = (name: string, over: Partial<RulesCard> = {}): RulesCard =>
   cardWithRules({
@@ -498,5 +501,139 @@ describe("guarded selection of reviewed worked lines", () => {
     const state = descendancyPosition();
     const withoutHero = { ...state, triggers: [] };
     expect(select(withoutHero, { currentLife: 35 })).toBeUndefined();
+  });
+});
+
+describe("opt-in worked-line batches", () => {
+  const run = (state: RulesState, options = {}) => {
+    expect(policyBatch.runGateWeaponPolicyFromState).toBeTypeOf("function");
+    const before = structuredClone(state);
+    const result = policyBatch.runGateWeaponPolicyFromState(state, {
+      turns: 1,
+      mode: "both",
+      ...options,
+    });
+    expect(state).toEqual(before);
+    checkInvariants(result.state);
+    return result;
+  };
+
+  it("counts a spare-resource match only with explicit decisions", () => {
+    const state = readyForSword([starter()]);
+    const result = run(state, {
+      decisions: { otherPlaysFinished: true, reserveBsl: true },
+    });
+    expect(result.policyMatches["spare-sword"]).toBe(1);
+    expect(
+      result.trace.filter(
+        (event) =>
+          event.type === "attackPlayed" &&
+          event.uid === state.zones.weapons[0]!.uid,
+      ),
+    ).toHaveLength(1);
+    expect(run(state).policyMatches["spare-sword"]).toBe(0);
+  });
+
+  it.each(["baseline", "gates", "weapons", "both"] as const)(
+    "handles the traverse-back fragment once in %s mode",
+    (mode) => {
+      const result = run(bloodfrenzyPosition(3), {
+        mode,
+        decisions: { traverseBack: true },
+      });
+      expect(result.state.turn).toBe(2);
+      expect(
+        result.trace.filter((event) => event.type === "turnEnded"),
+      ).toHaveLength(1);
+      expect(result.policyMatches["own-usurp-traverse-back"]).toBe(
+        mode === "gates" || mode === "both" ? 1 : 0,
+      );
+      expect(
+        result.trace.filter((event) => event.type === "gateActivated"),
+      ).toHaveLength(mode === "gates" || mode === "both" ? 1 : 0);
+      expect(
+        result.trace.filter(
+          (event) =>
+            event.type === "attackPlayed" &&
+            event.uid === result.state.zones.weapons[0]!.uid,
+        ),
+      ).toHaveLength(mode === "both" ? 1 : 0);
+    },
+  );
+
+  it("derives explicit goldfish life from starting life and self-loss, not a default", () => {
+    const state = { ...descendancyPosition(), lifeLost: 5 };
+    expect(
+      run(state, { startingLife: 40 }).policyMatches["descendancy-first"],
+    ).toBe(1);
+    expect(run(state).policyMatches["descendancy-first"]).toBe(0);
+    expect(
+      run(state, { startingLife: 39 }).policyMatches["descendancy-first"],
+    ).toBe(0);
+  });
+
+  it("does not enable sword-only hands in Gates-only mode", () => {
+    const state = readyForSword([shard(), starter()], 1);
+    const decisions = {
+      otherPlaysFinished: true,
+      reserveBsl: true,
+      spareShard: true,
+    };
+    expect(
+      run(state, { mode: "gates", decisions }).policyMatches[
+        "spare-shard-sword"
+      ],
+    ).toBe(0);
+    expect(
+      run(state, { mode: "weapons", decisions }).policyMatches[
+        "spare-shard-sword"
+      ],
+    ).toBe(1);
+  });
+
+  it("preserves the default report and paired seeds when no position matches", () => {
+    expect(policyBatch.runGateWeaponBatch).toBeTypeOf("function");
+    const setup = { deck: [] };
+    const options = { turns: 2, runs: 5, seed: 19 };
+    const baseline = runBatch(setup, baselineScript(2), options);
+    expect(
+      policyBatch.runGateWeaponBatch(setup, { ...options, mode: "baseline" }),
+    ).toEqual(baseline);
+    const result = policyBatch.runGateWeaponBatch(setup, {
+      ...options,
+      mode: "both",
+      startingLife: 40,
+      decisions: { traverseBack: false },
+    });
+    expect(result.inputs.script).toEqual(baseline.inputs.script);
+    expect(result.inputs.rulesDataVersion).toBe(
+      baseline.inputs.rulesDataVersion,
+    );
+    expect(result.inputs.policy).toEqual({
+      id: "reviewed-gate-weapon-v1",
+      assumptions: {
+        label: "Assumed",
+        mode: "both",
+        startingLife: 40,
+        traverseBack: false,
+      },
+    });
+    expect(result.byTurn).toEqual(baseline.byTurn);
+    expect(
+      result.perRun.map(({ policyMatches, ...record }) => {
+        expect(Object.values(policyMatches!)).toEqual([0, 0, 0, 0, 0]);
+        return record;
+      }),
+    ).toEqual(baseline.perRun);
+  });
+
+  it("keeps missing Cull answers as errors rather than inventing conditions", () => {
+    const state = position({ hand: [fact("Cull", { pitch: 1, cost: 0 })] });
+    expect(() => run(state)).toThrow(/explicit/i);
+  });
+
+  it("rejects unsupported modes and invalid starting life", () => {
+    expect(() => run(readyForSword(), { mode: "unknown" })).toThrow(/mode/i);
+    expect(() => run(readyForSword(), { startingLife: NaN })).toThrow(/life/i);
   });
 });
