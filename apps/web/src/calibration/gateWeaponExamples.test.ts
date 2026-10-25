@@ -144,7 +144,7 @@ describe("Gate and sword worked examples", () => {
     },
   );
 
-  it("marks all five reviewed exact lines as approved", () => {
+  it("marks all six reviewed lines as approved", () => {
     expect(
       GATE_WEAPON_EXAMPLES.find((entry) => entry.id === "spare-shard-sword")!
         .review,
@@ -157,6 +157,7 @@ describe("Gate and sword worked examples", () => {
       "descendancy-first",
       "own-usurp-no-gate",
       "own-usurp-traverse-back",
+      "spare-shard-descendancy",
       "spare-sword",
       "spare-shard-sword",
     ]);
@@ -679,7 +680,7 @@ describe("opt-in worked-line batches", () => {
       baseline.inputs.rulesDataVersion,
     );
     expect(result.inputs.policy).toEqual({
-      id: "reviewed-gate-weapon-v2",
+      id: "reviewed-gate-weapon-v3",
       assumptions: {
         label: "Assumed",
         mode: "both",
@@ -690,7 +691,7 @@ describe("opt-in worked-line batches", () => {
     expect(result.byTurn).toEqual(baseline.byTurn);
     expect(
       result.perRun.map(({ policyMatches, ...record }) => {
-        expect(Object.values(policyMatches!)).toEqual([0, 0, 0, 0, 0]);
+        expect(Object.values(policyMatches!)).toEqual([0, 0, 0, 0, 0, 0]);
         return record;
       }),
     ).toEqual(baseline.perRun);
@@ -704,5 +705,192 @@ describe("opt-in worked-line batches", () => {
   it("rejects unsupported modes and invalid starting life", () => {
     expect(() => run(readyForSword(), { mode: "unknown" })).toThrow(/mode/i);
     expect(() => run(readyForSword(), { startingLife: NaN })).toThrow(/life/i);
+  });
+});
+
+function fundingPosition(hand = [shard(), starter()]) {
+  return position({
+    hand,
+    banished: [descendant()],
+    resources: 0,
+    tokens: { gate: 1, runechant: 4 },
+  });
+}
+
+describe("the reviewed Shard-funded Descendancy line", () => {
+  const decisions = { currentLife: 25, spareShard: true, reserveBsl: true };
+
+  it("pitches Shard, plays gated Descendancy and swings without paying life or using BSL", () => {
+    const state = fundingPosition();
+    const result = execute("spare-shard-descendancy", state);
+    expect(result.steps.map((step) => step.outcome)).toEqual([
+      "done",
+      "done",
+      "done",
+      "done",
+    ]);
+    expect(result.state.resources).toBe(1);
+    expect(result.state.tokens.runechant ?? 0).toBe(0);
+    expect(result.state.tokens.gate ?? 0).toBe(0);
+    expect(result.state.lifeLost).toBe(state.lifeLost);
+    expect(
+      result.state.zones.hand.map((instance) => instance.card.name),
+    ).toEqual(["Become the Shadow Lord"]);
+    expect(
+      result.state.zones.pitch.map((instance) => instance.card.name),
+    ).toEqual(["Arknight Shard"]);
+    expect(result.trace).toContainEqual({ type: "arcaneDamage", amount: 5 });
+  });
+
+  it("selects only the reviewed hand with explicit spare and keeper choices", () => {
+    const state = fundingPosition();
+    const before = structuredClone(state);
+    expect(selection.selectGateWeaponExample(state, decisions)?.id).toBe(
+      "spare-shard-descendancy",
+    );
+    expect(state).toEqual(before);
+    expect(
+      selection.selectGateWeaponExample(state, {
+        ...decisions,
+        spareShard: false,
+      }),
+    ).toBeUndefined();
+    expect(
+      selection.selectGateWeaponExample(state, {
+        ...decisions,
+        reserveBsl: false,
+      }),
+    ).toBeUndefined();
+    expect(
+      selection.selectGateWeaponExample(
+        fundingPosition([fact("Other blue"), starter()]),
+        decisions,
+      ),
+    ).toBeUndefined();
+    expect(
+      selection.selectGateWeaponExample(
+        fundingPosition([shard(), starter(), fact("Another card")]),
+        decisions,
+      ),
+    ).toBeUndefined();
+  });
+
+  it.each([
+    ["different life", { currentLife: 26 }, {}],
+    ["unsafe life", { currentLife: 24 }, {}],
+    ["different resources", {}, { resources: 1 }],
+    ["different Runechants", {}, { tokens: { gate: 1, runechant: 5 } }],
+    ["no Gate", {}, { tokens: { gate: 0, runechant: 4 } }],
+    ["more Gates", {}, { tokens: { gate: 2, runechant: 4 } }],
+  ] as const)(
+    "does not silently broaden the exact funding line: %s",
+    (_label, changeDecisions, changeState) => {
+      expect(
+        selection.selectGateWeaponExample(
+          { ...fundingPosition(), ...changeState },
+          { ...decisions, ...changeDecisions },
+        ),
+      ).toBeUndefined();
+    },
+  );
+
+  it("does not pitch into a face-down or missing target or a used weapon", () => {
+    const state = fundingPosition();
+    expect(
+      selection.selectGateWeaponExample(
+        { ...state, faceDown: [state.zones.banished[0]!.uid] },
+        decisions,
+      ),
+    ).toBeUndefined();
+    expect(
+      selection.selectGateWeaponExample(
+        position({
+          hand: [shard(), starter()],
+          tokens: { gate: 1, runechant: 4 },
+        }),
+        decisions,
+      ),
+    ).toBeUndefined();
+    expect(
+      selection.selectGateWeaponExample(
+        { ...state, usedThisTurn: [state.zones.weapons[0]!.uid] },
+        decisions,
+      ),
+    ).toBeUndefined();
+  });
+
+  it.each(["baseline", "gates", "weapons", "both"] as const)(
+    "keeps BSL when applying the funding line in %s mode",
+    (mode) => {
+      const state = fundingPosition();
+      const keeper = state.zones.hand.find(
+        (instance) => instance.card.name === "Become the Shadow Lord",
+      )!.uid;
+      const result = policyBatch.runGateWeaponPolicyFromState(state, {
+        turns: 1,
+        mode,
+        startingLife: 25,
+        decisions: { spareShard: true, reserveBsl: true },
+      });
+      const applied = mode === "gates" || mode === "both";
+      expect(result.policyMatches["spare-shard-descendancy"]).toBe(
+        applied ? 1 : 0,
+      );
+      if (applied)
+        expect(
+          result.state.zones.hand.some((instance) => instance.uid === keeper),
+        ).toBe(true);
+      expect(
+        result.trace.filter((event) => event.type === "turnEnded"),
+      ).toHaveLength(1);
+      expect(
+        result.trace.filter(
+          (event) =>
+            event.type === "attackPlayed" &&
+            event.uid === state.zones.weapons[0]!.uid,
+        ),
+      ).toHaveLength(mode === "both" ? 1 : 0);
+      checkInvariants(result.state);
+    },
+  );
+
+  it("does not let a disabled Gate line hide an allowed sword-only line", () => {
+    const prior = fact("Fixture non-attack", {
+      effects: [],
+      goAgain: true,
+      playableFromBanish: true,
+    });
+    const initial = position({
+      hand: [shard(), starter()],
+      banished: [descendant(), prior],
+      tokens: { gate: 1, runechant: 4 },
+    });
+    const state = playCard(initial, uid(initial, prior.name));
+    const choices = { ...decisions, otherPlaysFinished: true };
+    expect(selection.selectGateWeaponExample(state, choices)?.id).toBe(
+      "spare-shard-descendancy",
+    );
+    expect(
+      selection.selectGateWeaponExample(state, choices, ["spare-shard-sword"])
+        ?.id,
+    ).toBe("spare-shard-sword");
+    expect(
+      selection.selectGateWeaponExample(state, choices, []),
+    ).toBeUndefined();
+    const result = policyBatch.runGateWeaponPolicyFromState(state, {
+      turns: 1,
+      mode: "weapons",
+      startingLife: 25,
+      decisions: {
+        otherPlaysFinished: true,
+        spareShard: true,
+        reserveBsl: true,
+      },
+    });
+    expect(result.policyMatches["spare-shard-sword"]).toBe(1);
+    expect(result.policyMatches["spare-shard-descendancy"]).toBe(0);
+    expect(result.trace.some((event) => event.type === "gateActivated")).toBe(
+      false,
+    );
   });
 });
