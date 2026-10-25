@@ -86,6 +86,8 @@ Game logic decided by the maintainer, with where it lives. Anything not here is 
 
 - **Reviewed Shard-funded Descendancy:** on Usurper with one action point, exactly 25 life, zero resources, four Runechants, one Gate and unused Nebula, with blue Descendancy face up in banish as the first blood debt attack and blue Shard plus blue BSL in hand, pitch Shard, Gate Descendancy, play it and swing Nebula. Keep BSL. Shard makes the fifth Runechant and three resources; the line leaves one resource and pays no life. This approves that exact funding line, not a general pitch preference or a wider hand shape.
 
+- **Current Descendancy health requirement:** the maintainer replaced the earlier 25-life limits with **over 17 life after payment**, for both the floating-resource and Shard-funded lines. Eighteen is allowed; seventeen is not. Paying three from 21 leaves 18 and passes; paying three from 20 leaves 17 and fails. This supersedes the earlier exact-25 funding restriction as well as the at-least-25 comfort check. Other card, token, resource and explicit-choice guards are unchanged.
+
 ## Open
 
 **For the maintainer**

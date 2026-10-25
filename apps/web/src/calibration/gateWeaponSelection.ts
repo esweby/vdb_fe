@@ -6,6 +6,7 @@ import {
 } from "@vdb/engine/rules";
 import {
   GATE_WEAPON_EXAMPLES,
+  descendancyComfortableAfterPayment,
   type GateWeaponExample,
 } from "./gateWeaponExamples.ts";
 
@@ -69,7 +70,7 @@ function matches(
     case "descendancy-first":
       return (
         Number.isInteger(decisions.currentLife) &&
-        decisions.currentLife! >= 25 &&
+        descendancyComfortableAfterPayment(decisions.currentLife!, 0) &&
         (state.tokens.gate ?? 0) >= 1 &&
         (state.tokens.runechant ?? 0) >= 4 &&
         firstBloodDebtAttack &&
@@ -91,7 +92,8 @@ function matches(
     }
     case "spare-shard-descendancy":
       return (
-        decisions.currentLife === 25 &&
+        Number.isInteger(decisions.currentLife) &&
+        descendancyComfortableAfterPayment(decisions.currentLife!, 0) &&
         decisions.spareShard === true &&
         decisions.reserveBsl === true &&
         state.resources === 0 &&

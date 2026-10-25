@@ -127,9 +127,14 @@ function readyForSword(hand: RulesCard[] = [], resources = 2) {
 describe("Gate and sword worked examples", () => {
   it.each([
     [28, 3, true],
-    [27, 3, false],
+    [27, 3, true],
     [25, 0, true],
-    [25, 1, false],
+    [25, 1, true],
+    [21, 3, true],
+    [20, 3, false],
+    [18, 0, true],
+    [17, 0, false],
+    [16, 0, false],
     [26, 1, true],
     [27, 2, true],
   ] as const)(
@@ -328,7 +333,7 @@ describe("guarded selection of reviewed worked lines", () => {
       "descendancy-first",
     );
     expect(select(descendancyPosition())).toBeUndefined();
-    expect(select(descendancyPosition(), { currentLife: 24 })).toBeUndefined();
+    expect(select(descendancyPosition(), { currentLife: 17 })).toBeUndefined();
     expect(select(descendancyPosition(), { currentLife: 34 })).toBe(
       "descendancy-first",
     );
@@ -514,7 +519,10 @@ describe("guarded selection of reviewed worked lines", () => {
     [4, 2, 35, false],
     [5, 1, 35, false],
     [3, 4, 35, false],
-    [5, 2, 24, false],
+    [5, 2, 18, true],
+    [5, 2, 24, true],
+    [5, 2, 17, false],
+    [5, 2, 16, false],
     [5, 2, Infinity, false],
   ] as const)(
     "checks bounded Descendancy with %s Runechants, %s resources and %s life",
@@ -680,7 +688,7 @@ describe("opt-in worked-line batches", () => {
       baseline.inputs.rulesDataVersion,
     );
     expect(result.inputs.policy).toEqual({
-      id: "reviewed-gate-weapon-v3",
+      id: "reviewed-gate-weapon-v4",
       assumptions: {
         label: "Assumed",
         mode: "both",
@@ -776,8 +784,8 @@ describe("the reviewed Shard-funded Descendancy line", () => {
   });
 
   it.each([
-    ["different life", { currentLife: 26 }, {}],
-    ["unsafe life", { currentLife: 24 }, {}],
+    ["unsafe life", { currentLife: 17 }, {}],
+    ["lower life", { currentLife: 16 }, {}],
     ["different resources", {}, { resources: 1 }],
     ["different Runechants", {}, { tokens: { gate: 1, runechant: 5 } }],
     ["no Gate", {}, { tokens: { gate: 0, runechant: 4 } }],
@@ -793,6 +801,33 @@ describe("the reviewed Shard-funded Descendancy line", () => {
       ).toBeUndefined();
     },
   );
+
+  it.each([18, 24, 25, 26, 35])(
+    "permits the funded line at %s life",
+    (currentLife) => {
+      expect(
+        selection.selectGateWeaponExample(fundingPosition(), {
+          ...decisions,
+          currentLife,
+        })?.id,
+      ).toBe("spare-shard-descendancy");
+    },
+  );
+
+  it("requires a supplied integer life total for the funded line", () => {
+    expect(
+      selection.selectGateWeaponExample(fundingPosition(), {
+        spareShard: true,
+        reserveBsl: true,
+      }),
+    ).toBeUndefined();
+    expect(
+      selection.selectGateWeaponExample(fundingPosition(), {
+        ...decisions,
+        currentLife: Infinity,
+      }),
+    ).toBeUndefined();
+  });
 
   it("does not pitch into a face-down or missing target or a used weapon", () => {
     const state = fundingPosition();
