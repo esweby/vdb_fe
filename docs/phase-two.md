@@ -80,6 +80,7 @@ Game logic decided by the maintainer, with where it lives. Anything not here is 
 
 - **Descendancy comfort:** at least 25 life after paying its life cost. Paying three from 28 is comfortable; paying three from 27 is not. This is not a ban on the previously discussed below-25 pressure exceptions.
 - **One reviewed Nebula hand:** on Usurper with one action point, zero resources, Nebula unused and a card already played from banish, pitch blue Arknight Shard to swing Nebula and keep blue Become the Shadow Lord for next turn. This approves that exact hand, not a general pitch preference. See [the worked hands](gate-weapon-worked-hands.md).
+- **Two reviewed Gate lines:** on Usurper with one action point and unused Nebula, at 35 life with three resources, four Runechants, one Gate, blue Descendancy already face up in banish and red Open the Gate held, activate the Gate on Descendancy, play it and swing Nebula, retaining Open the Gate. No more life is paid in this fragment. Separately, with two resources, one Runechant, one Gate and red Bloodfrenzy face up in banish as the turn's first blood debt attack, play Bloodfrenzy then Nebula without spending the Gate when no traverse back is wanted. These approve the exact worked lines, not arbitrary Gate targets or an automatic policy.
 
 ## Open
 

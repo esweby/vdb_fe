@@ -19,7 +19,7 @@ export function descendancyComfortableAfterPayment(
 export const GATE_WEAPON_EXAMPLES: readonly GateWeaponExample[] = [
   {
     id: "descendancy-first",
-    review: "unverified",
+    review: "approved",
     purpose:
       "Play gated Descendancy before the held Open the Gate, then swing Nebula.",
     preconditions: [
@@ -41,7 +41,7 @@ export const GATE_WEAPON_EXAMPLES: readonly GateWeaponExample[] = [
   },
   {
     id: "own-usurp-no-gate",
-    review: "unverified",
+    review: "approved",
     purpose: "Use Bloodfrenzy's own banish permission without spending a Gate.",
     preconditions: [
       "Usurper, one action point, two resources and an unused Nebula.",

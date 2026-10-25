@@ -1,6 +1,6 @@
 # Gate and sword worked hands
 
-These worked examples follow the guidance in [engine-calibration.md](engine-calibration.md#script-guidance-24-oct-2026). The maintainer approved the exact spare-Shard / reserved-BSL hand on 25 Oct; the other exact selections remain **UNVERIFIED policy examples** for review. They use registered rules for the cards actually played. They are not a new default policy, a claim of optimal play or a change to the calibration baseline.
+These worked examples follow the guidance in [engine-calibration.md](engine-calibration.md#script-guidance-24-oct-2026). On 25 Oct the maintainer approved three exact lines: Descendancy first, own permission without spending a Gate, and the spare-Shard / reserved-BSL hand. The traverse-back and spare-resource selections remain **UNVERIFIED policy examples** for review. They use registered rules for the cards actually played. They are not a new default policy, a claim of optimal play or a change to the calibration baseline.
 
 ## Declared inputs
 
@@ -32,5 +32,5 @@ An additional guard case refuses the sword swing if no card was played from bani
 
 ## Next decisions
 
-1. Review the remaining exact selections and define when a traverse back is wanted and which other Gate targets to try. In particular, spending a Gate without being able to play the target is not made automatic here.
+1. Review the traverse-back and spare-resource selections, and define when a traverse back is wanted and which other Gate targets to try. In particular, spending a Gate without being able to play the target is not made automatic here.
 2. Turn the reviewed selections into bounded script decisions, then compare baseline, Gates only, weapons only and both on the same inputs. Keep the Cull/Scar assumptions explicit and run T5 alongside the unchanged other checks.
