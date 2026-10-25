@@ -15,6 +15,7 @@ import {
 } from "@vdb/engine/rules";
 import { GATE_WEAPON_EXAMPLES } from "./gateWeaponExamples.ts";
 import * as examples from "./gateWeaponExamples.ts";
+import * as selection from "./gateWeaponSelection.ts";
 
 const fact = (name: string, over: Partial<RulesCard> = {}): RulesCard =>
   cardWithRules({
@@ -280,5 +281,222 @@ describe("Gate and sword worked examples", () => {
       "needs a card played from a banished zone",
     );
     expect(result.state).toEqual(initial);
+  });
+});
+
+function descendancyPosition() {
+  return position({
+    hand: [
+      fact("Open the Gate to i'Arathael", { pitch: 1, type: "attack_action" }),
+    ],
+    banished: [descendant()],
+    resources: 3,
+    tokens: { gate: 1, runechant: 4 },
+  });
+}
+
+function bloodfrenzyPosition(resources = 2) {
+  return position({
+    banished: [bloodfrenzy()],
+    resources,
+    tokens: { gate: 1, runechant: 1 },
+  });
+}
+
+describe("guarded selection of reviewed worked lines", () => {
+  const select = (state: RulesState, decisions = {}) => {
+    expect(selection.selectGateWeaponExample).toBeTypeOf("function");
+    const before = structuredClone(state);
+    const result = selection.selectGateWeaponExample(state, decisions);
+    expect(state).toEqual(before);
+    if (result) {
+      expect(result.review).toBe("approved");
+      const run = runScriptFromState(state, result.script);
+      expect(run.failure).toBeUndefined();
+      expect(run.steps.every((step) => step.outcome === "done")).toBe(true);
+      checkInvariants(run.state);
+    }
+    return result?.id;
+  };
+
+  it("selects Descendancy only with the explicit reviewed life input", () => {
+    expect(select(descendancyPosition(), { currentLife: 35 })).toBe(
+      "descendancy-first",
+    );
+    expect(select(descendancyPosition())).toBeUndefined();
+    expect(select(descendancyPosition(), { currentLife: 24 })).toBeUndefined();
+    expect(select(descendancyPosition(), { currentLife: 34 })).toBeUndefined();
+  });
+
+  it("requires an explicit traverse decision for either Bloodfrenzy line", () => {
+    expect(select(bloodfrenzyPosition(), { traverseBack: false })).toBe(
+      "own-usurp-no-gate",
+    );
+    expect(select(bloodfrenzyPosition())).toBeUndefined();
+    expect(select(bloodfrenzyPosition(3), { traverseBack: true })).toBe(
+      "own-usurp-traverse-back",
+    );
+    expect(
+      select(bloodfrenzyPosition(3), { traverseBack: false }),
+    ).toBeUndefined();
+  });
+
+  it("requires other plays to be finished and BSL to be explicitly reserved", () => {
+    expect(select(readyForSword(), { otherPlaysFinished: true })).toBe(
+      "spare-sword",
+    );
+    expect(select(readyForSword())).toBeUndefined();
+    expect(
+      select(readyForSword([starter()]), { otherPlaysFinished: true }),
+    ).toBeUndefined();
+    expect(
+      select(readyForSword([starter()]), {
+        otherPlaysFinished: true,
+        reserveBsl: true,
+      }),
+    ).toBe("spare-sword");
+  });
+
+  it("pitches Shard only for the reviewed hand and explicit spare/keeper choices", () => {
+    const state = readyForSword([shard(), starter()], 1);
+    const decisions = {
+      otherPlaysFinished: true,
+      reserveBsl: true,
+      spareShard: true,
+    };
+    expect(select(state, decisions)).toBe("spare-shard-sword");
+    expect(select(state, { ...decisions, spareShard: false })).toBeUndefined();
+    expect(select(state, { ...decisions, reserveBsl: false })).toBeUndefined();
+    expect(
+      select(state, { ...decisions, otherPlaysFinished: false }),
+    ).toBeUndefined();
+    expect(
+      select(
+        readyForSword([shard(), starter(), fact("Another card")], 1),
+        decisions,
+      ),
+    ).toBeUndefined();
+    expect(
+      select(
+        readyForSword([shard(), { ...starter(), pitch: 1 }], 1),
+        decisions,
+      ),
+    ).toBeUndefined();
+  });
+
+  it.each([
+    [
+      "wrong hero side",
+      (state: RulesState) => ({ ...state, side: "forsaken" as const }),
+    ],
+    ["no action point", (state: RulesState) => ({ ...state, actionPoints: 0 })],
+    [
+      "wrong phase",
+      (state: RulesState) => ({ ...state, phase: "end" as const }),
+    ],
+    [
+      "used Nebula",
+      (state: RulesState) => ({
+        ...state,
+        usedThisTurn: [state.zones.weapons[0]!.uid],
+      }),
+    ],
+    [
+      "unmodelled Nebula",
+      (state: RulesState) => ({
+        ...state,
+        zones: {
+          ...state.zones,
+          weapons: state.zones.weapons.map((instance) => ({
+            ...instance,
+            card: { ...instance.card, weaponAttack: undefined },
+          })),
+        },
+      }),
+    ],
+    ["no resources", (state: RulesState) => ({ ...state, resources: 0 })],
+  ] as const)("does not select a sword line with %s", (_label, change) => {
+    expect(
+      select(change(readyForSword()), { otherPlaysFinished: true }),
+    ).toBeUndefined();
+  });
+
+  it("checks banish play in the current turn, not an earlier turn", () => {
+    const state = readyForSword();
+    expect(
+      select(position({ resources: 1 }), { otherPlaysFinished: true }),
+    ).toBeUndefined();
+    expect(
+      select(
+        {
+          ...state,
+          events: [...state.events, { type: "turnStarted", turn: 2 }],
+        },
+        { otherPlaysFinished: true },
+      ),
+    ).toBeUndefined();
+  });
+
+  it("rejects a face-down target and a different pitch", () => {
+    const state = bloodfrenzyPosition();
+    expect(
+      select(
+        { ...state, faceDown: [state.zones.banished[0]!.uid] },
+        { traverseBack: false },
+      ),
+    ).toBeUndefined();
+    expect(
+      select(
+        position({
+          banished: [{ ...bloodfrenzy(), pitch: 2 }],
+          resources: 2,
+          tokens: { gate: 1, runechant: 1 },
+        }),
+        { traverseBack: false },
+      ),
+    ).toBeUndefined();
+  });
+
+  it("requires the declared Gate, Runechants and resources", () => {
+    const state = descendancyPosition();
+    expect(
+      select(
+        { ...state, tokens: { gate: 0, runechant: 4 } },
+        { currentLife: 35 },
+      ),
+    ).toBeUndefined();
+    expect(
+      select(
+        { ...state, tokens: { gate: 1, runechant: 3 } },
+        { currentLife: 35 },
+      ),
+    ).toBeUndefined();
+    expect(
+      select({ ...state, resources: 2 }, { currentLife: 35 }),
+    ).toBeUndefined();
+  });
+
+  it("does not treat a later blood debt attack as the first", () => {
+    const played = readyForSword();
+    const state = bloodfrenzyPosition();
+    const previous = played.zones.arena[0]!;
+    const withHistory = {
+      ...state,
+      zones: {
+        ...state.zones,
+        arena: [{ ...previous, uid: "earlier-attack" }],
+      },
+      events: [
+        ...state.events,
+        { type: "attackPlayed" as const, uid: "earlier-attack" },
+      ],
+    };
+    expect(select(withHistory, { traverseBack: false })).toBeUndefined();
+  });
+
+  it("rejects a partially runnable line before spending its Gate", () => {
+    const state = descendancyPosition();
+    const withoutHero = { ...state, triggers: [] };
+    expect(select(withoutHero, { currentLife: 35 })).toBeUndefined();
   });
 });
