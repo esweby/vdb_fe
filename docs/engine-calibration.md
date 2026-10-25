@@ -2,11 +2,11 @@
 
 Step 5 of [fablazing-plan.md](fablazing-plan.md): checking the TypeScript rules engine (`packages/engine`) against real games from FaBlazing.
 
-Status, 24 Oct 2026: **T1–T4 compared** on the maintainer's deck on 23 Oct; results below. T1–T5 were approved by the maintainer on 21 Oct 2026, before anything was compared, and haven't moved. **T6 (threatened damage) was approved as written on 24 Oct**, after its draft results had been reported separately. T5 waits for the Gate-target list. A divergence is something to investigate (a missing rule, a scripted decision or a difference in the data). It never means moving a threshold.
+Status, 25 Oct 2026: **T1–T4 and T6 compared at full verified-rule coverage**, using four explicit-answer cases approved by the maintainer; results at the end of this document. T1–T5 were approved on 21 Oct 2026, before anything was compared, and haven't moved. **T6 (threatened damage) was approved as written on 24 Oct**, after its draft results had been reported separately. T5 waits for the Gate-target list. A divergence is something to investigate (a missing rule, a scripted decision or a difference in the data). It never means moving a threshold.
 
-Latest coverage, after verifying blue Arknight Descendancy and Arknight Shard on 24 Oct: **43 of 54 copies (79.6%), still incomplete**. The latest same-seed baseline rerun is recorded at the end of this document.
+Latest coverage: **54 of 54 copies (100%), all 21 distinct cards**. All four same-seed cases completed 10,000 runs each. Every case still diverges; full card coverage does not establish calibration.
 
-The maintainer's target is now **100% coverage, reviewing a couple of cards at a time** (24 Oct). The first pair, blue Arknight Descendancy (two copies in this deck) and Arknight Shard (one), is approved and registered. Coverage is still below the 80% requirement; reaching that requirement is not the stopping point.
+The maintainer's target of **100% coverage, reviewing a couple of cards at a time** (24 Oct), is reached. That means each card has registered rules, with the scope limits below; it does not mean every combat effect or opponent interaction is modelled.
 
 Logs show associations, and the simulation tests counterfactuals. Causal words are kept for results where both agree. The game logic here is **unverified** until the maintainer checks it.
 
@@ -287,3 +287,26 @@ The maintainer approved both final card readings, now registered for red Cull an
 This is a coverage check, not a new simulation or calibration result. It is saved locally at `/private/tmp/vdb-calibration-20261024/coverage-full.json`, with rules data `0d49faac`. No opponent-context answers were chosen, no thresholds changed and no previous report was overwritten. The latest 10,000-run report is still the 49-of-54 Embrace and Sinspeaker baseline; its verdicts must not be presented as a full-coverage run.
 
 Before running the full-coverage deck, choose and record explicit `choices.conditions` values for Cull and Scar. The baseline currently supplies neither, so it will refuse a play that needs them. These answers are assumptions, not observed life totals or a tactical policy. Scar's new facts also need a card re-import; no local or hosted card records were changed here. Full verified-rule coverage does not remove the remaining combat, opponent-state, Gate and weapon-policy limits, or mean that the engine is calibrated.
+
+## Four explicit-answer cases (25 Oct 2026)
+
+The maintainer approved running all four combinations of Cull's instant-mode answer and Scar's life-comparison answer. PR 249 was merged after approval, so all 54 copies have registered rules. These cases are **Assumed**, not Observed: each answer is fixed for every play in that run. They do not track changing life totals, prove the condition was legal on each turn, define a tactical policy or bound what real play could achieve.
+
+Each case uses the same private deck, observed file, seed `20261021`, 10,000 runs, eight turns and six checked turns. All **40,000 runs completed**, with zero failures. Coverage is 54 of 54 copies and 21 of 21 distinct cards in every case. Engine version is `0.1.0`, rules data `0d49faac`, source commit `1eb3447`. Card data was read once from local Supabase for all four cases, with no imports, resets or hosted operations.
+
+The script is `baselineScript(8)` with only `choices.conditions` added. `hero_lost_life_this_turn: true` chooses Cull's instant mode every time; false plays it as an action. `less_life_than_opposing_hero: true` gives Scar its conditional go again; false does not. Each raw report saves the full script and labels these fixed answers **Assumed**. The script still never activates Gates or attacks with weapons, pays zero for Descendancy and uses the existing search preference. No tactical policy or threshold changed.
+
+| Cull instant | Scar go again | Traversed by turn 3 | Traversed by turn 6 | Mean arcane, turn 3 | Mean threatened attack, turn 3 |
+| ------------ | ------------- | ------------------- | ------------------- | ------------------- | ------------------------------ |
+| No           | No            | 7.52%               | 17.12%              | 0.1938              | 3.5150                         |
+| No           | Yes           | 8.56%               | 19.16%              | 0.2122              | 3.8154                         |
+| Yes          | No            | 9.65%               | 20.78%              | 0.2243              | 4.0828                         |
+| Yes          | Yes           | 10.79%              | 23.48%              | 0.2472              | 4.4570                         |
+
+The observed first-traverse shares are **76.03% by turn 3** and **95.51% by turn 6** with the primary turn mapping. None of the four fixed-answer cases removes that gap. The ranges in the table describe these cases only, not upper or lower bounds on a player's results. Threatened damage retains the earlier unmodelled bonuses and combat limits.
+
+All verdicts match the previous 49-of-54 baseline check by check: T1, T4 and T6a are within; T2 and T3 investigate on turns 2–6 with the primary mapping, and T6b investigates on turns 1–6. The other mapping also investigates T2 and T3 on turn 1. Each case has **16 investigate / 15 within** with the primary mapping, and **18 / 13** with the other, with no insufficient-data verdicts. Every pooled divergence is robust in the eligible matchup checks. This is still not a calibrated engine, and no one case is selected as the policy.
+
+The new raw reports are saved locally under `/private/tmp/vdb-calibration-20261025/`: `cull-no-scar-no.json`, `cull-no-scar-yes.json`, `cull-yes-scar-no.json` and `cull-yes-scar-yes.json`. `summary.json` checks their inputs, coverage, completion and assumption labels. All earlier reports and the private deck list are preserved. No private deck list is committed.
+
+The next unresolved work is the Gate and weapon script: turn the maintainer's existing guidance into explicit, reviewed decisions, then run T5 and compare on the same inputs. The final cards' answers are no longer a blocker for a labelled sensitivity run, but these four cases do not replace that policy work or the separate Cullingsong → Usurp counterfactual.
