@@ -13,7 +13,7 @@ export function descendancyComfortableAfterPayment(
   life: number,
   payment: number,
 ): boolean {
-  return life - payment >= 25;
+  return life - payment > 17;
 }
 
 export const GATE_WEAPON_EXAMPLES: readonly GateWeaponExample[] = [
@@ -25,7 +25,7 @@ export const GATE_WEAPON_EXAMPLES: readonly GateWeaponExample[] = [
     preconditions: [
       "Usurper, one action point, an unused Nebula, at least four Runechants and a Gate.",
       "Blue Descendancy is already face up in banish and is the first blood debt attack this turn.",
-      "At least 25 current life after any earlier payment; enough floating resources for Gate, Descendancy and Nebula.",
+      "Over 17 current life after any earlier payment; enough floating resources for Gate, Descendancy and Nebula.",
       "No automatic pitching or further life payment; other hand cards are left alone.",
     ],
     script: parseScript({
@@ -91,7 +91,7 @@ export const GATE_WEAPON_EXAMPLES: readonly GateWeaponExample[] = [
     purpose:
       "Fund Gate, Descendancy and Nebula with the reviewed spare Shard, keeping BSL.",
     preconditions: [
-      "Usurper, one action point, 25 current life, zero resources, four Runechants, one Gate and an unused Nebula.",
+      "Usurper, one action point, over 17 current life, zero resources, four Runechants, one Gate and an unused Nebula.",
       "Blue Descendancy is face up in banish and would be the first blood debt attack this turn.",
       "The hand is blue Shard and blue BSL; the caller explicitly marks Shard spare and BSL reserved.",
       "No life is paid and no other pitch preference is inferred.",
