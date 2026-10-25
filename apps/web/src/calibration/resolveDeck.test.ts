@@ -7,6 +7,31 @@ import { resolveDeck } from "./resolveDeck.ts";
 const cards = [...sampleCards, TEST_POCUS];
 
 describe("resolveDeck", () => {
+  it("counts the approved final pair as modelled and overrides stale Scar go again", () => {
+    const pair = ["Cull", "Scar for a Scar"].map((name) => ({
+      ...sampleCards[0]!,
+      name,
+      type: name === "Cull" ? "action" : "attack_action",
+      attributes: {
+        ...sampleCards[0]!.attributes,
+        hasGoAgain: name === "Scar for a Scar",
+      },
+      variants: [{ ...sampleCards[0]!.variants[0]!, pitch: 1, cost: 0 }],
+    }));
+    const resolved = resolveDeck(
+      pair.map((source) => ({ name: source.name, pitch: 1, copies: 2 })),
+      pair,
+    );
+    expect(resolved.coverage).toEqual({
+      copies: { modelled: 4, total: 4 },
+      distinct: { modelled: 2, total: 2 },
+      unmodelled: [],
+    });
+    expect(
+      resolved.deck.find((source) => source.name === "Scar for a Scar")!
+        .goAgain,
+    ).toBe(false);
+  });
   it("puts weapons in their slot and copies in the deck", () => {
     const r = resolveDeck(
       [

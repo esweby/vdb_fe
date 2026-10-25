@@ -3,9 +3,9 @@
 import type { AuthoredAttributes } from "../map.ts";
 
 export const remaining: AuthoredAttributes = {
-  // UNVERIFIED: Scar's keyword is conditional, not natural go again.
+  // Approved by the maintainer, 24 Oct 2026: conditional, not natural go again.
   "Scar for a Scar": {
-    verified: false,
+    verified: true,
     card: { goAgain: { conditions: ["less_life_than_opposing_hero"] } },
   },
   // Costs less per Runechant

@@ -1,7 +1,7 @@
-// UNVERIFIED synthetic drafts: exercise explicit answers without registering either real card.
+// Approved red rules with synthetic display names to isolate the choice interface.
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { CARD_RULES } from "@vdb/engine/rules";
+import { CARD_RULES, verifiedRulesFor } from "@vdb/engine/rules";
 import { expect, it } from "vitest";
 import { sampleCards } from "../test/fakeCardRepository.ts";
 import { Goldfish } from "./Goldfish.tsx";
@@ -15,23 +15,9 @@ it.each([true, false])(
       type: "attack_action",
       attributes: { ...sampleCards[0]!.attributes, hasGoAgain: true },
     };
-    CARD_RULES[card.name] = {
-      goAgain: false,
-      effects: [],
-      triggers: [
-        {
-          id: "draft-scar",
-          on: { event: "played", self: true },
-          effects: [
-            {
-              op: "ifAnswered",
-              condition: "less_life_than_opposing_hero",
-              then: [{ op: "grantGoAgain", target: "self" }],
-            },
-          ],
-        },
-      ],
-    };
+    const rules = verifiedRulesFor("Scar for a Scar", 1);
+    expect(rules).toBeDefined();
+    CARD_RULES[card.name] = rules!;
     try {
       render(
         <Goldfish
@@ -82,10 +68,9 @@ it("offers Cull's instant mode at zero action points, then asks which hand card 
     type: "action",
     attributes: { ...sampleCards[0]!.attributes, hasGoAgain: false },
   };
-  CARD_RULES[card.name] = {
-    effects: [{ op: "banish", from: "hand", amount: 1 }],
-    instantWhen: "hero_lost_life_this_turn",
-  };
+  const rules = verifiedRulesFor("Cull", 1);
+  expect(rules).toBeDefined();
+  CARD_RULES[card.name] = rules!;
   try {
     render(
       <Goldfish

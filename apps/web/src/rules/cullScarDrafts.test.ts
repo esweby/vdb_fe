@@ -1,4 +1,4 @@
-// UNVERIFIED final-pair drafts, pending the maintainer's game-logic review.
+// Final-pair rules approved by the maintainer on 24 Oct 2026.
 import { describe, expect, it } from "vitest";
 import { parseTriggers, verifiedRulesFor } from "@vdb/engine/rules";
 import { allAuthored } from "../../../../packages/importer/src/authored/index.ts";
@@ -25,14 +25,22 @@ const card = (name: string) => ({
 
 describe("the final draft pair", () => {
   it.each(["Cull", "Scar for a Scar"])(
-    "makes %s complete but not verified",
+    "marks %s verified with rules matching the accepted draft",
     (name) => {
       const entry = draftQueue([card(name)])[0];
       expect(entry).toBeDefined();
-      expect(entry!.status).toBe("complete");
-      expect(entry!.verified).toBe(false);
+      expect(entry!.status).toBe("verified");
+      expect(entry!.verified).toBe(true);
       expect(entry!.drafts[0]!.draft.notDrafted).toEqual([]);
-      expect(verifiedRulesFor(name, 1)).toBeUndefined();
+      expect(verifiedRulesFor(name, 1)).toEqual(entry!.drafts[0]!.draft.rules);
+    },
+  );
+
+  it.each(["Cull", "Scar for a Scar"])(
+    "leaves other pitches of %s unverified",
+    (name) => {
+      expect(verifiedRulesFor(name, 2)).toBeUndefined();
+      expect(verifiedRulesFor(name, 3)).toBeUndefined();
     },
   );
 
