@@ -349,4 +349,23 @@ The clear sampled blocker is funding: **every Descendancy target state failed th
 
 The maintainer then approved the exact Shard-funded line in [the worked hands](gate-weapon-worked-hands.md#opt-in-batches). It is recorded as policy version `reviewed-gate-weapon-v3`; it does not broaden other pitch or life-payment decisions. Unit tests establish the line and its guards, not its frequency in games. No v3 population improvement is claimed here.
 
-All these selectors require Usurper, so they act only after the first traverse. They cannot explain or fix the initial-traverse gap measured by T3. T5 still needs its chain-completion measurement. Neither threshold is changed. The private diagnostic is `/private/tmp/vdb-gate-diagnostic-20261025.json`; no database records, hosted data or card imports were changed.
+The v1–v5 selectors require Usurper, so they act only after the first traverse. They cannot explain or fix the initial-traverse gap measured by T3. T5 still needs its chain-completion measurement. Neither threshold is changed. The private diagnostic is `/private/tmp/vdb-gate-diagnostic-20261025.json`; no database records, hosted data or card imports were changed.
+
+## Draft setup sample (25 Oct 2026)
+
+The **UNVERIFIED** `draft-descendancy-setup-v6` policy adds BSL setup, bounded life payments and general funding from non-kept cards. Its choices and limits are described in [the worked hands](gate-weapon-worked-hands.md#draft-setup-policy-25-oct-2026). It is opt-in, not a replacement for the default policy or a verified strategy.
+
+The diagnostic uses **1,000 runs for each of four Cull/Scar cases**, comparing baseline with Gates only: **8,000 completed runs, no failures**. Each pair uses the same seeds (seed 20261021), eight turns, the private 54/54-covered deck and rules data `0d49faac`. Starting life 40, no incoming damage or life gain, no explicitly kept cards, and each case's fixed Cull/Scar answers are **Assumed**, not observed game state.
+
+| Cull instant / Scar go again | BSL setup matches | Funded Descendancy matches | First traverse by turn 3, baseline → draft | First traverse by turn 6, baseline → draft |
+| ---------------------------- | ----------------- | -------------------------- | ------------------------------------------ | ------------------------------------------ |
+| No / No                      | 190               | 191                        | 77 → 137                                   | 178 → 295                                  |
+| No / Yes                     | 197               | 198                        | 87 → 148                                   | 202 → 322                                  |
+| Yes / No                     | 188               | 189                        | 110 → 167                                  | 233 → 336                                  |
+| Yes / Yes                    | 194               | 196                        | 123 → 180                                  | 247 → 352                                  |
+
+Traversal figures are counts out of 1,000 runs. Policy matches count applications, not distinct games; a run may match more than once. Other approved fragments had zero matches in this sample. Unlike the old policy, the draft can affect first traverse because setup can start on Forsaken. This demonstrates that the previously missing actions are exercised, not that the policy is optimal or that the observed calibration gap is solved. No calibration threshold or T5 verdict is claimed.
+
+The private report is `/private/tmp/vdb-descendancy-setup-sample-final-20261025.json`. It records paired-seed digests and source hashes based on `fa10319`. No private deck list is added to the repository and no database records are changed.
+
+Next: review representative setup and funding traces, add the T5 chain-completion measurement, then decide whether a larger paired comparison is useful. Do not repeat a large run before inspecting the lines it actually plays.

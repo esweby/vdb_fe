@@ -12,6 +12,7 @@ import {
 } from "@vdb/engine/rules";
 import { baselineScript } from "../ranking/scenarioRuns.ts";
 import { GATE_WEAPON_EXAMPLES } from "./gateWeaponExamples.ts";
+import { selectDescendancyPlan } from "./descendancySetup.ts";
 import {
   selectGateWeaponExample,
   type GateWeaponDecisions,
@@ -52,7 +53,19 @@ function scriptFor(options: GateWeaponPolicyOptions): Script {
     throw new Error("Starting life must be a positive integer.");
   }
   const script = baselineScript(options.turns);
-  return options.choices ? { ...script, choices: options.choices } : script;
+  const choices = options.choices;
+  if (options.mode !== "baseline" && options.decisions?.reserveBsl === true)
+    return {
+      ...script,
+      choices: {
+        ...choices,
+        keep: [
+          ...(choices?.keep ?? []),
+          { name: "Become the Shadow Lord", pitch: 3 },
+        ],
+      },
+    };
+  return choices ? { ...script, choices } : script;
 }
 
 export function runGateWeaponPolicyFromState(
@@ -61,7 +74,11 @@ export function runGateWeaponPolicyFromState(
 ): GateWeaponPolicyRun {
   const baseline = scriptFor(options);
   const policyMatches = Object.fromEntries(
-    GATE_WEAPON_EXAMPLES.map((example) => [example.id, 0]),
+    [
+      ...GATE_WEAPON_EXAMPLES.map((example) => example.id),
+      "descendancy-setup",
+      "funded-descendancy",
+    ].map((id) => [id, 0]),
   );
   if (options.mode === "baseline")
     return { ...runScriptFromState(initial, baseline), policyMatches };
@@ -95,7 +112,30 @@ export function runGateWeaponPolicyFromState(
       },
       allowedIds,
     );
-    if (!example) return;
+    if (!example) {
+      if (options.mode === "weapons") return;
+      const plan = selectDescendancyPlan(
+        state,
+        options.startingLife,
+        baseline.choices,
+        options.mode === "both" &&
+          options.decisions?.nebulaAfterDescendancy !== false,
+      );
+      if (!plan) return;
+      const run = runScriptFromState(state, plan.script);
+      if (run.failure) {
+        append(run);
+        return;
+      }
+      const required = run.steps.filter(
+        (step) => step.step !== "attackWithWeapon",
+      );
+      append(run);
+      if (!required.length || required.some((step) => step.outcome !== "done"))
+        return;
+      policyMatches[plan.id]!++;
+      return plan.id;
+    }
     const script: Script = {
       ...example.script,
       choices: {
@@ -127,13 +167,18 @@ export function runGateWeaponPolicyFromState(
     const started = state.turn;
     for (let attempt = 0; attempt < 10 && !failure; attempt++) {
       const applied = attemptPolicy();
-      if (state.turn !== started || applied === "spare-shard-descendancy")
+      if (
+        failure ||
+        state.turn !== started ||
+        applied === "spare-shard-descendancy"
+      )
         break;
+      if (applied === "descendancy-setup") continue;
       applyBaseline({ do: "play", card: {} });
     }
     if (!failure && state.turn === started) {
       attemptPolicy();
-      if (state.turn === started) applyBaseline({ do: "endTurn" });
+      if (!failure && state.turn === started) applyBaseline({ do: "endTurn" });
     }
   }
   return {
@@ -159,6 +204,8 @@ export function runGateWeaponBatch(
   const assumptions: Record<string, string | number | boolean> = {
     label: "Assumed",
     mode: options.mode,
+    strategy:
+      "UNVERIFIED: BSL setup, bounded Descendancy life payment and highest-pitch funding from non-kept cards",
     ...options.decisions,
   };
   if (options.startingLife !== undefined)
@@ -166,7 +213,7 @@ export function runGateWeaponBatch(
   return runBatch(setup, script, {
     ...batchOptions,
     policy: {
-      id: "reviewed-gate-weapon-v5",
+      id: "draft-descendancy-setup-v6",
       assumptions,
       run: (input) => runGateWeaponPolicyFromState(setUp(input), options),
     },

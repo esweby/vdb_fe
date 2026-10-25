@@ -688,8 +688,10 @@ describe("opt-in worked-line batches", () => {
       baseline.inputs.rulesDataVersion,
     );
     expect(result.inputs.policy).toEqual({
-      id: "reviewed-gate-weapon-v5",
+      id: "draft-descendancy-setup-v6",
       assumptions: {
+        strategy:
+          "UNVERIFIED: BSL setup, bounded Descendancy life payment and highest-pitch funding from non-kept cards",
         label: "Assumed",
         mode: "both",
         startingLife: 40,
@@ -699,7 +701,7 @@ describe("opt-in worked-line batches", () => {
     expect(result.byTurn).toEqual(baseline.byTurn);
     expect(
       result.perRun.map(({ policyMatches, ...record }) => {
-        expect(Object.values(policyMatches!)).toEqual([0, 0, 0, 0, 0, 0]);
+        expect(Object.values(policyMatches!)).toEqual([0, 0, 0, 0, 0, 0, 0, 0]);
         return record;
       }),
     ).toEqual(baseline.perRun);
