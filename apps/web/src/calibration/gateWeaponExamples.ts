@@ -1,4 +1,4 @@
-// UNVERIFIED selections unless marked approved; not an automatic policy or baseline change.
+// Maintainer-approved exact examples, not an automatic policy or baseline change.
 import { parseScript, type Script } from "@vdb/engine/rules";
 
 export interface GateWeaponExample {
@@ -58,7 +58,7 @@ export const GATE_WEAPON_EXAMPLES: readonly GateWeaponExample[] = [
   },
   {
     id: "own-usurp-traverse-back",
-    review: "unverified",
+    review: "approved",
     purpose:
       "Spend a Gate on that same card only for an explicitly requested traverse back.",
     preconditions: [
@@ -82,7 +82,7 @@ export const GATE_WEAPON_EXAMPLES: readonly GateWeaponExample[] = [
   },
   {
     id: "spare-sword",
-    review: "unverified",
+    review: "approved",
     purpose:
       "Use an already floating resource without pitching a reserved starter.",
     preconditions: [
