@@ -1,4 +1,4 @@
-// Maintainer-approved exact examples, not an automatic policy or baseline change.
+// Maintainer-approved lines and bounded Descendancy extension, not a default policy change.
 import { parseScript, type Script } from "@vdb/engine/rules";
 
 export interface GateWeaponExample {
@@ -21,11 +21,12 @@ export const GATE_WEAPON_EXAMPLES: readonly GateWeaponExample[] = [
     id: "descendancy-first",
     review: "approved",
     purpose:
-      "Play gated Descendancy before the held Open the Gate, then swing Nebula.",
+      "Play gated Descendancy, then swing Nebula, retaining the other hand cards.",
     preconditions: [
-      "Usurper, one action point, three resources, four Runechants and one Gate.",
-      "The blue Descendancy is already face up in banish; Open the Gate stays in hand.",
-      "The declared example is at 35 life, with no further life payment in this fragment.",
+      "Usurper, one action point, an unused Nebula, at least four Runechants and a Gate.",
+      "Blue Descendancy is already face up in banish and is the first blood debt attack this turn.",
+      "At least 25 current life after any earlier payment; enough floating resources for Gate, Descendancy and Nebula.",
+      "No automatic pitching or further life payment; other hand cards are left alone.",
     ],
     script: parseScript({
       version: 1,
@@ -34,7 +35,11 @@ export const GATE_WEAPON_EXAMPLES: readonly GateWeaponExample[] = [
           do: "activateGate",
           target: { name: "Arknight Descendancy", pitch: 3 },
         },
-        { do: "play", card: { name: "Arknight Descendancy", pitch: 3 } },
+        {
+          do: "play",
+          from: "banished",
+          card: { name: "Arknight Descendancy", pitch: 3 },
+        },
         { do: "attackWithWeapon", weapon: { name: "Seven Sin Nebula" } },
       ],
     }),

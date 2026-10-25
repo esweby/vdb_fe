@@ -1,4 +1,5 @@
 import {
+  effectiveCost,
   runScriptFromState,
   type RulesInstance,
   type RulesState,
@@ -52,6 +53,11 @@ function matches(
   const faceUpBanish = state.zones.banished.filter(
     (instance) => !state.faceDown.includes(instance.uid),
   );
+  const descendancy = faceUpBanish.find(
+    (instance) =>
+      instance.card.name === "Arknight Descendancy" &&
+      instance.card.pitch === 3,
+  );
   const gatePosition = (resources: number, runechants: number) =>
     state.resources === resources &&
     state.tokens.gate === 1 &&
@@ -62,10 +68,16 @@ function matches(
   switch (id) {
     case "descendancy-first":
       return (
-        decisions.currentLife === 35 &&
-        gatePosition(3, 4) &&
-        exactCards(faceUpBanish, [["Arknight Descendancy", 3]]) &&
-        exactCards(hand, [["Open the Gate to i'Arathael", 1]])
+        Number.isInteger(decisions.currentLife) &&
+        decisions.currentLife! >= 25 &&
+        (state.tokens.gate ?? 0) >= 1 &&
+        (state.tokens.runechant ?? 0) >= 4 &&
+        firstBloodDebtAttack &&
+        !!descendancy &&
+        state.resources >=
+          1 +
+            effectiveCost(state, descendancy.uid) +
+            (state.zones.weapons[0]?.card.weaponAttack?.cost ?? Infinity)
       );
     case "own-usurp-no-gate":
     case "own-usurp-traverse-back": {
@@ -127,6 +139,18 @@ export function selectGateWeaponExample(
     if (example.review !== "approved" || !matches(example.id, state, decisions))
       return false;
     const run = runScriptFromState(state, example.script);
+    if (
+      example.id === "descendancy-first" &&
+      (run.state.zones.hand.length !== state.zones.hand.length ||
+        run.state.zones.hand.some(
+          (instance, index) => instance.uid !== state.zones.hand[index]!.uid,
+        ) ||
+        run.trace
+          .slice(state.events.length)
+          .some((event) => event.type === "pitched") ||
+        run.state.lifeLost !== state.lifeLost)
+    )
+      return false;
     return (
       run.failure === undefined &&
       run.steps.length === example.script.steps.length &&

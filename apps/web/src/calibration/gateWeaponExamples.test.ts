@@ -328,7 +328,9 @@ describe("guarded selection of reviewed worked lines", () => {
     );
     expect(select(descendancyPosition())).toBeUndefined();
     expect(select(descendancyPosition(), { currentLife: 24 })).toBeUndefined();
-    expect(select(descendancyPosition(), { currentLife: 34 })).toBeUndefined();
+    expect(select(descendancyPosition(), { currentLife: 34 })).toBe(
+      "descendancy-first",
+    );
   });
 
   it("requires an explicit traverse decision for either Bloodfrenzy line", () => {
@@ -502,6 +504,73 @@ describe("guarded selection of reviewed worked lines", () => {
     const withoutHero = { ...state, triggers: [] };
     expect(select(withoutHero, { currentLife: 35 })).toBeUndefined();
   });
+
+  it.each([
+    [4, 3, 25, true],
+    [4, 4, 34, true],
+    [5, 2, 25, true],
+    [6, 2, 35, true],
+    [4, 2, 35, false],
+    [5, 1, 35, false],
+    [3, 4, 35, false],
+    [5, 2, 24, false],
+    [5, 2, Infinity, false],
+  ] as const)(
+    "checks bounded Descendancy with %s Runechants, %s resources and %s life",
+    (runechants, resources, currentLife, allowed) => {
+      const state = position({
+        hand: [shard(), starter()],
+        banished: [bloodfrenzy(), descendant()],
+        resources,
+        tokens: { gate: 2, runechant: runechants },
+      });
+      expect(select(state, { currentLife })).toBe(
+        allowed ? "descendancy-first" : undefined,
+      );
+    },
+  );
+
+  it("plays Descendancy from banish while retaining an identical hand copy", () => {
+    const state = position({
+      hand: [descendant(), shard(), starter()],
+      banished: [bloodfrenzy(), descendant()],
+      resources: 3,
+      tokens: { gate: 1, runechant: 4 },
+    });
+    expect(select(state, { currentLife: 25 })).toBe("descendancy-first");
+    const example = selection.selectGateWeaponExample(state, {
+      currentLife: 25,
+    })!;
+    const result = runScriptFromState(state, example.script);
+    expect(result.state.zones.hand).toEqual(state.zones.hand);
+    expect(result.trace).toContainEqual({
+      type: "playedFromBanish",
+      uid: state.zones.banished[1]!.uid,
+    });
+    expect(result.trace.some((event) => event.type === "pitched")).toBe(false);
+    expect(result.state.lifeLost).toBe(state.lifeLost);
+  });
+
+  it("uses a face-up Descendancy without selecting a face-down copy", () => {
+    const state = position({
+      banished: [descendant(), descendant()],
+      resources: 3,
+      tokens: { gate: 1, runechant: 4 },
+    });
+    const first = state.zones.banished[0]!.uid;
+    expect(select({ ...state, faceDown: [first] }, { currentLife: 25 })).toBe(
+      "descendancy-first",
+    );
+    expect(
+      select(
+        {
+          ...state,
+          faceDown: state.zones.banished.map((instance) => instance.uid),
+        },
+        { currentLife: 25 },
+      ),
+    ).toBeUndefined();
+  });
 });
 
 describe("opt-in worked-line batches", () => {
@@ -569,7 +638,7 @@ describe("opt-in worked-line batches", () => {
     expect(run(state).policyMatches["descendancy-first"]).toBe(0);
     expect(
       run(state, { startingLife: 39 }).policyMatches["descendancy-first"],
-    ).toBe(0);
+    ).toBe(1);
   });
 
   it("does not enable sword-only hands in Gates-only mode", () => {
@@ -610,7 +679,7 @@ describe("opt-in worked-line batches", () => {
       baseline.inputs.rulesDataVersion,
     );
     expect(result.inputs.policy).toEqual({
-      id: "reviewed-gate-weapon-v1",
+      id: "reviewed-gate-weapon-v2",
       assumptions: {
         label: "Assumed",
         mode: "both",

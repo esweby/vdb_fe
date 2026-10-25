@@ -1,6 +1,6 @@
 # Gate and sword worked hands
 
-These worked examples follow the guidance in [engine-calibration.md](engine-calibration.md#script-guidance-24-oct-2026). On 25 Oct the maintainer approved all five exact lines: Descendancy first, own permission without spending a Gate, an explicitly wanted traverse back, a spare-resource sword swing, and the spare-Shard / reserved-BSL hand. They use registered rules for the cards actually played. They are not a new default policy, a claim of optimal play or a change to the calibration baseline.
+These worked examples follow the guidance in [engine-calibration.md](engine-calibration.md#script-guidance-24-oct-2026). On 25 Oct the maintainer approved all five exact lines: Descendancy first, own permission without spending a Gate, an explicitly wanted traverse back, a spare-resource sword swing, and the spare-Shard / reserved-BSL hand. They later approved the bounded Descendancy extension described below. The lines use registered rules for the cards actually played. They are not a new default policy, a claim of optimal play or a change to the calibration baseline.
 
 ## Declared inputs
 
@@ -29,8 +29,9 @@ An additional guard case refuses the sword swing if no card was played from bani
 The selector is deliberately narrow, not a general playing policy:
 
 - All matches need Usurper, the action phase, exactly one action point, an empty arsenal and a single unused Seven Sin Nebula. The interpreter checks the weapon's modelled ability too.
-- The Gate examples require the exact resource, Runechant, Gate and hand counts in the worked positions, exactly one face-up banished target of the reviewed pitch, and no earlier blood debt attack this turn. The Bloodfrenzy hands are empty.
-- Descendancy requires an explicit `currentLife: 35`, matching the reviewed position. Missing life or even another comfortable life total does not match. The separate after-payment comfort check is unchanged; approval of that check does not broaden this exact hand automatically.
+- The Bloodfrenzy examples still require the exact resource, Runechant, Gate and hand counts in the worked positions, exactly one face-up banished target of the reviewed pitch, and no earlier blood debt attack this turn. Their hands are empty.
+- Descendancy now uses the maintainer's bounded extension: explicit current life of at least 25 after any earlier payment, at least four Runechants, at least one Gate, blue Descendancy face up in banish as the first blood debt attack, and enough floating resources for Gate → Descendancy → Nebula. With four Runechants that needs three resources; with five or more it needs two under the registered rules. Open the Gate need not be held, and other banished cards may remain. No further life is paid and no card is pitched. The trial also requires the hand to stay unchanged.
+- Descendancy's play step explicitly uses `from: "banished"`, so an identical blue copy in hand cannot take its place. Scripted Gate selection skips face-down candidates rather than spending the Gate on a copy the line cannot play. Without a play-step source zone, the interpreter retains its existing hand-first order.
 - Bloodfrenzy requires an explicit `traverseBack: true` or `false`. No momentum decision is inferred.
 - Sword-only matches require `otherPlaysFinished: true` and a card played from banish in the current turn. A spare-resource match needs exactly one resource and either an empty hand or blue BSL with `reserveBsl: true`. The spare-Shard match needs exactly zero resources, only blue Shard and blue BSL in hand, and both `spareShard: true` and `reserveBsl: true`.
 
@@ -44,9 +45,9 @@ The caller can run a returned fragment with `runScriptFromState(state, example.s
 
 The runner keeps the baseline's card choices, including explicit Cull and Scar answers. Missing answers still raise errors. A fragment that already ends the turn replaces that turn's remaining baseline attempts and end-turn step; it cannot end the turn twice. Every run records counts for all five fragments, including zero counts. The batch report keeps counts on failed runs separate from completed-run summaries; do not count those as successful matches.
 
-The policy inputs record `reviewed-gate-weapon-v1`, the mode and all supplied decision flags under **Assumed**. An optional explicit `startingLife` gives goldfish life as starting life minus the engine's self-loss. This assumes no incoming damage, prevention or life gain; it is not an observed opponent interaction. Without starting life, Descendancy's life guard does not match. No default life or reservation/traverse decisions are invented. Cull and Scar's fixed condition answers remain in the recorded script.
+The policy inputs now record `reviewed-gate-weapon-v2`, the mode and all supplied decision flags under **Assumed**. An optional explicit `startingLife` gives goldfish life as starting life minus the engine's self-loss. This assumes no incoming damage, prevention or life gain; it is not an observed opponent interaction. Without starting life, Descendancy's life guard does not match. No default life or reservation/traverse decisions are invented. Cull and Scar's fixed condition answers remain in the recorded script.
 
-The original private deck does not contain Open the Gate, so the exact Descendancy comparator hand cannot match that deck. A zero count is useful evidence of this narrow selector's reach, not proof that Descendancy or Gates are unhelpful. Extending the target list, hand shapes, resource bounds or life range needs review rather than silently widening the guards.
+The original v1 selector required Open the Gate in hand, which the private deck does not contain. Its zero Descendancy matches are not evidence that Descendancy or Gates are unhelpful. Version 2 removes that restriction only within the newly approved bounds. Other targets, broader Bloodfrenzy hands, automatic pitching and the below-25 pressure exception still need review. A v1 result is not a measurement of v2.
 
 ## What these lines do not establish
 
