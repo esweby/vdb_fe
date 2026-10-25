@@ -1,4 +1,4 @@
-// UNVERIFIED batch scheduling and ablation; the five exact worked lines are approved.
+// UNVERIFIED batch scheduling and ablation; the worked lines and bounded extension are approved.
 import {
   runBatch,
   runScriptFromState,
@@ -34,6 +34,13 @@ export interface GateWeaponPolicyRun extends ScriptRun {
   policyMatches: Record<string, number>;
 }
 
+const GATE_LINES = [
+  "descendancy-first",
+  "own-usurp-no-gate",
+  "own-usurp-traverse-back",
+  "spare-shard-descendancy",
+];
+
 function scriptFor(options: GateWeaponPolicyOptions): Script {
   if (!["baseline", "gates", "weapons", "both"].includes(options.mode)) {
     throw new Error("Unknown Gate and weapon policy mode.");
@@ -63,6 +70,13 @@ export function runGateWeaponPolicyFromState(
   let trace = state.events;
   let failure: string | undefined;
   const steps: ScriptRun["steps"] = [];
+  const allowedIds = GATE_WEAPON_EXAMPLES.filter(
+    (example) =>
+      options.mode === "both" ||
+      (options.mode === "gates"
+        ? GATE_LINES.includes(example.id)
+        : !GATE_LINES.includes(example.id)),
+  ).map((example) => example.id);
   const append = (run: ScriptRun) => {
     state = run.state;
     trace = run.trace;
@@ -70,24 +84,18 @@ export function runGateWeaponPolicyFromState(
     steps.push(...run.steps);
   };
   const attemptPolicy = () => {
-    const example = selectGateWeaponExample(state, {
-      ...options.decisions,
-      currentLife:
-        options.startingLife === undefined
-          ? undefined
-          : options.startingLife - state.lifeLost,
-    });
+    const example = selectGateWeaponExample(
+      state,
+      {
+        ...options.decisions,
+        currentLife:
+          options.startingLife === undefined
+            ? undefined
+            : options.startingLife - state.lifeLost,
+      },
+      allowedIds,
+    );
     if (!example) return;
-    const gateLine = [
-      "descendancy-first",
-      "own-usurp-no-gate",
-      "own-usurp-traverse-back",
-    ].includes(example.id);
-    if (
-      (options.mode === "gates" && !gateLine) ||
-      (options.mode === "weapons" && gateLine)
-    )
-      return;
     const script: Script = {
       ...example.script,
       choices: {
@@ -110,6 +118,7 @@ export function runGateWeaponPolicyFromState(
       return;
     append(run);
     policyMatches[example.id]!++;
+    return example.id;
   };
   const applyBaseline = (step: Script["steps"][number]) =>
     append(runScriptFromState(state, { ...baseline, steps: [step] }));
@@ -117,8 +126,9 @@ export function runGateWeaponPolicyFromState(
   for (let turn = 0; turn < options.turns && !failure; turn++) {
     const started = state.turn;
     for (let attempt = 0; attempt < 10 && !failure; attempt++) {
-      attemptPolicy();
-      if (state.turn !== started) break;
+      const applied = attemptPolicy();
+      if (state.turn !== started || applied === "spare-shard-descendancy")
+        break;
       applyBaseline({ do: "play", card: {} });
     }
     if (!failure && state.turn === started) {
@@ -156,7 +166,7 @@ export function runGateWeaponBatch(
   return runBatch(setup, script, {
     ...batchOptions,
     policy: {
-      id: "reviewed-gate-weapon-v2",
+      id: "reviewed-gate-weapon-v3",
       assumptions,
       run: (input) => runGateWeaponPolicyFromState(setUp(input), options),
     },

@@ -89,6 +89,21 @@ function matches(
         hand.length === 0
       );
     }
+    case "spare-shard-descendancy":
+      return (
+        decisions.currentLife === 25 &&
+        decisions.spareShard === true &&
+        decisions.reserveBsl === true &&
+        state.resources === 0 &&
+        state.tokens.gate === 1 &&
+        state.tokens.runechant === 4 &&
+        firstBloodDebtAttack &&
+        !!descendancy &&
+        exactCards(hand, [
+          ["Arknight Shard", 3],
+          ["Become the Shadow Lord", 3],
+        ])
+      );
     case "spare-sword":
       return (
         decisions.otherPlaysFinished === true &&
@@ -118,6 +133,7 @@ function matches(
 export function selectGateWeaponExample(
   state: RulesState,
   decisions: GateWeaponDecisions = {},
+  allowedIds?: readonly string[],
 ): GateWeaponExample | undefined {
   if (
     state.side !== "usurper" ||
@@ -136,9 +152,29 @@ export function selectGateWeaponExample(
     return undefined;
 
   return GATE_WEAPON_EXAMPLES.find((example) => {
+    if (allowedIds && !allowedIds.includes(example.id)) return false;
     if (example.review !== "approved" || !matches(example.id, state, decisions))
       return false;
     const run = runScriptFromState(state, example.script);
+    if (example.id === "spare-shard-descendancy") {
+      const pitched = run.trace
+        .slice(state.events.length)
+        .filter((event) => event.type === "pitched");
+      const spare = state.zones.hand.find(
+        (instance) => instance.card.name === "Arknight Shard",
+      )!;
+      const keeper = state.zones.hand.find(
+        (instance) => instance.card.name === "Become the Shadow Lord",
+      )!;
+      if (
+        pitched.length !== 1 ||
+        pitched[0]!.uid !== spare.uid ||
+        run.state.zones.hand.length !== 1 ||
+        run.state.zones.hand[0]!.uid !== keeper.uid ||
+        run.state.lifeLost !== state.lifeLost
+      )
+        return false;
+    }
     if (
       example.id === "descendancy-first" &&
       (run.state.zones.hand.length !== state.zones.hand.length ||

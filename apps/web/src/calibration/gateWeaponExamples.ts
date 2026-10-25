@@ -86,6 +86,35 @@ export const GATE_WEAPON_EXAMPLES: readonly GateWeaponExample[] = [
     }),
   },
   {
+    id: "spare-shard-descendancy",
+    review: "approved",
+    purpose:
+      "Fund Gate, Descendancy and Nebula with the reviewed spare Shard, keeping BSL.",
+    preconditions: [
+      "Usurper, one action point, 25 current life, zero resources, four Runechants, one Gate and an unused Nebula.",
+      "Blue Descendancy is face up in banish and would be the first blood debt attack this turn.",
+      "The hand is blue Shard and blue BSL; the caller explicitly marks Shard spare and BSL reserved.",
+      "No life is paid and no other pitch preference is inferred.",
+    ],
+    script: parseScript({
+      version: 1,
+      choices: { lifePayment: 0 },
+      steps: [
+        { do: "pitch", card: { name: "Arknight Shard", pitch: 3 } },
+        {
+          do: "activateGate",
+          target: { name: "Arknight Descendancy", pitch: 3 },
+        },
+        {
+          do: "play",
+          from: "banished",
+          card: { name: "Arknight Descendancy", pitch: 3 },
+        },
+        { do: "attackWithWeapon", weapon: { name: "Seven Sin Nebula" } },
+      ],
+    }),
+  },
+  {
     id: "spare-sword",
     review: "approved",
     purpose:
