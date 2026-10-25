@@ -312,3 +312,22 @@ All verdicts match the previous 49-of-54 baseline check by check: T1, T4 and T6a
 The new raw reports are saved locally under `/private/tmp/vdb-calibration-20261025/`: `cull-no-scar-no.json`, `cull-no-scar-yes.json`, `cull-yes-scar-no.json` and `cull-yes-scar-yes.json`. `summary.json` checks their inputs, coverage, completion and assumption labels. All earlier reports and the private deck list are preserved. No private deck list is committed.
 
 The next unresolved work is the Gate and weapon script: turn the maintainer's existing guidance into explicit, reviewed decisions, then run T5 and compare on the same inputs. The final cards' answers are no longer a blocker for a labelled sensitivity run, but these four cases do not replace that policy work or the separate Cullingsong → Usurp counterfactual.
+
+## Initial guarded-policy comparison (25 Oct 2026)
+
+The original `reviewed-gate-weapon-v1` policy was compared in four modes across all four Cull/Scar cases: **16 batches of 10,000 runs, 160,000 completed and none failed**. All used seed `20261021`, eight turns, six checked turns, the same private 54-copy deck, observed file and rules data `0d49faac`. Seeds were paired across modes. All four fresh baselines reproduced the earlier four-case simulated distributions exactly.
+
+The exact worked lines were approved. Their scheduling and Gates-only ablation remain **UNVERIFIED** experimental policy choices. Inputs were labelled **Assumed**: starting life 40 with no incoming damage or life gain; traverse back wanted; other plays finished; blue BSL reserved; blue Shard spare. These flags apply only when a reviewed state guard matches. They are not observed decisions, a momentum test or claims that those choices are always correct. Cull and Scar retain each case's explicit fixed answers.
+
+**No Gate-related fragment matched in any run.** Gates-only reproduced baseline distributions exactly, and both reproduced weapons-only distributions exactly. The original Descendancy guard required Open the Gate in hand, which the private deck does not contain. The exact Bloodfrenzy guards also never matched. This says the guards are too narrow to test the Gate policy on these inputs, not that Gates have no value.
+
+| Cull instant / Scar go again | Runs with a weapon match, per 10,000 | Spare-resource / spare-Shard matches | Turn 3 mean arcane, baseline → weapons | Turn 3 mean threatened, baseline → weapons |
+| ---------------------------- | ------------------------------------ | ------------------------------------ | -------------------------------------- | ------------------------------------------ |
+| No / No                      | 265 (2.65%)                          | 269 / 2                              | 0.1938 → 0.1954                        | 3.5150 → 3.5168                            |
+| No / Yes                     | 357 (3.57%)                          | 366 / 2                              | 0.2122 → 0.2148                        | 3.8154 → 3.8192                            |
+| Yes / No                     | 550 (5.50%)                          | 574 / 2                              | 0.2243 → 0.2275                        | 4.0828 → 4.0869                            |
+| Yes / Yes                    | 693 (6.93%)                          | 731 / 3                              | 0.2472 → 0.2515                        | 4.4570 → 4.4638                            |
+
+A run can match more than once; the fragment counts are not percentages of runs. The same weapon counts and damage figures apply to both mode. Traversal by turns 3 and 6 stayed at each case's baseline shares. Every pooled verdict stayed unchanged **check by check**, not merely in total: 16 investigate / 15 within with shift 0; 18 / 13 with shift 1. Every divergence remained robust across eligible matchups. No threshold moved and no T5 result is claimed: its chain-completion measurement is not implemented.
+
+The raw reports and `summary.json` are private local files under `/private/tmp/vdb-calibration-policy-20261025/`. They record the input decisions, paired-seed digest and policy-source file hashes. The source was commit `4152adb`, merged as `aaf0590`. No private deck list is committed, and no cards were imported or database records changed. This is a frozen result for the original exact-position selector. The subsequently approved bounded Descendancy extension needs its own version and rerun; it must not be presented as measured here.
