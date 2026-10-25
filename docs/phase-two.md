@@ -88,6 +88,8 @@ Game logic decided by the maintainer, with where it lives. Anything not here is 
 
 - **Current Descendancy health requirement:** the maintainer replaced the earlier 25-life limits with **over 17 life after payment**, for both the floating-resource and Shard-funded lines. Eighteen is allowed; seventeen is not. Paying three from 21 leaves 18 and passes; paying three from 20 leaves 17 and fails. This supersedes the earlier exact-25 funding restriction as well as the at-least-25 comfort check. Other card, token, resource and explicit-choice guards are unchanged.
 
+- **Nebula is optional after Descendancy:** the maintainer clarified that the Gate → Descendancy line does not need to include Nebula. Do not require a weapon, an unused Nebula, go again for the sword, or an extra resource reserved for its attack before allowing Descendancy. Apply the same clarification to the Shard-funded line, keeping BSL and paying no further life. Other health, card, token and explicit-choice guards are unchanged.
+
 ## Open
 
 **For the maintainer**

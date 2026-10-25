@@ -21,11 +21,11 @@ export const GATE_WEAPON_EXAMPLES: readonly GateWeaponExample[] = [
     id: "descendancy-first",
     review: "approved",
     purpose:
-      "Play gated Descendancy, then swing Nebula, retaining the other hand cards.",
+      "Play gated Descendancy, with an optional legal Nebula follow-up, retaining the other hand cards.",
     preconditions: [
-      "Usurper, one action point, an unused Nebula, at least four Runechants and a Gate.",
+      "Usurper, one action point, at least four Runechants and a Gate; Nebula is not required.",
       "Blue Descendancy is already face up in banish and is the first blood debt attack this turn.",
-      "Over 17 current life after any earlier payment; enough floating resources for Gate, Descendancy and Nebula.",
+      "Over 17 current life after any earlier payment; enough floating resources for Gate and Descendancy.",
       "No automatic pitching or further life payment; other hand cards are left alone.",
     ],
     script: parseScript({
@@ -89,9 +89,9 @@ export const GATE_WEAPON_EXAMPLES: readonly GateWeaponExample[] = [
     id: "spare-shard-descendancy",
     review: "approved",
     purpose:
-      "Fund Gate, Descendancy and Nebula with the reviewed spare Shard, keeping BSL.",
+      "Fund Gate and Descendancy with the reviewed spare Shard, keeping BSL; Nebula is optional.",
     preconditions: [
-      "Usurper, one action point, over 17 current life, zero resources, four Runechants, one Gate and an unused Nebula.",
+      "Usurper, one action point, over 17 current life, zero resources, four Runechants and one Gate; Nebula is not required.",
       "Blue Descendancy is face up in banish and would be the first blood debt attack this turn.",
       "The hand is blue Shard and blue BSL; the caller explicitly marks Shard spare and BSL reserved.",
       "No life is paid and no other pitch preference is inferred.",
