@@ -1,4 +1,4 @@
-// UNVERIFIED selections unless marked approved; registered card rules establish legality.
+// Maintainer-approved exact selections; registered card rules establish legality.
 import { describe, expect, it } from "vitest";
 import {
   BLOOD_DEBT,
@@ -140,7 +140,7 @@ describe("Gate and sword worked examples", () => {
     },
   );
 
-  it("marks only the reviewed spare-Shard hand as approved", () => {
+  it("marks all five reviewed exact lines as approved", () => {
     expect(
       GATE_WEAPON_EXAMPLES.find((entry) => entry.id === "spare-shard-sword")!
         .review,
@@ -149,7 +149,13 @@ describe("Gate and sword worked examples", () => {
       GATE_WEAPON_EXAMPLES.filter((entry) => entry.review === "approved").map(
         (entry) => entry.id,
       ),
-    ).toEqual(["spare-shard-sword"]);
+    ).toEqual([
+      "descendancy-first",
+      "own-usurp-no-gate",
+      "own-usurp-traverse-back",
+      "spare-sword",
+      "spare-shard-sword",
+    ]);
   });
   it("plays gated Descendancy before the held Open the Gate and retains a sword resource", () => {
     const open = fact("Open the Gate to i'Arathael", {

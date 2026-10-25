@@ -37,7 +37,7 @@ The maintainer gave a concrete below-25 example: an opponent on 5–6 life facin
 
 These are player decisions to represent in the script, not an implemented policy yet. The choices of starter, slower hand and pitch order still need concrete examples before they can become deterministic checks. The baseline used for the 23 Oct results is unchanged.
 
-[Gate and sword worked hands](gate-weapon-worked-hands.md) now provide five runnable fragments from declared mid-turn states (25 Oct). The maintainer approved the exact blue Shard / blue BSL hand; the other selections remain **UNVERIFIED**. They cover the Descendancy line, retaining a Gate on an own-permission Usurp card, spending it for an explicit traverse back, and spare-resource or explicitly designated spare-pitch sword swings. A separate comfort check uses explicit life and payment inputs. The examples do not select themselves, infer life or momentum, simulate Open the Gate, or award Nebula's on-hit Runechant. They are a review step, not a new calibration policy or a T5 result.
+[Gate and sword worked hands](gate-weapon-worked-hands.md) now provide five runnable fragments from declared mid-turn states (25 Oct). The maintainer approved all five exact lines: Descendancy first, own-permission Bloodfrenzy that keeps the Gate, an explicitly wanted traverse back, a spare-resource sword swing, and the blue Shard / blue BSL hand. A separate comfort check uses explicit life and payment inputs. The examples do not select themselves, infer life or momentum, simulate Open the Gate, or award Nebula's on-hit Runechant. They are a review step, not a new calibration policy or a T5 result.
 
 ## What the engine can and can't be compared on
 
