@@ -16,6 +16,7 @@ export interface GateWeaponDecisions {
   otherPlaysFinished?: boolean;
   reserveBsl?: boolean;
   spareShard?: boolean;
+  nebulaAfterDescendancy?: boolean;
 }
 
 function exactCards(
@@ -75,10 +76,7 @@ function matches(
         (state.tokens.runechant ?? 0) >= 4 &&
         firstBloodDebtAttack &&
         !!descendancy &&
-        state.resources >=
-          1 +
-            effectiveCost(state, descendancy.uid) +
-            (state.zones.weapons[0]?.card.weaponAttack?.cost ?? Infinity)
+        state.resources >= 1 + effectiveCost(state, descendancy.uid)
       );
     case "own-usurp-no-gate":
     case "own-usurp-traverse-back": {
@@ -145,19 +143,55 @@ export function selectGateWeaponExample(
   )
     return undefined;
 
-  const weapons = state.zones.weapons;
-  if (
-    weapons.length !== 1 ||
-    weapons[0]!.card.name !== "Seven Sin Nebula" ||
-    state.usedThisTurn.includes(weapons[0]!.uid)
-  )
-    return undefined;
-
-  return GATE_WEAPON_EXAMPLES.find((example) => {
-    if (allowedIds && !allowedIds.includes(example.id)) return false;
+  for (const example of GATE_WEAPON_EXAMPLES) {
+    if (allowedIds && !allowedIds.includes(example.id)) continue;
     if (example.review !== "approved" || !matches(example.id, state, decisions))
-      return false;
-    const run = runScriptFromState(state, example.script);
+      continue;
+    const descendancy =
+      example.id === "descendancy-first" ||
+      example.id === "spare-shard-descendancy";
+    const weapons = state.zones.weapons;
+    if (
+      !descendancy &&
+      (weapons.length !== 1 ||
+        weapons[0]!.card.name !== "Seven Sin Nebula" ||
+        state.usedThisTurn.includes(weapons[0]!.uid))
+    )
+      continue;
+    let selected = example;
+    let run;
+    if (descendancy) {
+      selected = {
+        ...example,
+        script: {
+          ...example.script,
+          steps: example.script.steps.filter(
+            (step) => step.do !== "attackWithWeapon",
+          ),
+        },
+      };
+      run = runScriptFromState(state, selected.script);
+      if (run.failure || run.steps.some((step) => step.outcome !== "done"))
+        continue;
+      const sword = example.script.steps.find(
+        (step) => step.do === "attackWithWeapon",
+      );
+      if (sword && decisions.nebulaAfterDescendancy !== false) {
+        const followup = runScriptFromState(run.state, {
+          ...example.script,
+          steps: [sword],
+        });
+        if (
+          !followup.failure &&
+          followup.steps.every((step) => step.outcome === "done")
+        ) {
+          selected = example;
+          run = { ...followup, steps: [...run.steps, ...followup.steps] };
+        }
+      }
+    } else {
+      run = runScriptFromState(state, example.script);
+    }
     if (example.id === "spare-shard-descendancy") {
       const pitched = run.trace
         .slice(state.events.length)
@@ -175,7 +209,7 @@ export function selectGateWeaponExample(
         run.state.zones.hand[0]!.uid !== keeper.uid ||
         run.state.lifeLost !== state.lifeLost
       )
-        return false;
+        continue;
     }
     if (
       example.id === "descendancy-first" &&
@@ -188,13 +222,15 @@ export function selectGateWeaponExample(
           .some((event) => event.type === "pitched") ||
         run.state.lifeLost !== state.lifeLost)
     )
-      return false;
-    return (
+      continue;
+    if (
       run.failure === undefined &&
-      run.steps.length === example.script.steps.length &&
+      run.steps.length === selected.script.steps.length &&
       run.steps.every((step) => step.outcome === "done") &&
       (example.id !== "own-usurp-traverse-back" ||
         run.state.side === "forsaken")
-    );
-  });
+    )
+      return selected;
+  }
+  return undefined;
 }

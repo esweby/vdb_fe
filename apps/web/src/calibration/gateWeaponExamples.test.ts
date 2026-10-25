@@ -483,7 +483,7 @@ describe("guarded selection of reviewed worked lines", () => {
       ),
     ).toBeUndefined();
     expect(
-      select({ ...state, resources: 2 }, { currentLife: 35 }),
+      select({ ...state, resources: 1 }, { currentLife: 35 }),
     ).toBeUndefined();
   });
 
@@ -505,10 +505,10 @@ describe("guarded selection of reviewed worked lines", () => {
     expect(select(withHistory, { traverseBack: false })).toBeUndefined();
   });
 
-  it("rejects a partially runnable line before spending its Gate", () => {
+  it("allows Descendancy without go again when the sword cannot follow", () => {
     const state = descendancyPosition();
     const withoutHero = { ...state, triggers: [] };
-    expect(select(withoutHero, { currentLife: 35 })).toBeUndefined();
+    expect(select(withoutHero, { currentLife: 35 })).toBe("descendancy-first");
   });
 
   it.each([
@@ -516,8 +516,8 @@ describe("guarded selection of reviewed worked lines", () => {
     [4, 4, 34, true],
     [5, 2, 25, true],
     [6, 2, 35, true],
-    [4, 2, 35, false],
-    [5, 1, 35, false],
+    [4, 2, 35, true],
+    [5, 1, 35, true],
     [3, 4, 35, false],
     [5, 2, 18, true],
     [5, 2, 24, true],
@@ -688,7 +688,7 @@ describe("opt-in worked-line batches", () => {
       baseline.inputs.rulesDataVersion,
     );
     expect(result.inputs.policy).toEqual({
-      id: "reviewed-gate-weapon-v4",
+      id: "reviewed-gate-weapon-v5",
       assumptions: {
         label: "Assumed",
         mode: "both",
@@ -829,7 +829,7 @@ describe("the reviewed Shard-funded Descendancy line", () => {
     ).toBeUndefined();
   });
 
-  it("does not pitch into a face-down or missing target or a used weapon", () => {
+  it("rejects hidden or missing targets but permits a used weapon", () => {
     const state = fundingPosition();
     expect(
       selection.selectGateWeaponExample(
@@ -850,8 +850,8 @@ describe("the reviewed Shard-funded Descendancy line", () => {
       selection.selectGateWeaponExample(
         { ...state, usedThisTurn: [state.zones.weapons[0]!.uid] },
         decisions,
-      ),
-    ).toBeUndefined();
+      )?.id,
+    ).toBe("spare-shard-descendancy");
   });
 
   it.each(["baseline", "gates", "weapons", "both"] as const)(
@@ -927,5 +927,62 @@ describe("the reviewed Shard-funded Descendancy line", () => {
     expect(result.trace.some((event) => event.type === "gateActivated")).toBe(
       false,
     );
+  });
+});
+
+describe("Nebula is optional after Descendancy", () => {
+  it.each(["absent", "used", "unaffordable"] as const)(
+    "selects Gate and Descendancy when Nebula is %s",
+    (reason) => {
+      const initial = descendancyPosition();
+      const state =
+        reason === "absent"
+          ? { ...initial, zones: { ...initial.zones, weapons: [] } }
+          : reason === "used"
+            ? { ...initial, usedThisTurn: [initial.zones.weapons[0]!.uid] }
+            : { ...initial, resources: 2 };
+      const example = selection.selectGateWeaponExample(state, {
+        currentLife: 18,
+      });
+      expect(example?.id).toBe("descendancy-first");
+      const run = runScriptFromState(state, example!.script);
+      expect(run.steps.every((step) => step.outcome === "done")).toBe(true);
+      expect(run.steps.map((step) => step.step)).toEqual([
+        "activateGate",
+        "play",
+      ]);
+      expect(
+        run.trace.filter((event) => event.type === "attackPlayed"),
+      ).toHaveLength(1);
+    },
+  );
+
+  it("can explicitly decline an affordable Nebula swing", () => {
+    const state = descendancyPosition();
+    const example = selection.selectGateWeaponExample(state, {
+      currentLife: 18,
+      nebulaAfterDescendancy: false,
+    });
+    expect(example?.id).toBe("descendancy-first");
+    expect(
+      example!.script.steps.some((step) => step.do === "attackWithWeapon"),
+    ).toBe(false);
+  });
+
+  it("keeps BSL in the funded line without requiring a weapon", () => {
+    const initial = fundingPosition();
+    const state = { ...initial, zones: { ...initial.zones, weapons: [] } };
+    const example = selection.selectGateWeaponExample(state, {
+      currentLife: 18,
+      spareShard: true,
+      reserveBsl: true,
+    });
+    expect(example?.id).toBe("spare-shard-descendancy");
+    const run = runScriptFromState(state, example!.script);
+    expect(run.steps.every((step) => step.outcome === "done")).toBe(true);
+    expect(run.state.resources).toBe(2);
+    expect(run.state.zones.hand.map((instance) => instance.card.name)).toEqual([
+      "Become the Shadow Lord",
+    ]);
   });
 });

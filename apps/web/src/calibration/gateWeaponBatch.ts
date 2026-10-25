@@ -166,7 +166,7 @@ export function runGateWeaponBatch(
   return runBatch(setup, script, {
     ...batchOptions,
     policy: {
-      id: "reviewed-gate-weapon-v4",
+      id: "reviewed-gate-weapon-v5",
       assumptions,
       run: (input) => runGateWeaponPolicyFromState(setUp(input), options),
     },
