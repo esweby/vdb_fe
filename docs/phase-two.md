@@ -76,6 +76,11 @@ Game logic decided by the maintainer, with where it lives. Anything not here is 
 
 - **Become the Shadow Lord and Descendancy:** one Runechant from BSL's banish, then three from paying life for Descendancy, cause two top-deck banishes and one traverse, ending on Usurper. A queued Forsaken trigger must not traverse back after the first has traversed. The interaction test continues through a Gate, Descendancy and a legal Seven Sin Nebula swing.
 
+**25 Oct 2026**
+
+- **Descendancy comfort:** at least 25 life after paying its life cost. Paying three from 28 is comfortable; paying three from 27 is not. This is not a ban on the previously discussed below-25 pressure exceptions.
+- **One reviewed Nebula hand:** on Usurper with one action point, zero resources, Nebula unused and a card already played from banish, pitch blue Arknight Shard to swing Nebula and keep blue Become the Shadow Lord for next turn. This approves that exact hand, not a general pitch preference. See [the worked hands](gate-weapon-worked-hands.md).
+
 ## Open
 
 **For the maintainer**

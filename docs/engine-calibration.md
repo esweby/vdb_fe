@@ -27,7 +27,7 @@ The maintainer gave these reasons to attack with Seven Sin Nebula:
 
 The maintainer also gave these Gate priorities:
 
-- At least 25 life is comfortable for the Descendancy line when it can also lead to a sword swing. Below 25, consider whether blocking it would tax the opponent's entire hand without putting Viserai in immediate danger. Whether the life check is before or after the life payment still needs clarifying.
+- At least 25 life **after paying** is comfortable for the Descendancy line when it can also lead to a sword swing (payment timing confirmed 25 Oct). Below 25, consider whether blocking it would tax the opponent's entire hand without putting Viserai in immediate danger. The below-25 exception still needs an explicit danger decision.
 - Always prioritise Arknight Descendancy over Open the Gate to i'Arathael. Open the Gate is easier to play later; it does not need high pitch or five Runechants.
 - Activate a Gate on a Usurp card only to enable traversing back. This is a reason to activate the Gate, not an instruction to do it every time.
 
@@ -36,6 +36,8 @@ Activating a Gate without enough resources to play its target remains a choice, 
 The maintainer gave a concrete below-25 example: an opponent on 5–6 life facing four Runechants and a six-power attack. That is a pressure case to consider, not proof that the opponent must use their whole hand. The goldfish has no opponent life, defensive options or incoming threat, so evaluating the exception needs explicit scenario inputs. No damage is assumed to get through and no low-life exception is implemented yet.
 
 These are player decisions to represent in the script, not an implemented policy yet. The choices of starter, slower hand and pitch order still need concrete examples before they can become deterministic checks. The baseline used for the 23 Oct results is unchanged.
+
+[Gate and sword worked hands](gate-weapon-worked-hands.md) now provide five runnable fragments from declared mid-turn states (25 Oct). The maintainer approved the exact blue Shard / blue BSL hand; the other selections remain **UNVERIFIED**. They cover the Descendancy line, retaining a Gate on an own-permission Usurp card, spending it for an explicit traverse back, and spare-resource or explicitly designated spare-pitch sword swings. A separate comfort check uses explicit life and payment inputs. The examples do not select themselves, infer life or momentum, simulate Open the Gate, or award Nebula's on-hit Runechant. They are a review step, not a new calibration policy or a T5 result.
 
 ## What the engine can and can't be compared on
 

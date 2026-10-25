@@ -1,0 +1,116 @@
+// UNVERIFIED selections unless marked approved; not an automatic policy or baseline change.
+import { parseScript, type Script } from "@vdb/engine/rules";
+
+export interface GateWeaponExample {
+  id: string;
+  purpose: string;
+  review: "unverified" | "approved";
+  preconditions: readonly string[];
+  script: Script;
+}
+
+export function descendancyComfortableAfterPayment(
+  life: number,
+  payment: number,
+): boolean {
+  return life - payment >= 25;
+}
+
+export const GATE_WEAPON_EXAMPLES: readonly GateWeaponExample[] = [
+  {
+    id: "descendancy-first",
+    review: "unverified",
+    purpose:
+      "Play gated Descendancy before the held Open the Gate, then swing Nebula.",
+    preconditions: [
+      "Usurper, one action point, three resources, four Runechants and one Gate.",
+      "The blue Descendancy is already face up in banish; Open the Gate stays in hand.",
+      "The declared example is at 35 life, with no further life payment in this fragment.",
+    ],
+    script: parseScript({
+      version: 1,
+      steps: [
+        {
+          do: "activateGate",
+          target: { name: "Arknight Descendancy", pitch: 3 },
+        },
+        { do: "play", card: { name: "Arknight Descendancy", pitch: 3 } },
+        { do: "attackWithWeapon", weapon: { name: "Seven Sin Nebula" } },
+      ],
+    }),
+  },
+  {
+    id: "own-usurp-no-gate",
+    review: "unverified",
+    purpose: "Use Bloodfrenzy's own banish permission without spending a Gate.",
+    preconditions: [
+      "Usurper, one action point, two resources and an unused Nebula.",
+      "Red Bloodfrenzy is face up in banish, not in hand; it is the turn's first blood debt attack.",
+      "No traverse back is requested.",
+    ],
+    script: parseScript({
+      version: 1,
+      steps: [
+        { do: "play", card: { name: "Bloodfrenzy Gloomblade", pitch: 1 } },
+        { do: "attackWithWeapon", weapon: { name: "Seven Sin Nebula" } },
+      ],
+    }),
+  },
+  {
+    id: "own-usurp-traverse-back",
+    review: "unverified",
+    purpose:
+      "Spend a Gate on that same card only for an explicitly requested traverse back.",
+    preconditions: [
+      "Usurper, one action point, three resources, one Gate and an unused Nebula.",
+      "Red Bloodfrenzy is face up in banish, not in hand; it is the turn's first blood debt attack.",
+      "The caller explicitly wants to traverse back; this example does not infer momentum.",
+    ],
+    script: parseScript({
+      version: 1,
+      choices: { optional: { "viserai-usurper-traverse": true } },
+      steps: [
+        {
+          do: "activateGate",
+          target: { name: "Bloodfrenzy Gloomblade", pitch: 1 },
+        },
+        { do: "play", card: { name: "Bloodfrenzy Gloomblade", pitch: 1 } },
+        { do: "attackWithWeapon", weapon: { name: "Seven Sin Nebula" } },
+        { do: "endTurn" },
+      ],
+    }),
+  },
+  {
+    id: "spare-sword",
+    review: "unverified",
+    purpose:
+      "Use an already floating resource without pitching a reserved starter.",
+    preconditions: [
+      "An action point and one resource remain, Nebula is unused, and a card was played from banish this turn.",
+      "The caller has finished other plays or explicitly reserved the remaining hand for next turn.",
+      "The script does not evaluate which card is a better starter, and never pitches to fund this swing.",
+    ],
+    script: parseScript({
+      version: 1,
+      steps: [{ do: "attackWithWeapon", weapon: { name: "Seven Sin Nebula" } }],
+    }),
+  },
+  {
+    id: "spare-shard-sword",
+    review: "approved",
+    purpose:
+      "Pitch an explicitly designated spare Shard while keeping the chosen starter.",
+    preconditions: [
+      "Usurper, an action point, zero resources, an unused Nebula and a card played from banish this turn.",
+      "The caller designates blue Shard as spare and Become the Shadow Lord as the reserved starter.",
+      "This is an explicit hand decision, not a general rule to pitch Shard or preserve BSL.",
+    ],
+    script: parseScript({
+      version: 1,
+      steps: [
+        { do: "pitch", card: { name: "Arknight Shard", pitch: 3 } },
+        { do: "attackWithWeapon", weapon: { name: "Seven Sin Nebula" } },
+      ],
+    }),
+  },
+];
