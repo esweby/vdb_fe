@@ -51,6 +51,22 @@ The policy inputs now record `reviewed-gate-weapon-v5`, the mode and all supplie
 
 The original v1 selector required Open the Gate in hand, which the private deck does not contain. Its zero Descendancy matches are not evidence that Descendancy or Gates are unhelpful. Version 2 removed that restriction within the approved bounds; version 4 revises health only. Other targets, broader Bloodfrenzy hands, general pitch funding and exceptions at or below 17 life still need review. Historical results retain their original policy versions.
 
+## Draft setup policy (25 Oct 2026)
+
+`draft-descendancy-setup-v6` adds an opt-in **UNVERIFIED strategy**, separate from the approved examples above. It does not change the normal scenario or Goldfish policy.
+
+- If blue BSL and blue Descendancy are available in hand, prioritise BSL and banish Descendancy. This can start on Forsaken. The choice uses the visible hand, not the next hidden cards.
+- Pay the largest offered amount for Descendancy that leaves **at least 18 life**. Each payment reads self-loss at the moment it resolves, including earlier payments in the same action. For example, at 20 life the draft pays two, not three. Choosing partial payments this way is draft strategy, not a new card rule or an approved tactical judgement.
+- On Usurper, try a face-up blue Descendancy as the first blood debt attack when a Gate and enough resources can be funded. Pitch available cards highest pitch first, in hand order for ties. Count Shard's extra Runechant when checking the cost. There is no exact two-card hand, four-Runechant minimum or empty-arsenal requirement for this draft line.
+- `choices.keep` protects every matching card in hand from scripted play, automatic or explicit pitching, and hand-banish choices. It applies to the baseline steps too. The existing explicit `reserveBsl` decision protects blue BSL in non-baseline modes. Nothing infers which card should be kept.
+- Nebula is optional. Both mode tries it with resources left after Descendancy; it does not pitch another card for the sword. Gates mode omits it. A missing, used or unaffordable sword does not undo the Gate line, and no on-hit Runechant is awarded.
+
+Starting life is required for the draft. As before, it assumes no incoming damage or life gain. The 18-life floor constrains these optional payments, not subsequent blood debt loss or opponent damage. The draft does not assess danger, blocks, momentum or whether a different line is better. Existing approved examples still take precedence when their guards match. Historical v1–v5 results are unchanged.
+
+The script format also accepts a bounded payment object, for example `lifePayment: { card: { name: "Arknight Descendancy", pitch: 3 }, startingLife: 40, minimumRemainingLife: 18 }`. It pays zero for another source. Setup preserves an explicit `lifePayment`, including zero or a stricter bounded policy; its automatic payment applies only when that setting is absent. Outside this draft setup, fixed numeric payments and the default zero are unchanged. Payment requests expose the resolving source and self-loss so the policy does not use a stale pre-action total. Hand-banish requests identify their source zone, so kept-card protection also covers cards drawn during the action.
+
+See [the small seeded check](engine-calibration.md#draft-setup-sample-25-oct-2026) before planning a larger comparison. Match counts are not T5 measurements or proof of good play.
+
 ## What these lines do not establish
 
 - **Open the Gate is not registered in the engine.** It is a held comparator in the first example and is not played or banished. The test does not compare a simulated Open-first line or add its missing rules. The original calibration deck still has 54 of 54 copies covered; that does not cover every card mentioned in strategic guidance.
