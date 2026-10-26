@@ -683,12 +683,18 @@ describe("opt-in worked-line batches", () => {
       startingLife: 40,
       decisions: { traverseBack: false },
     });
-    expect(result.inputs.script).toEqual(baseline.inputs.script);
+    expect(result.inputs.script).toEqual({
+      ...baseline.inputs.script,
+      choices: {
+        neverBanish: [{ name: "Arknight Shard" }],
+        banish: [{ name: "Bloodfrenzy Gloomblade" }],
+      },
+    });
     expect(result.inputs.rulesDataVersion).toBe(
       baseline.inputs.rulesDataVersion,
     );
     expect(result.inputs.policy).toEqual({
-      id: "draft-descendancy-setup-v6",
+      id: "draft-bsl-banish-v1",
       assumptions: {
         strategy:
           "UNVERIFIED: BSL setup, bounded Descendancy life payment and highest-pitch funding from non-kept cards",

@@ -1,5 +1,7 @@
 # Gate and sword worked hands
 
+The later [Shard and Bloodfrenzy banish policy](bsl-banish-policy.md) records the maintainer's 25 Oct instruction: do not choose Shard for hand-banish effects, and prefer Bloodfrenzy outside the existing Descendancy setup. This is separate from the historical worked-line versions below.
+
 These worked examples follow the guidance in [engine-calibration.md](engine-calibration.md#script-guidance-24-oct-2026). On 25 Oct the maintainer approved all five exact lines: Descendancy first, own permission without spending a Gate, an explicitly wanted traverse back, a spare-resource sword swing, and the spare-Shard / reserved-BSL hand. They later approved the bounded Descendancy extension described below. The lines use registered rules for the cards actually played. They are not a new default policy, a claim of optimal play or a change to the calibration baseline.
 
 ## Declared inputs
