@@ -93,5 +93,7 @@ Publication check, 26 Oct: the patch is based on main after the banish-policy an
 
 ## Next decisions
 
+The [explicit traverse-back/hold policy](traverse-back-policy.md) now accepts per-turn answers, applies them to the end-phase choice and avoids spending another Gate when return is already enabled. Its general Usurp target order and funding remain unverified; it does not infer momentum or replace the exact examples above.
+
 1. Define when a traverse back is wanted and which other Gate targets to try. The approved traverse-back example takes that decision explicitly; it does not infer momentum. Spending a Gate without being able to play the target is not made automatic here.
 2. Compare baseline, Gates only, weapons only and both on the same inputs, recording match counts and keeping the Cull/Scar assumptions explicit. Add the T5 chain measurement before claiming a T5 result. An exact-position selector alone is not evidence that a broader policy has been calibrated.

@@ -15,6 +15,11 @@ import { GATE_WEAPON_EXAMPLES } from "./gateWeaponExamples.ts";
 import { selectDescendancyPlan } from "./descendancySetup.ts";
 import { withBanishPolicy } from "./banishPolicy.ts";
 import {
+  returnAlreadyEnabled,
+  selectTraverseBackPlan,
+  TRAVERSE_TRIGGER,
+} from "./traverseBackPolicy.ts";
+import {
   selectGateWeaponExample,
   type GateWeaponDecisions,
 } from "./gateWeaponSelection.ts";
@@ -26,6 +31,7 @@ export interface GateWeaponPolicyOptions {
   startingLife?: number;
   decisions?: Omit<GateWeaponDecisions, "currentLife">;
   choices?: Script["choices"];
+  traverseBackByTurn?: Record<number, boolean>;
 }
 export interface GateWeaponBatchOptions extends GateWeaponPolicyOptions {
   measureBslGateBloodDebt?: boolean;
@@ -45,6 +51,27 @@ const GATE_LINES = [
 ];
 
 function scriptFor(options: GateWeaponPolicyOptions): Script {
+  if (options.traverseBackByTurn !== undefined) {
+    if (options.mode === "baseline")
+      throw new Error(
+        "Per-turn traverse decisions require a non-baseline policy mode.",
+      );
+    if (
+      !options.traverseBackByTurn ||
+      typeof options.traverseBackByTurn !== "object" ||
+      Array.isArray(options.traverseBackByTurn) ||
+      Object.entries(options.traverseBackByTurn).some(
+        ([turn, value]) =>
+          !Number.isSafeInteger(Number(turn)) ||
+          Number(turn) < 1 ||
+          String(Number(turn)) !== turn ||
+          typeof value !== "boolean",
+      )
+    )
+      throw new Error(
+        "Traverse-back decisions must map positive engine-turn numbers to booleans.",
+      );
+  }
   if (!["baseline", "gates", "weapons", "both"].includes(options.mode)) {
     throw new Error("Unknown Gate and weapon policy mode.");
   }
@@ -83,10 +110,39 @@ export function runGateWeaponPolicyFromState(
       ...GATE_WEAPON_EXAMPLES.map((example) => example.id),
       "descendancy-setup",
       "funded-descendancy",
+      "explicit-usurp-traverse",
     ].map((id) => [id, 0]),
   );
   if (options.mode === "baseline")
     return { ...runScriptFromState(initial, baseline), policyMatches };
+
+  const decisionForTurn = (turn: number) =>
+    (options.traverseBackByTurn &&
+    Object.hasOwn(options.traverseBackByTurn, turn)
+      ? options.traverseBackByTurn[turn]
+      : undefined) ??
+    options.decisions?.traverseBack ??
+    baseline.choices?.optional?.[TRAVERSE_TRIGGER];
+  if (options.traverseBackByTurn !== undefined) {
+    for (let turn = initial.turn; turn < initial.turn + options.turns; turn++) {
+      if (decisionForTurn(turn) === undefined)
+        throw new Error(
+          `An explicit traverse-back decision is required for engine turn ${turn}.`,
+        );
+    }
+  }
+  const choicesForTurn = (turn: number): Script["choices"] => {
+    const traverseBack = decisionForTurn(turn);
+    return traverseBack === undefined
+      ? baseline.choices
+      : {
+          ...baseline.choices,
+          optional: {
+            ...baseline.choices?.optional,
+            [TRAVERSE_TRIGGER]: traverseBack,
+          },
+        };
+  };
 
   let state = initial;
   let trace = state.events;
@@ -106,26 +162,39 @@ export function runGateWeaponPolicyFromState(
     steps.push(...run.steps);
   };
   const attemptPolicy = () => {
+    const traverseBack = decisionForTurn(state.turn);
+    const turnChoices = choicesForTurn(state.turn);
+    const ids =
+      traverseBack === true && returnAlreadyEnabled(state)
+        ? allowedIds.filter((id) => id !== "own-usurp-traverse-back")
+        : allowedIds;
     const example = selectGateWeaponExample(
       state,
       {
         ...options.decisions,
+        traverseBack,
         currentLife:
           options.startingLife === undefined
             ? undefined
             : options.startingLife - state.lifeLost,
       },
-      allowedIds,
+      ids,
     );
     if (!example) {
       if (options.mode === "weapons") return;
-      const plan = selectDescendancyPlan(
+      const descendancy = selectDescendancyPlan(
         state,
         options.startingLife,
-        baseline.choices,
+        turnChoices,
         options.mode === "both" &&
           options.decisions?.nebulaAfterDescendancy !== false,
       );
+      const usurp = descendancy
+        ? undefined
+        : selectTraverseBackPlan(state, traverseBack, turnChoices);
+      const plan =
+        descendancy ??
+        (usurp ? { id: "explicit-usurp-traverse", script: usurp } : undefined);
       if (!plan) return;
       const run = runScriptFromState(state, plan.script);
       if (run.failure) {
@@ -144,11 +213,11 @@ export function runGateWeaponPolicyFromState(
     const script: Script = {
       ...example.script,
       choices: {
-        ...baseline.choices,
+        ...turnChoices,
         ...example.script.choices,
         optional: {
-          ...baseline.choices?.optional,
           ...example.script.choices?.optional,
+          ...turnChoices?.optional,
         },
       },
       steps:
@@ -166,7 +235,13 @@ export function runGateWeaponPolicyFromState(
     return example.id;
   };
   const applyBaseline = (step: Script["steps"][number]) =>
-    append(runScriptFromState(state, { ...baseline, steps: [step] }));
+    append(
+      runScriptFromState(state, {
+        ...baseline,
+        choices: choicesForTurn(state.turn),
+        steps: [step],
+      }),
+    );
 
   for (let turn = 0; turn < options.turns && !failure; turn++) {
     const started = state.turn;
@@ -218,10 +293,12 @@ export function runGateWeaponBatch(
   };
   if (options.startingLife !== undefined)
     assumptions.startingLife = options.startingLife;
+  if (options.traverseBackByTurn !== undefined)
+    assumptions.traverseBackByTurn = JSON.stringify(options.traverseBackByTurn);
   return runBatch(setup, script, {
     ...batchOptions,
     policy: {
-      id: "draft-forsaken-funding-v1",
+      id: "draft-gate-weapon-turn-decisions-v2",
       assumptions,
       run: (input) => runGateWeaponPolicyFromState(setUp(input), options),
     },
