@@ -28,6 +28,7 @@ export interface GateWeaponPolicyOptions {
   choices?: Script["choices"];
 }
 export interface GateWeaponBatchOptions extends GateWeaponPolicyOptions {
+  measureBslGateBloodDebt?: boolean;
   runs: number;
   seed: number;
   queries?: BatchOptions["queries"];
@@ -200,6 +201,9 @@ export function runGateWeaponBatch(
 ): BatchReport {
   const script = scriptFor(options);
   const batchOptions: BatchOptions = {
+    ...(options.measureBslGateBloodDebt
+      ? { measureBslGateBloodDebt: true }
+      : {}),
     runs: options.runs,
     seed: options.seed,
     ...(options.queries ? { queries: options.queries } : {}),

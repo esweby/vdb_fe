@@ -2,7 +2,7 @@
 
 Step 5 of [fablazing-plan.md](fablazing-plan.md): checking the TypeScript rules engine (`packages/engine`) against real games from FaBlazing.
 
-Status, 25 Oct 2026: **T1–T4 and T6 compared at full verified-rule coverage**, using four explicit-answer cases approved by the maintainer; results at the end of this document. T1–T5 were approved on 21 Oct 2026, before anything was compared, and haven't moved. **T6 (threatened damage) was approved as written on 24 Oct**, after its draft results had been reported separately. T5 waits for the Gate-target list. A divergence is something to investigate (a missing rule, a scripted decision or a difference in the data). It never means moving a threshold.
+Status, 26 Oct 2026: **T1–T4 and T6 compared at full verified-rule coverage**, using four explicit-answer cases approved by the maintainer; results at the end of this document. T1–T5 were approved on 21 Oct 2026, before anything was compared, and haven't moved. **T6 (threatened damage) was approved as written on 24 Oct**, after its draft results had been reported separately. [T5's opt-in chain measurement](t5-chain-measurement.md) is now implemented; a formal verdict still requires an agreed Gate script. A divergence is something to investigate (a missing rule, a scripted decision or a difference in the data). It never means moving a threshold.
 
 Latest coverage: **54 of 54 copies (100%), all 21 distinct cards**. All four same-seed cases completed 10,000 runs each. Every case still diverges; full card coverage does not establish calibration.
 
@@ -368,4 +368,4 @@ Traversal figures are counts out of 1,000 runs. Policy matches count application
 
 The private report is `/private/tmp/vdb-descendancy-setup-sample-final-20261025.json`. It records paired-seed digests and source hashes based on `fa10319`. No private deck list is added to the repository and no database records are changed.
 
-Next: review representative setup and funding traces, add the T5 chain-completion measurement, then decide whether a larger paired comparison is useful. Do not repeat a large run before inspecting the lines it actually plays.
+The subsequent [T5 timing measurement](t5-chain-measurement.md#diagnostic-result-25-oct-2026) now counts chains rather than fragment applications. The sampled draft completes 185–192 chains per 1,000 runs, with 97–98% of those completions in the setup turn; the aligned observed share is 41.47%. This is a diagnostic timing gap, not a formal T5 verdict for the unverified strategy. Broader delayed Gate use needs investigation before a larger policy comparison. Do not repeat a large run before inspecting the lines it actually plays.
