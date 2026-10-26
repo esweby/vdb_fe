@@ -99,4 +99,4 @@ There is no search that inspects hidden future cards to choose a move, and no au
 
 Opponent responses, blocking, incoming damage, life gain and combat hits remain outside this comparison. Threat is not damage dealt or win rate. The engine can continue after a notional life total reaches zero; do not read that as a surviving line in a real game. This does not run the observed-data T5/T6 tests.
 
-A later bounded legal-move search can explore pitches and play orders at each decision. It must disclose its limits and excluded branches, and keep hidden information out of move selection. That search is not implemented here.
+A separate [bounded one-turn explorer](turn-explorer.md) now branches over pitches, plays and offered choices. It discloses its limits and unfinished prefixes. This listed-pattern runner still does not search or automatically select a best line.
