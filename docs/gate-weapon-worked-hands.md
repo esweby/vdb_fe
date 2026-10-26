@@ -69,6 +69,20 @@ The script format also accepts a bounded payment object, for example `lifePaymen
 
 See [the small seeded check](engine-calibration.md#draft-setup-sample-25-oct-2026) before planning a larger comparison. Match counts are not T5 measurements or proof of good play.
 
+## Forsaken funding extension (25 Oct 2026)
+
+The maintainer approved removing the hero-side restriction from the general funded Descendancy line. Policy `draft-forsaken-funding-v1` now permits it on **Forsaken or Usurper**, while retaining the subsequently merged Shard protection and Bloodfrenzy preference. The v6 description above records the earlier bounds; historical results are unchanged. The overall setup, pitch and scheduling strategy remains **UNVERIFIED**.
+
+All other general-funding guards stay the same: an action point, a Gate, face-up blue Descendancy as the first blood debt attack, over 17 current life after earlier self-loss, and enough resources from floating pitch and non-kept cards. There is no extra life payment by default. Explicit life-payment settings remain preserved, rather than silently replaced.
+
+On Forsaken, Descendancy does not automatically get Usurper's go again. The registered rules decide whether a traverse or another effect grants it. A legal Descendancy attack can therefore finish the action points without a sword follow-up. No go again, traverse or on-hit Runechant is manufactured to keep the line going.
+
+For example: Forsaken, one action point, 39 life, zero resources, four Runechants, a Gate and blue Descendancy in banish. Pitch a non-kept blue card → Gate → Descendancy spends two of the three resources, pays no life and can end the turn without Nebula. Explicitly kept cards stay in hand.
+
+This extension does not broaden Gate targets, change the first-attack or health guards, or decide when to traverse back. Baseline and weapon-only modes are unchanged. It is separate from the T5 measurement work and does not establish calibration.
+
+Publication check, 26 Oct: the patch is based on main after the banish-policy and T5 measurement PRs. Regression tests cover the 17/18-life boundary after earlier self-loss, face-down targets, action points, first blood debt attack, kept cards and an unavailable sword. A further test confirms that Shard can fund the Forsaken line by pitching without being chosen for banishment. The existing card rules still determine go again and traversal; neither is added by this selector.
+
 ## What these lines do not establish
 
 - **Open the Gate is not registered in the engine.** It is a held comparator in the first example and is not played or banished. The test does not compare a simulated Open-first line or add its missing rules. The original calibration deck still has 54 of 54 copies covered; that does not cover every card mentioned in strategic guidance.
