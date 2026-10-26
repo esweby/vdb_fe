@@ -2,7 +2,7 @@
 
 This file is for agents other than Claude Code (Codex and the like). Claude Code reads [CLAUDE.md](CLAUDE.md); the rules are the same.
 
-The design is in [README.md](README.md). The current plan is [docs/test-loop.md](docs/test-loop.md), and the game-logic decisions made so far are in [docs/phase-two.md](docs/phase-two.md).
+The design is in [README.md](README.md). The current plan is [docs/engine-direction.md](docs/engine-direction.md), and the game-logic decisions made so far are in [docs/phase-two.md](docs/phase-two.md).
 
 ## The project
 
