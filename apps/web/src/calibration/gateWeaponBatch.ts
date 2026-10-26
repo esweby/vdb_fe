@@ -136,14 +136,18 @@ export function runGateWeaponPolicyFromState(
         );
     }
   }
+  const reviewedChoices = new Map<number, Script["choices"]>();
   const choicesForTurn = (turn: number): Script["choices"] => {
     const traverseBack = decisionForTurn(turn);
+    const choices = reviewedChoices.has(turn)
+      ? { ...baseline.choices, ...reviewedChoices.get(turn) }
+      : baseline.choices;
     return traverseBack === undefined
-      ? baseline.choices
+      ? choices
       : {
-          ...baseline.choices,
+          ...choices,
           optional: {
-            ...baseline.choices?.optional,
+            ...choices?.optional,
             [TRAVERSE_TRIGGER]: traverseBack,
           },
         };
@@ -194,6 +198,8 @@ export function runGateWeaponPolicyFromState(
             ? undefined
             : options.startingLife - state.lifeLost,
           turnChoices,
+          options.mode === "both" &&
+            options.decisions?.nebulaAfterDescendancy !== false,
         ) ??
         selectDescendancyPlan(
           state,
@@ -220,6 +226,8 @@ export function runGateWeaponPolicyFromState(
       append(run);
       if (!required.length || required.some((step) => step.outcome !== "done"))
         return;
+      if (REVIEWED_DELAYED_HAND_IDS.some((id) => id === plan.id))
+        reviewedChoices.set(state.turn, { keep: plan.script.choices?.keep });
       policyMatches[plan.id]!++;
       return plan.id;
     }
@@ -311,7 +319,7 @@ export function runGateWeaponBatch(
   return runBatch(setup, script, {
     ...batchOptions,
     policy: {
-      id: "reviewed-delayed-hands-v1",
+      id: "reviewed-delayed-hands-v2",
       assumptions,
       run: (input) => runGateWeaponPolicyFromState(setUp(input), options),
     },

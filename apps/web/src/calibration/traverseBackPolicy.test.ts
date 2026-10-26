@@ -259,7 +259,7 @@ describe("explicit traverse-back/hold policy", () => {
     expect(result.inputs.policy?.assumptions.traverseBackByTurn).toBe(
       '{"1":false,"2":true}',
     );
-    expect(result.inputs.policy?.id).toBe("reviewed-delayed-hands-v1");
+    expect(result.inputs.policy?.id).toBe("reviewed-delayed-hands-v2");
   });
 
   it("preserves the normal baseline report and rejects a per-turn policy in baseline mode", () => {
