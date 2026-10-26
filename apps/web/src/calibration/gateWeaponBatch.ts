@@ -221,7 +221,7 @@ export function runGateWeaponBatch(
   return runBatch(setup, script, {
     ...batchOptions,
     policy: {
-      id: "draft-bsl-banish-v1",
+      id: "draft-forsaken-funding-v1",
       assumptions,
       run: (input) => runGateWeaponPolicyFromState(setUp(input), options),
     },

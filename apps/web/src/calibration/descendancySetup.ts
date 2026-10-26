@@ -1,4 +1,4 @@
-// UNVERIFIED strategy: prioritise BSL setup and fund Descendancy from non-kept cards.
+// UNVERIFIED overall strategy: prioritise BSL setup and fund Descendancy from non-kept cards on either hero side.
 import {
   effectiveCost,
   type RulesInstance,
@@ -53,12 +53,7 @@ export function selectDescendancyPlan(
           .find((instance) => instance.uid === event.uid)!
           .card.traits.includes("blood_debt")),
   );
-  if (
-    target &&
-    state.side === "usurper" &&
-    (state.tokens.gate ?? 0) >= 1 &&
-    firstBloodDebt
-  ) {
+  if (target && (state.tokens.gate ?? 0) >= 1 && firstBloodDebt) {
     const steps: Script["steps"] = [];
     let projected = state;
     for (const instance of [...available]

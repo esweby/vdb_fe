@@ -752,7 +752,7 @@ describe("opt-in worked-line batches", () => {
       baseline.inputs.rulesDataVersion,
     );
     expect(result.inputs.policy).toEqual({
-      id: "draft-bsl-banish-v1",
+      id: "draft-forsaken-funding-v1",
       assumptions: {
         strategy:
           "UNVERIFIED: BSL setup, bounded Descendancy life payment and highest-pitch funding from non-kept cards",
