@@ -124,7 +124,7 @@ export interface PatternTurn {
   tokens: Record<string, number>;
   side: RulesState["side"];
   actions: {
-    type: "pitch" | "play" | "gate" | "weapon";
+    type: "pitch" | "play" | "gate" | "weapon" | "activate";
     card: CardRef;
     amount?: number;
   }[];
@@ -135,7 +135,10 @@ const ref = (instance: RulesInstance): CardRef => ({
   name: instance.card.name,
   pitch: instance.card.pitch,
 });
-const visible = (state: RulesState, startingLife: number) => ({
+export const visiblePatternState = (
+  state: RulesState,
+  startingLife: number,
+) => ({
   turn: state.turn,
   side: state.side,
   hand: state.zones.hand.map(ref),
@@ -154,7 +157,10 @@ const visible = (state: RulesState, startingLife: number) => ({
   remainingLife: startingLife - state.lifeLost,
 });
 
-function turnsOf(initial: RulesState, run: ScriptRun): PatternTurn[] {
+export function summarisePatternTurns(
+  initial: RulesState,
+  run: ScriptRun,
+): PatternTurn[] {
   const cards = new Map(
     Object.values(initial.zones)
       .flat()
@@ -213,6 +219,11 @@ function turnsOf(initial: RulesState, run: ScriptRun): PatternTurn[] {
         resources -= instance.card.weaponAttack?.cost ?? 0;
         current.actions.push({ type: "weapon", card: ref(instance) });
       }
+    }
+    if (event.type === "activated") {
+      const instance = cards.get(event.uid)!;
+      resources -= instance.card.activate?.cost ?? 0;
+      current.actions.push({ type: "activate", card: ref(instance) });
     }
     if (event.type === "gateActivated") {
       resources -= 1;
@@ -371,7 +382,7 @@ export function comparePlayPatterns(setup: BatchSetup, request: unknown) {
                   choices: pattern.choices,
                 });
           checkInvariants(run.state);
-          const turns = turnsOf(initial, run);
+          const turns = summarisePatternTurns(initial, run);
           return {
             id: pattern.id,
             label: pattern.label,
@@ -384,7 +395,7 @@ export function comparePlayPatterns(setup: BatchSetup, request: unknown) {
             turns,
             steps: run.steps,
             ...(run.policyMatches ? { policyMatches: run.policyMatches } : {}),
-            final: visible(run.state, options.startingLife),
+            final: visiblePatternState(run.state, options.startingLife),
           };
         }),
       };

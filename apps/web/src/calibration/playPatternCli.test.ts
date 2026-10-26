@@ -40,4 +40,19 @@ describe("play-pattern comparison CLI safeguards", () => {
     expect(result.status).not.toBe(0);
     expect(result.stderr).toMatch(/exists|overwrite/i);
   });
+
+  it("requires an explicit seed for opening-turn exploration", () => {
+    const result = invoke([...args, "--explore"]);
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toMatch(/exploration requires.*seed/i);
+  });
+
+  it("does not send exploration to a hosted endpoint", () => {
+    const result = invoke(
+      [...args, "--explore", "--seed", "17"],
+      "https://example.supabase.co",
+    );
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toMatch(/local|loopback/i);
+  });
 });
