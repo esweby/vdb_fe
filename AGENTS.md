@@ -58,7 +58,7 @@ Merging to `main` applies the migrations to the hosted database and redeploys th
 ## Game logic
 
 - Flesh and Blood rules, card interactions and synergy rules are checked by the maintainer. Anything you draft without that check is marked **unverified**, in the code comment and in the pull request.
-- Don't change a decision recorded in `docs/phase-two.md` or the other docs. Ask.
+- Don't change a game-logic decision the maintainer made (a card rule, threshold, health guard, play priority or deck rule) recorded in `docs/phase-two.md` or the other docs. Ask. Notes you wrote yourself about how the code works aren't decisions: update them as the code changes.
 - Deck rules: one of each piece of equipment; weapons one (two-handed) or two (one-handed) across the deck and sideboard; a deck with no weapon is fine.
 
 ## Style
@@ -67,12 +67,22 @@ Merging to `main` applies the migrations to the hosted database and redeploys th
 - **Docs and UI text:** plain British English, short sentences, no jargon a player wouldn't use. Match the existing docs.
 - **Code:** match the surrounding code's naming, comment density and idiom.
 
-## This week's work
+## When to ask
 
-From [docs/test-loop.md](docs/test-loop.md), in this order. Ask before starting anything not on this list.
+The maintainer gives the task. Once a task is agreed, carry it through to an open pull request without checking in at each step.
 
-1. **Parse Talishar's stats CSV** into a typed game record: the summary, game statistics, card play stats (card name and pitch read from `"Cull (1)"`), card activated stats and the turn-by-turn table. Pure TypeScript with Vitest tests, no database or UI. The format isn't documented and can change, so the tests use real exports, starting with the maintainer's game of 22 Oct 2026, and the parser rejects a file it doesn't recognise rather than guessing.
-2. **A report for one game,** from the parsed record: life by turn, cards blocked by turn, life lost to yourself as a share of the total, damage dealt by turn. Each figure is labelled Observed, Assumed or Extrapolated (see the plan). Our card data has no hero life yet, so the report takes starting life as an input; ask the maintainer for Viserai's.
-3. **Deck versions** (a migration): opening a deck in FaBrary saves its list as a version. Follow the database checklist above.
+Ask only for:
 
-Uploading a CSV onto a version, the deck's plan and comparing versions come after these, once the maintainer has reviewed them.
+- a game-logic decision (see "Game logic"), or a card rule you need checked
+- merging a pull request
+- running `supabase db reset`, anything against the hosted project, or anything that costs money
+- starting work the task didn't cover, including a follow-up you think is worth doing. Mention it in the pull request instead of starting it.
+
+Don't ask about:
+
+- which tests and checks to run (see "Commands")
+- code structure, naming, refactoring within the task, or wording of docs and comments
+- the next step of an agreed task
+- small choices with an obvious default. Pick it and say so in the pull request.
+
+Keep validation to what the change needs. Run large simulation batches (thousands of runs) only when the task is about results; a few hundred runs is enough as a smoke test for a code change.
