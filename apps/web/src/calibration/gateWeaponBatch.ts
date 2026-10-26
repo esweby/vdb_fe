@@ -13,6 +13,7 @@ import {
 import { baselineScript } from "../ranking/scenarioRuns.ts";
 import { GATE_WEAPON_EXAMPLES } from "./gateWeaponExamples.ts";
 import { selectDescendancyPlan } from "./descendancySetup.ts";
+import { withBanishPolicy } from "./banishPolicy.ts";
 import {
   selectGateWeaponExample,
   type GateWeaponDecisions,
@@ -53,7 +54,10 @@ function scriptFor(options: GateWeaponPolicyOptions): Script {
     throw new Error("Starting life must be a positive integer.");
   }
   const script = baselineScript(options.turns);
-  const choices = options.choices;
+  const choices =
+    options.mode === "baseline"
+      ? options.choices
+      : withBanishPolicy(options.choices);
   if (options.mode !== "baseline" && options.decisions?.reserveBsl === true)
     return {
       ...script,
@@ -213,7 +217,7 @@ export function runGateWeaponBatch(
   return runBatch(setup, script, {
     ...batchOptions,
     policy: {
-      id: "draft-descendancy-setup-v6",
+      id: "draft-bsl-banish-v1",
       assumptions,
       run: (input) => runGateWeaponPolicyFromState(setUp(input), options),
     },
