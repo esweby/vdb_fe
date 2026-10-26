@@ -107,11 +107,19 @@ const slug = (name: string) =>
 function conditionCheck(
   condition: Condition,
   bound: Set<string>,
+  pitch: number | null,
 ): Check | null {
   if (condition === "banished_card_is_runeblade" && bound.has("banished"))
     return { has: "runeblade", target: "banished" };
   if (condition === "banished_card_is_shadow" && bound.has("banished"))
     return { has: "shadow", target: "banished" };
+  if (
+    condition === "top_card_matches_pitch" &&
+    bound.has("banished") &&
+    pitch !== null
+  )
+    // UNVERIFIED Pull from Beyond draft: check the card just banished from the deck.
+    return { pitch, target: "banished" };
   return null;
 }
 
@@ -119,10 +127,11 @@ function conditionCheck(
 function checksFor(
   conditions: readonly Condition[] | undefined,
   bound: Set<string>,
+  pitch: number | null,
 ): { check?: Check; missing?: Condition } {
   const checks: Check[] = [];
   for (const c of conditions ?? []) {
-    const check = conditionCheck(c, bound);
+    const check = conditionCheck(c, bound, pitch);
     if (!check) return { missing: c };
     checks.push(check);
   }
@@ -157,6 +166,7 @@ export function draftEffects(
 
   const attackTriggerEffects: Effect[] = [];
   const attackPlayedEffects: Effect[] = [];
+  let banishesOnAttack = false;
 
   // Opt comes first: on every card with it, it's the card's first instruction (Blood Tribute:
   // "Opt 3, then banish the top card of your deck").
@@ -195,9 +205,10 @@ export function draftEffects(
     else note(`Opt ${TRIGGER_PLAIN[o.trigger] ?? o.trigger}: not drafted yet`);
   }
 
-  // Banishing your own cards, as the card is played.
+  // UNVERIFIED Embrace Ursur draft adds the attack timing; on-play banishing is established.
+  // Banishing your own cards as the card is played or attacks.
   for (const b of a.banishesOwn ?? []) {
-    if (b.trigger !== "on_play") {
+    if (b.trigger !== "on_play" && b.trigger !== "on_attack") {
       note(
         `Banishing ${TRIGGER_PLAIN[b.trigger] ?? b.trigger}: not drafted yet`,
       );
@@ -234,15 +245,22 @@ export function draftEffects(
         : b.from === "deck_top"
           ? "deckTop"
           : "graveyard";
+    const needsBanishedBinding =
+      from === "hand" ||
+      (a.tokens ?? []).some((token) =>
+        token.conditions?.includes("top_card_matches_pitch"),
+      );
     const storeAs =
-      from === "hand" && !bound.has("banished") ? "banished" : undefined;
-    effects.push({
+      needsBanishedBinding && !bound.has("banished") ? "banished" : undefined;
+    const banish: Effect = {
       op: "banish",
       from,
       amount,
       ...(b.optional ? { optional: true } : {}),
       ...(storeAs ? { storeAs } : {}),
-    });
+    };
+    (b.trigger === "on_attack" ? attackTriggerEffects : effects).push(banish);
+    if (b.trigger === "on_attack") banishesOnAttack = true;
     if (storeAs) bound.add(storeAs);
   }
 
@@ -276,7 +294,7 @@ export function draftEffects(
       note(`${label} on hit: combat is out of scope`);
       continue;
     }
-    const { check, missing } = checksFor(t.conditions, bound);
+    const { check, missing } = checksFor(t.conditions, bound, variant.pitch);
     if (missing) {
       note(
         `${label} if ${CONDITION_PLAIN[missing]}: the engine can't check that yet`,
@@ -312,12 +330,6 @@ export function draftEffects(
       on: { event: "lifeLost" },
       effects: [{ op: "destroySelf" }],
     });
-  if (attackTriggerEffects.length)
-    triggers.push({
-      id: `${slug(card.name)}-attacks`,
-      on: { event: "attacking", self: true },
-      effects: attackTriggerEffects,
-    });
   if (attackPlayedEffects.length)
     triggers.push({
       id: `${slug(card.name)}-attack-played`,
@@ -329,6 +341,17 @@ export function draftEffects(
   // Conditional go again.
   if (a.goAgain) {
     if (
+      a.goAgain.conditions.length === 1 &&
+      a.goAgain.conditions[0] === "banished_card_is_shadow" &&
+      banishesOnAttack &&
+      bound.has("banished")
+    ) {
+      attackTriggerEffects.push({
+        op: "if",
+        check: { has: "shadow", target: "banished" },
+        then: [{ op: "grantGoAgain", target: "self" }],
+      });
+    } else if (
       a.goAgain.conditions.length === 1 &&
       a.goAgain.conditions[0] === "less_life_than_opposing_hero"
     ) {
@@ -368,7 +391,11 @@ export function draftEffects(
         "Damage from this attack's hit must be noted by hand: combat is out of scope",
       );
     } else {
-      const { check, missing } = checksFor(a.goAgain.conditions, bound);
+      const { check, missing } = checksFor(
+        a.goAgain.conditions,
+        bound,
+        variant.pitch,
+      );
       if (missing || !check)
         note(
           `Go again if ${CONDITION_PLAIN[missing ?? a.goAgain.conditions[0]!]}: the engine can't check that yet`,
@@ -376,12 +403,23 @@ export function draftEffects(
       else effects.push({ op: "if", check, then: [{ op: "gainActionPoint" }] });
     }
   }
+  if (attackTriggerEffects.length)
+    triggers.push({
+      id: `${slug(card.name)}-attacks`,
+      on: { event: "attacking", self: true },
+      effects: attackTriggerEffects,
+    });
 
   // Everything else the facts record, noted rather than guessed.
   if (a.arcaneDamage?.length)
     note("Arcane damage: damage to an opponent is out of scope");
   for (const d of a.disrupts ?? []) {
-    if (
+    if (d.target === "each_hero" && d.trigger === "combat_chain_closes") {
+      // UNVERIFIED Widespread cycle draft: combat-chain resolution stays outside this engine.
+      note(
+        `Each hero ${d.action === "discard" ? "discards" : d.action === "banish" ? "banishes" : "destroys"} when the combat chain closes: combat is out of scope`,
+      );
+    } else if (
       d.target === "each_hero" &&
       d.action === "banish" &&
       d.from === "hand" &&
