@@ -34,13 +34,39 @@ func run(args []string) error {
 	capN := fs.Int("cap", aggregate.PlayerCap, "most sides one player contributes per day and format (0 for no cap)")
 	turns := fs.Int("turns", 8, "turn indexes to report, from 0")
 	out := fs.String("out", "", "write JSON here instead of standard output")
+	chainSpec := fs.String("chain-spec", "", "measure T5 using this bsl-gate-blood-debt spec (requires -chain-sets)")
+	chainSets := fs.String("chain-sets", "", "card sets for T5 (requires -chain-spec)")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
 	if fs.NArg() == 0 {
 		return fmt.Errorf("no CSV files given")
 	}
-	ob := observed.New(observed.Options{MinTurns: *minTurns, Concession: aggregate.Concession, PlayerCap: *capN, TurnIndexes: *turns})
+	if (*chainSpec == "") != (*chainSets == "") {
+		return fmt.Errorf("-chain-spec and -chain-sets must be supplied together")
+	}
+	options := observed.Options{MinTurns: *minTurns, Concession: aggregate.Concession, PlayerCap: *capN, TurnIndexes: *turns}
+	metadata := map[string]any{"min_turns": *minTurns, "player_cap": *capN, "turn_indexes": *turns}
+	if *chainSpec != "" {
+		specFile, err := os.Open(*chainSpec)
+		if err != nil {
+			return err
+		}
+		defer specFile.Close()
+		setsFile, err := os.Open(*chainSets)
+		if err != nil {
+			return err
+		}
+		defer setsFile.Close()
+		options.ChainSpeed, err = observed.ParseChainSpeed(specFile, setsFile)
+		if err != nil {
+			return err
+		}
+		metadata["chain_speed"] = "bsl-gate-blood-debt"
+		metadata["chain_spec"] = filepath.Base(*chainSpec)
+		metadata["chain_sets"] = filepath.Base(*chainSets)
+	}
+	ob := observed.New(options)
 	var files []string
 	for _, path := range fs.Args() {
 		files = append(files, filepath.Base(path))
@@ -54,7 +80,7 @@ func run(args []string) error {
 		Files   []string `json:"files"`
 		Options any      `json:"options"`
 		observed.Result
-	}{files, map[string]int{"min_turns": *minTurns, "player_cap": *capN, "turn_indexes": *turns}, ob.Result()}, "", "  ")
+	}{files, metadata, ob.Result()}, "", "  ")
 	if err != nil {
 		return err
 	}

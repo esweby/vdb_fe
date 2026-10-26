@@ -75,7 +75,7 @@ See [the small seeded check](engine-calibration.md#draft-setup-sample-25-oct-202
 - **Nebula makes a Runechant on hit, not just for attacking.** Hits are not resolved by this engine. None of these examples awards an on-hit Runechant or treats ending on one as guaranteed. A chance to end on one cannot yet be scored as a known outcome.
 - **Life and danger are not inferred.** The comfort check requires explicit life and payment inputs. Exceptions at or below 17 life, an opponent's blocks and immediate danger are not implemented.
 - **Retaining BSL and pitching Shard is not a general rule.** The maintainer approved that exact hand: Usurper, one action point, zero resources, unused Nebula, a card already played from banish, and blue Shard plus blue BSL in hand. The examples do not classify slower hands, choose pitch stacks or judge momentum.
-- **T5 still needs its chain measurement.** The batch runner can apply the reviewed Gate fragments, but the comparison module does not yet measure the BSL → Gate → blood debt chain's completion buckets. Policy-match counts are not T5. The four fixed Cull/Scar cases and their thresholds are untouched.
+- **Policy matches are not T5.** The opt-in [chain measurement](t5-chain-measurement.md) now counts one best BSL → Gate → blood debt attempt per run, matching the observed definition. The four fixed Cull/Scar cases and their thresholds are untouched. Formal T5 comparison still requires an approved Gate script; the v6 strategy remains unverified.
 
 ## Next decisions
 

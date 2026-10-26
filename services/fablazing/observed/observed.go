@@ -20,8 +20,9 @@ import (
 type Options struct {
 	MinTurns    int
 	Concession  game.ConcessionRule
-	PlayerCap   int // per day and format; 0 for no cap
-	TurnIndexes int // turn indexes reported, from 0
+	PlayerCap   int             // per day and format; 0 for no cap
+	TurnIndexes int             // turn indexes reported, from 0
+	ChainSpeed  *ChainSpeedSpec // optional; built by ParseChainSpeed
 }
 
 // Dist is a distribution of whole numbers: Counts[v] sides had value v.
@@ -58,6 +59,7 @@ type Group struct {
 	Sides         int           `json:"sides"`
 	ByTurn        []Turn        `json:"by_turn"`
 	FirstTraverse FirstTraverse `json:"first_traverse"`
+	ChainSpeed    *ChainSpeed   `json:"chain_speed,omitempty"`
 }
 
 // Counts says what was left out and why. Each Viserai side counts once, in
@@ -100,7 +102,11 @@ type Observer struct {
 
 // New starts an Observer.
 func New(o Options) *Observer {
-	return &Observer{o: o, pooled: &collector{}, byFormat: map[string]*collector{}, byFirst: map[string]*collector{}, byOpp: map[string]*collector{}, perPlayer: map[capKey]int{}}
+	pooled := &collector{}
+	if o.ChainSpeed.enabled() {
+		pooled.chainSpeed = &ChainSpeed{Chain: o.ChainSpeed.spec.ID}
+	}
+	return &Observer{o: o, pooled: pooled, byFormat: map[string]*collector{}, byFirst: map[string]*collector{}, byOpp: map[string]*collector{}, perPlayer: map[capKey]int{}}
 }
 
 // Compute builds the observed distributions from one batch of games.
@@ -146,6 +152,18 @@ func (ob *Observer) Add(games []game.Game) {
 				c.Capped++
 			default:
 				c.Kept++
+				if o.ChainSpeed.enabled() {
+					match := o.ChainSpeed.spec.Match(s.Log)
+					speed := ChainSpeed{Chain: o.ChainSpeed.spec.ID, Population: 1}
+					speed.Reached[match.Reached]++
+					if match.Complete(o.ChainSpeed.spec) {
+						speed.ByDelay[match.PayoffTurn-match.SetupTurn]++
+					}
+					ob.pooled.addChainSpeed(speed)
+					group(ob.byFormat, strconv.Itoa(g.Format)).addChainSpeed(speed)
+					group(ob.byFirst, strconv.Itoa(s.FirstPlayer)).addChainSpeed(speed)
+					group(ob.byOpp, opponent(s.Opponent)).addChainSpeed(speed)
+				}
 				ob.pooled.add(s)
 				group(ob.byFormat, strconv.Itoa(g.Format)).add(s)
 				group(ob.byFirst, strconv.Itoa(s.FirstPlayer)).add(s)
@@ -187,6 +205,20 @@ type collector struct {
 	arcane, damage, threatened map[int][]int
 	firstTraverse              []int
 	never                      int
+	chainSpeed                 *ChainSpeed
+}
+
+func (c *collector) addChainSpeed(speed ChainSpeed) {
+	if c.chainSpeed == nil {
+		c.chainSpeed = &ChainSpeed{Chain: speed.Chain}
+	}
+	c.chainSpeed.Population += speed.Population
+	for index, count := range speed.Reached {
+		c.chainSpeed.Reached[index] += count
+	}
+	for index, count := range speed.ByDelay {
+		c.chainSpeed.ByDelay[index] += count
+	}
 }
 
 func group(m map[string]*collector, k string) *collector {
@@ -220,6 +252,10 @@ func (c *collector) add(s game.Side) {
 
 func (c *collector) group(turnIndexes int) Group {
 	g := Group{Sides: c.sides, ByTurn: make([]Turn, turnIndexes)}
+	if c.chainSpeed != nil {
+		speed := *c.chainSpeed
+		g.ChainSpeed = &speed
+	}
 	for i := range g.ByTurn {
 		g.ByTurn[i] = Turn{TurnIndex: i, Arcane: dist(c.arcane[i]), Damage: dist(c.damage[i]), Threatened: dist(c.threatened[i])}
 	}

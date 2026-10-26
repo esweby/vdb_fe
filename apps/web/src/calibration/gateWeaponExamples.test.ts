@@ -583,6 +583,64 @@ describe("guarded selection of reviewed worked lines", () => {
 });
 
 describe("opt-in worked-line batches", () => {
+  it("measures a real BSL setup without changing the merged banish policy", () => {
+    const setup = {
+      deck: [
+        shard(),
+        starter(),
+        descendant(),
+        fact("Kept card", { effects: [] }),
+        ...Array.from({ length: 20 }, () => fact("Filler", { effects: [] })),
+      ],
+      order: "asGiven" as const,
+      side: "forsaken" as const,
+      triggers: [...VISERAI, RUNECHANT, BLOOD_DEBT],
+    };
+    const options = {
+      turns: 1,
+      runs: 2,
+      seed: 17,
+      mode: "gates" as const,
+      startingLife: 21,
+      choices: { keep: [{ name: "Kept card" }] },
+    };
+    const plain = policyBatch.runGateWeaponBatch(setup, options);
+    const measured = policyBatch.runGateWeaponBatch(setup, {
+      ...options,
+      measureBslGateBloodDebt: true,
+    });
+    expect(measured.failed).toBe(0);
+    expect(measured.inputs.script.choices?.neverBanish).toContainEqual({
+      name: "Arknight Shard",
+    });
+    expect(measured.perRun.map((run) => run.bslGateBloodDebt)).toEqual([
+      { reached: 3, setupTurn: 1, gateTurn: 1, payoffTurn: 1, delay: 0 },
+      { reached: 3, setupTurn: 1, gateTurn: 1, payoffTurn: 1, delay: 0 },
+    ]);
+    expect(
+      measured.perRun.map(({ bslGateBloodDebt, ...rest }) => rest),
+    ).toEqual(plain.perRun);
+    expect(measured.byTurn).toEqual(plain.byTurn);
+  });
+
+  it.each(["baseline", "gates", "weapons", "both"] as const)(
+    "forwards opt-in chain measurement in %s mode without changing play",
+    (mode) => {
+      const options = { turns: 2, runs: 3, seed: 17, mode, startingLife: 40 };
+      const baseline = policyBatch.runGateWeaponBatch({ deck: [] }, options);
+      const measured = policyBatch.runGateWeaponBatch(
+        { deck: [] },
+        { ...options, measureBslGateBloodDebt: true },
+      );
+      expect(measured.inputs).toHaveProperty("measureBslGateBloodDebt", true);
+      expect(measured.perRun[0]).toHaveProperty("bslGateBloodDebt.reached", 0);
+      expect(
+        measured.perRun.map(({ bslGateBloodDebt, ...rest }) => rest),
+      ).toEqual(baseline.perRun);
+      expect(measured.byTurn).toEqual(baseline.byTurn);
+    },
+  );
+
   const run = (state: RulesState, options = {}) => {
     expect(policyBatch.runGateWeaponPolicyFromState).toBeTypeOf("function");
     const before = structuredClone(state);
