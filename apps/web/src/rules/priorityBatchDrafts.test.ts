@@ -1,4 +1,4 @@
-// UNVERIFIED effect drafts. The maintainer must approve these five cards before they gain rules.
+// Drafts approved by the maintainer on 26 Oct 2026.
 import {
   parseEffects,
   parseTriggers,
@@ -93,10 +93,10 @@ const widespread = (
 });
 
 describe("the first priority rules batch", () => {
-  it("drafts Embrace Ursur as one complete, unverified three-pitch rule", () => {
+  it("verifies Embrace Ursur as one three-pitch rule", () => {
     const entry = draftQueue([embrace])[0]!;
-    expect(entry.status).toBe("complete");
-    expect(entry.verified).toBe(false);
+    expect(entry.status).toBe("verified");
+    expect(entry.verified).toBe(true);
     expect(entry.drafts).toHaveLength(1);
     expect(entry.drafts[0]!.pitches).toEqual([1, 2, 3]);
     expect(entry.drafts[0]!.draft.rules.triggers).toMatchObject([
@@ -118,12 +118,16 @@ describe("the first priority rules batch", () => {
     expect(() =>
       parseTriggers(entry.drafts[0]!.draft.rules.triggers),
     ).not.toThrow();
+    for (const pitch of [1, 2, 3])
+      expect(verifiedRulesFor(embrace.name, pitch)).toEqual(
+        entry.drafts[0]!.draft.rules,
+      );
   });
 
   it("drafts each Pull from Beyond pitch through Opt, banish and matching Gate", () => {
     const entry = draftQueue([pull])[0]!;
-    expect(entry.status).toBe("complete");
-    expect(entry.verified).toBe(false);
+    expect(entry.status).toBe("verified");
+    expect(entry.verified).toBe(true);
     expect(entry.drafts).toHaveLength(3);
     for (const queued of entry.drafts) {
       const pitch = queued.pitches[0]!;
@@ -137,6 +141,7 @@ describe("the first priority rules batch", () => {
         },
       ]);
       expect(() => parseEffects(queued.draft.rules.effects)).not.toThrow();
+      expect(verifiedRulesFor(pull.name, pitch)).toEqual(queued.draft.rules);
     }
   });
 
@@ -148,13 +153,15 @@ describe("the first priority rules batch", () => {
     "keeps %s's combat-chain effect visible but out of scope",
     (name, pitch, from) => {
       const entry = draftQueue([widespread(name, pitch, from)])[0]!;
-      expect(entry.status).toBe("undraftable");
-      expect(entry.verified).toBe(false);
+      expect(entry.status).toBe("verified");
+      expect(entry.verified).toBe(true);
       expect(entry.drafts[0]!.draft.rules.effects).toEqual([]);
       expect(entry.drafts[0]!.draft.outOfScope).toEqual([
         "Each hero banishes when the combat chain closes: combat is out of scope",
       ]);
-      expect(verifiedRulesFor(name, pitch)).toBeUndefined();
+      expect(verifiedRulesFor(name, pitch)).toEqual(
+        entry.drafts[0]!.draft.rules,
+      );
     },
   );
 });
