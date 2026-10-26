@@ -15,6 +15,10 @@ import { GATE_WEAPON_EXAMPLES } from "./gateWeaponExamples.ts";
 import { selectDescendancyPlan } from "./descendancySetup.ts";
 import { withBanishPolicy } from "./banishPolicy.ts";
 import {
+  REVIEWED_DELAYED_HAND_IDS,
+  selectReviewedDelayedHand,
+} from "./reviewedDelayedHands.ts";
+import {
   returnAlreadyEnabled,
   selectTraverseBackPlan,
   TRAVERSE_TRIGGER,
@@ -111,6 +115,7 @@ export function runGateWeaponPolicyFromState(
       "descendancy-setup",
       "funded-descendancy",
       "explicit-usurp-traverse",
+      ...REVIEWED_DELAYED_HAND_IDS,
     ].map((id) => [id, 0]),
   );
   if (options.mode === "baseline")
@@ -182,18 +187,26 @@ export function runGateWeaponPolicyFromState(
     );
     if (!example) {
       if (options.mode === "weapons") return;
-      const descendancy = selectDescendancyPlan(
-        state,
-        options.startingLife,
-        turnChoices,
-        options.mode === "both" &&
-          options.decisions?.nebulaAfterDescendancy !== false,
-      );
-      const usurp = descendancy
+      const preferred =
+        selectReviewedDelayedHand(
+          state,
+          options.startingLife === undefined
+            ? undefined
+            : options.startingLife - state.lifeLost,
+          turnChoices,
+        ) ??
+        selectDescendancyPlan(
+          state,
+          options.startingLife,
+          turnChoices,
+          options.mode === "both" &&
+            options.decisions?.nebulaAfterDescendancy !== false,
+        );
+      const usurp = preferred
         ? undefined
         : selectTraverseBackPlan(state, traverseBack, turnChoices);
       const plan =
-        descendancy ??
+        preferred ??
         (usurp ? { id: "explicit-usurp-traverse", script: usurp } : undefined);
       if (!plan) return;
       const run = runScriptFromState(state, plan.script);
@@ -298,7 +311,7 @@ export function runGateWeaponBatch(
   return runBatch(setup, script, {
     ...batchOptions,
     policy: {
-      id: "draft-gate-weapon-turn-decisions-v2",
+      id: "reviewed-delayed-hands-v1",
       assumptions,
       run: (input) => runGateWeaponPolicyFromState(setUp(input), options),
     },
