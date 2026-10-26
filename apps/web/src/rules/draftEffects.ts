@@ -70,6 +70,12 @@ const TOKEN_LABEL: Record<string, string> = {
   eloquence: "Eloquence",
 };
 
+const TOKEN_SINGLE: Record<string, string> = {
+  runechant: "Runechant",
+  gate: "Gate",
+  eloquence: "Eloquence",
+};
+
 const TRIGGER_PLAIN: Record<string, string> = {
   on_defend: "when it defends",
   on_pitch: "when it's pitched",
@@ -297,7 +303,7 @@ export function draftEffects(
     const { check, missing } = checksFor(t.conditions, bound, variant.pitch);
     if (missing) {
       note(
-        `${label} if ${CONDITION_PLAIN[missing]}: the engine can't check that yet`,
+        `${amount} ${amount === 1 ? (TOKEN_SINGLE[t.token] ?? t.token) : label} if ${CONDITION_PLAIN[missing]}: the engine can't check that yet`,
       );
       continue;
     }
@@ -604,6 +610,8 @@ export function draftEffects(
         : []),
       ...(rules.costReductions ?? []).map(describeCostReduction),
       ...(rules.activate ? [describeActivation(rules.activate)] : []),
+      ...(a.hasRuneGate ? ["Rune Gate."] : []),
+      ...(a.hasBloodDebt ? ["Blood debt."] : []),
     ],
     notDrafted,
     outOfScope,
