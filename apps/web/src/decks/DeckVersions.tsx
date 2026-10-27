@@ -13,13 +13,18 @@ export function DeckVersions({
 }) {
   const { decks } = useServices();
   const [versions, setVersions] = useState<DeckVersion[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let live = true;
     setFailed(false);
     decks.listVersions(deckId).then(
-      (rows) => live && setVersions(rows),
+      (rows) => {
+        if (!live) return;
+        setVersions(rows);
+        setLoaded(true);
+      },
       () => live && setFailed(true),
     );
     return () => {
@@ -31,11 +36,15 @@ export function DeckVersions({
       ? [latest, ...versions]
       : versions;
   return (
-    <details className={styles.versions}>
-      <summary>Versions ({shown.length})</summary>
+    <section className={styles.versions} aria-label="Versions">
       <p>
         Each opening in FaBrary saves a private copy of your list and loadouts.
       </p>
+      {loaded && shown.length === 0 && (
+        <p className={styles.versionsEmpty}>
+          No versions yet. Open the deck in FaBrary to save the first one.
+        </p>
+      )}
       {failed && (
         <p role="alert">
           Couldn't load versions.{" "}
@@ -47,7 +56,7 @@ export function DeckVersions({
       {shown.map((version) => (
         <Version key={version.id} version={version} />
       ))}
-    </details>
+    </section>
   );
 }
 

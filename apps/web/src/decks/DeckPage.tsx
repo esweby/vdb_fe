@@ -58,7 +58,8 @@ type Tab =
   | "synergies"
   | "scenarios"
   | "matchups"
-  | "goldfish";
+  | "goldfish"
+  | "versions";
 type View = "tiles" | "list";
 const TABS: { id: Tab; label: string }[] = [
   { id: "cards", label: "Cards" },
@@ -68,6 +69,8 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "scenarios", label: "Scenarios" },
   { id: "matchups", label: "Matchups" },
   { id: "goldfish", label: "Goldfish" },
+  // The owner's private copies, saved each time the deck opens in FaBrary.
+  { id: "versions", label: "Versions" },
 ];
 
 /** Cards in a list's main deck, leaving out weapons and equipment. */
@@ -90,7 +93,7 @@ const viseraiImages = (heroes: Hero[]) => {
 export function DeckPage() {
   const { deckId } = route.useParams();
   const {
-    tab = "cards",
+    tab: requestedTab = "cards",
     view = "tiles",
     seed,
     side,
@@ -128,7 +131,7 @@ export function DeckPage() {
     return () => {
       live = false;
     };
-  }, [decks, deckId, user, tab]);
+  }, [decks, deckId, user, requestedTab]);
 
   const [loadFailed, setLoadFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -332,6 +335,9 @@ export function DeckPage() {
 
   // Only the owner changes a deck; anyone else sees a public one read only.
   const canEdit = user?.id === deck.ownerId;
+  // Versions are private to the owner: anyone else following a link lands on the cards.
+  const tab: Tab =
+    requestedTab === "versions" && !canEdit ? "cards" : requestedTab;
   // The plan being played, if any: its cards are the main deck for goldfish and scenarios.
   const playing = planId
     ? plans.matchups.find((matchup) => matchup.id === planId)
@@ -429,12 +435,14 @@ export function DeckPage() {
       </header>
 
       {error && <p role="alert">{error}</p>}
-      {canEdit && (
-        <DeckVersions
-          key={deck.id}
-          deckId={deck.id}
-          latest={latestVersion?.deckId === deck.id ? latestVersion : null}
-        />
+      {canEdit && latestVersion?.deckId === deck.id && (
+        <p role="status" className={styles.versionSaved}>
+          Saved version {latestVersion.number}. Find it under{" "}
+          <Link to="." search={{ tab: "versions" }}>
+            Versions
+          </Link>
+          .
+        </p>
       )}
       {problems.length > 0 && (
         <ul className={styles.problems}>
@@ -445,7 +453,7 @@ export function DeckPage() {
       )}
 
       <div role="tablist" aria-label="Deck views" className={styles.tabs}>
-        {TABS.map((t) => (
+        {TABS.filter((t) => t.id !== "versions" || canEdit).map((t) => (
           <button
             key={t.id}
             type="button"
@@ -503,7 +511,13 @@ export function DeckPage() {
             )}
           </div>
         )}
-        {tab === "goldfish" ? (
+        {tab === "versions" ? (
+          <DeckVersions
+            key={deck.id}
+            deckId={deck.id}
+            latest={latestVersion?.deckId === deck.id ? latestVersion : null}
+          />
+        ) : tab === "goldfish" ? (
           <Goldfish
             key={playing ? playing.id : "main"}
             entries={playEntries}

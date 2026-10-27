@@ -163,7 +163,13 @@ const routeTree = rootRoute.addChildren([
       search: Record<string, unknown>,
     ): {
       tab?:
-        "stats" | "gaps" | "synergies" | "scenarios" | "matchups" | "goldfish";
+        | "stats"
+        | "gaps"
+        | "synergies"
+        | "scenarios"
+        | "matchups"
+        | "goldfish"
+        | "versions";
       view?: "list";
       /** Goldfish: the shuffle to start from. */
       seed?: number;
@@ -183,10 +189,16 @@ const routeTree = rootRoute.addChildren([
       search.tab === "synergies" ||
       search.tab === "scenarios" ||
       search.tab === "matchups" ||
-      search.tab === "goldfish"
+      search.tab === "goldfish" ||
+      search.tab === "versions"
         ? {
             tab: search.tab as
-              "stats" | "gaps" | "synergies" | "scenarios" | "goldfish",
+              | "stats"
+              | "gaps"
+              | "synergies"
+              | "scenarios"
+              | "goldfish"
+              | "versions",
           }
         : {}),
       ...(search.view === "list" ? { view: "list" as const } : {}),

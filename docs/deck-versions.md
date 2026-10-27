@@ -5,6 +5,9 @@ numbered version, even when the list has not changed. A failed save keeps you he
 offers another try. Saving records the export attempt; it cannot confirm that you pressed
 Import in FaBrary, or that you later kept the same list there.
 
+Versions have their own **Versions** tab on the deck page, shown only to the owner. After
+a save, a short note under the deck header links to it.
+
 ## What is saved
 
 The server takes a copy of the saved deck in one database statement. It includes:
