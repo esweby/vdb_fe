@@ -409,10 +409,36 @@ describe("cards page", () => {
     await user.click(
       within(summary).getByRole("button", { name: "Confirm review" }),
     );
-    expect(
-      await screen.findByRole("dialog", { name: "Fate Foreseen" }),
-    ).toBeInTheDocument();
+    const next = await screen.findByRole("dialog", { name: "Fate Foreseen" });
     expect(scores.saved).toContain("review card-become-the-shadow-lord");
+    // Focus stays on the slider, so the new card is read out (M8 keyboard pass).
+    expect(
+      within(next).getByRole("status", { name: "Current card" }),
+    ).toHaveTextContent(/^Now showing Fate Foreseen, 2 of \d+\.$/);
+  });
+
+  it("says nothing extra when a card first opens, and names each card it moves to", async () => {
+    await renderApp({
+      path: "/cards?view=list&sort=name",
+      auth: fakeAuthService().service,
+    });
+    const user = userEvent.setup();
+    await user.click(
+      await screen.findByRole("link", { name: "Become the Shadow Lord" }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Become the Shadow Lord",
+    });
+    expect(
+      within(dialog).getByRole("status", { name: "Current card" }),
+    ).toHaveTextContent("");
+    await user.click(within(dialog).getByRole("button", { name: "Next card" }));
+    await screen.findByRole("dialog", { name: "Fate Foreseen" });
+    expect(
+      within(screen.getByRole("dialog")).getByRole("status", {
+        name: "Current card",
+      }),
+    ).toHaveTextContent(/^Now showing Fate Foreseen, 2 of \d+\.$/);
   });
 
   it("closes only the review summary on Escape, not the card", async () => {
