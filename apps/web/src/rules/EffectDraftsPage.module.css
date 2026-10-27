@@ -2,7 +2,7 @@
   max-width: 48rem;
 }
 .section {
-  margin-bottom: 2rem;
+  margin-bottom: var(--space-7);
 }
 .muted {
   color: var(--muted);
@@ -12,14 +12,14 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(26rem, 100%), 1fr));
-  gap: 1rem;
+  gap: var(--space-4);
 }
 .card {
   display: grid;
   /* minmax(0, …) so long draft text wraps instead of widening the page on a phone. */
   grid-template-columns: 8rem minmax(0, 1fr);
-  gap: 1rem;
-  padding: 1rem;
+  gap: var(--space-4);
+  padding: var(--space-4);
   border: 1px solid var(--border);
   border-radius: 0.5rem;
   background: var(--surface);
@@ -30,8 +30,8 @@
 @media (max-width: 30rem) {
   .card {
     grid-template-columns: 5.5rem minmax(0, 1fr);
-    gap: 0.75rem;
-    padding: 0.75rem;
+    gap: var(--space-3);
+    padding: var(--space-3);
   }
 }
 .imageWrap {
@@ -52,19 +52,19 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
 }
 .name {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: var(--text-md);
 }
 .draft + .draft {
-  margin-top: 0.75rem;
+  margin-top: var(--space-3);
 }
 .draft ul {
-  margin: 0.25rem 0;
-  padding-left: 1.25rem;
+  margin: var(--space-1) 0;
+  padding-left: var(--space-5);
 }
 .pitch {
   margin: 0;
@@ -75,8 +75,8 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
 }
 .verdict > :first-child:not(span) {
   flex: 1 1 12rem;
@@ -90,21 +90,21 @@
 
 /* What to do, and the folded sections (the maintainer, 20 Oct 2026). */
 .guide {
-  margin: 1rem 0;
-  padding: 0.75rem 1rem;
+  margin: var(--space-4) 0;
+  padding: var(--space-3) var(--space-4);
   border: 1px solid var(--accent);
   border-radius: 0.5rem;
   background: color-mix(in srgb, var(--accent) 6%, var(--bg));
 }
 .guide h2 {
-  margin: 0 0 0.4rem;
-  font-size: 1.05rem;
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-md);
 }
 .guide ol {
   margin: 0;
-  padding-left: 1.3rem;
+  padding-left: var(--space-5);
   display: grid;
-  gap: 0.3rem;
+  gap: var(--space-1);
 }
 details.section > summary {
   cursor: pointer;
@@ -115,9 +115,9 @@ details.section > summary h2 {
 }
 .missing {
   columns: 2 16rem;
-  margin: 0 0 1rem;
-  padding-left: 1.2rem;
-  font-size: 0.9rem;
+  margin: 0 0 var(--space-4);
+  padding-left: var(--space-5);
+  font-size: var(--text-sm);
 }
 
 /* A reviewed card, folded to its picture's height; the chevron opens it. */
@@ -152,14 +152,14 @@ details.section > summary h2 {
 .select {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: var(--space-1);
   max-width: 20rem;
   font-weight: 600;
-  margin-bottom: 0.75rem;
+  margin-bottom: var(--space-3);
 }
 .select select {
   font: inherit;
-  padding: 0.4rem 0.6rem;
+  padding: var(--space-2);
   border: 1px solid var(--border);
   border-radius: 0.4rem;
   background: var(--bg);
@@ -173,7 +173,7 @@ details.section > summary h2 {
   font-weight: 600;
 }
 .plays {
-  margin: 0.25rem 0 0;
-  font-size: 0.85rem;
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-sm);
   font-weight: 600;
 }
