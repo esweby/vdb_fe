@@ -1,4 +1,4 @@
-// UNVERIFIED effect drafts. The maintainer must approve these five cards before they gain rules.
+// Drafts approved by the maintainer on 27 Oct 2026.
 import { parseEffects, verifiedRulesFor } from "@vdb/engine/rules";
 import { describe, expect, it } from "vitest";
 import type { CardSummary } from "../cards/cardRepository.ts";
@@ -130,22 +130,26 @@ const enshrine = card(
 );
 
 describe("the second priority rules batch", () => {
-  it("shows Vantom Wraith's Rune Gate and blood debt traits for review", () => {
+  it("verifies Vantom Wraith's Rune Gate and blood debt traits", () => {
     const entry = draftQueue([vantom])[0]!;
-    expect(entry.status).toBe("complete");
-    expect(entry.verified).toBe(false);
+    expect(entry.status).toBe("verified");
+    expect(entry.verified).toBe(true);
     expect(entry.drafts).toHaveLength(1);
     expect(entry.drafts[0]!.draft.description).toEqual([
       "Rune Gate.",
       "Blood debt.",
     ]);
     expect(entry.drafts[0]!.draft.rules.effects).toEqual([]);
+    for (const pitch of [1, 2, 3])
+      expect(verifiedRulesFor(vantom.name, pitch)).toEqual(
+        entry.drafts[0]!.draft.rules,
+      );
   });
 
   it("keeps Deadwood Dirge's aura cost visible until the engine can pay it", () => {
     const entry = draftQueue([deadwood])[0]!;
-    expect(entry.status).toBe("undraftable");
-    expect(entry.verified).toBe(false);
+    expect(entry.status).toBe("verified");
+    expect(entry.verified).toBe(true);
     expect(entry.drafts).toHaveLength(3);
     expect(entry.drafts.map((draft) => draft.pitches)).toEqual([[1], [2], [3]]);
     expect(entry.drafts[0]!.draft.notDrafted).toEqual([
@@ -157,12 +161,17 @@ describe("the second priority rules batch", () => {
     expect(entry.drafts[2]!.draft.notDrafted).toEqual([
       "1 Runechant if you destroyed an aura you control: the engine can't check that yet",
     ]);
+    for (const draft of entry.drafts)
+      for (const pitch of draft.pitches)
+        expect(verifiedRulesFor(deadwood.name, pitch)).toEqual(
+          draft.draft.rules,
+        );
   });
 
   it("drafts Shadow of Ursur's supported text and calls out the additional cost", () => {
     const entry = draftQueue([shadow])[0]!;
-    expect(entry.status).toBe("partial");
-    expect(entry.verified).toBe(false);
+    expect(entry.status).toBe("verified");
+    expect(entry.verified).toBe(true);
     expect(entry.drafts[0]!.draft.rules).toMatchObject({
       effects: [
         {
@@ -181,24 +190,30 @@ describe("the second priority rules batch", () => {
     expect(() =>
       parseEffects(entry.drafts[0]!.draft.rules.effects),
     ).not.toThrow();
+    expect(verifiedRulesFor(shadow.name, 3)).toEqual(
+      entry.drafts[0]!.draft.rules,
+    );
   });
 
   it("keeps Revel in Runeblood's two earlier plays visible", () => {
     const entry = draftQueue([revel])[0]!;
-    expect(entry.status).toBe("undraftable");
-    expect(entry.verified).toBe(false);
+    expect(entry.status).toBe("verified");
+    expect(entry.verified).toBe(true);
     expect(entry.drafts[0]!.draft.notDrafted).toEqual([
       "4 Runechants if you've played an attack action card this turn: the engine can't check that yet",
     ]);
     expect(entry.drafts[0]!.draft.factsNote).toContain(
       "another non-attack action card besides this one",
     );
+    expect(verifiedRulesFor(revel.name, 1)).toEqual(
+      entry.drafts[0]!.draft.rules,
+    );
   });
 
   it("drafts Enshrine Sin's supported text together for all three pitches", () => {
     const entry = draftQueue([enshrine])[0]!;
-    expect(entry.status).toBe("complete");
-    expect(entry.verified).toBe(false);
+    expect(entry.status).toBe("verified");
+    expect(entry.verified).toBe(true);
     expect(entry.drafts).toHaveLength(1);
     expect(entry.drafts[0]!.pitches).toEqual([1, 2, 3]);
     expect(entry.drafts[0]!.draft.rules).toMatchObject({
@@ -209,15 +224,9 @@ describe("the second priority rules batch", () => {
       playableFromBanish: true,
     });
     expect(entry.drafts[0]!.draft.factsNote).toContain("equal to pitch value");
-  });
-
-  it.each([
-    ["Vantom Wraith", 1],
-    ["Deadwood Dirge", 1],
-    ["Shadow of Ursur", 3],
-    ["Revel in Runeblood", 1],
-    ["Enshrine Sin", 1],
-  ])("keeps %s pitch %s unverified", (name, pitch) => {
-    expect(verifiedRulesFor(name, pitch)).toBeUndefined();
+    for (const pitch of [1, 2, 3])
+      expect(verifiedRulesFor(enshrine.name, pitch)).toEqual(
+        entry.drafts[0]!.draft.rules,
+      );
   });
 });
