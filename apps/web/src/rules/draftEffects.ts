@@ -273,11 +273,13 @@ export function draftEffects(
   // Tokens.
   for (const t of a.tokens ?? []) {
     const label = TOKEN_LABEL[t.token] ?? t.token;
+    const amount = t.amount;
     if (t.grantedTo) {
-      note(`${label} given to a later card`);
+      note(
+        `${amount} ${amount === 1 ? (TOKEN_SINGLE[t.token] ?? t.token) : label} given to a later card: not drafted yet`,
+      );
       continue;
     }
-    const amount = t.amount;
     if (amount === "X") {
       if (
         t.trigger === "on_banished" &&

@@ -108,7 +108,7 @@ describe("the seventh priority rules batch", () => {
     const entry = draftQueue([dystopia])[0]!;
     expect(entry.status).toBe("undraftable");
     expect(entry.drafts[0]!.draft.notDrafted).toEqual([
-      "Runechants given to a later card",
+      "X Runechants given to a later card: not drafted yet",
       "Cost reductions given to a later card: not drafted yet",
     ]);
   });

@@ -102,6 +102,16 @@ describe("authored batches", () => {
     });
   });
 
+  it("records Fiddler's Green's graveyard life gain as unverified", () => {
+    expect(allAuthored()["Fiddler's Green"]).toEqual({
+      verified: false,
+      card: {
+        notes:
+          "When this is put into your graveyard from anywhere, gain 3/2/1 life (red/yellow/blue).",
+      },
+    });
+  });
+
   it("includes batch 4, weapons and equipment", () => {
     expect(Object.keys(batches)).toContain("04-weapons-and-equipment");
   });
