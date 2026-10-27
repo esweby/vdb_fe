@@ -1,4 +1,5 @@
-// UNVERIFIED effect drafts. The maintainer must approve these five cards before they gain rules.
+// Funeral Moon and Rattle Bones approved by the maintainer on 27 Oct 2026.
+// The other three effect drafts remain UNVERIFIED.
 import { parseEffects, verifiedRulesFor } from "@vdb/engine/rules";
 import { describe, expect, it } from "vitest";
 import { runechantCreators } from "../../../../packages/importer/src/authored/01-runechant-creators.ts";
@@ -71,8 +72,8 @@ describe("the sixth priority rules batch", () => {
 
   it("drafts all of Funeral Moon's setup effects", () => {
     const entry = draftQueue([funeral])[0]!;
-    expect(entry.status).toBe("complete");
-    expect(entry.verified).toBe(false);
+    expect(entry.status).toBe("verified");
+    expect(entry.verified).toBe(true);
     expect(entry.drafts[0]!.draft.rules).toEqual({
       effects: [{ op: "createToken", token: "runechant", amount: 1 }],
       instantWhen: "hero_lost_life_this_turn",
@@ -81,6 +82,9 @@ describe("the sixth priority rules batch", () => {
     expect(() =>
       parseEffects(entry.drafts[0]!.draft.rules.effects),
     ).not.toThrow();
+    expect(verifiedRulesFor(funeral.name, 1)).toEqual(
+      entry.drafts[0]!.draft.rules,
+    );
   });
 
   it("keeps Soul of Existence's purple pitch and life loss visible", () => {
@@ -106,8 +110,8 @@ describe("the sixth priority rules batch", () => {
 
   it("drafts Rattle Bones' graveyard banish and lists both unsupported permissions", () => {
     const entry = draftQueue([rattle])[0]!;
-    expect(entry.status).toBe("partial");
-    expect(entry.verified).toBe(false);
+    expect(entry.status).toBe("verified");
+    expect(entry.verified).toBe(true);
     expect(entry.drafts[0]!.draft.rules).toEqual({
       effects: [{ op: "banish", from: "graveyard", amount: 1 }],
     });
@@ -115,14 +119,15 @@ describe("the sixth priority rules batch", () => {
       "Letting other cards be played from the banished zone: not drafted yet",
       "Playing it as an instant: not drafted yet",
     ]);
+    expect(verifiedRulesFor(rattle.name, 1)).toEqual(
+      entry.drafts[0]!.draft.rules,
+    );
   });
 
   it.each([
     ["Eloquent Eulogy", 1],
-    ["Funeral Moon", 1],
     ["Soul of Existence", 4],
     ["Shadow Puppetry", 1],
-    ["Rattle Bones", 1],
   ])("keeps %s pitch %s unverified", (name, pitch) => {
     expect(verifiedRulesFor(name, pitch)).toBeUndefined();
   });

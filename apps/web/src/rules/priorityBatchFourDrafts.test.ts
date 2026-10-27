@@ -1,4 +1,5 @@
-// UNVERIFIED effect drafts. The maintainer must approve these five cards before they gain rules.
+// Invert Existence and Painful Passage approved by the maintainer on 27 Oct 2026.
+// The other three effect drafts remain UNVERIFIED.
 import { parseEffects, verifiedRulesFor } from "@vdb/engine/rules";
 import { describe, expect, it } from "vitest";
 import { remaining } from "../../../../packages/importer/src/authored/05-remaining.ts";
@@ -119,8 +120,8 @@ describe("the fourth priority rules batch", () => {
 
   it("drafts Invert Existence's banished-zone permission only", () => {
     const entry = draftQueue([invert])[0]!;
-    expect(entry.status).toBe("complete");
-    expect(entry.verified).toBe(false);
+    expect(entry.status).toBe("verified");
+    expect(entry.verified).toBe(true);
     expect(entry.drafts[0]!.draft.rules).toEqual({
       effects: [],
       playableFromBanish: true,
@@ -129,6 +130,9 @@ describe("the fourth priority rules batch", () => {
       "Arcane damage: damage to an opponent is out of scope",
       "Disrupting an opponent: out of scope",
     ]);
+    expect(verifiedRulesFor(invert.name, 3)).toEqual(
+      entry.drafts[0]!.draft.rules,
+    );
   });
 
   it("keeps Eye of Ophidia's pitch Opt visible but unsupported", () => {
@@ -142,8 +146,8 @@ describe("the fourth priority rules batch", () => {
 
   it("drafts Painful Passage's optional banish and leaves its grant out", () => {
     const entry = draftQueue([painful])[0]!;
-    expect(entry.status).toBe("partial");
-    expect(entry.verified).toBe(false);
+    expect(entry.status).toBe("verified");
+    expect(entry.verified).toBe(true);
     expect(entry.drafts[0]!.draft.rules.effects).toEqual([
       {
         op: "banish",
@@ -159,6 +163,9 @@ describe("the fourth priority rules batch", () => {
     expect(() =>
       parseEffects(entry.drafts[0]!.draft.rules.effects),
     ).not.toThrow();
+    expect(verifiedRulesFor(painful.name, 1)).toEqual(
+      entry.drafts[0]!.draft.rules,
+    );
   });
 
   it("keeps Call for Backup's defend text visible and out of the engine", () => {
@@ -173,9 +180,7 @@ describe("the fourth priority rules batch", () => {
 
   it.each([
     ["Runeblood Incantation", 1],
-    ["Invert Existence", 3],
     ["Eye of Ophidia", 3],
-    ["Painful Passage", 1],
     ["Call for Backup", 1],
   ])("keeps %s pitch %s unverified", (name, pitch) => {
     expect(verifiedRulesFor(name, pitch)).toBeUndefined();

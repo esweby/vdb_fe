@@ -1,4 +1,5 @@
-// UNVERIFIED effect drafts. The maintainer must approve these ten cards before they gain rules.
+// Runic Reaving and Vantom Banshee approved by the maintainer on 27 Oct 2026.
+// The other eight effect drafts remain UNVERIFIED.
 import { verifiedRulesFor } from "@vdb/engine/rules";
 import { describe, expect, it } from "vitest";
 import { runechantCreators } from "../../../../packages/importer/src/authored/01-runechant-creators.ts";
@@ -94,7 +95,8 @@ describe("the eighth priority rules batch", () => {
 
   it("groups and fully drafts Runic Reaving's pitches", () => {
     const entry = draftQueue([reaving])[0]!;
-    expect(entry.status).toBe("complete");
+    expect(entry.status).toBe("verified");
+    expect(entry.verified).toBe(true);
     expect(entry.drafts).toHaveLength(1);
     expect(entry.drafts[0]!.pitches).toEqual([1, 2, 3]);
     expect(entry.drafts[0]!.draft.rules).toEqual({
@@ -107,6 +109,10 @@ describe("the eighth priority rules batch", () => {
       },
       usurp: true,
     });
+    for (const pitch of [1, 2, 3])
+      expect(verifiedRulesFor(reaving.name, pitch)).toEqual(
+        entry.drafts[0]!.draft.rules,
+      );
   });
 
   it("keeps Overcrowded's combat bonus unsupported", () => {
@@ -153,12 +159,17 @@ describe("the eighth priority rules batch", () => {
 
   it("groups Vantom Banshee's Rune Gate and blood debt pitches", () => {
     const entry = draftQueue([banshee])[0]!;
-    expect(entry.status).toBe("complete");
+    expect(entry.status).toBe("verified");
+    expect(entry.verified).toBe(true);
     expect(entry.drafts[0]!.pitches).toEqual([1, 2, 3]);
     expect(entry.drafts[0]!.draft.description).toEqual([
       "Rune Gate.",
       "Blood debt.",
     ]);
+    for (const pitch of [1, 2, 3])
+      expect(verifiedRulesFor(banshee.name, pitch)).toEqual(
+        entry.drafts[0]!.draft.rules,
+      );
   });
 
   it("keeps Bounding Demigon's conditional banished-zone play unsupported", () => {
@@ -172,14 +183,12 @@ describe("the eighth priority rules batch", () => {
 
   it.each([
     ["Shadowrealm Harrower", 3],
-    ["Runic Reaving", 1],
     ["Overcrowded", 3],
     ["Sigil of Solace", 1],
     ["Command and Conquer", 1],
     ["Deathly Delight", 1],
     ["Sigil of Suffering", 1],
     ["Heart of Fyendal", 3],
-    ["Vantom Banshee", 3],
     ["Bounding Demigon", 1],
   ])("keeps %s pitch %s unverified", (name, pitch) => {
     expect(verifiedRulesFor(name, pitch)).toBeUndefined();
