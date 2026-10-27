@@ -21,6 +21,25 @@
   --success: #1f9d61;
   --font-display: "Cinzel", "Trajan Pro", Georgia, serif;
   --font-ui: "Inter", system-ui, sans-serif;
+  /* Type scale. Text-relative sizes (em) are fine for things that follow the text around them. */
+  --text-2xs: 0.7rem;
+  --text-xs: 0.8rem;
+  --text-sm: 0.9rem;
+  --text-md: 1rem;
+  --text-lg: 1.15rem;
+  --text-xl: 1.35rem;
+  --text-2xl: 1.6rem;
+  --text-3xl: 1.9rem;
+  --text-display: 3rem;
+  /* Spacing scale for margin, padding and gap. Nudges of 0.2rem or less are optical, not spacing. */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-7: 2rem;
+  --space-8: 3rem;
   font-family: var(--font-ui);
   line-height: 1.5;
 }
@@ -71,6 +90,6 @@ h2 {
   letter-spacing: 0.01em;
 }
 h1 {
-  font-size: 1.9rem;
-  margin: 0 0 1rem;
+  font-size: var(--text-3xl);
+  margin: 0 0 var(--space-4);
 }
