@@ -51,6 +51,16 @@ describe("authored batches", () => {
     expect(Object.keys(batches)).toContain("05-remaining");
   });
 
+  it("records Call for Backup's defend text as unverified", () => {
+    expect(allAuthored()["Call for Backup"]).toEqual({
+      verified: false,
+      card: {
+        notes:
+          "When this defends, choose 2 differently named attack action cards in your graveyard. An opponent chooses 1 to banish; put the other on top of your deck.",
+      },
+    });
+  });
+
   it("includes batch 4, weapons and equipment", () => {
     expect(Object.keys(batches)).toContain("04-weapons-and-equipment");
   });

@@ -3,6 +3,13 @@
 import type { AuthoredAttributes } from "../map.ts";
 
 export const remaining: AuthoredAttributes = {
+  "Call for Backup": {
+    verified: false,
+    card: {
+      notes:
+        "When this defends, choose 2 differently named attack action cards in your graveyard. An opponent chooses 1 to banish; put the other on top of your deck.",
+    },
+  },
   // Approved by the maintainer, 24 Oct 2026: conditional, not natural go again.
   "Scar for a Scar": {
     verified: true,
