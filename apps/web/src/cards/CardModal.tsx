@@ -1,7 +1,8 @@
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CardScoringView } from "../scoring/CardScoringView.tsx";
 import { Button, Dialog, Tag } from "../ui/index.ts";
+import ui from "../ui/ui.module.css";
 import styles from "./CardModal.module.css";
 
 /**
@@ -30,6 +31,19 @@ export function CardModal(props: {
   const { onPrevious, onNext } = props;
   const { cardTab } = useSearch({ strict: false }) as { cardTab?: unknown };
   const navigate = useNavigate();
+
+  // Moving to another card keeps focus where it was (often a slider), so the dialog's new title
+  // isn't read out: say it instead. Nothing on first opening (M8 keyboard pass).
+  const [said, setSaid] = useState("");
+  const shown = useRef(props.cardId);
+  const { cardId, name, position } = props;
+  useEffect(() => {
+    if (shown.current === cardId) return;
+    shown.current = cardId;
+    setSaid(
+      `Now showing ${name}${position ? `, ${position.index.toLocaleString("en-GB")} of ${position.total.toLocaleString("en-GB")}` : ""}.`,
+    );
+  }, [cardId, name, position]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -83,6 +97,9 @@ export function CardModal(props: {
         </span>
       }
     >
+      <p role="status" aria-label="Current card" className={ui.visuallyHidden}>
+        {said}
+      </p>
       <CardScoringView
         cardId={props.cardId}
         initialVariantId={props.variantId}
