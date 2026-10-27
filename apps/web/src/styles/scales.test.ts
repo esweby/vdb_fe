@@ -9,12 +9,9 @@ const SRC = join(import.meta.dirname, "..");
 // Stylesheets not yet moved onto the scales. Each is moved in its own small PR; remove it here
 // when it is. The test fails if a listed file is already clean, so the list only shrinks.
 const NOT_YET_ON_SCALES = new Set([
-  "decks/CardFinder.module.css",
   "decks/Decks.module.css",
-  "decks/DecksPage.module.css",
   "decks/Goldfish.module.css",
   "ranking/RankingPage.module.css",
-  "scenarios/ScenarioBuilder.module.css",
   "scoring/CardScoringPage.module.css",
 ]);
 
