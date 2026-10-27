@@ -1,10 +1,10 @@
 /* Desktop first: settings and block rows sit on one line each, wrapping when narrow. */
 .builder {
   display: grid;
-  gap: 1rem;
+  gap: var(--space-4);
   /* As a grid or flex item, shrink to the page rather than grow to its widest table. */
   min-width: 0;
-  padding: 1rem 1.2rem;
+  padding: var(--space-4) var(--space-5);
   border: 1px solid var(--border);
   border-radius: 0.75rem;
   background: var(--surface);
@@ -15,11 +15,11 @@
   flex-wrap: wrap;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 0.75rem 1.5rem;
+  gap: var(--space-3) var(--space-6);
 }
 
 .head h2 {
-  margin: 0 0 0.25rem;
+  margin: 0 0 var(--space-1);
 }
 
 .head p {
@@ -32,13 +32,13 @@
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: 0.5rem 0.75rem;
+  gap: var(--space-2) var(--space-3);
 }
 
 .select {
   display: grid;
   gap: 0.2rem;
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
 }
 
 .select span {
@@ -47,7 +47,7 @@
 
 .select select {
   font: inherit;
-  padding: 0.3rem 0.4rem;
+  padding: var(--space-1) var(--space-2);
   border: 1px solid var(--border);
   border-radius: 0.35rem;
   background: var(--bg);
@@ -64,9 +64,9 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.4rem 1rem;
+  gap: var(--space-2) var(--space-4);
   margin: 0;
-  padding: 0.5rem 0.75rem;
+  padding: var(--space-2) var(--space-3);
   border: 1px solid var(--border);
   border-radius: 0.5rem;
 }
@@ -79,21 +79,21 @@
 .access label {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: var(--space-1);
 }
 
 .access legend,
 .fixed legend {
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: var(--text-sm);
 }
 
 .topGroup,
 .group {
   display: grid;
-  gap: 0.6rem;
+  gap: var(--space-2);
   margin: 0;
-  padding: 0.75rem;
+  padding: var(--space-3);
   border: 1px solid var(--border);
   border-radius: 0.6rem;
 }
@@ -105,9 +105,9 @@
 
 .block {
   display: grid;
-  gap: 0.5rem;
+  gap: var(--space-2);
   margin: 0;
-  padding: 0.6rem 0.75rem;
+  padding: var(--space-2) var(--space-3);
   border: 1px solid var(--border);
   border-radius: 0.5rem;
   background: var(--surface);
@@ -115,7 +115,7 @@
 
 .from {
   align-self: center;
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
   color: var(--muted);
 }
 
@@ -128,7 +128,7 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
-  gap: 0.5rem 0.75rem;
+  gap: var(--space-2) var(--space-3);
 }
 
 .problem {
@@ -138,31 +138,31 @@
 
 .result {
   display: grid;
-  gap: 0.4rem;
-  padding-top: 0.75rem;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
   border-top: 1px solid var(--border);
 }
 
 .result h3 {
-  margin: 0.5rem 0 0;
-  font-size: 0.9rem;
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-sm);
 }
 
 .result ul {
   margin: 0;
-  padding-left: 1.2rem;
+  padding-left: var(--space-5);
 }
 
 .rate {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: var(--text-lg);
   font-variant-numeric: tabular-nums;
 }
 
 .byTurn {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.25rem 1.25rem;
+  gap: var(--space-1) var(--space-5);
   list-style: none;
   padding-left: 0 !important;
 }
@@ -175,7 +175,7 @@
 
 .hint {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
   color: var(--muted);
 }
 
@@ -183,7 +183,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: 0.5rem 0.75rem;
+  gap: var(--space-2) var(--space-3);
   margin-right: auto;
 }
 
@@ -195,19 +195,19 @@
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.92rem;
+  font-size: var(--text-sm);
 }
 
 .table th,
 .table td {
-  padding: 0.45rem 0.5rem;
+  padding: var(--space-2);
   border-bottom: 1px solid var(--border);
   text-align: left;
   vertical-align: middle;
 }
 
 .table thead th {
-  font-size: 0.8rem;
+  font-size: var(--text-xs);
   color: var(--muted);
   font-weight: 600;
 }
@@ -237,41 +237,41 @@
 
 @media (max-width: 40rem) {
   .builder {
-    padding: 0.75rem;
+    padding: var(--space-3);
   }
   .table th,
   .table td {
-    padding: 0.4rem 0.3rem;
+    padding: var(--space-2) var(--space-1);
     overflow-wrap: anywhere;
   }
 }
 
 /* The form in five numbered parts, read back as one sentence (the maintainer, 19 Oct 2026). */
 .readsAs {
-  padding: 0.75rem 1rem;
+  padding: var(--space-3) var(--space-4);
   border-radius: 0.6rem;
   border-left: 4px solid var(--accent);
   background: color-mix(in srgb, var(--accent) 8%, transparent);
 }
 .readsAs p {
   margin: 0;
-  font-size: 1rem;
+  font-size: var(--text-md);
   line-height: 1.45;
 }
 .part {
   display: grid;
-  gap: 0.6rem;
-  padding: 0.9rem 1rem;
+  gap: var(--space-2);
+  padding: var(--space-4);
   border: 1px solid var(--border);
   border-radius: 0.6rem;
   background: var(--bg);
 }
 .part > h3 {
   margin: 0;
-  font-size: 0.95rem;
+  font-size: var(--text-md);
 }
 .part > .hint {
-  margin-top: -0.3rem;
+  margin-top: calc(-1 * var(--space-1));
 }
 .part .topGroup {
   border: none;
@@ -281,7 +281,7 @@
   display: inline-flex;
   align-items: flex-end;
   gap: 0.15rem;
-  padding: 0.15rem 0.2rem 0.15rem 0.5rem;
+  padding: 0.15rem 0.2rem 0.15rem var(--space-2);
   border: 1px solid var(--border);
   border-radius: 0.5rem;
   background: var(--surface);
@@ -293,7 +293,7 @@
   border-radius: 0.3rem;
   background: none;
   color: var(--muted);
-  font-size: 1rem;
+  font-size: var(--text-md);
   cursor: pointer;
 }
 .chipRemove:hover {
@@ -302,7 +302,7 @@
 }
 .blockReads {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
   color: var(--muted);
   font-style: italic;
 }
@@ -315,37 +315,37 @@
 .createLayout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
-  gap: 1rem;
+  gap: var(--space-4);
   align-items: start;
 }
 .guide {
   position: sticky;
   top: 1rem;
   display: grid;
-  gap: 0.6rem;
-  padding: 1rem;
+  gap: var(--space-2);
+  padding: var(--space-4);
   border: 1px solid var(--border);
   border-radius: 0.75rem;
   background: var(--surface, var(--bg));
-  font-size: 0.9rem;
+  font-size: var(--text-sm);
 }
 .guide h2 {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: var(--text-md);
 }
 .guide p {
   margin: 0;
 }
 .guide dl {
   display: grid;
-  gap: 0.4rem;
+  gap: var(--space-2);
   margin: 0;
 }
 .guide dt {
   font-weight: 700;
 }
 .guide dd {
-  margin: 0 0 0.3rem;
+  margin: 0 0 var(--space-1);
   color: var(--muted);
 }
 .addRow {
