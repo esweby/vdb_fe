@@ -61,6 +61,16 @@ describe("authored batches", () => {
     });
   });
 
+  it("records Sink Below's hand-cycle text as unverified", () => {
+    expect(allAuthored()["Sink Below"]).toEqual({
+      verified: false,
+      card: {
+        notes:
+          "You may put a card from your hand on the bottom of your deck. If you do, draw a card.",
+      },
+    });
+  });
+
   it("includes batch 4, weapons and equipment", () => {
     expect(Object.keys(batches)).toContain("04-weapons-and-equipment");
   });
