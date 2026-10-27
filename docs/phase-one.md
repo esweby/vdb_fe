@@ -14,7 +14,7 @@ Carried into phase two (none of these block it):
 
 - A player check of the legality filter (M2).
 - Number entry when scoring doesn't work well on a MacBook keyboard. Details to come from the maintainer; a failing test first.
-- M8: a shared type scale and spacing scale, and a full keyboard and screen-reader pass.
+- M8: a full keyboard and screen-reader pass. (The shared type and spacing scales are done: #277 to #293.)
 - The scoring group's open questions: slider wording, risk presets, the spread threshold, the Mine / Blend / Community presets and the strategy question wording.
 
 Phase two is largely built: see [phase-two.md](phase-two.md) for its status, the maintainer's decisions and what's open. These carried items are still open there too.
@@ -161,7 +161,7 @@ Scorers are volunteers. If the app feels like a prototype they won't engage, and
 
 - [x] **No dead ends or placeholders.** A real home page explains the app and points to the next step. Every page has a way forward. _Home page (first visit, a scorer's reviews left, build a core); Needs review after a review (#59); a saved core links to its deck (#77); Create an account on the home page (#79)._
 - [x] **Every state is designed:** loading, empty (with the next action), error (in plain words, with a retry) and saved (visible confirmation). _`Loading` and `LoadError` with Try again (#73); the deck page waits for the cards rather than showing an empty deck (#77); check-your-email after sign-up (#79)._
-- [ ] **Consistent look:** one type scale, spacing scale and colour tokens. Pitch colours everywhere a pitch appears. Dark mode checked. _Pitch colours are global tokens with a guard test, and dark mode is checked on every journey (#80). The type and spacing scales are global tokens (`--text-*`, `--space-*`) with a ratchet test; the shell, global styles and shared components are on them, and the rest of the stylesheets move over in small PRs (the test lists them)._
+- [x] **Consistent look:** one type scale, spacing scale and colour tokens. Pitch colours everywhere a pitch appears. Dark mode checked. _Pitch colours are global tokens with a guard test, and dark mode is checked on every journey (#80). Every stylesheet sizes text and spaces things from the global `--text-*` and `--space-*` scales, and a guard test keeps it that way (#277 to #293)._
 - [x] **Card images** on the card page and in the deck builder, moved forward from the backlog. Recognising cards by their art is what makes it feel like a FaB tool. Done: `variants.image_url` from the latest standard, normal-art printing; the stand-in shows when there is no image or it fails to load.
 - [x] **Works on a phone** for scoring and browsing. Deck building can be desktop-first. _Account and Sign out stay in view (#74); the review dialog fills the screen and the card enlarges (#75). Checked at 320 and 375px._
 - [x] **Fast scoring:** "Next card" after Mark reviewed, and sensible keyboard focus, so a scorer can work through a list without reaching for the mouse each time. _Each card opens on Overall; Ctrl/⌘+Enter, then Enter, reviews and moves on (#72)._

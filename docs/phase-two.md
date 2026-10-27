@@ -108,4 +108,4 @@ Game logic decided by the maintainer, with where it lives. Anything not here is 
 **Smaller**
 
 - Matchup plans that offer to add cards added to the deck since.
-- Phase one's M8 leftovers: a shared type and spacing scale, and a full keyboard and screen-reader pass.
+- Phase one's M8 leftover: a full keyboard and screen-reader pass.
