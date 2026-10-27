@@ -9,21 +9,21 @@
 
 /* Space between the tables (each is wrapped in a div). */
 .page > div + div {
-  margin-top: 2.5rem;
+  margin-top: var(--space-8);
 }
 
 .totals {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem 2rem;
-  margin: 1rem 0 2rem;
+  gap: var(--space-3) var(--space-7);
+  margin: var(--space-4) 0 var(--space-7);
 }
 .total dt {
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
 }
 .total dd {
   margin: 0;
-  font-size: 1.6rem;
+  font-size: var(--text-2xl);
   font-weight: 600;
 }

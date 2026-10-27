@@ -1,6 +1,6 @@
 .page {
   display: grid;
-  gap: 1rem;
+  gap: var(--space-4);
   max-width: 36rem;
 }
 .page h1 {
@@ -8,20 +8,20 @@
 }
 .panel {
   display: grid;
-  gap: 0.75rem;
-  padding: 1rem 1.25rem;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
   border: 1px solid var(--border);
   border-radius: 0.75rem;
   background: var(--surface);
 }
 .panel h2 {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: var(--text-lg);
 }
 .details {
   display: grid;
   grid-template-columns: 7rem minmax(0, 1fr);
-  gap: 0.5rem 1rem;
+  gap: var(--space-2) var(--space-4);
   margin: 0;
 }
 .details dt {
@@ -34,13 +34,13 @@
 .note {
   margin: 0.15rem 0 0;
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
 }
 .usernameForm {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 /* The field grows; the button stays beside the input, the hint runs under both. */
 .usernameForm > :first-child {
@@ -50,7 +50,7 @@
 .check {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 .alert {
   margin: 0;
@@ -64,6 +64,6 @@
     gap: 0.1rem;
   }
   .details dd + dt {
-    margin-top: 0.5rem;
+    margin-top: var(--space-2);
   }
 }

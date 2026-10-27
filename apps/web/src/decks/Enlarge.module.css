@@ -25,7 +25,7 @@
   z-index: 200;
   display: grid;
   place-items: center;
-  padding: 2rem;
+  padding: var(--space-7);
   background: rgb(8 6 16 / 0.86);
   backdrop-filter: blur(3px);
   cursor: zoom-out;
@@ -51,7 +51,7 @@
   border-radius: 50%;
   background: rgb(255 255 255 / 0.1);
   color: #fff;
-  font-size: 1.1rem;
+  font-size: var(--text-lg);
   cursor: pointer;
 }
 .close:hover {

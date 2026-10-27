@@ -1,16 +1,16 @@
 .toggles {
   display: flex;
   flex-wrap: wrap;
-  gap: 1.5rem;
-  margin-bottom: 0.75rem;
-  font-size: 0.88rem;
+  gap: var(--space-6);
+  margin-bottom: var(--space-3);
+  font-size: var(--text-sm);
 }
 /* One compact block per rating: name and "Both sides" on one line, then the slider row. */
 .dimension {
   border: none;
   border-top: 1px solid var(--border);
   border-radius: 0;
-  padding: 0.6rem 0 0.2rem;
+  padding: var(--space-2) 0 0.2rem;
   margin: 0;
 }
 .dimension legend {
@@ -22,8 +22,8 @@
   float: right;
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
-  font-size: 0.8rem;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
   color: var(--muted);
   cursor: pointer;
 }
@@ -32,16 +32,16 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: end;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 .cell > :first-child {
-  margin-bottom: 0.25rem;
+  margin-bottom: var(--space-1);
 }
 .cellActions {
   display: flex;
   align-items: center;
   gap: 0.15rem;
-  padding-bottom: 0.55rem;
+  padding-bottom: var(--space-2);
 }
 .iconButton {
   font: inherit;
@@ -70,8 +70,8 @@
 .inherited {
   color: var(--muted);
   font-style: italic;
-  font-size: 0.8rem;
-  margin-right: 0.25rem;
+  font-size: var(--text-xs);
+  margin-right: var(--space-1);
 }
 /* Can't be rated on this card: greyed out, but it keeps its place so every card's
    scoring column is the same shape. */
@@ -82,19 +82,19 @@
   clear: both;
   margin: 0;
   padding-top: 0.2rem;
-  font-size: 0.82rem;
+  font-size: var(--text-xs);
   color: var(--muted);
 }
 
 .others {
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
 }
 
 .zeroWarning {
   flex-basis: 100%;
   color: var(--danger);
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
 }
 .inlineFix {
   font: inherit;
