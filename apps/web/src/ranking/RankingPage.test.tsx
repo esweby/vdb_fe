@@ -125,6 +125,28 @@ describe("engine board explains itself", () => {
     );
   });
 
+  // Keyboard pass (M8): what a pointer shows, focus shows too.
+  it("explains and highlights a card's links when you move to it with the keyboard", async () => {
+    const { user } = await open(`/core?${core({ hp3: 3 })}`);
+    const bsl = lane("Make Gates")[0]!;
+    await user.click(screen.getByRole("searchbox", { name: "Find a card" }));
+    while (!bsl.contains(document.activeElement)) await user.tab();
+    expect(
+      screen.getByRole("status", { name: "About this card" }),
+    ).toHaveTextContent(
+      "Become the Shadow Lord works with 1 card in your core: Hocus Pocus.",
+    );
+    const hocusBlue = lane("Gate targets").find(
+      (li) => li.getAttribute("aria-label") === "Hocus Pocus (blue)",
+    )!;
+    expect(hocusBlue).toHaveAttribute("data-partner");
+    await user.click(screen.getByRole("searchbox", { name: "Find a card" }));
+    expect(
+      screen.getByRole("status", { name: "About this card" }),
+    ).toHaveTextContent(/^Point at or move to a card/);
+    expect(hocusBlue).not.toHaveAttribute("data-partner");
+  });
+
   it("has a key to the badges, the score and the range bar", async () => {
     await open();
     const key = within(screen.getByRole("list", { name: "Key" }));

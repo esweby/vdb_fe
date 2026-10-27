@@ -141,6 +141,10 @@ export function EngineBoard(props: {
         onMouseEnter={() =>
           setFocus({ label: c.label, roles: c.roles, partners: x.partners })
         }
+        // The keyboard gets what the pointer gets (M8 keyboard pass).
+        onFocus={() =>
+          setFocus({ label: c.label, roles: c.roles, partners: x.partners })
+        }
       >
         <button
           type="button"
@@ -233,6 +237,9 @@ export function EngineBoard(props: {
       className={styles.board}
       data-focus={focus ? "" : undefined}
       onMouseLeave={() => setFocus(null)}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) setFocus(null);
+      }}
     >
       <div className={styles.explain}>
         <ul aria-label="Key" className={styles.key}>
@@ -255,7 +262,7 @@ export function EngineBoard(props: {
         <p role="status" aria-label="About this card" className={styles.about}>
           {focus
             ? about(focus.label, focus.partners)
-            : "Point at a card to see what it works with in your core."}
+            : "Point at or move to a card to see what it works with in your core."}
         </p>
       </div>
       {props.engines.map((e) => {
