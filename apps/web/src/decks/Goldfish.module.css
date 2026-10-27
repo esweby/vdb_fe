@@ -1,6 +1,6 @@
 .goldfish {
   display: grid;
-  gap: 1rem;
+  gap: var(--space-4);
 }
 
 .bar,
@@ -8,7 +8,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem 0.75rem;
+  gap: var(--space-2) var(--space-3);
 }
 
 .side {
@@ -20,7 +20,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   margin-left: auto;
 }
 
@@ -31,14 +31,14 @@
 .startSide {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
-  font-size: 0.9rem;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
 }
 
 .startSide select,
 .card select {
   font: inherit;
-  padding: 0.25rem 0.35rem;
+  padding: var(--space-1);
   border: 1px solid var(--border);
   border-radius: 0.35rem;
   background: var(--bg);
@@ -48,8 +48,8 @@
 .counter {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.3rem 0.5rem;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
   border: 1px solid var(--border);
   border-radius: 0.5rem;
   background: var(--surface);
@@ -70,11 +70,11 @@
 .table {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(14rem, 100%), 1fr));
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 .zone {
-  padding: 0.6rem;
+  padding: var(--space-2);
   border: 1px solid var(--border);
   border-radius: 0.6rem;
   background: var(--surface);
@@ -86,14 +86,14 @@
 }
 
 .zone h3 {
-  margin: 0 0 0.5rem;
-  font-size: 0.9rem;
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-sm);
 }
 
 .cards {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: var(--space-2);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -101,7 +101,7 @@
 
 .card {
   display: grid;
-  gap: 0.25rem;
+  gap: var(--space-1);
   width: 7.5rem;
 }
 
@@ -116,9 +116,9 @@
 .standIn {
   display: grid;
   place-items: center;
-  padding: 0.4rem;
+  padding: var(--space-2);
   text-align: center;
-  font-size: 0.8rem;
+  font-size: var(--text-xs);
   border: 1px solid var(--border);
   background: var(--bg);
 }
@@ -136,21 +136,21 @@
 
 .deckActions {
   display: flex;
-  gap: 0.4rem;
-  margin-top: 0.5rem;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
 }
 
 .logBox h3 {
-  margin: 0 0 0.25rem;
-  font-size: 0.9rem;
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-sm);
 }
 
 .log {
   margin: 0;
-  padding-left: 1.4rem;
+  padding-left: var(--space-6);
   max-height: 12rem;
   overflow-y: auto;
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
 }
 
 .muted {
@@ -166,8 +166,8 @@
 
 .gear {
   display: grid;
-  gap: 0.3rem;
-  font-size: 0.8rem;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
 }
 
 .used {
@@ -192,7 +192,7 @@
 .lookAt input {
   width: 3.5rem;
   font: inherit;
-  padding: 0.25rem 0.35rem;
+  padding: var(--space-1);
   border: 1px solid var(--border);
   border-radius: 0.35rem;
   background: var(--bg);
@@ -205,16 +205,16 @@
 
 .peek {
   display: grid;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-  padding-top: 0.75rem;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
   border-top: 1px solid var(--border);
 }
 
 .history {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr));
-  gap: 1rem;
+  gap: var(--space-4);
 }
 
 .card:focus-visible {
@@ -232,20 +232,20 @@
 }
 
 .prompts {
-  padding: 0.6rem 0.8rem;
+  padding: var(--space-2) var(--space-3);
   border: 1px solid var(--accent);
   border-radius: 0.6rem;
   background: color-mix(in srgb, var(--accent) 8%, var(--surface));
 }
 
 .prompts h3 {
-  margin: 0 0 0.4rem;
-  font-size: 0.9rem;
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-sm);
 }
 
 .prompts ul {
   display: grid;
-  gap: 0.4rem;
+  gap: var(--space-2);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -255,7 +255,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.4rem 0.6rem;
+  gap: var(--space-2);
 }
 
 .prompts li span {
@@ -264,7 +264,7 @@
 
 .refused {
   margin: 0;
-  padding: 0.5rem 0.75rem;
+  padding: var(--space-2) var(--space-3);
   border-radius: 0.5rem;
   background: color-mix(in srgb, var(--danger, #b42318) 10%, transparent);
   color: var(--fg);
@@ -288,9 +288,9 @@
     "equipment .     weapons hero    .     .     pitch deck"
     "equipment .     .       arsenal .     .     .     banished"
     "hand      hand  hand    hand    hand  hand  hand  hand";
-  gap: 0.75rem;
+  gap: var(--space-3);
   align-items: start;
-  padding: 1rem 1rem 0;
+  padding: var(--space-4) var(--space-4) 0;
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 0.75rem;
@@ -299,7 +299,7 @@
 .mat > [data-place="equipment"] {
   grid-area: equipment;
   /* Down a little from the top edge (the maintainer, 20 Oct 2026). */
-  margin-top: 1.5rem;
+  margin-top: var(--space-6);
 }
 .mat > [data-place="arena"] {
   grid-area: arena;
@@ -339,7 +339,7 @@
   background: none;
 }
 .mat .cards {
-  gap: 0.4rem;
+  gap: var(--space-2);
 }
 .mat .card {
   position: relative;
@@ -357,13 +357,13 @@
   border-radius: 0.35rem;
 }
 .mat .standIn {
-  font-size: 0.65rem;
+  font-size: var(--text-2xs);
 }
 .mat .card[data-used] img {
   opacity: 0.55;
 }
 .mat .used {
-  font-size: 0.65rem;
+  font-size: var(--text-2xs);
 }
 
 /* An empty zone: a card-sized space with its name. */
@@ -373,16 +373,16 @@
   place-items: center;
   width: var(--card-w);
   aspect-ratio: 5 / 7;
-  padding: 0.25rem;
+  padding: var(--space-1);
   border: 1px solid var(--border);
   border-radius: 0.4rem;
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: var(--text-xs);
   text-align: center;
 }
 .mat [data-place="arena"] {
   min-height: calc(var(--card-w) * 1.4 + 1rem);
-  padding: 0.5rem;
+  padding: var(--space-2);
   border: 1px solid var(--border);
   border-radius: 0.6rem;
 }
@@ -392,7 +392,7 @@
   aspect-ratio: auto;
   min-height: calc(var(--card-w) * 1.4);
   border: none;
-  font-size: 0.95rem;
+  font-size: var(--text-md);
 }
 
 /* Piles: the cards stacked on one another, the newest on top, with a count badge. The
@@ -432,11 +432,11 @@
   place-items: center;
   min-width: 1.5rem;
   height: 1.5rem;
-  padding: 0 0.35rem;
+  padding: 0 var(--space-1);
   border-radius: 999px;
   background: var(--fg);
   color: var(--bg);
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   font-weight: 700;
   pointer-events: none;
 }
@@ -460,7 +460,7 @@
   left: 0.25rem;
   right: 0.25rem;
   opacity: 0;
-  font-size: 0.7rem;
+  font-size: var(--text-2xs);
   transition: opacity 120ms;
 }
 .mat .card:hover .cardMenu,
@@ -478,7 +478,7 @@
   border: 1px solid var(--border);
   border-radius: 0.4rem;
   text-align: center;
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
 }
 .heroButton {
   display: grid;
@@ -504,7 +504,7 @@
   border-radius: 0.35rem;
 }
 .heroName {
-  padding: 0.3rem;
+  padding: var(--space-1);
   font-weight: 700;
 }
 .life {
@@ -512,11 +512,11 @@
   bottom: 0.3rem;
   left: 50%;
   translate: -50% 0;
-  padding: 0.05rem 0.45rem;
+  padding: 0.05rem var(--space-2);
   border-radius: 999px;
   background: var(--fg);
   color: var(--bg);
-  font-size: 0.7rem;
+  font-size: var(--text-2xs);
   font-weight: 700;
   white-space: nowrap;
 }
@@ -530,7 +530,7 @@
     "chest arms"
     "legs  .";
   /* The same gap across and down, and every slot one card high, filled or not. */
-  gap: 1rem;
+  gap: var(--space-4);
   align-content: start;
 }
 .slot {
@@ -563,11 +563,11 @@
   justify-content: center;
   flex-wrap: nowrap;
   gap: 0;
-  padding: 1.5rem 0 0;
+  padding: var(--space-6) 0 0;
 }
 .mat [data-place="hand"] .card {
   width: 10rem;
-  margin: 0 -1.25rem -3.5rem;
+  margin: 0 calc(-1 * var(--space-5)) calc(-1 * var(--space-8));
   transform: rotate(calc(var(--fan, 0) * 4deg))
     translateY(calc(var(--drop, 0) * 0.5rem));
   transform-origin: 50% 120%;
@@ -586,11 +586,11 @@
   translate: 50% 0;
   z-index: 50;
   display: grid;
-  gap: 0.75rem;
+  gap: var(--space-3);
   width: min(60rem, calc(100vw - 2rem));
   max-height: 84vh;
   overflow-y: auto;
-  padding: 1rem;
+  padding: var(--space-4);
   box-shadow: 0 1rem 3rem rgb(0 0 0 / 0.25);
   border: 1px solid var(--border);
   border-radius: 0.75rem;
@@ -600,7 +600,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 .pileList h3 {
   margin: 0;
@@ -621,14 +621,14 @@
   height: auto;
 }
 .pileList .cardMenu {
-  font-size: 0.7rem;
+  font-size: var(--text-2xs);
 }
 
 @media (max-width: 60rem) {
   .mat {
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas: "hero" "hand" "arsenal" "arena" "weapons" "equipment" "pitch" "deck" "graveyard" "banished";
-    padding-bottom: 1rem;
+    padding-bottom: var(--space-4);
   }
   .mat .cardMenu {
     position: static;
@@ -636,7 +636,7 @@
   }
   .mat [data-place="hand"] .cards {
     flex-wrap: wrap;
-    gap: 0.4rem;
+    gap: var(--space-2);
   }
   .mat [data-place="hand"] .card {
     width: 7rem;
@@ -656,12 +656,12 @@
       "equipment equipment equipment"
       "pitch deck graveyard"
       "banished . .";
-    padding: 0.75rem;
+    padding: var(--space-3);
   }
   .mat > [data-place="equipment"] {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.75rem;
+    gap: var(--space-3);
     margin-top: 0;
   }
 }
@@ -677,7 +677,7 @@
   place-items: center;
   min-width: 2rem;
   height: 2rem;
-  padding: 0 0.3rem;
+  padding: 0 var(--space-1);
   border: 2px solid white;
   border-radius: 999px;
   background: var(--accent);
@@ -689,7 +689,7 @@
 .counterButtons {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.25rem;
+  gap: var(--space-1);
 }
 .counterButtons button {
   padding: 0.1rem 0;
@@ -697,7 +697,7 @@
   border-radius: 0.3rem;
   background: var(--bg);
   color: var(--fg);
-  font-size: 0.9rem;
+  font-size: var(--text-sm);
   line-height: 1.2;
   cursor: pointer;
 }
@@ -709,15 +709,15 @@
    the list instead (the maintainer, 20 Oct 2026). */
 .playButton {
   width: 100%;
-  padding: 0.2rem 0.4rem;
-  font-size: 0.8rem;
+  padding: 0.2rem var(--space-2);
+  font-size: var(--text-xs);
 }
 .pile .playButton {
   display: none;
 }
 .gearAbility {
-  padding: 0.15rem 0.3rem;
-  font-size: 0.65rem;
+  padding: 0.15rem var(--space-1);
+  font-size: var(--text-2xs);
   line-height: 1.2;
   white-space: normal;
 }
@@ -735,9 +735,9 @@
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  gap: 0.25rem;
+  gap: var(--space-1);
   width: var(--card-w, 5.5rem);
-  margin-top: 0.3rem;
+  margin-top: var(--space-1);
   font-weight: 700;
   text-align: center;
 }

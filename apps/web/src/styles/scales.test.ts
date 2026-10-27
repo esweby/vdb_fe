@@ -8,11 +8,7 @@ const SRC = join(import.meta.dirname, "..");
 
 // Stylesheets not yet moved onto the scales. Each is moved in its own small PR; remove it here
 // when it is. The test fails if a listed file is already clean, so the list only shrinks.
-const NOT_YET_ON_SCALES = new Set([
-  "decks/Decks.module.css",
-  "decks/Goldfish.module.css",
-  "scoring/CardScoringPage.module.css",
-]);
+const NOT_YET_ON_SCALES = new Set(["decks/Decks.module.css"]);
 
 const TEXT_TOKENS = [
   "--text-2xs",
@@ -66,6 +62,11 @@ function offScale(css: string): string[] {
     ([, property = "", value = ""]) => {
       const rest = value
         .replace(/!important/, "")
+        // Room for the phone's home bar on top of a step: only the step is checked.
+        .replace(
+          /calc\((.+?) \+ env\(safe-area-inset-[a-z]+(?:, 0(?:px)?)?\)\)/g,
+          "$1",
+        )
         .replace(/calc\(-1 \* var\(--(space|text)-[\w-]+\)\)/g, "")
         .replace(/var\(--(space|text)-[\w-]+\)/g, "")
         .trim();
@@ -123,5 +124,12 @@ describe("type and spacing scales", () => {
         .b { margin: 0 auto calc(-1 * var(--space-1)); gap: 2px; font-size: 0.85em; }
         /* margin: 9rem */ .c { font-size: var(--text-sm); margin-top: 3rem !important; }`),
     ).toEqual(["padding: 0.4rem", "font-size: 0.85rem", "margin-top: 3rem"]);
+  });
+
+  it("lets a step plus the phone's safe-area inset through, but not an off-scale value plus it", () => {
+    expect(
+      offScale(`.a { padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom, 0px)); }
+        .b { padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px)); }`),
+    ).toEqual(["padding-bottom: 0.75rem"]);
   });
 });
