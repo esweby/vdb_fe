@@ -81,6 +81,18 @@ a {
 a:hover {
   text-decoration: underline;
 }
+/* A link inside text or a list is underlined, not marked by colour alone (M8 keyboard pass,
+   the maintainer, 27 Oct 2026). Links styled as tabs, buttons or images have a class and keep
+   their own look. */
+p a:not([class]),
+li a:not([class]),
+dd a:not([class]),
+td a:not([class]),
+figcaption a:not([class]) {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.15em;
+}
 
 /* Headings and card names in the display serif. */
 h1,
