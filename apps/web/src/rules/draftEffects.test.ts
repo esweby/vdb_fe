@@ -74,7 +74,7 @@ describe("draftEffects", () => {
     expect(draft.rules.effects).toEqual([]);
     expect(draft.notDrafted).toEqual([
       "X Runechants: the engine needs a number",
-      "Runechants given to a later card",
+      "1 Runechant given to a later card: not drafted yet",
     ]);
     expect(draft.outOfScope).toEqual([
       "Runechants on hit: combat is out of scope",
