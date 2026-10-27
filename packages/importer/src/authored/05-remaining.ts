@@ -49,6 +49,13 @@ export const remaining: AuthoredAttributes = {
         "When pitched, if you have less life than an opposing hero, gain 1 life.",
     },
   },
+  "Fiddler's Green": {
+    verified: false,
+    card: {
+      notes:
+        "When this is put into your graveyard from anywhere, gain 3/2/1 life (red/yellow/blue).",
+    },
+  },
   // Approved by the maintainer, 24 Oct 2026: conditional, not natural go again.
   "Scar for a Scar": {
     verified: true,
