@@ -16,11 +16,12 @@ Source: the Cards tab availability (`apps/web/src/decks/cardAvailability.ts`,
 2. **Is "rarely available" 1 in 4?** `RARELY_BELOW` is 25%, a round number. Ask players what
    rate makes them cut a card.
 3. **Hand or turns?** Availability is measured on the opening hand of 4, hand only. The
-   maintainer's rule is about 4 turns, which also counts draws and the arsenal. Ask which
+   maintainer's example of a useless card was about 4 turns, which also counts draws and the
+   arsenal. It was an illustration, not a decision, and neither reading is settled. Ask which
    players think in terms of, and whether to wait for scenarios with steps.
 
 ## Decks still being built
 
-4. **How should a half-built deck be judged?** Today it is padded to 60 with blanks
-   (`FULL_DECK`). Ask whether players would rather see it against their sideboard, or against
-   recommended fill cards.
+4. **How should a half-built deck be judged?** It is filled to 60 from its sideboard, then
+   blanks (the maintainer, 27 Oct 2026). Ask whether players would rather see it against
+   recommended fill cards instead.

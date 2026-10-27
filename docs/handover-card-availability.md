@@ -5,8 +5,15 @@ the next worker. Maintainer decisions are quoted from 23 Oct.
 
 ## Decisions
 
-- **60 is the full deck.** A deck under 60 is measured as if padded to 60 with blanks
-  (`FULL_DECK` in `apps/web/src/decks/useCardAvailability.ts`). That is a stopgap.
+- **60 is the full deck.** A deck under 60 is measured filled to 60 from its sideboard
+  (`measuredDeck` in `apps/web/src/decks/sideboardFill.ts`), then blanks for whatever the
+  sideboard can't reach.
+- **Fill from the sideboard** (the maintainer, 27 Oct 2026), chosen over hidden
+  recommendations. The sideboard's own order; copy limits still apply across the deck and the
+  fill; never over 60; a deck of 60 or more is unchanged; filled cards go in as `core` cards.
+  The Cards tab says when availability was measured with filled cards. Sideboard cards are
+  never shown as counted. Padding the rest with blanks when the sideboard runs out is for the
+  maintainer to confirm. Weapons and equipment in the sideboard aren't used to fill (UNVERIFIED).
 - **Cutoff reading.** The maintainer's example of a useless card was one that can't be used
   inside 4 turns. It was an illustration, not a decision. The current measure is the opening
   hand of 4 (`RARELY_BELOW` = 25%, in `cardAvailability.ts`), which is not the same thing. Both
@@ -15,24 +22,16 @@ the next worker. Maintainer decisions are quoted from 23 Oct.
 
 ## To do
 
-Replace the blank padding with real cards, in one of two ways. Ask the maintainer which first,
-or build the first and leave the second:
+The sideboard fill is done. Still open:
 
-1. **Fill from the sideboard.** Pad the main deck with sideboard cards up to 60 before
-   running the scenarios. Decide the order (the sideboard's own order, or most likely to be
-   played) and whether copies limits still apply.
-2. **Fill from hidden recommendations.** Extend the recommendation engine to produce
+1. **Fill from hidden recommendations** instead, if players prefer it (question 4 in
+   [future-questions.md](future-questions.md)). Extend the recommendation engine to produce
    recommendations that are not shown to the user, and use the top ones to fill the deck to 60
    for the measurement only. They must never be added to the deck or shown as part of it. Mark
    the choice of fill cards UNVERIFIED.
 
-Either way:
+For any change to the fill:
 
-- Test first: a failing test per rule (padding source, never over 60, a deck of 60 or more is
-  unchanged, sideboard cards that aren't in the deck are never shown as counted).
-- The padding lives in `useCardAvailability.ts` where `deckSize` is set; the batch takes
-  `core` cards, so filled cards go in as `core`, not blanks.
-- Availability should say when it was measured against filled cards, so it isn't read as the
-  deck's own number.
+- Test first: a failing test per rule (`sideboardFill.test.ts`, `CardAvailability.test.tsx`).
 - Revisit the 4-turn question in [future-questions.md](future-questions.md) before changing
   what "available" measures.

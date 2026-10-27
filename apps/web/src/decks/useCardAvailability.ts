@@ -9,30 +9,26 @@ import {
   type CardAvailability,
 } from "./cardAvailability.ts";
 import { availabilityScenarios } from "./conditionAvailability.ts";
-import { sectionOf, type DeckEntry } from "./deckRules.ts";
+import { type DeckEntry, type FormatRules } from "./deckRules.ts";
+import { measuredDeck, type MeasuredDeck } from "./sideboardFill.ts";
 
-/**
- * A deck still being built is measured as a full one: the cards not chosen yet are blanks.
- *
- * UNVERIFIED: 60 cards is the usual Classic Constructed deck; for the maintainer to confirm.
- */
-const FULL_DECK = 60;
-
-export function useCardAvailability(entries: DeckEntry[]) {
-  const drawn = entries.filter(
-    (e) => !e.sideboard && sectionOf(e.card) === "deck",
-  );
+export function useCardAvailability(
+  entries: DeckEntry[],
+  rules: FormatRules | null,
+) {
+  const measured = measuredDeck(entries, rules);
   const signature = JSON.stringify(
-    drawn.map((e) => [e.variant.id, e.quantity]).sort(),
+    measured.core.map((c) => [c.variant.id, c.copies]).sort(),
   );
   const { scenarios } = useMemo(
     () => availabilityScenarios(entries),
-    // The signature covers what's drawn.
+    // The signature covers what's drawn and the fill.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [signature],
   );
   const [run, setRun] = useState<{
     byCard: Map<string, CardAvailability>;
+    fill: Pick<MeasuredDeck, "filled" | "blanks">;
     signature: string;
   } | null>(null);
   const [running, setRunning] = useState(false);
@@ -40,23 +36,22 @@ export function useCardAvailability(entries: DeckEntry[]) {
   function start() {
     setRunning(true);
     const used = signature;
+    const { filled, blanks } = measured;
     runScenarioBatch({
       definitions: scenarios.map((s) => s.definition),
-      core: drawn.map((e) => ({
-        card: engineCardOf(e.card, e.variant),
-        copies: e.quantity,
+      core: measured.core.map((c) => ({
+        card: engineCardOf(c.card, c.variant),
+        copies: c.copies,
       })),
       gear: [],
-      deckSize: Math.max(
-        FULL_DECK,
-        drawn.reduce((n, e) => n + e.quantity, 0),
-      ),
+      deckSize: measured.deckSize,
       runs: RUNS,
       seed: 1,
     }).then(
       (outputs) => {
         setRun({
           byCard: availabilityByCard(scenarios, outputs),
+          fill: { filled, blanks },
           signature: used,
         });
         setRunning(false);
@@ -65,9 +60,12 @@ export function useCardAvailability(entries: DeckEntry[]) {
     );
   }
 
+  const current = run && run.signature === signature ? run : null;
   return {
     /** Null until worked out, and again once the deck has changed since. */
-    byCard: run && run.signature === signature ? run.byCard : null,
+    byCard: current?.byCard ?? null,
+    /** How the deck was made up to 60 for the measurement, while it's current. */
+    fill: current?.fill ?? null,
     running,
     canRun: scenarios.length > 0,
     start,
