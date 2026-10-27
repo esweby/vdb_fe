@@ -16,6 +16,7 @@ import {
   sortByAvailability,
   type CardAvailability,
 } from "./cardAvailability.ts";
+import { FULL_DECK } from "./sideboardFill.ts";
 import { useCardAvailability } from "./useCardAvailability.ts";
 import { ConditionAvailabilityPanel } from "./ConditionAvailabilityPanel.tsx";
 import { DeckGapsPanel } from "./DeckGapsPanel.tsx";
@@ -310,7 +311,7 @@ export function DeckPage() {
     [entries],
   );
 
-  const availability = useCardAvailability(entries);
+  const availability = useCardAvailability(entries, rules);
   const [sortBy, setSortBy] = useState<"pitch" | "availability">("pitch");
   const [onlyRarely, setOnlyRarely] = useState(false);
 
@@ -645,6 +646,17 @@ export function DeckPage() {
                   {`Only rarely available (under ${RARELY_BELOW * 100}%)`}
                 </label>
               </div>
+              {availability.fill && availability.fill.filled > 0 && (
+                <p className={styles.muted}>
+                  {`Measured with ${availability.fill.filled} sideboard ${
+                    availability.fill.filled === 1 ? "card" : "cards"
+                  }${
+                    availability.fill.blanks > 0
+                      ? ` and ${availability.fill.blanks} ${availability.fill.blanks === 1 ? "blank" : "blanks"}`
+                      : ""
+                  } making the deck up to ${FULL_DECK}, as it isn't finished.`}
+                </p>
+              )}
               <div
                 className={
                   view === "tiles" ? styles.tileColumns : styles.columns

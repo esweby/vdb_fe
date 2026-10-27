@@ -7,7 +7,13 @@ import { fakeAuthService } from "../test/fakeAuthService.ts";
 import { fakeDeckRepository } from "../test/fakeDeckRepository.ts";
 import { renderApp } from "../test/renderApp.tsx";
 
-async function open(view: "tiles" | "list") {
+type Row = { variantId: string; quantity: number; sideboard: boolean };
+const UNFINISHED: Row[] = [
+  { variantId: "hp1", quantity: 3, sideboard: false },
+  { variantId: "bsl3", quantity: 3, sideboard: false },
+];
+
+async function open(view: "tiles" | "list", cards: Row[] = UNFINISHED) {
   await renderApp({
     path: `/decks/deck-1${view === "list" ? "?view=list" : ""}`,
     auth: fakeAuthService({
@@ -19,10 +25,7 @@ async function open(view: "tiles" | "list") {
         id: "deck-1",
         name: "Gate tempo",
         updatedAt: "2026-10-14T10:00:00Z",
-        cards: [
-          { variantId: "hp1", quantity: 3, sideboard: false },
-          { variantId: "bsl3", quantity: 3, sideboard: false },
-        ],
+        cards,
         pitchTargets: {},
       },
     ]).repository,
@@ -78,5 +81,47 @@ describe("condition availability in the card list", () => {
       }),
     );
     expect(names()).toEqual(["Become the Shadow Lord"]);
+  });
+
+  it("says when the deck was measured with sideboard cards filling it", async () => {
+    const { deck } = await open("list", [
+      { variantId: "hp1", quantity: 3, sideboard: false },
+      { variantId: "bsl3", quantity: 2, sideboard: false },
+      { variantId: "bsl3", quantity: 1, sideboard: true },
+      { variantId: "ff1", quantity: 3, sideboard: true },
+    ]);
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: "Work out availability" }));
+    await deck.findByText(/^available \d+%$/);
+    expect(
+      screen.getByText(
+        "Measured with 4 sideboard cards and 51 blanks making the deck up to 60, as it isn't finished.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("says nothing about filling when there's no sideboard to fill from", async () => {
+    const { deck } = await open("list");
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: "Work out availability" }));
+    await deck.findByText(/^available \d+%$/);
+    expect(screen.queryByText(/^Measured with/)).not.toBeInTheDocument();
+  });
+
+  it("never shows a sideboard card as counted", async () => {
+    await open("list", [
+      { variantId: "hp1", quantity: 3, sideboard: false },
+      { variantId: "bsl3", quantity: 2, sideboard: false },
+      { variantId: "bsl3", quantity: 1, sideboard: true },
+    ]);
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: "Work out availability" }));
+    await screen.findByText(/^Measured with/);
+    const sideboard = within(screen.getByRole("region", { name: "Sideboard" }));
+    expect(sideboard.getByText("Become the Shadow Lord")).toBeInTheDocument();
+    expect(sideboard.queryByText(/available \d+%/)).not.toBeInTheDocument();
   });
 });
