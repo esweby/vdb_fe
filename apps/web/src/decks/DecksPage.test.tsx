@@ -359,9 +359,10 @@ describe("deck page", () => {
     const user = userEvent.setup();
     await user.click(item.getByRole("button", { name: "Add Face Purgatory" }));
     expect(fake.saved).toEqual(["set deck-1 fp 1 main"]);
+    // Unavailable but still focusable, so the keyboard doesn't lose its place.
     expect(
       item.getByRole("button", { name: "Add Face Purgatory" }),
-    ).toBeDisabled();
+    ).toHaveAttribute("aria-disabled", "true");
   });
 
   it("offers Remove rather than − and + for equipment in the deck, as only one is allowed", async () => {
@@ -604,6 +605,66 @@ describe("deck page", () => {
     await screen.findByText("1 deck cards · 1 sideboard · 2 in the pool");
   });
 
+  // Keyboard pass (M8): adding says what changed, and the button keeps focus at the limit.
+  it("says what each add did, for screen readers", async () => {
+    await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      decks: withDeck().repository,
+    });
+    const finder = within(
+      await screen.findByRole("region", { name: "Add cards" }),
+    );
+    const red = within(
+      finder.getByRole("listitem", { name: "Hocus Pocus (red)" }),
+    );
+    const user = userEvent.setup();
+    await user.click(
+      red.getByRole("button", { name: "Add Hocus Pocus (red)" }),
+    );
+    expect(await finder.findByRole("status")).toHaveTextContent(
+      "Added Hocus Pocus (red) to the deck: 1 in the deck.",
+    );
+    await user.click(
+      red.getByRole("button", {
+        name: "Add Hocus Pocus (red) to the sideboard",
+      }),
+    );
+    expect(await finder.findByRole("status")).toHaveTextContent(
+      "Added Hocus Pocus (red) to the sideboard: 1 in the sideboard.",
+    );
+  });
+
+  it("keeps focus on Add when a card reaches its limit, and says why another won't go in", async () => {
+    const fake = withDeck([
+      { variantId: "hp1", quantity: 2, sideboard: false },
+    ]);
+    await renderApp({
+      path: "/decks/deck-1",
+      auth: auth(),
+      decks: fake.repository,
+    });
+    const finder = within(
+      await screen.findByRole("region", { name: "Add cards" }),
+    );
+    const add = within(
+      finder.getByRole("listitem", { name: "Hocus Pocus (red)" }),
+    ).getByRole("button", { name: "Add Hocus Pocus (red)" });
+    const user = userEvent.setup();
+    add.focus();
+    await user.keyboard("{Enter}");
+    expect(await finder.findByRole("status")).toHaveTextContent(
+      "Added Hocus Pocus (red) to the deck: 3 in the deck.",
+    );
+    expect(add).toHaveAttribute("aria-disabled", "true");
+    expect(add).toHaveFocus();
+    await user.keyboard("{Enter}");
+    expect(fake.saved).toEqual(["set deck-1 hp1 3 main"]);
+    expect(finder.getByRole("status")).toHaveTextContent(
+      "At most 3 copies of Hocus Pocus (red).",
+    );
+  });
+
   it("counts the deck and sideboard copies together for the copy limit", async () => {
     const fake = withDeck([
       { variantId: "hp1", quantity: 1, sideboard: false },
@@ -619,12 +680,12 @@ describe("deck page", () => {
     );
     expect(
       red.getByRole("button", { name: "Add Hocus Pocus (red)" }),
-    ).toBeDisabled();
+    ).toHaveAttribute("aria-disabled", "true");
     expect(
       region("Deck").getByRole("button", {
         name: "One more Hocus Pocus (red)",
       }),
-    ).toBeDisabled();
+    ).toHaveAttribute("aria-disabled", "true");
   });
 
   it("shows weapons apart from the deck, and what makes the deck illegal", async () => {
@@ -899,14 +960,14 @@ describe("deck page", () => {
       await region("Deck").findByRole("button", {
         name: "One more Hocus Pocus (red)",
       }),
-    ).toBeDisabled();
+    ).toHaveAttribute("aria-disabled", "true");
     await userEvent.setup().type(screen.getByLabelText("Find cards"), "hocus");
     expect(
       screen.getByRole("button", { name: "Add Hocus Pocus (red)" }),
-    ).toBeDisabled();
+    ).toHaveAttribute("aria-disabled", "true");
     expect(
       screen.getByRole("button", { name: "Add Hocus Pocus (blue)" }),
-    ).toBeEnabled();
+    ).not.toHaveAttribute("aria-disabled");
     expect(fake.saved).toEqual([]);
   });
 

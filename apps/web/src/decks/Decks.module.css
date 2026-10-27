@@ -253,6 +253,7 @@
   font-weight: 600;
 }
 .quantity button:disabled,
+.quantity button[aria-disabled="true"],
 .add:disabled {
   opacity: 0.4;
   cursor: not-allowed;
@@ -547,7 +548,8 @@
   color: var(--fg);
   cursor: pointer;
 }
-.controls button:disabled {
+.controls button:disabled,
+.controls button[aria-disabled="true"] {
   opacity: 0.4;
   cursor: not-allowed;
 }
@@ -671,7 +673,8 @@
   color: var(--fg);
   cursor: pointer;
 }
-.tileControls button:disabled {
+.tileControls button:disabled,
+.tileControls button[aria-disabled="true"] {
   opacity: 0.4;
   cursor: not-allowed;
 }
