@@ -1,4 +1,5 @@
-// UNVERIFIED effect drafts. The maintainer must approve these five cards before they gain rules.
+// Fallen Herald and Haunting Rendition approved by the maintainer on 27 Oct 2026.
+// The other three effect drafts remain UNVERIFIED.
 import { parseEffects, verifiedRulesFor } from "@vdb/engine/rules";
 import { describe, expect, it } from "vitest";
 import { remaining } from "../../../../packages/importer/src/authored/05-remaining.ts";
@@ -113,8 +114,8 @@ const machinations = card(
 describe("the fifth priority rules batch", () => {
   it("drafts Fallen Herald's hand activation without guessing prevention", () => {
     const entry = draftQueue([fallen])[0]!;
-    expect(entry.status).toBe("complete");
-    expect(entry.verified).toBe(false);
+    expect(entry.status).toBe("verified");
+    expect(entry.verified).toBe(true);
     expect(entry.drafts[0]!.draft.rules).toEqual({
       effects: [],
       activate: {
@@ -124,6 +125,9 @@ describe("the fifth priority rules batch", () => {
         effects: [],
       },
     });
+    expect(verifiedRulesFor(fallen.name, 2)).toEqual(
+      entry.drafts[0]!.draft.rules,
+    );
     expect(entry.drafts[0]!.draft.factsNote).toContain("prevent the next 4");
   });
 
@@ -140,8 +144,8 @@ describe("the fifth priority rules batch", () => {
 
   it("drafts Haunting Rendition's activation and keeps prevention in its note", () => {
     const entry = draftQueue([haunting])[0]!;
-    expect(entry.status).toBe("complete");
-    expect(entry.verified).toBe(false);
+    expect(entry.status).toBe("verified");
+    expect(entry.verified).toBe(true);
     expect(entry.drafts[0]!.draft.rules).toEqual({
       effects: [],
       activate: {
@@ -154,6 +158,9 @@ describe("the fifth priority rules batch", () => {
     expect(() =>
       parseEffects(entry.drafts[0]!.draft.rules.activate?.effects),
     ).not.toThrow();
+    expect(verifiedRulesFor(haunting.name, 1)).toEqual(
+      entry.drafts[0]!.draft.rules,
+    );
   });
 
   it("keeps Swarming Gloomveil's aura thresholds visible but unsupported", () => {
@@ -181,9 +188,7 @@ describe("the fifth priority rules batch", () => {
   });
 
   it.each([
-    ["Fallen Herald", 2],
     ["Sink Below", 1],
-    ["Haunting Rendition", 1],
     ["Swarming Gloomveil", 1],
     ["Machinations of Dominion", 3],
   ])("keeps %s pitch %s unverified", (name, pitch) => {
