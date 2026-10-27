@@ -1,4 +1,4 @@
-// UNVERIFIED effect drafts. The maintainer must approve these five cards before they gain rules.
+// Drafts approved by the maintainer on 27 Oct 2026.
 import {
   parseEffects,
   parseTriggers,
@@ -117,8 +117,8 @@ const become = card(
 describe("the third priority rules batch", () => {
   it("drafts Open the Gate's banish trigger and leaves its hit outside combat", () => {
     const entry = draftQueue([openTheGate])[0]!;
-    expect(entry.status).toBe("complete");
-    expect(entry.verified).toBe(false);
+    expect(entry.status).toBe("verified");
+    expect(entry.verified).toBe(true);
     expect(entry.drafts[0]!.draft.rules).toMatchObject({
       effects: [],
       triggers: [
@@ -134,24 +134,30 @@ describe("the third priority rules batch", () => {
     expect(() =>
       parseTriggers(entry.drafts[0]!.draft.rules.triggers),
     ).not.toThrow();
+    expect(verifiedRulesFor(openTheGate.name, 1)).toEqual(
+      entry.drafts[0]!.draft.rules,
+    );
   });
 
   it("keeps Succumb to Temptation blocked instead of guessing at opponent play", () => {
     const entry = draftQueue([succumb])[0]!;
-    expect(entry.status).toBe("undraftable");
-    expect(entry.verified).toBe(false);
+    expect(entry.status).toBe("verified");
+    expect(entry.verified).toBe(true);
     expect(entry.drafts[0]!.draft.notDrafted).toEqual([
       "Playing it as an instant: not drafted yet",
     ]);
     expect(entry.drafts[0]!.draft.outOfScope).toEqual([
       "Disrupting an opponent: out of scope",
     ]);
+    expect(verifiedRulesFor(succumb.name, 2)).toEqual(
+      entry.drafts[0]!.draft.rules,
+    );
   });
 
   it("drafts Shadowrealm Walker once for all pitches", () => {
     const entry = draftQueue([walker])[0]!;
-    expect(entry.status).toBe("complete");
-    expect(entry.verified).toBe(false);
+    expect(entry.status).toBe("verified");
+    expect(entry.verified).toBe(true);
     expect(entry.drafts).toHaveLength(1);
     expect(entry.drafts[0]!.pitches).toEqual([1, 2, 3]);
     expect(entry.drafts[0]!.draft.rules.triggers).toMatchObject([
@@ -176,22 +182,29 @@ describe("the third priority rules batch", () => {
     expect(() =>
       parseTriggers(entry.drafts[0]!.draft.rules.triggers),
     ).not.toThrow();
+    for (const pitch of [1, 2, 3])
+      expect(verifiedRulesFor(walker.name, pitch)).toEqual(
+        entry.drafts[0]!.draft.rules,
+      );
   });
 
   it("keeps Mordred Tide's replacement effect visible as a vocabulary gap", () => {
     const entry = draftQueue([mordred])[0]!;
-    expect(entry.status).toBe("undraftable");
-    expect(entry.verified).toBe(false);
+    expect(entry.status).toBe("verified");
+    expect(entry.verified).toBe(true);
     expect(entry.drafts[0]!.draft.rules.effects).toEqual([]);
     expect(entry.drafts[0]!.draft.factsNote).toContain(
       "each time you create Runechants you create 1 extra",
+    );
+    expect(verifiedRulesFor(mordred.name, 1)).toEqual(
+      entry.drafts[0]!.draft.rules,
     );
   });
 
   it("drafts Become the Arknight's reduction but not its discard and search", () => {
     const entry = draftQueue([become])[0]!;
-    expect(entry.status).toBe("partial");
-    expect(entry.verified).toBe(false);
+    expect(entry.status).toBe("verified");
+    expect(entry.verified).toBe(true);
     expect(entry.drafts[0]!.draft.rules).toMatchObject({
       effects: [],
       costReductions: [{ amount: "perRunechant" }],
@@ -203,15 +216,8 @@ describe("the third priority rules batch", () => {
     expect(() =>
       parseEffects(entry.drafts[0]!.draft.rules.effects),
     ).not.toThrow();
-  });
-
-  it.each([
-    ["Open the Gate to i'Arathael", 1],
-    ["Succumb to Temptation", 2],
-    ["Shadowrealm Walker", 1],
-    ["Mordred Tide", 1],
-    ["Become the Arknight", 3],
-  ])("keeps %s pitch %s unverified", (name, pitch) => {
-    expect(verifiedRulesFor(name, pitch)).toBeUndefined();
+    expect(verifiedRulesFor(become.name, 3)).toEqual(
+      entry.drafts[0]!.draft.rules,
+    );
   });
 });
