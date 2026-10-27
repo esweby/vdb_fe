@@ -2,7 +2,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: 1rem;
+  gap: var(--space-4);
 }
 .toolbar > :first-child {
   flex: 1;
@@ -12,14 +12,14 @@
 .select {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: var(--space-1);
   font-weight: 600;
-  margin-bottom: 0.75rem;
+  margin-bottom: var(--space-3);
 }
 /* Same border as the search box. */
 .select select {
   font: inherit;
-  padding: 0.4rem 0.6rem;
+  padding: var(--space-2);
   border: 1px solid var(--border);
   border-radius: 0.4rem;
   background: var(--bg);
@@ -73,13 +73,13 @@
   padding: 0;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 /* Tiles are sized in em, so one font size scales the whole card. */
 .tiles[data-size="large"] {
   grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
   font-size: 1.35em;
-  gap: 1rem;
+  gap: var(--space-4);
 }
 .empty {
   color: var(--muted);
@@ -97,14 +97,14 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem 1.5rem;
+  gap: var(--space-3) var(--space-6);
 }
 
 .loadMore {
   font: inherit;
   display: block;
-  margin: 1.5rem auto 0.5rem;
-  padding: 0.55rem 1.5rem;
+  margin: var(--space-6) auto var(--space-2);
+  padding: var(--space-2) var(--space-6);
   border: 1px solid var(--border);
   border-radius: 999px;
   background: var(--bg);
@@ -134,7 +134,7 @@
 }
 /* A magnifier inside the search box. */
 .search {
-  padding-left: 2.1rem !important;
+  padding-left: var(--space-7) !important;
   background: var(--bg)
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%237a7a86' stroke-width='2' stroke-linecap='round' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E")
     no-repeat 0.7rem center !important;

@@ -1,8 +1,8 @@
 .sidebar {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-  font-size: 0.92rem;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
 }
 .facet ul {
   list-style: none;
@@ -13,7 +13,7 @@
 .sectionHeading {
   display: flex;
   align-items: baseline;
-  gap: 0.4rem;
+  gap: var(--space-2);
   cursor: pointer;
   list-style: none;
 }
@@ -39,7 +39,7 @@ details[open] > .sectionHeading::before {
 }
 .heading {
   padding: 0.2rem 0;
-  font-size: 0.8rem;
+  font-size: var(--text-xs);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -59,9 +59,9 @@ details[open] > .sectionHeading::before {
 .value {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.1rem 0.25rem;
-  margin: 0 -0.25rem;
+  gap: var(--space-2);
+  padding: 0.1rem var(--space-1);
+  margin: 0 calc(-1 * var(--space-1));
   border-radius: 0.3rem;
 }
 .value:hover {
@@ -71,7 +71,7 @@ details[open] > .sectionHeading::before {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: var(--space-2);
   cursor: pointer;
   min-width: 0;
 }
@@ -129,29 +129,29 @@ details[open] > .sectionHeading::before {
 }
 .section {
   border-top: 1px solid var(--border);
-  padding-top: 0.5rem;
-  margin-top: 0.4rem;
+  padding-top: var(--space-2);
+  margin-top: var(--space-2);
 }
 .sectionHeading {
   font-weight: 600;
   padding: 0.2rem 0;
 }
 .section .facet {
-  margin-left: 0.6rem;
+  margin-left: var(--space-2);
 }
 .facet[open] > ul {
-  margin: 0.15rem 0 0.6rem;
+  margin: 0.15rem 0 var(--space-2);
 }
 
 .badge {
   flex: none !important;
   min-width: 1.15rem;
   height: 1.15rem;
-  padding: 0 0.3rem;
+  padding: 0 var(--space-1);
   border-radius: 999px;
   background: var(--accent);
   color: var(--accent-fg);
-  font-size: 0.7rem;
+  font-size: var(--text-2xs);
   font-weight: 700;
   letter-spacing: 0;
   display: inline-grid;
