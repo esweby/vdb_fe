@@ -81,6 +81,27 @@ describe("authored batches", () => {
     });
   });
 
+  it.each([
+    [
+      "Overcrowded",
+      "Ambush. When this attacks or defends, it gets +1 power and +1 defence for each differently named aura token in the arena.",
+    ],
+    ["Sigil of Solace", "Gain 3/2/1 life (red/yellow/blue)."],
+    [
+      "Command and Conquer",
+      "Defence reactions can't be played to this chain link. When this hits a hero, destroy all cards in their arsenal.",
+    ],
+    [
+      "Heart of Fyendal",
+      "When pitched, if you have less life than an opposing hero, gain 1 life.",
+    ],
+  ])("records %s's text as unverified", (name, notes) => {
+    expect(allAuthored()[name]).toEqual({
+      verified: false,
+      card: { notes },
+    });
+  });
+
   it("includes batch 4, weapons and equipment", () => {
     expect(Object.keys(batches)).toContain("04-weapons-and-equipment");
   });
