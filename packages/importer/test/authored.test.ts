@@ -71,6 +71,16 @@ describe("authored batches", () => {
     });
   });
 
+  it("records Looking for a Scrap's optional graveyard cost as unverified", () => {
+    expect(allAuthored()["Looking for a Scrap"]).toEqual({
+      verified: false,
+      card: {
+        notes:
+          "As an additional cost, you may banish a 1-power card from your graveyard. If you do, this gets +1 power and go again.",
+      },
+    });
+  });
+
   it("includes batch 4, weapons and equipment", () => {
     expect(Object.keys(batches)).toContain("04-weapons-and-equipment");
   });
