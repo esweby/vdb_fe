@@ -326,7 +326,7 @@ export function draftEffects(
       attackPlayedEffects.push(...make);
     else
       note(
-        `${label} ${TRIGGER_PLAIN[t.trigger] ?? t.trigger}: not drafted yet`,
+        `${amount} ${amount === 1 ? (TOKEN_SINGLE[t.token] ?? t.token) : label} ${TRIGGER_PLAIN[t.trigger] ?? t.trigger}: not drafted yet`,
       );
   }
   // "If you lose {h} during your turn, destroy this." Goldfish and scenarios play your turns only.
