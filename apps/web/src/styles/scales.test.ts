@@ -11,7 +11,6 @@ const SRC = join(import.meta.dirname, "..");
 const NOT_YET_ON_SCALES = new Set([
   "decks/Decks.module.css",
   "decks/Goldfish.module.css",
-  "ranking/RankingPage.module.css",
   "scoring/CardScoringPage.module.css",
 ]);
 
