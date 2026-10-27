@@ -204,6 +204,78 @@ describe("Dialog", () => {
       .click(screen.getByRole("button", { name: "Close" }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
+
+  // Keyboard pass (M8): focus stays in an open dialog and goes back to what opened it.
+  function Opener(props: { nested?: boolean }) {
+    const [open, setOpen] = useState(false);
+    const [inner, setInner] = useState(false);
+    return (
+      <>
+        <button type="button">Before</button>
+        <button type="button" onClick={() => setOpen(true)}>
+          Open
+        </button>
+        <Dialog title="Outer" open={open} onClose={() => setOpen(false)}>
+          <TextField label="Name" value="" onChange={() => {}} />
+          {props.nested && (
+            <button type="button" onClick={() => setInner(true)}>
+              Open inner
+            </button>
+          )}
+          <button type="button">Save</button>
+          <Dialog title="Inner" open={inner} onClose={() => setInner(false)}>
+            <button type="button">Confirm</button>
+          </Dialog>
+        </Dialog>
+        <button type="button">After</button>
+      </>
+    );
+  }
+
+  it("keeps Tab and Shift+Tab inside the dialog, wrapping at either end", async () => {
+    render(<Opener />);
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Open" }));
+    const close = screen.getByRole("button", { name: "Close" });
+    expect(close).toHaveFocus();
+    await user.tab();
+    expect(screen.getByLabelText("Name")).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole("button", { name: "Save" })).toHaveFocus();
+    await user.tab();
+    expect(close).toHaveFocus();
+    await user.tab({ shift: true });
+    expect(screen.getByRole("button", { name: "Save" })).toHaveFocus();
+  });
+
+  it("returns focus to what opened it when it closes, by Escape or Close", async () => {
+    render(<Opener />);
+    const user = userEvent.setup();
+    const open = screen.getByRole("button", { name: "Open" });
+    await user.click(open);
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(open).toHaveFocus();
+    await user.click(open);
+    await user.click(screen.getByRole("button", { name: "Close" }));
+    expect(open).toHaveFocus();
+  });
+
+  it("traps focus in the topmost of two dialogs, then returns it to the one below", async () => {
+    render(<Opener nested />);
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Open" }));
+    const openInner = screen.getByRole("button", { name: "Open inner" });
+    await user.click(openInner);
+    const inner = screen.getByRole("dialog", { name: "Inner" });
+    for (let i = 0; i < 3; i++) {
+      await user.tab();
+      expect(inner).toContainElement(document.activeElement as HTMLElement);
+    }
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog", { name: "Inner" })).toBeNull();
+    expect(openInner).toHaveFocus();
+  });
 });
 
 describe("Slider scale on a wide range", () => {
