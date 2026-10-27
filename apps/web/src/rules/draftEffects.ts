@@ -70,6 +70,12 @@ const TOKEN_LABEL: Record<string, string> = {
   eloquence: "Eloquence",
 };
 
+const TOKEN_SINGLE: Record<string, string> = {
+  runechant: "Runechant",
+  gate: "Gate",
+  eloquence: "Eloquence",
+};
+
 const TRIGGER_PLAIN: Record<string, string> = {
   on_defend: "when it defends",
   on_pitch: "when it's pitched",
@@ -297,7 +303,7 @@ export function draftEffects(
     const { check, missing } = checksFor(t.conditions, bound, variant.pitch);
     if (missing) {
       note(
-        `${label} if ${CONDITION_PLAIN[missing]}: the engine can't check that yet`,
+        `${amount} ${amount === 1 ? (TOKEN_SINGLE[t.token] ?? t.token) : label} if ${CONDITION_PLAIN[missing]}: the engine can't check that yet`,
       );
       continue;
     }
@@ -573,37 +579,44 @@ export function draftEffects(
     ...(graveyardToBanish ? { graveyardToBanish: true } : {}),
     ...(costReductions.length ? { costReductions } : {}),
   };
+  const description = [
+    ...describeEffects(effects),
+    ...triggers.flatMap((t) =>
+      describeEffects(t.effects).map(
+        (line) =>
+          `${t.on.event === "played" && t.on.self ? "When this is played" : (TRIGGER_EVENT_TEXT[t.on.event] ?? "When you play an attack action card")}${t.condition && "playedFromBanish" in t.condition ? ", if this was played from the banished zone" : ""}: ${t.optional ? "you may " : ""}${line[0]!.toLowerCase()}${line.slice(1)}`,
+      ),
+    ),
+    ...(rules.usurp ? ["Usurp."] : []),
+    ...(rules.instantWhen
+      ? [
+          "You may play this as an instant if a hero has lost life this turn (the player answers).",
+        ]
+      : []),
+    ...(rules.playableFromBanish
+      ? ["It can be played from the banished zone."]
+      : []),
+    ...(rules.playableFromBanishWhen === "usurpedThisTurn"
+      ? ["It can be played from the banished zone if you've usurped this turn."]
+      : []),
+    ...(rules.graveyardToBanish
+      ? ["If it would go to the graveyard, it's banished instead."]
+      : []),
+    ...(rules.costReductions ?? []).map(describeCostReduction),
+    ...(rules.activate ? [describeActivation(rules.activate)] : []),
+  ];
   return {
     cardName: card.name,
     pitch: variant.pitch,
     rules,
     description: [
-      ...describeEffects(effects),
-      ...triggers.flatMap((t) =>
-        describeEffects(t.effects).map(
-          (line) =>
-            `${t.on.event === "played" && t.on.self ? "When this is played" : (TRIGGER_EVENT_TEXT[t.on.event] ?? "When you play an attack action card")}${t.condition && "playedFromBanish" in t.condition ? ", if this was played from the banished zone" : ""}: ${t.optional ? "you may " : ""}${line[0]!.toLowerCase()}${line.slice(1)}`,
-        ),
-      ),
-      ...(rules.usurp ? ["Usurp."] : []),
-      ...(rules.instantWhen
-        ? [
-            "You may play this as an instant if a hero has lost life this turn (the player answers).",
-          ]
+      ...description,
+      ...(description.length === 0 && leftOut.length === 0 && a.hasRuneGate
+        ? ["Rune Gate."]
         : []),
-      ...(rules.playableFromBanish
-        ? ["It can be played from the banished zone."]
+      ...(description.length === 0 && leftOut.length === 0 && a.hasBloodDebt
+        ? ["Blood debt."]
         : []),
-      ...(rules.playableFromBanishWhen === "usurpedThisTurn"
-        ? [
-            "It can be played from the banished zone if you've usurped this turn.",
-          ]
-        : []),
-      ...(rules.graveyardToBanish
-        ? ["If it would go to the graveyard, it's banished instead."]
-        : []),
-      ...(rules.costReductions ?? []).map(describeCostReduction),
-      ...(rules.activate ? [describeActivation(rules.activate)] : []),
     ],
     notDrafted,
     outOfScope,
