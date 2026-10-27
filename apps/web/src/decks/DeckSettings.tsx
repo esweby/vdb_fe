@@ -1,16 +1,22 @@
 // A deck's owner can set who sees it (private, link only or public; the maintainer, 27 Oct 2026),
-// rename it, and delete it after confirming (the maintainer, 20 Oct 2026).
+// rename it, and delete it after confirming (the maintainer, 20 Oct 2026). They can also replace
+// its cards from a pasted or uploaded list (the maintainer, 27 Oct 2026).
 import { useState, type FormEvent } from "react";
 import { useServices } from "../servicesContext.ts";
 import { Button, Dialog, TextField } from "../ui/index.ts";
-import type { Visibility } from "./deckRepository.ts";
+import { ImportListDialog } from "./DeckImport.tsx";
+import type { DeckCard, Visibility } from "./deckRepository.ts";
 import styles from "./Decks.module.css";
 import { VISIBILITIES } from "./visibility.ts";
 
 export function DeckSettings(props: {
   deck: { id: string; name: string; visibility: Visibility };
   /** The deck as it now is, after a change saved. */
-  onChange: (patch: { name?: string; visibility?: Visibility }) => void;
+  onChange: (patch: {
+    name?: string;
+    visibility?: Visibility;
+    cards?: DeckCard[];
+  }) => void;
   onDeleted: () => void;
 }) {
   const { decks } = useServices();
@@ -20,6 +26,7 @@ export function DeckSettings(props: {
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [replacing, setReplacing] = useState(false);
 
   async function changeVisibility(visibility: Visibility) {
     try {
@@ -132,6 +139,21 @@ export function DeckSettings(props: {
         >
           Rename
         </Button>
+      )}
+      <Button variant="ghost" onClick={() => setReplacing(true)}>
+        Replace from list
+      </Button>
+      {replacing && (
+        <ImportListDialog
+          mode="replace"
+          title={`Replace ${props.deck.name}'s cards`}
+          onClose={() => setReplacing(false)}
+          onImport={async ({ cards }) => {
+            await decks.replaceCards(props.deck.id, cards);
+            props.onChange({ cards });
+            setReplacing(false);
+          }}
+        />
       )}
       <Button
         variant="ghost"

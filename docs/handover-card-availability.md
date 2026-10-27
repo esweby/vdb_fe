@@ -12,8 +12,9 @@ the next worker. Maintainer decisions are quoted from 23 Oct.
   recommendations. The sideboard's own order; copy limits still apply across the deck and the
   fill; never over 60; a deck of 60 or more is unchanged; filled cards go in as `core` cards.
   The Cards tab says when availability was measured with filled cards. Sideboard cards are
-  never shown as counted. Padding the rest with blanks when the sideboard runs out is for the
-  maintainer to confirm. Weapons and equipment in the sideboard aren't used to fill (UNVERIFIED).
+  never shown as counted.
+- **Blanks pad the rest** when the sideboard can't reach 60, and **weapons and equipment in the
+  sideboard aren't used to fill** (the maintainer, 27 Oct 2026).
 - **Cutoff reading.** The maintainer's example of a useless card was one that can't be used
   inside 4 turns. It was an illustration, not a decision. The current measure is the opening
   hand of 4 (`RARELY_BELOW` = 25%, in `cardAvailability.ts`), which is not the same thing. Both

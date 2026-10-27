@@ -8,6 +8,7 @@ import { useServices } from "../servicesContext.ts";
 import { Button, Dialog, TextField } from "../ui/index.ts";
 import ui from "../ui/ui.module.css";
 import type { DeckSummary, Visibility } from "./deckRepository.ts";
+import { ImportListDialog } from "./DeckImport.tsx";
 import type { FormatRules } from "./deckRules.ts";
 import styles from "./DecksPage.module.css";
 import { VISIBILITIES, visibilityLabel } from "./visibility.ts";
@@ -222,6 +223,7 @@ export function DecksPage() {
   const [rules, setRules] = useState<FormatRules | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [attempt, setAttempt] = useState(0);
 
   const lookup: Lookup = useMemo(
@@ -300,6 +302,22 @@ export function DecksPage() {
         />
       )}
 
+      {importing && (
+        <ImportListDialog
+          mode="create"
+          title="Import a list"
+          onClose={() => setImporting(false)}
+          onImport={async ({ name, visibility, cards }) => {
+            const deck = await decks.createDeck(name, { visibility });
+            await decks.replaceCards(deck.id, cards);
+            await navigate({
+              to: "/decks/$deckId",
+              params: { deckId: deck.id },
+            });
+          }}
+        />
+      )}
+
       <header className={styles.head}>
         <div>
           <h1>Decks</h1>
@@ -308,9 +326,12 @@ export function DecksPage() {
           </p>
         </div>
         {user ? (
-          <Button variant="primary" onClick={() => setCreating(true)}>
-            New deck
-          </Button>
+          <div className={styles.headActions}>
+            <Button onClick={() => setImporting(true)}>Import list</Button>
+            <Button variant="primary" onClick={() => setCreating(true)}>
+              New deck
+            </Button>
+          </div>
         ) : (
           <Link to="/sign-in" className={linkButton("primary")}>
             Sign in to build decks

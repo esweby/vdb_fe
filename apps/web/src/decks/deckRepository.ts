@@ -106,6 +106,8 @@ export interface DeckRepository {
    * both: some copies in the deck, the rest in the sideboard.
    */
   setCard(deckId: string, card: DeckCard): Promise<void>;
+  /** Replaces the whole pool, deck and sideboard, in one statement. */
+  replaceCards(deckId: string, cards: DeckCard[]): Promise<void>;
   setPitchTargets(deckId: string, targets: PitchTargets): Promise<void>;
   getFormatRules(): Promise<FormatRules>;
   /** Heroes a deck can face, by name. */
@@ -262,6 +264,13 @@ export function supabaseDeckRepository(client: SupabaseClient): DeckRepository {
         .from("decks")
         .update({ updated_at: new Date().toISOString() })
         .eq("id", deckId);
+    },
+    async replaceCards(deckId, cards) {
+      const { error } = await client.rpc("replace_deck_cards", {
+        target_deck_id: deckId,
+        new_cards: cards,
+      });
+      if (error) throw error;
     },
     async setPitchTargets(deckId, targets) {
       const { error } = await client

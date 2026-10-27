@@ -29,9 +29,8 @@ export interface MeasuredDeck {
 /**
  * The deck to measure: its own cards, then sideboard cards in the sideboard's own order up to
  * 60, each within its copy limit across the deck and the fill. A deck of 60 or more is
- * unchanged. Where the sideboard can't reach 60 the rest are blanks, as before.
- *
- * UNVERIFIED: weapons and equipment in the sideboard are left out, as they aren't drawn.
+ * unchanged. Where the sideboard can't reach 60 the rest are blanks, and weapons and equipment
+ * in the sideboard are left out, as they aren't drawn (both the maintainer, 27 Oct 2026).
  */
 export function measuredDeck(
   entries: DeckEntry[],
