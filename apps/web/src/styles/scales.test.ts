@@ -6,10 +6,6 @@ import { describe, expect, it } from "vitest";
 
 const SRC = join(import.meta.dirname, "..");
 
-// Stylesheets not yet moved onto the scales. Each is moved in its own small PR; remove it here
-// when it is. The test fails if a listed file is already clean, so the list only shrinks.
-const NOT_YET_ON_SCALES = new Set(["decks/Decks.module.css"]);
-
 const TEXT_TOKENS = [
   "--text-2xs",
   "--text-xs",
@@ -99,7 +95,6 @@ describe("type and spacing scales", () => {
   it("sizes text and spaces things from the scales", () => {
     const offenders = stylesheets(SRC)
       .map((f) => f.slice(SRC.length + 1))
-      .filter((name) => !NOT_YET_ON_SCALES.has(name))
       .flatMap((name) =>
         offScale(
           name === "styles/global.css"
@@ -109,13 +104,6 @@ describe("type and spacing scales", () => {
         ).map((o) => `${name} ${o}`),
       );
     expect(offenders).toEqual([]);
-  });
-
-  it("lists only stylesheets that still need moving", () => {
-    const done = [...NOT_YET_ON_SCALES].filter(
-      (name) => offScale(readFileSync(join(SRC, name), "utf8")).length === 0,
-    );
-    expect(done).toEqual([]);
   });
 
   it("catches off-scale values and lets scale and text-relative ones through", () => {
