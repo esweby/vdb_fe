@@ -17,6 +17,13 @@ export const remaining: AuthoredAttributes = {
         "You may put a card from your hand on the bottom of your deck. If you do, draw a card.",
     },
   },
+  "Looking for a Scrap": {
+    verified: false,
+    card: {
+      notes:
+        "As an additional cost, you may banish a 1-power card from your graveyard. If you do, this gets +1 power and go again.",
+    },
+  },
   // Approved by the maintainer, 24 Oct 2026: conditional, not natural go again.
   "Scar for a Scar": {
     verified: true,
