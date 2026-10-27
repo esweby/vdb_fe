@@ -817,9 +817,10 @@ function PoolSection(props: {
             <button
               type="button"
               aria-label={`One more ${label}`}
-              disabled={full}
+              // Not disabled, so focus stays here when the last copy goes in.
+              aria-disabled={full || undefined}
               title={full ? `At most ${limit} copies` : undefined}
-              onClick={() => set({ quantity: e.quantity + 1 })}
+              onClick={() => !full && set({ quantity: e.quantity + 1 })}
             >
               +
             </button>

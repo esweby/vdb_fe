@@ -324,7 +324,7 @@
   cursor: pointer;
   box-shadow: 0 3px 8px rgb(0 0 0 / 0.45);
 }
-.action:hover:not(:disabled) {
+.action:hover:not([aria-disabled="true"]) {
   filter: brightness(1.12);
 }
 .action[data-sideboard] {
@@ -335,7 +335,7 @@
   font-weight: 800;
   letter-spacing: 0.04em;
 }
-.action:disabled {
+.action[aria-disabled="true"] {
   opacity: 0.45;
   cursor: default;
 }

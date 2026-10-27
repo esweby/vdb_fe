@@ -40,6 +40,8 @@ export function CardFinder(props: {
   const [state, setState] = useState<FilterState>({});
   const [more, setMore] = useState(false);
   const [page, setPage] = useState(0);
+  // What the last Add did, read out by screen readers (M8 keyboard pass).
+  const [said, setSaid] = useState("");
   const scroller = useRef<HTMLDivElement>(null);
   /** Another page, from the top of the list. */
   const turnTo = (next: number) => {
@@ -85,6 +87,9 @@ export function CardFinder(props: {
 
   return (
     <div className={styles.finder}>
+      <p role="status" className={styles.visuallyHidden}>
+        {said}
+      </p>
       <div className={styles.searchRow}>
         <label className={styles.search}>
           <span className={styles.visuallyHidden}>Find cards</span>
@@ -193,6 +198,16 @@ export function CardFinder(props: {
             const full = props.atLimit(v.id);
             const limit = props.limitOf(v.id);
             const atMost = `At most ${limit} ${limit === 1 ? "copy" : "copies"}`;
+            // At the limit the buttons say so rather than going disabled, so they keep focus.
+            const add = (toSideboard: boolean) => {
+              if (full) return setSaid(`${atMost} of ${name}.`);
+              props.onAdd(v.id, toSideboard || undefined);
+              setSaid(
+                toSideboard
+                  ? `Added ${name} to the sideboard: ${have.sideboard + 1} in the sideboard.`
+                  : `Added ${name} to the deck: ${have.deck + 1} in the deck.`,
+              );
+            };
             return (
               <li
                 key={v.id}
@@ -217,8 +232,8 @@ export function CardFinder(props: {
                       className={styles.action}
                       aria-label={`Add ${name}`}
                       title={full ? atMost : "Add to the deck"}
-                      disabled={full}
-                      onClick={() => props.onAdd(v.id)}
+                      aria-disabled={full || undefined}
+                      onClick={() => add(false)}
                     >
                       +
                     </button>
@@ -228,8 +243,8 @@ export function CardFinder(props: {
                       data-sideboard=""
                       aria-label={`Add ${name} to the sideboard`}
                       title={full ? atMost : "Add to the sideboard"}
-                      disabled={full}
-                      onClick={() => props.onAdd(v.id, true)}
+                      aria-disabled={full || undefined}
+                      onClick={() => add(true)}
                     >
                       SB
                     </button>
