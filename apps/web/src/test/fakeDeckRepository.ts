@@ -153,6 +153,18 @@ export function fakeDeckRepository(
             },
       );
     },
+    async replaceCards(deckId, cards) {
+      saved.push(
+        `replace ${deckId} ${cards
+          .map(
+            (c) => `${c.variantId}:${c.quantity}${c.sideboard ? ":side" : ""}`,
+          )
+          .join(",")}`,
+      );
+      decks = decks.map((d) =>
+        d.id === deckId ? { ...d, cards: cards.map((c) => ({ ...c })) } : d,
+      );
+    },
     async setPitchTargets(deckId, targets) {
       saved.push(
         `targets ${deckId} ${Object.entries(targets)

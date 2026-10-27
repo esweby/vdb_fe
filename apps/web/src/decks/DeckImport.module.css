@@ -1,0 +1,112 @@
+/* Import a list: the list on the left, the check on the right; stacked on narrow screens. */
+.form {
+  display: grid;
+  gap: var(--space-3);
+}
+.details {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+.details > :first-child {
+  flex: 1 1 18rem;
+}
+.who {
+  display: grid;
+  gap: var(--space-1);
+  justify-items: start;
+}
+.who > label,
+.source > label:first-child {
+  font-weight: 600;
+}
+.who select {
+  font: inherit;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  background: var(--bg);
+  color: var(--fg);
+}
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+.source {
+  display: grid;
+  gap: var(--space-1);
+}
+.text {
+  width: 100%;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--text-sm);
+  resize: vertical;
+}
+.hint {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+.fileLabel {
+  margin-top: var(--space-2);
+  font-weight: 600;
+}
+.check {
+  display: grid;
+  gap: var(--space-2);
+  max-height: 24rem;
+  overflow-y: auto;
+}
+.note,
+.summary,
+.warning {
+  margin: 0;
+}
+.note {
+  color: var(--muted);
+}
+.summary {
+  font-weight: 600;
+}
+.warning {
+  padding: var(--space-2) var(--space-3);
+  border-left: 3px solid var(--warning, var(--accent));
+  background: var(--surface, transparent);
+}
+.problems {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+.problems > li {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+}
+.lineNo {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+.reason {
+  display: block;
+  color: var(--danger);
+  font-size: var(--text-sm);
+}
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+@media (max-width: 800px) {
+  .columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
