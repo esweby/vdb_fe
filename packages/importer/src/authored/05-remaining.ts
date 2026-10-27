@@ -24,6 +24,31 @@ export const remaining: AuthoredAttributes = {
         "As an additional cost, you may banish a 1-power card from your graveyard. If you do, this gets +1 power and go again.",
     },
   },
+  Overcrowded: {
+    verified: false,
+    card: {
+      notes:
+        "Ambush. When this attacks or defends, it gets +1 power and +1 defence for each differently named aura token in the arena.",
+    },
+  },
+  "Sigil of Solace": {
+    verified: false,
+    card: { notes: "Gain 3/2/1 life (red/yellow/blue)." },
+  },
+  "Command and Conquer": {
+    verified: false,
+    card: {
+      notes:
+        "Defence reactions can't be played to this chain link. When this hits a hero, destroy all cards in their arsenal.",
+    },
+  },
+  "Heart of Fyendal": {
+    verified: false,
+    card: {
+      notes:
+        "When pitched, if you have less life than an opposing hero, gain 1 life.",
+    },
+  },
   // Approved by the maintainer, 24 Oct 2026: conditional, not natural go again.
   "Scar for a Scar": {
     verified: true,
