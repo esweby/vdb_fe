@@ -1,5 +1,5 @@
 .section {
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--space-6);
 }
 .count {
   color: var(--muted);
@@ -7,7 +7,7 @@
 }
 .list {
   columns: 16rem;
-  padding-left: 1.25rem;
+  padding-left: var(--space-5);
 }
 .done {
   color: var(--muted);
@@ -17,14 +17,14 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.75rem 1.25rem;
-  margin-bottom: 1rem;
+  gap: var(--space-3) var(--space-5);
+  margin-bottom: var(--space-4);
 }
 .intro p {
   margin: 0;
 }
 .allDone {
-  padding: 1rem 1.25rem;
+  padding: var(--space-4) var(--space-5);
   border: 1px solid var(--border);
   border-radius: 0.5rem;
   background: var(--surface);

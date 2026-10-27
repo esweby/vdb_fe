@@ -9,34 +9,18 @@ const SRC = join(import.meta.dirname, "..");
 // Stylesheets not yet moved onto the scales. Each is moved in its own small PR; remove it here
 // when it is. The test fails if a listed file is already clean, so the list only shrinks.
 const NOT_YET_ON_SCALES = new Set([
-  "account/AccountPage.module.css",
-  "analytics/UserAnalyticsPage.module.css",
-  "auth/SignInPage.module.css",
-  "cards/CardModal.module.css",
   "cards/CardsPage.module.css",
   "decks/CardFinder.module.css",
   "decks/Decks.module.css",
   "decks/DecksPage.module.css",
-  "decks/Enlarge.module.css",
   "decks/Goldfish.module.css",
-  "fablazing/RealGames.module.css",
-  "filters/FilterBar.module.css",
   "filters/FilterSidebar.module.css",
-  "filters/FilteredLayout.module.css",
-  "home/HomePage.module.css",
   "ranking/RankingPage.module.css",
   "rules/EffectDraftsPage.module.css",
   "scenarios/ScenarioBuilder.module.css",
   "scoring/CardScoringPage.module.css",
-  "scoring/NeedsReviewPage.module.css",
   "scoring/QuickReviewPage.module.css",
-  "scoring/ReviewDialog.module.css",
-  "scoring/ScoreEditor.module.css",
-  "synergy/RelatedCards.module.css",
   "synergy/SynergyExplorerPage.module.css",
-  "synergy/SynergyNudge.module.css",
-  "synergy/SynergyQueuePage.module.css",
-  "synergy/SynergyWeightsPage.module.css",
 ]);
 
 const TEXT_TOKENS = [
