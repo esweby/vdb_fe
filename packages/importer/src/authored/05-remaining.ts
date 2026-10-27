@@ -10,6 +10,13 @@ export const remaining: AuthoredAttributes = {
         "When this defends, choose 2 differently named attack action cards in your graveyard. An opponent chooses 1 to banish; put the other on top of your deck.",
     },
   },
+  "Sink Below": {
+    verified: false,
+    card: {
+      notes:
+        "You may put a card from your hand on the bottom of your deck. If you do, draw a card.",
+    },
+  },
   // Approved by the maintainer, 24 Oct 2026: conditional, not natural go again.
   "Scar for a Scar": {
     verified: true,
