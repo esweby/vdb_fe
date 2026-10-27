@@ -1,5 +1,11 @@
-import { Link, Outlet } from "@tanstack/react-router";
-import { useEffect, useRef, useState, type ComponentProps } from "react";
+import { Link, Outlet, useRouterState } from "@tanstack/react-router";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ComponentProps,
+  type RefObject,
+} from "react";
 import { useSelector } from "react-redux";
 import {
   selectCanScore,
@@ -67,7 +73,55 @@ function AdminMenu() {
   );
 }
 
+const SITE = "Viserai Deck Builder";
+
+/**
+ * Names the browser tab after the page's heading and, after the first page, moves focus to that
+ * heading on each new page, so screen readers say where you've landed (M8 keyboard pass). A
+ * change to the query alone (filters, an open card) isn't a new page. Pages that load their
+ * heading later are caught when it appears.
+ */
+function usePageHeading(main: RefObject<HTMLElement | null>) {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  // The address focus last moved for; none yet on the first page (and StrictMode's rerun of it).
+  const shownPath = useRef<string | null>(null);
+  const lastHeading = useRef<{ el: Element; text: string } | null>(null);
+  useEffect(() => {
+    const root = main.current;
+    if (!root) return;
+    let moveFocus =
+      shownPath.current !== null && shownPath.current !== pathname;
+    shownPath.current = pathname;
+    // The page before can still be showing for a moment: wait for this page's heading.
+    const before = lastHeading.current;
+    const update = () => {
+      const heading = root.querySelector("h1");
+      const name = heading?.textContent?.trim() ?? "";
+      if (heading && before?.el === heading && before.text === name) return;
+      if (heading) lastHeading.current = { el: heading, text: name };
+      document.title = name && name !== SITE ? `${name} · ${SITE}` : SITE;
+      if (!heading || !moveFocus) return;
+      moveFocus = false;
+      // Leave focus alone if the page has already put it somewhere, e.g. in a dialog.
+      const active = document.activeElement;
+      if (active && active !== document.body && root.contains(active)) return;
+      heading.tabIndex = -1;
+      heading.focus({ preventScroll: true });
+    };
+    update();
+    const watch = new MutationObserver(update);
+    watch.observe(root, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
+    return () => watch.disconnect();
+  }, [main, pathname]);
+}
+
 export function Layout() {
+  const main = useRef<HTMLElement>(null);
+  usePageHeading(main);
   const signedIn = useSelector((s: RootState) => selectIsSignedIn(s));
   const canScore = useSelector((s: RootState) => selectCanScore(s));
   const isAdmin = useSelector((s: RootState) => selectRole(s) === "admin");
@@ -111,7 +165,7 @@ export function Layout() {
           </nav>
         </div>
       </header>
-      <main className={styles.main}>
+      <main className={styles.main} ref={main}>
         <Outlet />
       </main>
     </div>

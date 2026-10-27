@@ -93,3 +93,7 @@ h1 {
   font-size: var(--text-3xl);
   margin: 0 0 var(--space-4);
 }
+/* A new page moves focus to its heading for screen readers; it isn't a control, so no ring. */
+h1[tabindex="-1"]:focus {
+  outline: none;
+}

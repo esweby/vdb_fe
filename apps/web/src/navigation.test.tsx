@@ -183,3 +183,45 @@ describe("navigation", () => {
     expect(screen.queryByRole("link", { name: "User analytics" })).toBeNull();
   });
 });
+
+// Keyboard pass (M8): a new page is named in the browser tab and announced by moving focus to
+// its heading, so screen readers say where you've landed.
+describe("moving between pages", () => {
+  it("names the browser tab after the page", async () => {
+    await renderApp({ path: "/", auth: fakeAuthService().service });
+    await screen.findByRole("heading", { level: 1 });
+    await waitFor(() => expect(document.title).toBe("Viserai Deck Builder"));
+    await userEvent.setup().click(nav().getByRole("link", { name: "Cards" }));
+    await waitFor(() =>
+      expect(document.title).toBe("Cards · Viserai Deck Builder"),
+    );
+  });
+
+  it("moves focus to the new page's heading, but not on the first page", async () => {
+    await renderApp({ path: "/", auth: fakeAuthService().service });
+    const home = await screen.findByRole("heading", { level: 1 });
+    expect(home).not.toHaveFocus();
+    await userEvent.setup().click(nav().getByRole("link", { name: "Decks" }));
+    await waitFor(() =>
+      expect(
+        screen.getByRole("heading", { level: 1, name: "Decks" }),
+      ).toHaveFocus(),
+    );
+  });
+
+  it("leaves focus where it is when only the query changes", async () => {
+    const { router } = await renderApp({
+      path: "/cards",
+      auth: fakeAuthService().service,
+    });
+    await screen.findByRole("heading", { level: 1, name: "Cards" });
+    const search = screen.getByRole("searchbox", { name: "Search" });
+    const user = userEvent.setup();
+    await user.click(search);
+    await user.type(search, "hocus");
+    await waitFor(() =>
+      expect(router.state.location.search).toMatchObject({ q: "hocus" }),
+    );
+    expect(search).toHaveFocus();
+  });
+});
