@@ -65,7 +65,10 @@ describe("opening a deck in FaBrary", () => {
         "viserai-the-forsaken,saved-card-blue",
       );
       expect(popup.opener).toBeNull();
-      expect(await screen.findByText("Version 1")).toBeInTheDocument();
+      expect(await screen.findByText(/Saved version 1\./)).toHaveAttribute(
+        "role",
+        "status",
+      );
     } finally {
       openWindow.mockRestore();
     }
@@ -101,7 +104,10 @@ describe("opening a deck in FaBrary", () => {
         expect(popup.location.href).toContain("https://fabrary.net/"),
       );
       await user.click(screen.getByRole("button", { name: "Open in FaBrary" }));
-      expect(await screen.findByText("Version 2")).toBeInTheDocument();
+      expect(await screen.findByText(/Saved version 2\./)).toHaveAttribute(
+        "role",
+        "status",
+      );
     } finally {
       finish();
       openWindow.mockRestore();
@@ -125,7 +131,10 @@ describe("opening a deck in FaBrary", () => {
       expect(popup.close).toHaveBeenCalledOnce();
       expect(popup.location.href).toBe("");
       await user.click(screen.getByRole("button", { name: "Open in FaBrary" }));
-      expect(await screen.findByText("Version 1")).toBeInTheDocument();
+      expect(await screen.findByText(/Saved version 1\./)).toHaveAttribute(
+        "role",
+        "status",
+      );
     } finally {
       openWindow.mockRestore();
     }
@@ -185,8 +194,9 @@ describe("opening a deck in FaBrary", () => {
     } as unknown as Window);
     try {
       await user.click(screen.getByRole("button", { name: "Open in FaBrary" }));
-      await user.click(await screen.findByText("Versions (1)"));
-      await user.click(screen.getByText("Version 1"));
+      await screen.findByText(/Saved version 1\./);
+      await user.click(screen.getByRole("tab", { name: "Versions" }));
+      await user.click(await screen.findByText("Version 1"));
       const field = screen.getByRole("textbox", {
         name: "FaBrary link for version 1",
       });
@@ -230,8 +240,77 @@ describe("opening a deck in FaBrary", () => {
     expect(
       screen.getByRole("link", { name: "Open in FaBrary" }),
     ).toBeInTheDocument();
-    expect(screen.queryByText(/Versions \(/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("tab", { name: "Versions" }),
+    ).not.toBeInTheDocument();
     expect(fake.saved).toEqual([]);
+  });
+});
+
+describe("the Versions tab", () => {
+  it("holds the deck's versions in their own tab, not above the tabs", async () => {
+    const { user } = await open();
+    expect(
+      screen.queryByText(/Each opening in FaBrary/),
+    ).not.toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: "Versions" }));
+    const panel = screen.getByRole("tabpanel");
+    expect(
+      await within(panel).findByText(
+        /Each opening in FaBrary saves a private copy/,
+      ),
+    ).toBeInTheDocument();
+    expect(within(panel).getByText(/No versions yet/)).toBeInTheDocument();
+  });
+
+  it("links to the Versions tab after a save, which then lists it", async () => {
+    const { router, user } = await open();
+    const openWindow = vi.spyOn(window, "open").mockReturnValue({
+      location: { href: "" },
+      close: vi.fn(),
+      opener: {},
+    } as unknown as Window);
+    try {
+      await user.click(screen.getByRole("button", { name: "Open in FaBrary" }));
+      const status = await screen.findByText(/Saved version 1\./);
+      await user.click(within(status).getByRole("link", { name: "Versions" }));
+      expect(router.state.location.search).toMatchObject({ tab: "versions" });
+      expect(
+        await within(screen.getByRole("tabpanel")).findByText("Version 1"),
+      ).toBeInTheDocument();
+    } finally {
+      openWindow.mockRestore();
+    }
+  });
+
+  it("isn't offered on someone else's deck, even from a link", async () => {
+    const fake = fakeDeckRepository([
+      {
+        id: "deck-1",
+        name: "Gate tempo",
+        updatedAt: "2026-10-14T10:00:00Z",
+        ownerId: "u2",
+        isPublic: true,
+        cards: [{ variantId: "hp1", quantity: 3, sideboard: false }],
+        pitchTargets: {},
+      },
+    ]);
+    await renderApp({
+      path: "/decks/deck-1?tab=versions",
+      auth: fakeAuthService({
+        users: { "u@test.local": { id: "u1", password: "pw", role: "user" } },
+        signedIn: { id: "u1", email: "u@test.local" },
+      }).service,
+      decks: fake.repository,
+    });
+    await screen.findByRole("heading", { level: 1 });
+    expect(
+      screen.queryByRole("tab", { name: "Versions" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Cards" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
   });
 });
 
