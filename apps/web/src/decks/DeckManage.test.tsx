@@ -293,7 +293,7 @@ describe("the Versions tab", () => {
         name: "Gate tempo",
         updatedAt: "2026-10-14T10:00:00Z",
         ownerId: "u2",
-        isPublic: true,
+        visibility: "public",
         cards: [{ variantId: "hp1", quantity: 3, sideboard: false }],
         pitchTargets: {},
       },
