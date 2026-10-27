@@ -4,8 +4,8 @@
   position: sticky;
   top: 0;
   z-index: 5;
-  margin: -1.5rem -1rem 1.5rem;
-  padding: 0.9rem 1rem 0;
+  margin: calc(-1 * var(--space-6)) calc(-1 * var(--space-4)) var(--space-6);
+  padding: var(--space-4) var(--space-4) 0;
   background: var(--bg);
   border-bottom: 1px solid var(--border);
 }
@@ -13,24 +13,24 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem 1.5rem;
+  gap: var(--space-2) var(--space-6);
 }
 .buildRow h1 {
   margin: 0;
-  font-size: 1.45rem;
+  font-size: var(--text-xl);
 }
 .summary {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.4rem 1rem;
+  gap: var(--space-2) var(--space-4);
   margin-left: auto;
   min-width: 0;
-  font-size: 0.86rem;
+  font-size: var(--text-sm);
 }
 .summaryCount {
   font-weight: 600;
-  font-size: 1rem;
+  font-size: var(--text-md);
   font-variant-numeric: tabular-nums;
 }
 .miniMix {
@@ -52,16 +52,16 @@
 }
 .tabs {
   display: flex;
-  gap: 1.75rem;
-  margin-top: 0.6rem;
+  gap: var(--space-7);
+  margin-top: var(--space-2);
   overflow-x: auto;
   scrollbar-width: none;
 }
 .tabs button {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
-  padding: 0.5rem 0 0.6rem;
+  gap: var(--space-2);
+  padding: var(--space-2) 0 var(--space-2);
   border: none;
   border-bottom: 2px solid transparent;
   background: none;
@@ -83,7 +83,7 @@
 @media (max-width: 40rem) {
   .tabs {
     flex-wrap: wrap;
-    gap: 0 1.25rem;
+    gap: 0 var(--space-5);
     overflow-x: visible;
   }
 }
@@ -93,7 +93,7 @@
   width: 1.3rem;
   height: 1.3rem;
   border-radius: 50%;
-  font-size: 0.72rem;
+  font-size: var(--text-2xs);
   font-weight: 600;
   background: color-mix(in srgb, var(--fg) 8%, var(--bg));
 }
@@ -107,30 +107,30 @@
 .readings {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1.25rem;
+  gap: var(--space-5);
   align-items: start;
 }
 .formCard {
   display: grid;
-  gap: 1rem;
+  gap: var(--space-4);
   min-width: 0;
-  padding: 1.1rem 1.25rem;
+  padding: var(--space-4) var(--space-5);
   border: 1px solid var(--border);
   border-radius: 0.75rem;
   background: var(--surface);
 }
 .formCard > header h2 {
   margin: 0;
-  font-size: 1.15rem;
+  font-size: var(--text-lg);
 }
 .formCard > header p {
   margin: 0.2rem 0 0;
   color: var(--muted);
-  font-size: 0.84rem;
+  font-size: var(--text-xs);
 }
 .field {
   display: grid;
-  gap: 0.35rem;
+  gap: var(--space-1);
 }
 .field > div:not(.presets) {
   margin-bottom: 0;
@@ -146,12 +146,12 @@
 }
 .hint {
   margin: 0;
-  font-size: 0.76rem;
+  font-size: var(--text-xs);
   color: var(--muted);
 }
 .question {
   display: grid;
-  gap: 0.4rem;
+  gap: var(--space-2);
 }
 .questionPrompt {
   font-weight: 500;
@@ -162,12 +162,12 @@
   gap: 3px;
 }
 .scale button {
-  padding: 0.35rem 0;
+  padding: var(--space-1) 0;
   border: 1px solid var(--border);
   border-radius: 0.35rem;
   background: var(--surface);
   font: inherit;
-  font-size: 0.84rem;
+  font-size: var(--text-xs);
   font-variant-numeric: tabular-nums;
   color: var(--fg);
   cursor: pointer;
@@ -185,8 +185,8 @@
 .community {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  font-size: 0.8rem;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
@@ -211,8 +211,8 @@
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.9rem;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
 }
 .setupNext {
   grid-column: 1 / -1;
@@ -220,7 +220,7 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   align-items: center;
-  gap: 0.5rem 1rem;
+  gap: var(--space-2) var(--space-4);
 }
 .railCount {
   color: var(--muted);
@@ -231,7 +231,7 @@
 .page {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 17rem;
-  gap: 2rem;
+  gap: var(--space-7);
   align-items: start;
 }
 .visuallyHidden {
@@ -244,7 +244,7 @@
 }
 .label {
   margin: 0;
-  font-size: 0.7rem;
+  font-size: var(--text-2xs);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -253,14 +253,14 @@
 .none {
   margin: 0;
   color: var(--muted);
-  font-size: 0.88rem;
+  font-size: var(--text-sm);
 }
 .main {
   min-width: 0;
 }
 .footnote {
-  margin-top: 2rem;
-  font-size: 0.82rem;
+  margin-top: var(--space-7);
+  font-size: var(--text-xs);
   color: var(--muted);
   max-width: 70ch;
 }
@@ -270,9 +270,9 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.75rem 1.5rem;
-  padding-bottom: 1rem;
-  margin-bottom: 1.5rem;
+  gap: var(--space-3) var(--space-6);
+  padding-bottom: var(--space-4);
+  margin-bottom: var(--space-6);
   border-bottom: 1px solid var(--border);
 }
 .search {
@@ -280,7 +280,7 @@
   min-width: 0;
   font: inherit;
   height: 2.3rem;
-  padding: 0 0.75rem 0 2.1rem;
+  padding: 0 var(--space-3) 0 var(--space-7);
   border: 1px solid var(--border);
   border-radius: 0.5rem;
   color: var(--fg);
@@ -295,11 +295,11 @@
 .orderControl {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 .boardCount {
   color: var(--muted);
-  font-size: 0.88rem;
+  font-size: var(--text-sm);
   font-variant-numeric: tabular-nums;
 }
 
@@ -313,11 +313,11 @@
 }
 .presets button {
   font: inherit;
-  font-size: 0.84rem;
+  font-size: var(--text-xs);
   border: none;
   background: none;
   color: var(--muted);
-  padding: 0.28rem 0.65rem;
+  padding: var(--space-1) var(--space-3);
   border-radius: 0.35rem;
   cursor: pointer;
   white-space: nowrap;
@@ -335,24 +335,24 @@
 
 /* Engines: makers on the left, what uses them on the right */
 .engine {
-  margin-bottom: 2.5rem;
+  margin-bottom: var(--space-8);
 }
 .engineHead {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
-  gap: 0.25rem 1rem;
-  margin-bottom: 0.9rem;
+  gap: var(--space-1) var(--space-4);
+  margin-bottom: var(--space-4);
 }
 .engineHead h2 {
   margin: 0;
-  font-size: 1.35rem;
+  font-size: var(--text-xl);
 }
 .engineHead p {
   margin: 0;
   color: var(--muted);
-  font-size: 0.86rem;
+  font-size: var(--text-sm);
   max-width: 60ch;
 }
 .engineHead .engineSummary {
@@ -364,9 +364,9 @@
 /* The key to the board's badges, and the sentence about the card being pointed at. */
 .explain {
   display: grid;
-  gap: 0.5rem;
-  margin-bottom: 1.25rem;
-  padding: 0.75rem 1rem;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+  padding: var(--space-3) var(--space-4);
   border: 1px solid var(--border);
   border-radius: 0.6rem;
   background: var(--surface);
@@ -374,40 +374,40 @@
 .key {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.35rem 1.25rem;
+  gap: var(--space-1) var(--space-5);
   margin: 0;
   padding: 0;
   list-style: none;
-  font-size: 0.82rem;
+  font-size: var(--text-xs);
   color: var(--muted);
 }
 .key li > span {
-  margin-right: 0.3rem;
-  font-size: 0.7rem;
+  margin-right: var(--space-1);
+  font-size: var(--text-2xs);
   font-weight: 600;
-  padding: 0.1rem 0.45rem;
+  padding: 0.1rem var(--space-2);
   border-radius: 999px;
 }
 .key strong {
   color: var(--fg);
-  margin-right: 0.3rem;
+  margin-right: var(--space-1);
 }
 .about {
   margin: 0;
   min-height: 1.4em;
-  font-size: 0.9rem;
+  font-size: var(--text-sm);
 }
 .pair {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 1.75rem minmax(0, 1fr);
-  gap: 0 0.5rem;
+  gap: 0 var(--space-2);
 }
 .arrow {
   display: grid;
   place-items: start center;
   padding-top: 0.15rem;
   color: var(--muted);
-  font-size: 1.2rem;
+  font-size: var(--text-lg);
 }
 .lane {
   min-width: 0;
@@ -415,12 +415,12 @@
 .laneHead {
   display: flex;
   align-items: baseline;
-  gap: 0.5rem;
-  margin-bottom: 0.55rem;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
 }
 .laneHead h3 {
   margin: 0;
-  font-size: 0.72rem;
+  font-size: var(--text-2xs);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -428,13 +428,13 @@
 }
 .count {
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: var(--text-xs);
   font-variant-numeric: tabular-nums;
 }
 .more {
   margin-left: auto;
   font: inherit;
-  font-size: 0.8rem;
+  font-size: var(--text-xs);
   border: none;
   background: none;
   padding: 0;
@@ -447,7 +447,7 @@
   padding: 0;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
-  gap: 0.65rem;
+  gap: var(--space-3);
 }
 .engine > .lane .tiles {
   grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
@@ -458,7 +458,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: var(--space-1);
   transition: opacity 0.15s;
 }
 .art {
@@ -493,11 +493,11 @@
   display: flex;
   align-items: flex-end;
   height: 100%;
-  padding: 0.5rem;
+  padding: var(--space-2);
   border-top: 0.4rem solid var(--pitch);
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: 0.82rem;
+  font-size: var(--text-xs);
   line-height: 1.2;
   color: var(--fg);
   text-align: left;
@@ -523,14 +523,14 @@
   right: 0.35rem;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.25rem;
+  gap: var(--space-1);
   pointer-events: none;
 }
 .badges > span {
   pointer-events: auto;
-  font-size: 0.7rem;
+  font-size: var(--text-2xs);
   font-weight: 600;
-  padding: 0.1rem 0.45rem;
+  padding: 0.1rem var(--space-2);
   border-radius: 999px;
 }
 .inCore {
@@ -553,7 +553,7 @@
 .foot {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: var(--space-2);
 }
 .value {
   font-weight: 600;
@@ -616,7 +616,7 @@
   top: calc(50% - 0.3rem);
   width: 0.6rem;
   height: 0.6rem;
-  margin-left: -0.3rem;
+  margin-left: calc(-1 * var(--space-1));
   border-radius: 50%;
   background: var(--accent);
   border: 2px solid var(--bg);
@@ -628,17 +628,17 @@
 .gear {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 .slot {
-  padding: 0.65rem 0.8rem;
+  padding: var(--space-3);
   border: 1px solid var(--border);
   border-radius: 0.5rem;
   background: var(--surface);
 }
 .slot h3 {
-  margin: 0 0 0.35rem;
-  font-size: 0.7rem;
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-2xs);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -647,9 +647,9 @@
 .slotRow {
   display: flex;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: var(--space-2);
   padding: 0.15rem 0;
-  font-size: 0.88rem;
+  font-size: var(--text-sm);
 }
 .slotRow button {
   font: inherit;
@@ -667,8 +667,8 @@
 .empty {
   display: grid;
   justify-items: center;
-  gap: 0.5rem;
-  padding: 4rem 1rem;
+  gap: var(--space-2);
+  padding: var(--space-8) var(--space-4);
   text-align: center;
   border: 1px dashed var(--border);
   border-radius: 0.75rem;
@@ -691,15 +691,15 @@
   overflow: hidden;
 }
 .trayHead {
-  padding: 1rem 1.1rem 0.8rem;
+  padding: var(--space-4) var(--space-4) var(--space-3);
   border-bottom: 1px solid var(--border);
 }
 .trayHead h2 {
   margin: 0 0 0.15rem;
-  font-size: 1.2rem;
+  font-size: var(--text-lg);
 }
 .total {
-  font-size: 1.05rem;
+  font-size: var(--text-md);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
@@ -707,15 +707,15 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 0.25rem 1.1rem 1rem;
+  padding: var(--space-1) var(--space-4) var(--space-4);
 }
 .traySection {
   display: grid;
   /* One column no wider than the rail: long card names shorten with "…" rather than pushing
      the copies buttons off the edge. */
   grid-template-columns: minmax(0, 1fr);
-  gap: 0.45rem;
-  padding: 0.85rem 0;
+  gap: var(--space-2);
+  padding: var(--space-3) 0;
   border-bottom: 1px solid var(--border);
 }
 .traySection:last-child {
@@ -733,9 +733,9 @@
 .ends {
   display: flex;
   justify-content: space-between;
-  margin-top: -0.4rem;
-  padding-right: 2.5rem;
-  font-size: 0.75rem;
+  margin-top: calc(-1 * var(--space-2));
+  padding-right: var(--space-8);
+  font-size: var(--text-xs);
   color: var(--muted);
 }
 .preference {
@@ -746,15 +746,15 @@
   margin-bottom: 0;
 }
 .prefNote {
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   color: var(--muted);
 }
 .meter {
   display: grid;
   grid-template-columns: 6.5rem minmax(0, 1fr) 3.4rem;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.86rem;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
   font-variant-numeric: tabular-nums;
 }
 .bar {
@@ -773,7 +773,7 @@
   font: inherit;
   width: 100%;
   box-sizing: border-box;
-  padding: 0.15rem 0.3rem;
+  padding: 0.15rem var(--space-1);
   border: 1px solid var(--border);
   border-radius: 0.35rem;
   background: var(--bg);
@@ -782,7 +782,7 @@
 .balance {
   display: grid;
   gap: 0.15rem;
-  font-size: 0.84rem;
+  font-size: var(--text-xs);
 }
 .balanceName {
   font-weight: 600;
@@ -791,7 +791,7 @@
   display: grid;
   grid-template-columns: 4.5rem minmax(0, 1fr) 4.5rem;
   align-items: center;
-  gap: 0.4rem;
+  gap: var(--space-2);
   font-variant-numeric: tabular-nums;
 }
 .balanceRow > span:last-child {
@@ -815,7 +815,7 @@
   width: 0.4rem;
 }
 .gap {
-  font-size: 0.8rem;
+  font-size: var(--text-xs);
   color: var(--danger);
 }
 .coreList {
@@ -826,10 +826,10 @@
 .coreList li {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.3rem 0;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
   border-bottom: 1px solid var(--border);
-  font-size: 0.88rem;
+  font-size: var(--text-sm);
 }
 .pitchDot {
   flex: none;
@@ -878,13 +878,13 @@
 }
 .trayFoot {
   display: grid;
-  gap: 0.55rem;
-  padding: 0.85rem 1.1rem 1rem;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4) var(--space-4);
   border-top: 1px solid var(--border);
 }
 .trayFoot p {
   margin: 0;
-  font-size: 0.86rem;
+  font-size: var(--text-sm);
 }
 /* The rail is slim: everything in its footer shrinks to fit and stacks. */
 .trayFoot > * {
@@ -892,7 +892,7 @@
 }
 .deckPick {
   display: grid;
-  gap: 0.25rem;
+  gap: var(--space-1);
   min-width: 0;
 }
 .deckPick select {
@@ -902,7 +902,7 @@
 .deckPick select,
 .newDeck input {
   font: inherit;
-  padding: 0.35rem 0.5rem;
+  padding: var(--space-1) var(--space-2);
   border: 1px solid var(--border);
   border-radius: 0.4rem;
   background: var(--bg);
@@ -910,7 +910,7 @@
 }
 .newDeck {
   display: grid;
-  gap: 0.4rem;
+  gap: var(--space-2);
   min-width: 0;
 }
 .newDeck input {
@@ -958,11 +958,11 @@
     display: none;
   }
   .lane + .lane {
-    margin-top: 1rem;
+    margin-top: var(--space-4);
   }
   .tiles {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.45rem;
+    gap: var(--space-2);
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -982,33 +982,33 @@
   flex-wrap: wrap;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 0.75rem 1.5rem;
+  gap: var(--space-3) var(--space-6);
 }
 .cardHeadRow h2 {
   margin: 0;
-  font-size: 1.15rem;
+  font-size: var(--text-lg);
 }
 .cardHeadRow p {
   margin: 0.2rem 0 0;
   color: var(--muted);
-  font-size: 0.84rem;
+  font-size: var(--text-xs);
   max-width: 60ch;
 }
 .runButtons {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 .runInfo {
   margin: 0;
-  font-size: 0.8rem;
+  font-size: var(--text-xs);
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
 .stale {
   margin: 0;
-  padding: 0.45rem 0.7rem;
+  padding: var(--space-2) var(--space-3);
   border-radius: 0.4rem;
-  font-size: 0.84rem;
+  font-size: var(--text-xs);
   color: var(--fg);
   background: color-mix(in srgb, var(--pitch-2) 22%, var(--surface));
 }
@@ -1024,8 +1024,8 @@
     "name rate turns"
     "why why why";
   align-items: center;
-  gap: 0.15rem 0.75rem;
-  padding: 0.6rem 0;
+  gap: 0.15rem var(--space-3);
+  padding: var(--space-2) 0;
   border-bottom: 1px solid var(--border);
 }
 .scenarioName {
@@ -1035,7 +1035,7 @@
 .rate {
   grid-area: rate;
   text-align: right;
-  font-size: 1.25rem;
+  font-size: var(--text-xl);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
@@ -1043,28 +1043,28 @@
   grid-column: 2 / -1;
   white-space: nowrap;
   text-align: right;
-  font-size: 0.82rem;
+  font-size: var(--text-xs);
   color: var(--muted);
 }
 /* Scenarios the core can't meet at all, in a quiet note below the results. */
 .cantRun {
-  margin-top: 0.9rem;
-  padding: 0.7rem 0.9rem;
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
   border-radius: 0.5rem;
   background: color-mix(in srgb, var(--fg) 4%, transparent);
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
   color: var(--muted);
 }
 .cantRun h3 {
-  margin: 0 0 0.35rem;
+  margin: 0 0 var(--space-1);
   font-family: inherit;
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
   font-weight: 600;
   color: var(--fg);
 }
 .cantRun ul {
   margin: 0;
-  padding-left: 1.1rem;
+  padding-left: var(--space-4);
   display: grid;
   gap: 0.2rem;
 }
@@ -1082,24 +1082,24 @@
 }
 .why {
   grid-area: why;
-  font-size: 0.8rem;
+  font-size: var(--text-xs);
   color: var(--muted);
 }
 .facts {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem 2rem;
+  gap: var(--space-2) var(--space-7);
 }
 .fact {
   display: grid;
 }
 .fact b {
-  font-size: 1.45rem;
+  font-size: var(--text-xl);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 .fact span {
-  font-size: 0.78rem;
+  font-size: var(--text-xs);
   color: var(--muted);
 }
 .chartWrap {
@@ -1111,7 +1111,7 @@
   height: auto;
 }
 .chart text {
-  font-size: 11px;
+  font-size: var(--text-2xs);
   fill: var(--muted);
 }
 .gridLine {
@@ -1135,9 +1135,9 @@
 .legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: var(--space-4);
   margin: 0;
-  font-size: 0.8rem;
+  font-size: var(--text-xs);
   color: var(--muted);
 }
 .legend span::before {
@@ -1145,7 +1145,7 @@
   display: inline-block;
   width: 14px;
   height: 3px;
-  margin-right: 0.4rem;
+  margin-right: var(--space-2);
   vertical-align: middle;
   border-radius: 2px;
   background: var(--accent);
@@ -1161,11 +1161,11 @@
 }
 
 .signInPrompt {
-  margin: 0 0 0.75rem;
-  padding: 0.5rem 0.75rem;
+  margin: 0 0 var(--space-3);
+  padding: var(--space-2) var(--space-3);
   border-radius: 0.4rem;
   background: color-mix(in srgb, var(--accent) 10%, var(--surface));
-  font-size: 0.9rem;
+  font-size: var(--text-sm);
 }
 .signInPrompt a {
   font-weight: 600;
@@ -1175,22 +1175,22 @@
 .compact .scenarioList {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(24rem, 100%), 1fr));
-  column-gap: 2rem;
+  column-gap: var(--space-7);
 }
 .compact .scenarioList li {
   grid-template-columns: minmax(0, 1fr) 3.5rem 4rem;
-  padding: 0.35rem 0;
+  padding: var(--space-1) 0;
 }
 .compact .scenarioName {
-  font-size: 0.9rem;
+  font-size: var(--text-sm);
 }
 .compact .rate {
-  font-size: 1rem;
+  font-size: var(--text-md);
 }
 .compact .why {
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
 }
 .compact .cantRun {
-  margin-top: 0.5rem;
-  padding: 0.5rem 0.75rem;
+  margin-top: var(--space-2);
+  padding: var(--space-2) var(--space-3);
 }
