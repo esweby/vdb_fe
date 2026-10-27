@@ -18,9 +18,9 @@ insert into public.variants (id, card_id, external_id, pitch) values
   ('20000000-0000-0000-0000-0000000025f3', '10000000-0000-0000-0000-0000000025c3', 'version-head', null);
 insert into public.heroes (id, external_id, name) values
   ('40000000-0000-0000-0000-0000000025e1', 'version-hero', 'Version opponent');
-insert into public.decks (id, user_id, name, is_public, pitch_targets) values
-  ('30000000-0000-0000-0000-0000000025d1', '00000000-0000-0000-0000-0000000025a1', 'Version deck', true, '{"1":30}'),
-  ('30000000-0000-0000-0000-0000000025d2', '00000000-0000-0000-0000-0000000025a1', 'Empty deck', false, '{}');
+insert into public.decks (id, user_id, name, visibility, pitch_targets) values
+  ('30000000-0000-0000-0000-0000000025d1', '00000000-0000-0000-0000-0000000025a1', 'Version deck', 'public', '{"1":30}'),
+  ('30000000-0000-0000-0000-0000000025d2', '00000000-0000-0000-0000-0000000025a1', 'Empty deck', 'private', '{}');
 insert into public.deck_cards (deck_id, variant_id, quantity, sideboard) values
   ('30000000-0000-0000-0000-0000000025d1', '20000000-0000-0000-0000-0000000025f1', 1, false),
   ('30000000-0000-0000-0000-0000000025d1', '20000000-0000-0000-0000-0000000025f1', 2, true),

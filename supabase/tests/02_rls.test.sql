@@ -84,7 +84,7 @@ select results_eq(
   array[0], 'users cannot flag fringe cards'
 );
 -- Private decks only: public decks (anyone's) are readable by everyone.
-select is((select count(*)::int from public.decks where not is_public), 1, 'users see their own decks');
+select is((select count(*)::int from public.decks where visibility = 'private'), 1, 'users see their own decks');
 select results_eq(
   $$with u as (update public.app_settings set value = '99' returning 1) select count(*)::int from u$$,
   array[0], 'users cannot change settings'
@@ -94,8 +94,8 @@ reset role;
 -- Bob (scorer) cannot see or touch Alice's deck
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000b0","role":"authenticated"}', true);
-select is((select count(*)::int from public.decks where not is_public), 0, 'other users cannot see a deck');
-select is((select count(*)::int from public.deck_cards dc join public.decks d on d.id = dc.deck_id where not d.is_public), 0, 'other users cannot see a deck''s cards');
+select is((select count(*)::int from public.decks where visibility = 'private'), 0, 'other users cannot see a deck');
+select is((select count(*)::int from public.deck_cards dc join public.decks d on d.id = dc.deck_id where d.visibility = 'private'), 0, 'other users cannot see a deck''s cards');
 select throws_ok(
   $$insert into public.deck_cards (deck_id, variant_id, quantity)
     values ('30000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', 1)$$,

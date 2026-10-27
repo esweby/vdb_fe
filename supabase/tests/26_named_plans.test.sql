@@ -8,9 +8,9 @@ select ok(not has_function_privilege('anon', 'public.save_matchup(uuid,text,uuid
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-0000000026a1', 'plan-owner@test.local'),
   ('00000000-0000-0000-0000-0000000026a2', 'plan-other@test.local');
-insert into public.decks (id, user_id, name, is_public) values
-  ('30000000-0000-0000-0000-0000000026d1', '00000000-0000-0000-0000-0000000026a1', 'Plans deck', true),
-  ('30000000-0000-0000-0000-0000000026d2', '00000000-0000-0000-0000-0000000026a1', 'Another deck', false);
+insert into public.decks (id, user_id, name, visibility) values
+  ('30000000-0000-0000-0000-0000000026d1', '00000000-0000-0000-0000-0000000026a1', 'Plans deck', 'public'),
+  ('30000000-0000-0000-0000-0000000026d2', '00000000-0000-0000-0000-0000000026a1', 'Another deck', 'private');
 insert into public.cards (id, external_id, name, type) values
   ('10000000-0000-0000-0000-0000000026c1', 'named-plan-card', 'Plan card', 'action');
 insert into public.variants (id, card_id, external_id, pitch) values

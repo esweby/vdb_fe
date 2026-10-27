@@ -16,7 +16,7 @@ Phase two is largely built. What's left is less building than feeding the engine
 | Goldfish on the rules engine, laid out as a playmat                                                   | Built                                                  |
 | Matchups: per-hero board plans, played in goldfish and scenarios                                      | Built                                                  |
 | Rules engine, steps 1 to 9                                                                            | Built. Cards are added as the maintainer verifies them |
-| Accounts and decks: usernames fixed once set; rename, delete and public or private                    | Built                                                  |
+| Accounts and decks: usernames fixed once set; rename, delete; private, link only or public            | Built                                                  |
 
 ## Verifying cards
 

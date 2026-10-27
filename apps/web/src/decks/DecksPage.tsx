@@ -1,5 +1,5 @@
 import { getRouteApi, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useId, useMemo, useState, type FormEvent } from "react";
 import type { CardSummary, VariantSummary } from "../cards/cardRepository.ts";
 import { pitchesShown, pitchName } from "../cards/pitch.ts";
 import { useCards } from "../cards/useCards.ts";
@@ -7,9 +7,10 @@ import { useAppSelector } from "../hooks.ts";
 import { useServices } from "../servicesContext.ts";
 import { Button, Dialog, TextField } from "../ui/index.ts";
 import ui from "../ui/ui.module.css";
-import type { DeckSummary } from "./deckRepository.ts";
+import type { DeckSummary, Visibility } from "./deckRepository.ts";
 import type { FormatRules } from "./deckRules.ts";
 import styles from "./DecksPage.module.css";
+import { VISIBILITIES, visibilityLabel } from "./visibility.ts";
 
 const route = getRouteApi("/decks");
 const GEAR = ["weapon", "equipment"];
@@ -32,7 +33,7 @@ function DeckTile(props: {
   lookup: Lookup;
   yours: boolean;
   canChangeVisibility: boolean;
-  onVisibility: (isPublic: boolean) => void;
+  onVisibility: (visibility: Visibility) => void;
 }) {
   const { deck, lookup } = props;
   // Deck cards only: no sideboard, and weapons and equipment don't take deck space.
@@ -103,26 +104,32 @@ function DeckTile(props: {
           )}
         </span>
         <div className={styles.foot}>
-          <span
-            className={styles.badge}
-            data-public={deck.isPublic ? "" : undefined}
-          >
-            {deck.isPublic ? "Public" : "Private"}
-          </span>
+          {props.canChangeVisibility ? (
+            <select
+              className={styles.visibility}
+              aria-label={`Who can see ${deck.name}`}
+              value={deck.visibility}
+              data-shared={deck.visibility === "private" ? undefined : ""}
+              onChange={(e) => props.onVisibility(e.target.value as Visibility)}
+            >
+              {VISIBILITIES.map((v) => (
+                <option key={v.value} value={v.value}>
+                  {v.label}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <span
+              className={styles.badge}
+              data-public={deck.visibility === "public" ? "" : undefined}
+            >
+              {visibilityLabel(deck.visibility)}
+            </span>
+          )}
           {props.yours && !props.canChangeVisibility && (
             <span className={styles.badge} data-yours="">
               Yours
             </span>
-          )}
-          {props.canChangeVisibility && (
-            <button
-              type="button"
-              className={styles.visibility}
-              aria-label={`Make ${deck.name} ${deck.isPublic ? "private" : "public"}`}
-              onClick={() => props.onVisibility(!deck.isPublic)}
-            >
-              {deck.isPublic ? "Make private" : "Make public"}
-            </button>
           )}
         </div>
       </div>
@@ -132,10 +139,11 @@ function DeckTile(props: {
 
 function NewDeckDialog(props: {
   onClose: () => void;
-  onCreate: (name: string, isPublic: boolean) => Promise<void>;
+  onCreate: (name: string, visibility: Visibility) => Promise<void>;
 }) {
   const [name, setName] = useState("");
-  const [isPublic, setPublic] = useState(false);
+  const [visibility, setVisibility] = useState<Visibility>("private");
+  const whoId = useId();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -144,7 +152,7 @@ function NewDeckDialog(props: {
     if (!name.trim()) return setError("Name the deck first.");
     setBusy(true);
     try {
-      await props.onCreate(name.trim(), isPublic);
+      await props.onCreate(name.trim(), visibility);
     } catch (err) {
       setError(
         `Couldn't create the deck: ${err instanceof Error ? err.message : String(err)}`,
@@ -167,19 +175,25 @@ function NewDeckDialog(props: {
             setError(null);
           }}
         />
-        <label className={styles.check}>
-          <input
-            type="checkbox"
-            checked={isPublic}
-            onChange={(e) => setPublic(e.target.checked)}
-          />
-          <span>
-            Make it public
-            <small>
-              Anyone can see a public deck. You can change this later.
-            </small>
-          </span>
-        </label>
+        <div className={styles.who}>
+          <label htmlFor={whoId}>Who can see it</label>
+          <select
+            id={whoId}
+            aria-describedby={`${whoId}-hint`}
+            value={visibility}
+            onChange={(e) => setVisibility(e.target.value as Visibility)}
+          >
+            {VISIBILITIES.map((v) => (
+              <option key={v.value} value={v.value}>
+                {v.label}
+              </option>
+            ))}
+          </select>
+          <small id={`${whoId}-hint`}>
+            {VISIBILITIES.find((v) => v.value === visibility)!.hint} You can
+            change this later.
+          </small>
+        </div>
         <div className={styles.dialogActions}>
           <Button variant="ghost" onClick={props.onClose}>
             Cancel
@@ -249,12 +263,12 @@ export function DecksPage() {
 
   const list = lists[tab];
 
-  async function setVisibility(deck: DeckSummary, isPublic: boolean) {
+  async function setVisibility(deck: DeckSummary, visibility: Visibility) {
     const swap = (l?: DeckSummary[]) =>
-      l?.map((d) => (d.id === deck.id ? { ...d, isPublic } : d));
+      l?.map((d) => (d.id === deck.id ? { ...d, visibility } : d));
     setLists((l) => ({ ...l, mine: swap(l.mine) }));
     try {
-      await decks.setVisibility(deck.id, isPublic);
+      await decks.setVisibility(deck.id, visibility);
     } catch (e) {
       setLists((l) => ({
         ...l,
@@ -276,8 +290,8 @@ export function DecksPage() {
       {creating && (
         <NewDeckDialog
           onClose={() => setCreating(false)}
-          onCreate={async (name, isPublic) => {
-            const deck = await decks.createDeck(name, { isPublic });
+          onCreate={async (name, visibility) => {
+            const deck = await decks.createDeck(name, { visibility });
             await navigate({
               to: "/decks/$deckId",
               params: { deckId: deck.id },
@@ -369,7 +383,9 @@ export function DecksPage() {
                 lookup={lookup}
                 yours={deck.ownerId === user?.id}
                 canChangeVisibility={tab === "mine"}
-                onVisibility={(isPublic) => void setVisibility(deck, isPublic)}
+                onVisibility={(visibility) =>
+                  void setVisibility(deck, visibility)
+                }
               />
             ))}
           </ul>

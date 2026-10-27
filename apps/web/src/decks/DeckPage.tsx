@@ -21,6 +21,7 @@ import { ConditionAvailabilityPanel } from "./ConditionAvailabilityPanel.tsx";
 import { DeckGapsPanel } from "./DeckGapsPanel.tsx";
 import { DeckScenarios } from "./DeckScenarios.tsx";
 import { DeckSettings } from "./DeckSettings.tsx";
+import { visibilityLabel } from "./visibility.ts";
 import { DeckVersions } from "./DeckVersions.tsx";
 import { MatchupsPanel } from "./MatchupsPanel.tsx";
 import { entriesForMatchup } from "./matchupEntries.ts";
@@ -409,8 +410,8 @@ export function DeckPage() {
         <div className={styles.deckStatusRow}>
           <p className={styles.deckStatus}>
             {canEdit ? (
-              <Tag tone={deck.isPublic ? "accent" : "neutral"}>
-                {deck.isPublic ? "Public" : "Private"}
+              <Tag tone={deck.visibility === "private" ? "neutral" : "accent"}>
+                {visibilityLabel(deck.visibility)}
               </Tag>
             ) : (
               <Tag>Read only</Tag>
