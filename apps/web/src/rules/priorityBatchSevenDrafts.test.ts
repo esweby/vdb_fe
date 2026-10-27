@@ -1,4 +1,5 @@
-// UNVERIFIED effect drafts. The maintainer must approve these ten cards before they gain rules.
+// Seeds of Agony, Shadowrealm Ripper and Sonata Galaxia approved by the maintainer on 27 Oct 2026.
+// The other seven effect drafts remain UNVERIFIED.
 import { verifiedRulesFor } from "@vdb/engine/rules";
 import { describe, expect, it } from "vitest";
 import { runechantCreators } from "../../../../packages/importer/src/authored/01-runechant-creators.ts";
@@ -94,7 +95,8 @@ describe("the seventh priority rules batch", () => {
 
   it("drafts Seeds of Agony's banished-zone permission", () => {
     const entry = draftQueue([seeds])[0]!;
-    expect(entry.status).toBe("complete");
+    expect(entry.status).toBe("verified");
+    expect(entry.verified).toBe(true);
     expect(entry.drafts[0]!.draft.rules).toEqual({
       effects: [],
       playableFromBanish: true,
@@ -102,6 +104,9 @@ describe("the seventh priority rules batch", () => {
     expect(entry.drafts[0]!.draft.outOfScope).toEqual([
       "Arcane damage: damage to an opponent is out of scope",
     ]);
+    expect(verifiedRulesFor(seeds.name, 3)).toEqual(
+      entry.drafts[0]!.draft.rules,
+    );
   });
 
   it("keeps Sonata Dystopia's effects on the next attack unsupported", () => {
@@ -141,7 +146,8 @@ describe("the seventh priority rules batch", () => {
 
   it("drafts Shadowrealm Ripper's optional attack banish", () => {
     const entry = draftQueue([ripper])[0]!;
-    expect(entry.status).toBe("complete");
+    expect(entry.status).toBe("verified");
+    expect(entry.verified).toBe(true);
     expect(entry.drafts[0]!.draft.rules).toEqual({
       effects: [],
       triggers: [
@@ -163,11 +169,15 @@ describe("the seventh priority rules batch", () => {
     expect(entry.drafts[0]!.draft.outOfScope).toEqual([
       "Bonuses to power or defence: combat is out of scope",
     ]);
+    expect(verifiedRulesFor(ripper.name, 1)).toEqual(
+      entry.drafts[0]!.draft.rules,
+    );
   });
 
   it("drafts Sonata Galaxia's Runechant discount only", () => {
     const entry = draftQueue([galaxia])[0]!;
-    expect(entry.status).toBe("partial");
+    expect(entry.status).toBe("verified");
+    expect(entry.verified).toBe(true);
     expect(entry.drafts[0]!.draft.rules).toEqual({
       effects: [],
       costReductions: [{ amount: "perRunechant" }],
@@ -176,6 +186,9 @@ describe("the seventh priority rules batch", () => {
       "Go again if X is 2 or more: the engine can't check that yet",
       "Searching the deck: not drafted yet",
     ]);
+    expect(verifiedRulesFor(galaxia.name, 1)).toEqual(
+      entry.drafts[0]!.draft.rules,
+    );
   });
 
   it.each([
@@ -191,13 +204,10 @@ describe("the seventh priority rules batch", () => {
 
   it.each([
     ["Dimenxxional Ferryman", 3],
-    ["Seeds of Agony", 3],
     ["Sonata Dystopia", 3],
     ["Looking for a Scrap", 1],
     ["Deathly Wail", 1],
     ["Corrupt and Conquer", 1],
-    ["Shadowrealm Ripper", 1],
-    ["Sonata Galaxia", 1],
     ["Forbidden Harvest", 2],
     ["Sonata Fantasmia", 3],
   ])("keeps %s pitch %s unverified", (name, pitch) => {
