@@ -2,12 +2,17 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { FormatRules } from "./deckRules.ts";
 
+/**
+ * Who can see a deck: only its owner (private), anyone with its link (link, not listed), or
+ * anyone (public, listed in Public decks).
+ */
+export type Visibility = "private" | "link" | "public";
+
 export interface DeckSummary {
   id: string;
   name: string;
   updatedAt: string;
-  /** Anyone can see a public deck; a private one only its owner. */
-  isPublic: boolean;
+  visibility: Visibility;
   ownerId: string;
   /** The owner's username, if they've chosen one (shown on public decks). */
   ownerName?: string | null;
@@ -88,12 +93,13 @@ export interface DeckRepository {
   listPublicDecks(): Promise<DeckSummary[]>;
   createDeck(
     name: string,
-    options?: { isPublic?: boolean },
+    options?: { visibility?: Visibility },
   ): Promise<DeckSummary>;
-  setVisibility(deckId: string, isPublic: boolean): Promise<void>;
+  setVisibility(deckId: string, visibility: Visibility): Promise<void>;
   renameDeck(deckId: string, name: string): Promise<void>;
   /** Deletes the deck, with its cards, plans and scenario results. */
   deleteDeck(deckId: string): Promise<void>;
+  /** Yours, a public deck, or a link-only one opened by its address. */
   getDeck(id: string): Promise<Deck | null>;
   /**
    * Adds, updates or (with quantity 0) removes a card's deck row or sideboard row. A card can have
@@ -119,7 +125,7 @@ export interface DeckRepository {
 
 const INVALID_UUID = "22P02";
 const SUMMARY =
-  "id, name, updatedAt:updated_at, isPublic:is_public, ownerId:user_id, cards:deck_cards(variantId:variant_id, quantity, sideboard)";
+  "id, name, updatedAt:updated_at, visibility, ownerId:user_id, cards:deck_cards(variantId:variant_id, quantity, sideboard)";
 const VERSION =
   "id, deckId:deck_id, number, createdAt:created_at, snapshot, fabraryUrl:fabrary_url";
 
@@ -183,7 +189,7 @@ export function supabaseDeckRepository(client: SupabaseClient): DeckRepository {
       const { data, error } = await client
         .from("decks")
         .select(SUMMARY)
-        .eq("is_public", true)
+        .eq("visibility", "public")
         .order("updated_at", { ascending: false })
         .limit(60);
       if (error) throw error;
@@ -192,16 +198,16 @@ export function supabaseDeckRepository(client: SupabaseClient): DeckRepository {
     async createDeck(name, options) {
       const { data, error } = await client
         .from("decks")
-        .insert({ name, is_public: options?.isPublic ?? false })
+        .insert({ name, visibility: options?.visibility ?? "private" })
         .select(SUMMARY)
         .single();
       if (error) throw error;
       return data as DeckSummary;
     },
-    async setVisibility(deckId, isPublic) {
+    async setVisibility(deckId, visibility) {
       const { error } = await client
         .from("decks")
-        .update({ is_public: isPublic })
+        .update({ visibility })
         .eq("id", deckId);
       if (error) throw error;
     },
@@ -224,7 +230,17 @@ export function supabaseDeckRepository(client: SupabaseClient): DeckRepository {
         .maybeSingle();
       if (error?.code === INVALID_UUID) return null;
       if (error) throw error;
-      return data ? (await withOwnerNames([data as Deck]))[0]! : null;
+      // The tables return your decks and public ones; a link-only deck comes by its id alone.
+      const deck =
+        (data as Deck | null) ??
+        (await (async () => {
+          const linked = await client.rpc("linked_deck", {
+            target_deck_id: id,
+          });
+          if (linked.error) throw linked.error;
+          return linked.data as Deck | null;
+        })());
+      return deck ? (await withOwnerNames([deck]))[0]! : null;
     },
     async setCard(deckId, card) {
       const { error } =

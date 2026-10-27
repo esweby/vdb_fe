@@ -16,8 +16,8 @@ export const sampleRules: FormatRules = {
 };
 
 /** A deck for tests: private and owned by u1 unless it says otherwise. */
-export type DeckFixture = Omit<Deck, "isPublic" | "ownerId"> &
-  Partial<Pick<Deck, "isPublic" | "ownerId">>;
+export type DeckFixture = Omit<Deck, "visibility" | "ownerId"> &
+  Partial<Pick<Deck, "visibility" | "ownerId">>;
 
 /** An in-memory DeckRepository; `saved` records every write. New decks belong to `userId`. */
 export function fakeDeckRepository(
@@ -33,7 +33,7 @@ export function fakeDeckRepository(
   let matchups = [...(options.matchups ?? [])];
   let nextMatchup = 0;
   let decks: Deck[] = initial.map((d) => ({
-    isPublic: false,
+    visibility: "private",
     ownerId: "u1",
     ...d,
     cards: [...d.cards],
@@ -101,15 +101,18 @@ export function fakeDeckRepository(
     },
     listMyDecks: async (userId) =>
       decks.filter((d) => d.ownerId === userId).map(summary),
-    listPublicDecks: async () => decks.filter((d) => d.isPublic).map(summary),
+    listPublicDecks: async () =>
+      decks.filter((d) => d.visibility === "public").map(summary),
     async createDeck(name, createOptions) {
-      const isPublic = createOptions?.isPublic ?? false;
-      saved.push(`create ${name}${isPublic ? " public" : ""}`);
+      const visibility = createOptions?.visibility ?? "private";
+      saved.push(
+        `create ${name}${visibility === "private" ? "" : ` ${visibility}`}`,
+      );
       const deck: Deck = {
         id: `deck-${decks.length + 1}`,
         name,
         updatedAt: "2026-10-14T12:00:00Z",
-        isPublic,
+        visibility,
         ownerId: options.userId ?? "u1",
         cards: [],
         pitchTargets: {},
@@ -117,9 +120,9 @@ export function fakeDeckRepository(
       decks = [...decks, deck];
       return summary(deck);
     },
-    async setVisibility(deckId, isPublic) {
-      saved.push(`${isPublic ? "public" : "private"} ${deckId}`);
-      decks = decks.map((d) => (d.id === deckId ? { ...d, isPublic } : d));
+    async setVisibility(deckId, visibility) {
+      saved.push(`${visibility} ${deckId}`);
+      decks = decks.map((d) => (d.id === deckId ? { ...d, visibility } : d));
     },
     async renameDeck(deckId, name) {
       saved.push(`rename ${deckId} ${name}`);

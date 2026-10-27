@@ -152,7 +152,7 @@ async function matchupsTab(signedIn: boolean, extra: MatchupStat[] = []) {
         updatedAt: "2026-10-14T10:00:00Z",
         cards: [{ variantId: "bsl3", quantity: 2, sideboard: false }],
         pitchTargets: {},
-        isPublic: true,
+        visibility: "public",
       },
     ],
     { heroes: HEROES, userId: "u1" },

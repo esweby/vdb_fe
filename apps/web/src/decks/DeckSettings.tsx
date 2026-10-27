@@ -1,14 +1,16 @@
-// A deck's owner can make it public or private, rename it, and delete it after confirming (the
-// maintainer, 20 Oct 2026).
+// A deck's owner can set who sees it (private, link only or public; the maintainer, 27 Oct 2026),
+// rename it, and delete it after confirming (the maintainer, 20 Oct 2026).
 import { useState, type FormEvent } from "react";
 import { useServices } from "../servicesContext.ts";
 import { Button, Dialog, TextField } from "../ui/index.ts";
+import type { Visibility } from "./deckRepository.ts";
 import styles from "./Decks.module.css";
+import { VISIBILITIES } from "./visibility.ts";
 
 export function DeckSettings(props: {
-  deck: { id: string; name: string; isPublic: boolean };
+  deck: { id: string; name: string; visibility: Visibility };
   /** The deck as it now is, after a change saved. */
-  onChange: (patch: { name?: string; isPublic?: boolean }) => void;
+  onChange: (patch: { name?: string; visibility?: Visibility }) => void;
   onDeleted: () => void;
 }) {
   const { decks } = useServices();
@@ -17,15 +19,26 @@ export function DeckSettings(props: {
   const [nameError, setNameError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
-  async function toggleVisibility() {
-    const isPublic = !props.deck.isPublic;
+  async function changeVisibility(visibility: Visibility) {
     try {
-      await decks.setVisibility(props.deck.id, isPublic);
-      props.onChange({ isPublic });
+      await decks.setVisibility(props.deck.id, visibility);
+      props.onChange({ visibility });
       setError(null);
     } catch {
       setError("Couldn't change who can see the deck.");
+    }
+  }
+
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(
+        `${window.location.origin}/decks/${props.deck.id}`,
+      );
+      setCopied(true);
+    } catch {
+      setError("Couldn't copy the link. Copy it from the address bar instead.");
     }
   }
 
@@ -57,9 +70,31 @@ export function DeckSettings(props: {
 
   return (
     <div className={styles.deckSettings}>
-      <Button variant="ghost" onClick={() => void toggleVisibility()}>
-        {props.deck.isPublic ? "Make private" : "Make public"}
-      </Button>
+      <select
+        className={styles.visibilitySelect}
+        aria-label="Who can see this deck"
+        value={props.deck.visibility}
+        onChange={(e) => {
+          setCopied(false);
+          void changeVisibility(e.target.value as Visibility);
+        }}
+      >
+        {VISIBILITIES.map((v) => (
+          <option key={v.value} value={v.value}>
+            {v.label}
+          </option>
+        ))}
+      </select>
+      {props.deck.visibility !== "private" && (
+        <Button variant="ghost" onClick={() => void copyLink()}>
+          Copy link
+        </Button>
+      )}
+      {copied && (
+        <span role="status" className={styles.linkCopied}>
+          Link copied.
+        </span>
+      )}
       {renaming ? (
         <form className={styles.renameForm} onSubmit={(e) => void rename(e)}>
           <TextField

@@ -55,7 +55,7 @@ describe("decks list", () => {
     name: "Usurp aggro",
     updatedAt: "2026-10-13T10:00:00Z",
     ownerId: "u2",
-    isPublic: true,
+    visibility: "public",
     cards: [],
     pitchTargets: {},
   };
@@ -63,7 +63,13 @@ describe("decks list", () => {
     ...theirs,
     id: "deck-8",
     name: "Secret tech",
-    isPublic: false,
+    visibility: "private",
+  };
+  const theirLink: DeckFixture = {
+    ...theirs,
+    id: "deck-7",
+    name: "Link tech",
+    visibility: "link",
   };
   const tile = (name: string) => within(screen.getByRole("listitem", { name }));
 
@@ -82,7 +88,9 @@ describe("decks list", () => {
     expect(
       gate.getByRole("img", { name: "Pitch mix: 3 red, 0 yellow, 2 blue" }),
     ).toBeInTheDocument();
-    expect(gate.getByText("Private")).toBeInTheDocument();
+    expect(
+      gate.getByRole("combobox", { name: "Who can see Gate tempo" }),
+    ).toHaveValue("private");
     expect(gate.getByRole("link", { name: "Gate tempo" })).toHaveAttribute(
       "href",
       "/decks/deck-1",
@@ -91,7 +99,7 @@ describe("decks list", () => {
     expect(screen.queryByRole("listitem", { name: "Usurp aggro" })).toBeNull();
   });
 
-  it("creates a deck from the header, public or private, and opens it", async () => {
+  it("creates a deck from the header, private, link only or public, and opens it", async () => {
     const fake = decksOf([mine]);
     const { router } = await renderApp({
       path: "/decks",
@@ -102,12 +110,14 @@ describe("decks list", () => {
     await user.click(await screen.findByRole("button", { name: "New deck" }));
     const dialog = within(screen.getByRole("dialog", { name: "New deck" }));
     await user.type(dialog.getByLabelText("Deck name"), "Runechant aggro");
-    await user.click(dialog.getByRole("checkbox", { name: /Make it public/ }));
+    const who = dialog.getByRole("combobox", { name: "Who can see it" });
+    expect(who).toHaveValue("private");
+    await user.selectOptions(who, "Link only");
     await user.click(dialog.getByRole("button", { name: "Create deck" }));
     await waitFor(() =>
       expect(router.state.location.pathname).toBe("/decks/deck-2"),
     );
-    expect(fake.saved).toEqual(["create Runechant aggro public"]);
+    expect(fake.saved).toEqual(["create Runechant aggro link"]);
   });
 
   it("asks for a name before creating a deck", async () => {
@@ -124,27 +134,38 @@ describe("decks list", () => {
     expect(fake.saved).toEqual([]);
   });
 
-  it("makes a deck public or private from the list", async () => {
+  it("sets who can see a deck from the list: private, link only or public", async () => {
     const fake = decksOf([mine]);
     await renderApp({ path: "/decks", auth: auth(), decks: fake.repository });
     const user = userEvent.setup();
-    await user.click(
-      await screen.findByRole("button", { name: "Make Gate tempo public" }),
-    );
+    const who = await screen.findByRole("combobox", {
+      name: "Who can see Gate tempo",
+    });
+    expect(who).toHaveValue("private");
+    await user.selectOptions(who, "Public");
     expect(fake.saved).toEqual(["public deck-1"]);
-    expect(tile("Gate tempo").getByText("Public")).toBeInTheDocument();
-    await user.click(
-      screen.getByRole("button", { name: "Make Gate tempo private" }),
-    );
-    expect(fake.saved).toEqual(["public deck-1", "private deck-1"]);
+    expect(who).toHaveValue("public");
+    await user.selectOptions(who, "Link only");
+    expect(fake.saved).toEqual(["public deck-1", "link deck-1"]);
+    expect(who).toHaveValue("link");
+    await user.selectOptions(who, "Private");
+    expect(fake.saved).toEqual([
+      "public deck-1",
+      "link deck-1",
+      "private deck-1",
+    ]);
   });
 
   it("lists everyone's public decks in their own tab, kept in the URL", async () => {
     const { router } = await renderApp({
       path: "/decks",
       auth: auth(),
-      decks: decksOf([{ ...mine, isPublic: true }, theirs, theirSecret])
-        .repository,
+      decks: decksOf([
+        { ...mine, visibility: "public" },
+        theirs,
+        theirSecret,
+        theirLink,
+      ]).repository,
     });
     const user = userEvent.setup();
     await user.click(await screen.findByRole("tab", { name: "Public decks" }));
@@ -154,9 +175,11 @@ describe("decks list", () => {
     ).toBeInTheDocument();
     expect(tile("Gate tempo").getByText("Yours")).toBeInTheDocument();
     expect(screen.queryByRole("listitem", { name: "Secret tech" })).toBeNull();
+    // A link-only deck isn't listed
+    expect(screen.queryByRole("listitem", { name: "Link tech" })).toBeNull();
     // Only the owner changes visibility
     expect(
-      screen.queryByRole("button", { name: "Make Usurp aggro private" }),
+      screen.queryByRole("combobox", { name: "Who can see Usurp aggro" }),
     ).toBeNull();
   });
 
@@ -1065,7 +1088,7 @@ describe("someone else's public deck", () => {
         name: "Usurp aggro",
         updatedAt: "2026-10-13T10:00:00Z",
         ownerId: "u2",
-        isPublic: true,
+        visibility: "public",
         cards,
         pitchTargets: { 1: 20 },
       },

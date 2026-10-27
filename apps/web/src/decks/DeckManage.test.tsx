@@ -7,14 +7,17 @@ import { fakeAuthService } from "../test/fakeAuthService.ts";
 import { fakeDeckRepository } from "../test/fakeDeckRepository.ts";
 import { renderApp } from "../test/renderApp.tsx";
 
-async function open(ownerId = "u1", isPublic = false) {
+async function open(
+  ownerId = "u1",
+  visibility: "private" | "link" | "public" = "private",
+) {
   const fake = fakeDeckRepository([
     {
       id: "deck-1",
       name: "Gate tempo",
       updatedAt: "2026-10-14T10:00:00Z",
       ownerId,
-      isPublic,
+      visibility,
       cards: [{ variantId: "hp1", quantity: 3, sideboard: false }],
       pitchTargets: {},
     },
@@ -225,7 +228,7 @@ describe("opening a deck in FaBrary", () => {
   });
 
   it("links to FaBrary's import form filled in with the hero and every copy", async () => {
-    await open("u2", true);
+    await open("u2", "public");
     const link = screen.getByRole("link", { name: "Open in FaBrary" });
     const url = new URL(link.getAttribute("href") ?? "");
     expect(url.searchParams.get("name")).toBe("Gate tempo");
@@ -236,7 +239,7 @@ describe("opening a deck in FaBrary", () => {
   });
 
   it("is there on someone else's public deck too", async () => {
-    const { fake } = await open("u2", true);
+    const { fake } = await open("u2", "public");
     expect(
       screen.getByRole("link", { name: "Open in FaBrary" }),
     ).toBeInTheDocument();
@@ -290,7 +293,7 @@ describe("the Versions tab", () => {
         name: "Gate tempo",
         updatedAt: "2026-10-14T10:00:00Z",
         ownerId: "u2",
-        isPublic: true,
+        visibility: "public",
         cards: [{ variantId: "hp1", quantity: 3, sideboard: false }],
         pitchTargets: {},
       },
@@ -315,14 +318,43 @@ describe("the Versions tab", () => {
 });
 
 describe("managing a deck from its page", () => {
-  it("switches it between private and public", async () => {
+  it("switches it between private, link only and public", async () => {
     const { fake, user } = await open();
-    expect(screen.getByText("Private")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Make public" }));
+    expect(
+      screen.getByText("Private", { selector: "span" }),
+    ).toBeInTheDocument();
+    const who = screen.getByRole("combobox", { name: "Who can see this deck" });
+    await user.selectOptions(who, "Public");
     await waitFor(() => expect(fake.saved).toContain("public deck-1"));
     expect(
-      screen.getByRole("button", { name: "Make private" }),
+      screen.getByText("Public", { selector: "span" }),
     ).toBeInTheDocument();
+    await user.selectOptions(who, "Link only");
+    await waitFor(() => expect(fake.saved).toContain("link deck-1"));
+    expect(
+      screen.getByText("Link only", { selector: "span" }),
+    ).toBeInTheDocument();
+  });
+
+  it("copies the deck's link once anyone else can open it", async () => {
+    const { user } = await open();
+    expect(
+      screen.queryByRole("button", { name: "Copy link" }),
+    ).not.toBeInTheDocument();
+    const writeText = vi.fn(async () => {});
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText },
+      configurable: true,
+    });
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Who can see this deck" }),
+      "Link only",
+    );
+    await user.click(await screen.findByRole("button", { name: "Copy link" }));
+    expect(writeText).toHaveBeenCalledWith(
+      `${window.location.origin}/decks/deck-1`,
+    );
+    expect(await screen.findByText("Link copied.")).toBeInTheDocument();
   });
 
   it("renames it, but not to nothing", async () => {
@@ -362,8 +394,11 @@ describe("managing a deck from its page", () => {
   });
 
   it("shows none of this on someone else's deck", async () => {
-    await open("someone-else", true);
-    expect(screen.queryByRole("button", { name: /Make p/ })).toBeNull();
+    await open("someone-else", "public");
+    expect(
+      screen.queryByRole("combobox", { name: "Who can see this deck" }),
+    ).toBeNull();
+    expect(screen.queryByRole("button", { name: "Copy link" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Rename" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Delete deck" })).toBeNull();
   });

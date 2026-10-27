@@ -292,7 +292,7 @@ describe("effect drafts page", () => {
           name: "Someone else's",
           updatedAt: "2026-10-20T12:00:00Z",
           ownerId: "u9",
-          isPublic: true,
+          visibility: "public",
           pitchTargets: {},
           cards: [],
         },

@@ -354,6 +354,18 @@
 .deckSettings > .deleteDeck:hover {
   color: var(--danger);
 }
+.visibilitySelect {
+  font: inherit;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  background: var(--bg);
+  color: var(--fg);
+}
+.linkCopied {
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
 .deckSettings [role="alert"] {
   flex-basis: 100%;
   margin: 0;
