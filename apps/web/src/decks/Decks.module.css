@@ -317,8 +317,12 @@
   border: 1px solid var(--border);
   border-radius: 0.4rem;
 }
-.versions summary {
-  cursor: pointer;
+.versionsEmpty,
+.versionSaved {
+  color: var(--muted);
+}
+.versionSaved {
+  margin: var(--space-2) 0 0;
 }
 .version {
   margin-block: 1rem;
