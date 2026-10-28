@@ -1,6 +1,6 @@
 # Turn objectives (draft)
 
-**UNVERIFIED.** Drafted by Claude on 28 Oct 2026 from real games, for the maintainer to check. The maintainer's answers are recorded at the end. The per-turn objectives are not approved, and nothing in the engine uses this yet.
+**UNVERIFIED.** Drafted by Claude on 28 Oct 2026 from real games, for the maintainer to check. The maintainer's answers are recorded at the end. The per-turn objectives are not approved. The engine's line chooser ([Scoring settings](#scoring-settings)) scores lines on these ideas; the full analysis doesn't use it yet.
 
 ## Why
 
@@ -144,7 +144,7 @@ Draft, unverified: going wide could be a fourth thing a line is scored on, besid
 1. **Do the objectives and their order match how you play?** "Sort of but not really, they're broad ideas based on game state." So the per-turn tables above are not approved. Objectives should come from the game state (Runechants, banished cards, side, hand), not from a fixed turn number.
 2. **What should turn 1's setup leave behind?** Runechants carried, which are useful for usurp, and cards in banish, which can be banished and played out. A setup line is worth more the more of both it leaves.
 3. **Is coming back to the Forsaken a goal?** Yes, a goal in itself, not only a side effect of a Gate.
-4. **Burst at 9, or a second level?** "14". Read here as a second level, a big burst at 14 or more, with 9 kept as the burst line. Still to confirm: whether 14 should replace 9 instead.
+4. **Burst at 9, or a second level?** "14", as an extra level: a big burst at 14 or more, above the burst at 9, which stays the burst line (confirmed 28 Oct 2026).
 5. **How many cards should the engine hold back to defend?** A variable: a setting the analysis can change, with no fixed default yet.
 6. **Could Greed have flipped turn 2 of the goldfish game?** The maintainer doesn't remember. Left open.
 
@@ -160,6 +160,59 @@ Draft, unverified: going wide could be a fourth thing a line is scored on, besid
 | Going second, turn 2, burst      | 31%    | 36%     |
 
 At 14, the 9 to 13 turns count as build or defend, so the two columns aren't from the same split. This is an association like the rest.
+
+## Scoring settings
+
+**UNVERIFIED.** Task 7, built by Claude on 28 Oct 2026. `chooseLine(state, settings)` in `packages/engine/src/rules/objectives.ts` runs the [turn search](turn-search.md) and plays the line with the highest score. Ties go to the first line in the search's order, so the choice is deterministic. `playByObjectives` plays a game turn by turn with it, and `objectivePolicy` runs it as a batch policy on the same seeds as a script, ready for the full analysis to switch to (task 10).
+
+A line's score is the sum of these, each from the game state the line leaves, not from the turn number. The settings are the maintainer's ideas; every default weight is Claude's guess, for the maintainer to check.
+
+| Setting            | What it counts                                                                                                    | Default     |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------- | ----------- |
+| `damage`           | per point threatened (power + arcane + 2 per usurp)                                                               | 1           |
+| `burst`            | once, at 9 or more threatened                                                                                     | +4 at 9     |
+| `bigBurst`         | once more, at 14 or more (on top of the burst)                                                                    | +4 at 14    |
+| `runechants`       | per Runechant token carried into the next turn (for usurp)                                                        | 1           |
+| `sinchants`        | per sinchant (Runechant aura) carried                                                                             | 1           |
+| `banishedPlayable` | per card face up in banish that can be played out next turn                                                       | 1.5         |
+| `flip`             | traversed to the Usurper this turn                                                                                | 2           |
+| `back`             | traversed back to the Forsaken this turn: a goal in itself                                                        | 3           |
+| `width`            | per card played from hand, arsenal or banish                                                                      | 0.5         |
+| `arsenal`          | a card left in the arsenal                                                                                        | 1           |
+| `lifeLost`         | per life lost this turn (blood debt, Descendancy), taken off                                                      | 0.5         |
+| `holdBack`         | hand cards kept back as blockers; only lines that keep at least this many are chosen (or as many as any line can) | none: unset |
+
+The engine has no opponent, so "defend" is `holdBack`: a variable with no default, as the maintainer asked.
+
+### The goldfish game against the chooser
+
+The maintainer's four turns, with the default settings (`packages/engine/test/rules/line-scoring-goldfish.test.ts`):
+
+| Turn | Maintainer                                      | Chooser                                                                                   | Same? |
+| ---- | ----------------------------------------------- | ----------------------------------------------------------------------------------------- | ----- |
+| 1    | BSL, Murmuring from banish, Greed to arsenal: 4 | Greed, BSL, Murmuring from banish, the Nebula: 9, flips and comes back through BSL's Gate | No    |
+| 2    | Enshrine, Murmuring: 5, Greed held              | Enshrine, Greed from the arsenal, Murmuring, Demonbound: 11 and flips                     | No    |
+| 3    | Embrace, Greed, Murmuring from banish: flips    | the same line (10 in the engine)                                                          | Yes   |
+| 4    | Embrace, Murmuring from banish, the Nebula      | the same line (15 in the engine)                                                          | Yes   |
+
+Why turns 1 and 2 differ:
+
+- **Turn 1** is a real disagreement, not an unmodelled card. Under the verified rules, playing Greed first makes the third Runechant, so the line bursts, flips and comes back in one turn. Every setting scores that above setting up. The maintainer kept Greed for later. In real games, flipping on turn 1 goes with worse results (26–29%), but the chooser doesn't use the turn number, and the arsenal's weight (1) values a held Greed far below a burst. Whether a turn-1 flip and back is right, or the chooser needs a way to value a held card, is the maintainer's call.
+- **Turn 2** answers open question 6 in the engine: yes, Greed from the arsenal makes the third Runechant. The chooser takes the burst and flip that the draft objectives preferred. Whether the maintainer would have, given the hand that followed, is still open.
+
+### Before and after
+
+Average damage threatened per turn over turns 1–4, goldfish and unblocked, on the same seeds (`apps/web/scripts/compare-line-scoring.ts`). Not a calibration.
+
+The maintainer's 52-card list (`apps/web/scripts/fixtures/maintainer-52.txt`, all 52 cards with verified rules), 200 games, seed 20261028, going first. The old policies get the full analysis's first answers to the conditions (no life lost, not less life).
+
+| Policy                                    | T1  | T2  | T3  | T4  | Mean T1–4 | Flipped by T4 | Time per game |
+| ----------------------------------------- | --- | --- | --- | --- | --------- | ------------- | ------------- |
+| Baseline (every card, reds first)         | 3.3 | 4.4 | 4.6 | 4.4 | 4.2       | 11%           | 1 ms          |
+| Full analysis (reviewed-delayed-hands-v2) | 3.5 | 4.6 | 4.8 | 4.4 | 4.3       | 19%           | 1 ms          |
+| Line chooser, default settings            | 5.7 | 8.4 | 8.1 | 8.6 | 7.7       | 85%           | 350 ms        |
+
+The chooser threatens nearly twice as much, but stays below the maintainer's usual 9–14. The equipment (task 8), Greed's "counts as a Runechant", Otherworldly Sins' +3 and other combat bonuses aren't modelled, so some of the gap is the engine, not the choice. Calibrating against real games is task 9. The chooser is about 350 times slower: 1,000 full-analysis games of 8 turns would take minutes, so task 10 needs to plan for that.
 
 ## Not covered
 

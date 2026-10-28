@@ -2,7 +2,7 @@
 
 **UNVERIFIED.** Built by Claude on 28 Oct 2026 as task 6 of [turn-objectives.md](turn-objectives.md). The search's own rules below are Claude's reading, for the maintainer to check. Card rules are only the verified `CARD_RULES`.
 
-`searchTurn(state)` in `packages/engine/src/rules/search.ts` lists every distinct legal line for one turn, from the start of the action phase to the end of the turn. It doesn't choose a line. Scoring lines against objectives is task 7.
+`searchTurn(state)` in `packages/engine/src/rules/search.ts` lists every distinct legal line for one turn, from the start of the action phase to the end of the turn. It doesn't choose a line: the line chooser does that ([turn-objectives.md, Scoring settings](turn-objectives.md#scoring-settings)).
 
 ## What it branches on
 
@@ -16,7 +16,7 @@ Explicit conditions about the opponent aren't branched. By default "a hero has l
 
 ## What each line gives
 
-Its actions (replayable with `applySessionAction`), damage threatened (power + arcane + 2 per usurp, as the play pattern comparison counts it), Runechants and sinchants at the end of the turn, playable cards face up in banish, whether it flipped to the Usurper and came back, cards played (width), life lost, and the state after the turn ends.
+Its actions (replayable with `applySessionAction`), damage threatened (power + arcane + 2 per usurp, as the play pattern comparison counts it), Runechants and sinchants at the end of the turn, playable cards face up in banish, whether it flipped to the Usurper and came back, cards played (width), hand cards held at the end of the turn (blockers kept back), life lost, and the state after the turn ends.
 
 ## Bounds
 
