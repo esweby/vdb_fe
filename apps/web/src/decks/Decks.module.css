@@ -359,40 +359,6 @@
 .versionLinkForm > div {
   flex: 1 1 24rem;
 }
-/* The Results tab: the upload (file, version and note side by side, stacked when narrow),
-   then the games, each with its version and a delete. */
-.results,
-.resultsUpload {
-  margin-block: var(--space-4);
-}
-.resultsList {
-  padding: 0;
-  list-style: none;
-}
-.resultsList li {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-3);
-  padding-block: var(--space-2);
-}
-.resultsList li > span {
-  flex: 1 1 24rem;
-}
-.versionGameForm {
-  display: flex;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-  margin-block: var(--space-3);
-}
-.versionGameForm > div {
-  flex: 1 1 20rem;
-}
-.versionGameForm input[type="file"] {
-  display: block;
-  margin-block-start: var(--space-2);
-}
 /* Public or private, rename and delete, for the deck's owner (the maintainer, 20 Oct 2026). */
 .deckSettings {
   display: flex;
