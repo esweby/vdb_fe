@@ -43,12 +43,22 @@ describe("condition availability in the card list", () => {
     const { deck } = await open("list");
     expect(deck.queryByText(/available \d+%/)).not.toBeInTheDocument();
     expect(
-      screen.getByRole("combobox", { name: "Sort the deck" }),
-    ).toBeDisabled();
+      screen.queryByRole("combobox", { name: "Sort the deck" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("checkbox", { name: /Only rarely/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "Support in opening hands" }),
+    ).toHaveTextContent(
+      "When you draw a card with a supported condition, how often is another card it needs in the same opening hand? This checks cards in hand, not whether you can complete the play.",
+    );
 
     await userEvent
       .setup()
-      .click(screen.getByRole("button", { name: "Work out availability" }));
+      .click(
+        screen.getByRole("button", { name: "Check support in opening hands" }),
+      );
     const shown = await deck.findByText(/^available \d+%$/);
     // Become the Shadow Lord has two conditions; the lowest is shown, each in the title.
     expect(shown.closest("li")).toHaveTextContent("Become the Shadow Lord");
@@ -67,10 +77,10 @@ describe("condition availability in the card list", () => {
     expect(names()).toEqual(["Hocus Pocus", "Become the Shadow Lord"]);
 
     await user.click(
-      screen.getByRole("button", { name: "Work out availability" }),
+      screen.getByRole("button", { name: "Check support in opening hands" }),
     );
-    const sort = screen.getByRole("combobox", { name: "Sort the deck" });
     await screen.findByText(/^available \d+%$/);
+    const sort = screen.getByRole("combobox", { name: "Sort the deck" });
     await user.selectOptions(sort, "Availability, lowest first");
     expect(names()).toEqual(["Become the Shadow Lord", "Hocus Pocus"]);
 
@@ -92,7 +102,9 @@ describe("condition availability in the card list", () => {
     ]);
     await userEvent
       .setup()
-      .click(screen.getByRole("button", { name: "Work out availability" }));
+      .click(
+        screen.getByRole("button", { name: "Check support in opening hands" }),
+      );
     await deck.findByText(/^available \d+%$/);
     expect(
       screen.getByText(
@@ -105,7 +117,9 @@ describe("condition availability in the card list", () => {
     const { deck } = await open("list");
     await userEvent
       .setup()
-      .click(screen.getByRole("button", { name: "Work out availability" }));
+      .click(
+        screen.getByRole("button", { name: "Check support in opening hands" }),
+      );
     await deck.findByText(/^available \d+%$/);
     expect(screen.queryByText(/^Measured with/)).not.toBeInTheDocument();
   });
@@ -118,7 +132,9 @@ describe("condition availability in the card list", () => {
     ]);
     await userEvent
       .setup()
-      .click(screen.getByRole("button", { name: "Work out availability" }));
+      .click(
+        screen.getByRole("button", { name: "Check support in opening hands" }),
+      );
     await screen.findByText(/^Measured with/);
     const sideboard = within(screen.getByRole("region", { name: "Sideboard" }));
     expect(sideboard.getByText("Become the Shadow Lord")).toBeInTheDocument();

@@ -619,7 +619,16 @@ export function DeckPage() {
                   </button>
                 ))}
               </div>
-              <div className={styles.viewToggle}>
+              <section
+                className={styles.openingSupport}
+                aria-labelledby="opening-support-title"
+              >
+                <h2 id="opening-support-title">Support in opening hands</h2>
+                <p>
+                  When you draw a card with a supported condition, how often is
+                  another card it needs in the same opening hand? This checks
+                  cards in hand, not whether you can complete the play.
+                </p>
                 <button
                   type="button"
                   disabled={availability.running || !availability.canRun}
@@ -627,42 +636,47 @@ export function DeckPage() {
                 >
                   {availability.running
                     ? "Working it out…"
-                    : "Work out availability"}
+                    : "Check support in opening hands"}
                 </button>
-                <select
-                  aria-label="Sort the deck"
-                  disabled={!availability.byCard}
-                  value={availability.byCard ? sortBy : "pitch"}
-                  onChange={(ev) =>
-                    setSortBy(ev.target.value as "pitch" | "availability")
-                  }
-                >
-                  <option value="pitch">Pitch, then name</option>
-                  <option value="availability">
-                    Availability, lowest first
-                  </option>
-                </select>
-                <label>
-                  <input
-                    type="checkbox"
-                    disabled={!availability.byCard}
-                    checked={!!availability.byCard && onlyRarely}
-                    onChange={(ev) => setOnlyRarely(ev.target.checked)}
-                  />{" "}
-                  {`Only rarely available (under ${RARELY_BELOW * 100}%)`}
-                </label>
-              </div>
-              {availability.fill && availability.fill.filled > 0 && (
-                <p className={styles.muted}>
-                  {`Measured with ${availability.fill.filled} sideboard ${
-                    availability.fill.filled === 1 ? "card" : "cards"
-                  }${
-                    availability.fill.blanks > 0
-                      ? ` and ${availability.fill.blanks} ${availability.fill.blanks === 1 ? "blank" : "blanks"}`
-                      : ""
-                  } making the deck up to ${FULL_DECK}, as it isn't finished.`}
-                </p>
-              )}
+                {availability.byCard && (
+                  <div className={styles.supportControls}>
+                    <label>
+                      Sort deck
+                      <select
+                        aria-label="Sort the deck"
+                        value={availability.byCard ? sortBy : "pitch"}
+                        onChange={(ev) =>
+                          setSortBy(ev.target.value as "pitch" | "availability")
+                        }
+                      >
+                        <option value="pitch">Pitch, then name</option>
+                        <option value="availability">
+                          Availability, lowest first
+                        </option>
+                      </select>
+                    </label>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={!!availability.byCard && onlyRarely}
+                        onChange={(ev) => setOnlyRarely(ev.target.checked)}
+                      />{" "}
+                      {`Only rarely available (under ${RARELY_BELOW * 100}%)`}
+                    </label>
+                  </div>
+                )}
+                {availability.fill && availability.fill.filled > 0 && (
+                  <p className={styles.muted}>
+                    {`Measured with ${availability.fill.filled} sideboard ${
+                      availability.fill.filled === 1 ? "card" : "cards"
+                    }${
+                      availability.fill.blanks > 0
+                        ? ` and ${availability.fill.blanks} ${availability.fill.blanks === 1 ? "blank" : "blanks"}`
+                        : ""
+                    } making the deck up to ${FULL_DECK}, as it isn't finished.`}
+                  </p>
+                )}
+              </section>
               <div
                 className={
                   view === "tiles" ? styles.tileColumns : styles.columns
