@@ -790,7 +790,7 @@
 }
 .gapCards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(20rem, 100%), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(24rem, 100%), 1fr));
   gap: var(--space-4);
   align-items: start;
 }
@@ -812,6 +812,15 @@
 .gapCard h4 {
   font-size: var(--text-sm);
   color: var(--muted);
+}
+/* Evidence lists flow into columns so a lone, full-width gap card isn't one tall list. */
+.gapEvidence {
+  columns: 16rem;
+  column-gap: var(--space-6);
+  margin: 0;
+}
+.gapEvidence li {
+  break-inside: avoid;
 }
 .pitch1Edge {
   border-left-color: var(--pitch-1);
