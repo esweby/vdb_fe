@@ -43,6 +43,22 @@ export interface Rate {
   games: number;
 }
 
+/**
+ * Two real-game rates (task 7c): "not enough data" below MIN_GAMES on either side, and a
+ * difference only when their 95% Wilson intervals don't overlap.
+ */
+export function compareRealRates(
+  a: Rate,
+  b: Rate,
+): "higher" | "lower" | "no clear difference" | "not enough data" {
+  if (a.games < MIN_GAMES || b.games < MIN_GAMES) return "not enough data";
+  const first = wilson(a.wins, a.games);
+  const second = wilson(b.wins, b.games);
+  if (first.low > second.high) return "higher";
+  if (first.high < second.low) return "lower";
+  return "no clear difference";
+}
+
 export function cardEvidence(s: CardStat) {
   const games = s.resultDecks;
   return {

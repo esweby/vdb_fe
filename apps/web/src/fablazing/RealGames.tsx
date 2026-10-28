@@ -14,12 +14,14 @@ import {
 } from "./fablazingRepository.ts";
 import {
   cardEvidence,
+  compareRealRates,
   formatDay,
   formatInterval,
   formatRate,
   formatWindow,
   heroFromSlug,
   matchupEvidence,
+  type Rate,
 } from "./stats.ts";
 import styles from "./RealGames.module.css";
 
@@ -148,6 +150,16 @@ function useRows<T>(
   return { rows, failed };
 }
 
+/** Two real-game rates side by side, compared by the overlap rule (docs/plan-goals.md). */
+function versusBaseline(rate: Rate, baseline: Rate) {
+  const result = compareRealRates(rate, baseline);
+  return result === "not enough data"
+    ? "Not enough data to compare with all of Viserai's decks."
+    : result === "no clear difference"
+      ? "No clear difference from all of Viserai's decks."
+      : `${result === "higher" ? "Higher" : "Lower"} than all of Viserai's decks: the intervals don't overlap.`;
+}
+
 function CardNumbers(props: {
   window: FablazingWindow;
   cardId: string;
@@ -203,6 +215,7 @@ function CardNumbers(props: {
           {`All of Viserai's decks won ${formatRate(e.baseline.wins, e.baseline.games)}`}
         </p>
       )}
+      {e.baseline.games > 0 && <p>{versusBaseline(e.winRate, e.baseline)}</p>}
       <p className={styles.muted}>
         {`n = ${e.games} games with this card. Across every hero Viserai faced, in the proportions it faced them; a deck's Matchups tab shows that mix. These are associations: decks that include a card differ in other ways too.`}
       </p>
