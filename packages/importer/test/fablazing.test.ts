@@ -145,6 +145,7 @@ describe("cardMapRows", () => {
     { externalId: "h-usurper", name: "Viserai, Usurper" },
     { externalId: "h-levia", name: "Levia, Shadowborn Abomination" },
     { externalId: "h-teklo", name: "Teklovossen, Esteemed Magnate" },
+    { externalId: "h-jarl", name: "Jarl Vetreiði" },
   ] as unknown as ImportHero[];
 
   it("maps every variant, and each hero side to its hero row", () => {
@@ -160,6 +161,8 @@ describe("cardMapRows", () => {
         { slug: "blasmophet_levia_consumed", heroExternalId: "h-levia" },
         { slug: "teklovossen_esteemed_magnate", heroExternalId: "h-teklo" },
         { slug: "teklovossen_the_mechropotent", heroExternalId: "h-teklo" },
+        { slug: "jarl_vetreidi", heroExternalId: "h-jarl" },
+        { slug: "jarl_vetreidi~BLIND", heroExternalId: "h-jarl" },
         ...IGNORED.map((slug) => ({ slug, ignored: true })),
       ].sort((a, b) => a.slug.localeCompare(b.slug)),
     );
@@ -194,6 +197,8 @@ const IGNORED = [
   // New, not in the dataset yet; ignored for a few months.
   "azalea_ace_of_spades",
   "UNKNOWNHERO",
+  // A weapon recorded as a side's hero in one game on 18 Oct 2026 (the maintainer, 28 Oct 2026).
+  "redwood_hammer",
 ];
 
 describe("cardMapRows: heroes FaBlazing ends games as", () => {
@@ -201,6 +206,7 @@ describe("cardMapRows: heroes FaBlazing ends games as", () => {
     { externalId: "h-levia", name: "Levia, Shadowborn Abomination" },
     { externalId: "h-teklo", name: "Teklovossen, Esteemed Magnate" },
     { externalId: "h-marionette", name: "Arakni, Marionette" },
+    { externalId: "h-jarl", name: "Jarl Vetreiði" },
   ] as unknown as ImportHero[];
   const rows = cardMapRows([], heroes);
   const target = (slug: string) => rows.find((r) => r.slug === slug);
@@ -218,6 +224,18 @@ describe("cardMapRows: heroes FaBlazing ends games as", () => {
       slug: "teklovossen_the_mechropotent",
       heroExternalId: "h-teklo",
     });
+  });
+
+  it("counts a hero's other FaBlazing ids as that hero", () => {
+    // Seen once, 19 Oct 2026: probably Talishar's hidden-hero mode. The maintainer, 28 Oct 2026.
+    expect(target("jarl_vetreidi~BLIND")).toEqual({
+      slug: "jarl_vetreidi~BLIND",
+      heroExternalId: "h-jarl",
+    });
+  });
+
+  it("fails if another id's hero isn't imported", () => {
+    expect(() => cardMapRows([], heroes.slice(0, 3))).toThrow(/Jarl Vetreiði/);
   });
 
   it("marks the ids the maintainer ignores, even over a hero row", () => {
