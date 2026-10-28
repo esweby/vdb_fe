@@ -1,15 +1,25 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { useServices } from "../servicesContext.ts";
 import { Button, TextField } from "../ui/index.ts";
 import type { DeckVersion } from "./deckRepository.ts";
+import type { DeckEntry } from "./deckRules.ts";
+import {
+  compareLists,
+  entryCards,
+  snapshotCards,
+  type CardChange,
+} from "./versionCompare.ts";
 import styles from "./Decks.module.css";
 
 export function DeckVersions({
   deckId,
   latest,
+  entries,
 }: {
   deckId: string;
   latest: DeckVersion | null;
+  /** The deck as it is now, to compare a version with. */
+  entries: DeckEntry[];
 }) {
   const { decks } = useServices();
   const [versions, setVersions] = useState<DeckVersion[]>([]);
@@ -53,9 +63,89 @@ export function DeckVersions({
           </Button>
         </p>
       )}
+      {shown.length > 0 && <Compare versions={shown} entries={entries} />}
       {shown.map((version) => (
         <Version key={version.id} version={version} />
       ))}
+    </section>
+  );
+}
+
+const CURRENT = "current";
+const KIND = (change: CardChange) =>
+  change.from === 0 ? "Added" : change.to === 0 ? "Removed" : "Changed";
+
+/** Two versions, or a version and the deck as it is now, newest first. */
+function Compare({
+  versions,
+  entries,
+}: {
+  versions: DeckVersion[];
+  entries: DeckEntry[];
+}) {
+  const id = useId();
+  const [fromId, setFromId] = useState(versions[0]!.id);
+  const [toId, setToId] = useState(CURRENT);
+  const cardsOf = (key: string) => {
+    if (key === CURRENT) return entryCards(entries);
+    const version = versions.find((v) => v.id === key);
+    return version ? snapshotCards(version.snapshot) : [];
+  };
+  const changes = compareLists(cardsOf(fromId), cardsOf(toId));
+  const options = versions.map((version) => (
+    <option key={version.id} value={version.id}>
+      Version {version.number}
+    </option>
+  ));
+  return (
+    <section className={styles.versionCompare} aria-label="Compare">
+      <div className={styles.versionCompareChoice}>
+        <div>
+          <label htmlFor={`${id}-from`}>Compare</label>
+          <select
+            id={`${id}-from`}
+            value={fromId}
+            onChange={(event) => setFromId(event.target.value)}
+          >
+            {options}
+          </select>
+        </div>
+        <div>
+          <label htmlFor={`${id}-to`}>With</label>
+          <select
+            id={`${id}-to`}
+            value={toId}
+            onChange={(event) => setToId(event.target.value)}
+          >
+            <option value={CURRENT}>Current deck</option>
+            {options}
+          </select>
+        </div>
+      </div>
+      <div className={styles.versionCompareSides} aria-live="polite">
+        <Changes title="Main deck" changes={changes.deck} />
+        <Changes title="Sideboard" changes={changes.sideboard} />
+      </div>
+    </section>
+  );
+}
+
+function Changes({ title, changes }: { title: string; changes: CardChange[] }) {
+  const id = useId();
+  return (
+    <section aria-labelledby={id}>
+      <h3 id={id}>{title}</h3>
+      {changes.length === 0 ? (
+        <p className={styles.versionsEmpty}>No changes.</p>
+      ) : (
+        <ul>
+          {changes.map((change) => (
+            <li key={change.variantId}>
+              {KIND(change)}: {change.name} {change.from} → {change.to}
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }

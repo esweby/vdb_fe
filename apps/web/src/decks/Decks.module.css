@@ -328,6 +328,28 @@
 .version {
   margin-block: var(--space-4);
 }
+/* Comparing two versions, or one with the deck now: side by side, stacked when narrow. */
+.versionCompare {
+  margin-block: var(--space-4);
+}
+.versionCompareChoice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+.versionCompareChoice > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.versionCompareSides {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: var(--space-4);
+}
+.versionCompareSides h3 {
+  margin-block: var(--space-3) var(--space-2);
+}
 .versionLinkForm {
   display: flex;
   align-items: flex-start;
