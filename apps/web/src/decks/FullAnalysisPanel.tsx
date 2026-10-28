@@ -208,6 +208,11 @@ export function FullAnalysisPanel(props: {
           damage is taken.
         </p>
       </div>
+      <p className={styles.analysisNote}>
+        Hidden for now: damage threatened, Gate made and becoming the Usurper.
+        The practice player plays well below real players, so those answers
+        would mislead. They come back once it plays to turn objectives.
+      </p>
       {prepared.missing.length > 0 && (
         <p role="alert">
           Analysis data is missing: {prepared.missing.join(", ")}.

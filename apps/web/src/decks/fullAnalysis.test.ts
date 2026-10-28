@@ -10,6 +10,8 @@ import {
   watchedPlays,
   type AnalysisRow,
   type ProfileRun,
+  HIDDEN_QUESTIONS,
+  questions,
 } from "./fullAnalysis.ts";
 
 const card = (name: string, cost: number) =>
@@ -175,6 +177,11 @@ describe("full analysis: the questions", () => {
     policy: "reviewed-delayed-hands-v2" as const,
   });
 
+  it("leaves out the damage, Gate and Usurper questions by default", () => {
+    expect(questions(3, []).map((q) => q.id)).toEqual(["chain"]);
+    expect(HIDDEN_QUESTIONS).toEqual(new Set(["damage", "gate", "usurper"]));
+  });
+
   it("states each question for the chosen turn and answers it in a sentence", () => {
     const answers = answerQuestions(
       output([
@@ -194,6 +201,7 @@ describe("full analysis: the questions", () => {
       ]),
       3,
       observed,
+      new Set(),
     );
 
     expect(answers.map((a) => a.question)).toEqual([
@@ -289,6 +297,7 @@ describe("full analysis: the questions", () => {
       ]),
       2,
       observed,
+      new Set(),
     );
     expect(answers[1]!.differences[0]).toMatchObject({
       pairs: 0,

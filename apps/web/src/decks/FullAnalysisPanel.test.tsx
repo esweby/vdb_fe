@@ -10,7 +10,10 @@ const game = (gateTurn: number | null): ProfileRun => ({
   damage: [1, 2, 3, 4, 5, 6, 7, 8],
   gateTurn,
   usurperTurn: null,
-  chain: { reached: 0, setupTurn: null, payoffTurn: null },
+  chain:
+    gateTurn === null
+      ? { reached: 0, setupTurn: null, payoffTurn: null }
+      : { reached: 3, setupTurn: gateTurn, payoffTurn: gateTurn },
   cards: {},
 });
 
@@ -76,7 +79,7 @@ describe("Full analysis", () => {
 
     expect(
       screen.getByRole("heading", {
-        name: "How much damage does this deck threaten by turn 6?",
+        name: "How often do Become the Shadow Lord, a Gate and a blood debt card come together by turn 6?",
       }),
     ).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Run analysis" }));
@@ -92,6 +95,25 @@ describe("Full analysis", () => {
     expect(screen.getByText(/real games it's 41%/)).toBeInTheDocument();
   });
 
+  it("hides the damage, Gate and Usurper questions and says why", () => {
+    renderPanel();
+
+    expect(
+      screen.queryByRole("heading", { name: /How much damage/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: /made a Gate/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: /become the Usurper/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Hidden for now: damage threatened, Gate made and becoming the Usurper\./,
+      ),
+    ).toBeInTheDocument();
+  });
+
   it("answers for another turn without running again", async () => {
     const run = renderPanel();
     const user = userEvent.setup();
@@ -102,7 +124,7 @@ describe("Full analysis", () => {
 
     expect(
       screen.getByRole("heading", {
-        name: "How often has it made a Gate by turn 4?",
+        name: "How often do Become the Shadow Lord, a Gate and a blood debt card come together by turn 4?",
       }),
     ).toBeInTheDocument();
     expect(screen.getByText("In 25% of games.")).toBeInTheDocument();
@@ -116,7 +138,7 @@ describe("Full analysis", () => {
     await screen.findByText("In 50% of games.");
 
     const table = screen.getByRole("table", {
-      name: "Gate made, by turn",
+      name: "Become the Shadow Lord, Gate and blood debt, by turn",
     });
     const rows = within(table).getAllByRole("row");
     expect(within(rows[1]!).getByText("This deck")).toBeInTheDocument();
