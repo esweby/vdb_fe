@@ -55,7 +55,8 @@ func TestClassify(t *testing.T) {
 		{"a weapon swing alone is quiet", with(side("p", true, 3), 0, "M seven_sin_nebula", "M gate_to_iarathael"), "quiet"},
 		{"nothing is quiet", side("p", true, 0), "quiet"},
 		{"traversing to the Usurper adds flip", with(side("p", true, 4), 0, "M become_the_shadow_lord_blue", "TRANSFORM viserai_usurper"), "build+flip"},
-		{"traversing back alone isn't a flip", with(side("p", true, 4), 0, "M become_the_shadow_lord_blue", "TRANSFORM viserai_the_forsaken"), "build"},
+		{"traversing back alone is back, not a flip", with(side("p", true, 4), 0, "M become_the_shadow_lord_blue", "TRANSFORM viserai_the_forsaken"), "build+back"},
+		{"there and back in one turn", with(side("p", true, 4), 0, "M become_the_shadow_lord_blue", "TRANSFORM viserai_usurper", "TRANSFORM viserai_the_forsaken"), "build+flip+back"},
 	}
 	for _, c := range cases {
 		if got := Classify(c.s, 0, o); got != c.want {
@@ -118,7 +119,7 @@ func TestPlayerCapLeavesOutLaterSides(t *testing.T) {
 
 func TestTalliesSplitByWhoWentFirst(t *testing.T) {
 	first := with(side("a", true, 0, 0, 0, 0), 0, "B cull_red", "B murmuring_gloomblade_red")
-	second := with(side("b", false, 0, 0, 0, 0), 0, "B cull_red", "B murmuring_gloomblade_red")
+	second := with(side("b", false, 0, 0, 0, 0, 0), 0, "B cull_red", "B murmuring_gloomblade_red")
 	second.FirstPlayer = 0
 	r := Compute([]game.Game{g(first), g(second)}, opts())
 
@@ -128,5 +129,47 @@ func TestTalliesSplitByWhoWentFirst(t *testing.T) {
 	if got := r.ByFirst["second"]; got.Kept != 1 || got.ByRound[0]["defend"] != (Tally{Sides: 1}) ||
 		got.Sequences["defend > quiet > quiet > quiet"] != (Tally{Sides: 1}) {
 		t.Fatalf("second = %+v", got)
+	}
+}
+
+// Going first, a round is the opponent's turn before yours, then yours: round
+// 0 is only your first turn. Going second, round 0 is only the opponent's first
+// turn and each later round is yours, then the opponent's next (fablazing logs).
+func TestOwnTurnsGoingFirst(t *testing.T) {
+	s := with(side("a", true, 3, 10, 0, 0), 0, "M malefic_incantation_red")
+	s = with(s, 1, "B cull_red", "B murmuring_gloomblade_red", "M murmuring_gloomblade_red")
+	o := opts()
+	if got := Classify(s, 0, o); got != "build" {
+		t.Errorf("own turn 1 = %q, want build", got)
+	}
+	if got := Classify(s, 1, o); got != "burst" {
+		t.Errorf("own turn 2 = %q, want burst (round 1's threatened)", got)
+	}
+}
+
+func TestOwnTurnsGoingSecond(t *testing.T) {
+	s := with(side("a", true, 0, 10, 2, 0, 0), 0, "B cull_red", "B murmuring_gloomblade_red")
+	s = with(s, 1, "M murmuring_gloomblade_red", "TRANSFORM viserai_usurper", "B embrace_ursur_red", "D sink_below_red", "P shadow_of_ursur_blue")
+	s = with(s, 2, "M enshrine_sin_blue")
+	s.FirstPlayer = 0
+	o := opts()
+	if got := Classify(s, 0, o); got != "burst+flip" {
+		t.Errorf("own turn 1 = %q, want burst+flip (round 0's blocks, round 1's own part)", got)
+	}
+	if got := Classify(s, 1, o); got != "defend" {
+		t.Errorf("own turn 2 = %q, want defend (round 1's later blocks, round 2's 2 threatened)", got)
+	}
+	r := Compute([]game.Game{g(s)}, o)
+	if got := r.Cards["defend"]["pitched"]["shadow_of_ursur_blue"]; got != 1 {
+		t.Errorf("a pitch in the opponent's turn goes with the blocks: %+v", r.Cards["defend"])
+	}
+}
+
+func TestGoingSecondNeedsARoundMoreForTheSameOwnTurns(t *testing.T) {
+	s := side("a", true, 0, 0, 0, 0)
+	s.FirstPlayer = 0
+	r := Compute([]game.Game{g(s)}, opts())
+	if r.Counts.Short != 1 || r.Counts.Kept != 0 {
+		t.Fatalf("counts = %+v", r.Counts)
 	}
 }

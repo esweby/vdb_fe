@@ -15,7 +15,7 @@ func runTurns(args []string) error {
 	fs := flag.NewFlagSet("turns", flag.ContinueOnError)
 	capN := fs.Int("cap", playerCap, "most sides one player contributes per day and format (0 for no cap)")
 	minTurns := fs.Int("min-turns", 4, "fewest turn indexes a side needs to count")
-	rounds := fs.Int("rounds", 4, "rounds tallied and in each sequence")
+	rounds := fs.Int("rounds", 4, "own turns tallied and in each sequence")
 	burst := fs.Int("burst", 9, "damage threatened (arcane included) for a burst")
 	defend := fs.Int("defend", 2, "hand cards blocked with to defend")
 	if err := fs.Parse(args); err != nil {
@@ -55,8 +55,8 @@ func printTurns(r turntypes.Result, o turntypes.Options) {
 	c := r.Counts
 	fmt.Printf("%d games, %d Viserai sides: %d kept (%d abandoned, %d without detail, %d under %d turns, %d capped)\n",
 		c.Games, c.ViseraiSides, c.Kept, c.Abandoned, c.WithoutDetail, c.Short, o.MinTurns, c.Capped)
-	fmt.Printf("UNVERIFIED turn types: burst = %d+ threatened; defend = %d+ hand cards blocked; build = a hand card played; quiet = none. +flip = traversed to the Usurper.\n", o.BurstAt, o.DefendBlocks)
-	fmt.Println("(associations, not causes; a round is both players' turns)")
+	fmt.Printf("UNVERIFIED turn types: burst = %d+ threatened; defend = %d+ hand cards blocked; build = a hand card played; quiet = none. +flip = traversed to the Usurper, +back = to the Forsaken. Each own turn includes the opponent's turn before it.\n", o.BurstAt, o.DefendBlocks)
+	fmt.Println("(associations, not causes)")
 
 	printBreakdown("all sides", &r.Breakdown, o)
 	printBreakdown("went first", r.ByFirst["first"], o)
@@ -78,12 +78,12 @@ func printTurns(r turntypes.Result, o turntypes.Options) {
 func printBreakdown(title string, b *turntypes.Breakdown, o turntypes.Options) {
 	fmt.Printf("\n== %s: %d sides\n", title, b.Kept)
 	for round, m := range b.ByRound {
-		fmt.Printf("\nround %d                share   won\n", round)
+		fmt.Printf("\nown turn %d             share   won\n", round+1)
 		for _, k := range byCount(m, 1) {
 			fmt.Printf("  %-18s %5.1f%%  %s\n", k, 100*float64(m[k].Sides)/float64(b.Kept), rate(m[k].Wins, m[k].Sides))
 		}
 	}
-	fmt.Printf("\nsequences of rounds 0-%d with %d+ sides\n", o.Rounds-1, minSample)
+	fmt.Printf("\nsequences of own turns 1-%d with %d+ sides\n", o.Rounds, minSample)
 	for i, k := range byCount(b.Sequences, minSample) {
 		if i == 15 {
 			break

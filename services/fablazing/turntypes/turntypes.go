@@ -19,7 +19,7 @@ type Options struct {
 	MinTurns     int
 	Concession   game.ConcessionRule
 	PlayerCap    int // per day and format; 0 for no cap
-	Rounds       int // rounds tallied and in each sequence, from 0
+	Rounds       int // own turns tallied and in each sequence, from the first
 	BurstAt      int // damage threatened (arcane included) for a burst
 	DefendBlocks int // cards from hand blocked with (defence reactions too) to defend
 }
@@ -96,18 +96,66 @@ func action(code string) string {
 	return ""
 }
 
-// Classify gives one round's turn type: burst (damage threatened at BurstAt or
-// more), defend (DefendBlocks or more hand cards blocked with), build (a hand
-// card played) or quiet, with "+flip" when Viserai traversed to the Usurper.
-func Classify(s game.Side, round int, o Options) string {
-	var plays, blocks int
-	flip := false
+// ownTurn is the side's own turn (0 for its first) with the opponent's turn
+// before it, and the damage it threatened. Going first, that's one round: round
+// 0 is only the first turn, and later rounds are the opponent's turn, then
+// yours. Going second, round 0 is only the opponent's first turn and later
+// rounds are yours, then the opponent's, split at the first block. Inferred
+// from the logs, not documented by FaBlazing.
+func ownTurn(s game.Side, turn int) (events []game.Event, threatened int) {
+	round := turn
+	if !s.WentFirst() {
+		round = turn + 1
+	}
+	if round < len(s.TurnStats) {
+		threatened = s.TurnStats[round].DamageThreatened
+	}
+	if s.WentFirst() {
+		for _, e := range s.Log {
+			if e.Turn == round {
+				events = append(events, e)
+			}
+		}
+		return events, threatened
+	}
+	opp, _ := splitRound(s, round-1)
+	_, own := splitRound(s, round)
+	return append(opp, own...), threatened
+}
+
+// splitRound splits a going-second side's round into the opponent's turn that
+// ends it and the side's own turn that starts it (round 0 has no own turn).
+func splitRound(s game.Side, round int) (opp, own []game.Event) {
+	blocking := round == 0
 	for _, e := range s.Log {
 		if e.Turn != round {
 			continue
 		}
-		if e.Action == "TRANSFORM" && e.Card == "viserai_usurper" {
-			flip = true
+		if e.Action == "B" || e.Action == "D" {
+			blocking = true
+		}
+		if blocking {
+			opp = append(opp, e)
+		} else {
+			own = append(own, e)
+		}
+	}
+	return opp, own
+}
+
+// Classify gives an own turn's type (0 for the first): burst (damage threatened
+// at BurstAt or more), defend (DefendBlocks or more hand cards blocked with in
+// the opponent's turn before), build (a hand card played) or quiet, with
+// "+flip" when Viserai traversed to the Usurper and "+back" when it traversed
+// to the Forsaken.
+func Classify(s game.Side, turn int, o Options) string {
+	events, threatened := ownTurn(s, turn)
+	var plays, blocks int
+	flip, back := false, false
+	for _, e := range events {
+		if e.Action == "TRANSFORM" {
+			flip = flip || e.Card == "viserai_usurper"
+			back = back || e.Card == "viserai_the_forsaken"
 		}
 		if !handCard(s, e.Card) {
 			continue
@@ -118,10 +166,6 @@ func Classify(s game.Side, round int, o Options) string {
 		case "blocked":
 			blocks++
 		}
-	}
-	threatened := 0
-	if round < len(s.TurnStats) {
-		threatened = s.TurnStats[round].DamageThreatened
 	}
 	kind := "quiet"
 	switch {
@@ -135,6 +179,9 @@ func Classify(s game.Side, round int, o Options) string {
 	if flip {
 		kind += "+flip"
 	}
+	if back {
+		kind += "+back"
+	}
 	return kind
 }
 
@@ -145,7 +192,7 @@ type capKey struct {
 }
 
 // Compute tallies the kept Viserai sides of a batch of games: detailed, at least
-// MinTurns rounds, not abandoned, and within each player's earliest PlayerCap
+// MinTurns rounds (one more than Rounds going second), not abandoned, and within each player's earliest PlayerCap
 // sides per day and format.
 func Compute(games []game.Game, o Options) Result {
 	r := Result{
@@ -181,7 +228,7 @@ func Compute(games []game.Game, o Options) Result {
 				c.Abandoned++
 			case !s.Detailed:
 				c.WithoutDetail++
-			case s.Turns < o.MinTurns:
+			case s.Turns < o.MinTurns, !s.WentFirst() && s.Turns <= o.Rounds:
 				c.Short++
 			case capped:
 				c.Capped++
@@ -203,9 +250,10 @@ func (r *Result) add(s game.Side, o Options) {
 	for round := range kinds {
 		kind := Classify(s, round, o)
 		kinds[round] = kind
-		for _, e := range s.Log {
+		events, _ := ownTurn(s, round)
+		for _, e := range events {
 			a := action(e.Action)
-			if e.Turn != round || a == "" || !handCard(s, e.Card) {
+			if a == "" || !handCard(s, e.Card) {
 				continue
 			}
 			if r.Cards[kind] == nil {
