@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { parseGameStats } from "../src/index.ts";
+import { createGameReport, parseGameStats } from "../src/index.ts";
 
 const csv = readFileSync(
   new URL("./fixtures/game-stats-2026-10-22T14-46-08.csv", import.meta.url),
@@ -134,14 +134,21 @@ describe("Talishar stats export (22 Oct 2026)", () => {
     ).toBe('Cull, the "Example"');
   });
 
-  it("reads the other known first-player and result values", () => {
+  it("reads the other known result value", () => {
     expect(
+      parseGameStats(csv.replace("Result,Loser", "Result,Winner")).summary,
+    ).toMatchObject({ firstPlayer: true, result: "win" });
+  });
+
+  it("rejects a going-first export with a turn row more than its turns", () => {
+    expect(() =>
       parseGameStats(
-        csv
-          .replace("First Player,Yes", "First Player,No")
-          .replace("Result,Loser", "Result,Winner"),
-      ).summary,
-    ).toMatchObject({ firstPlayer: false, result: "win" });
+        csv.replace(
+          "6,5,2,0,0,0,0,0,18,10,7,0,0,0,23\n",
+          "6,5,2,0,0,0,0,0,18,10,7,0,0,0,23\n7,0,0,0,0,0,0,0,0,0,0,0,0,0,0\n",
+        ),
+      ),
+    ).toThrow("turn rows do not match the summary");
   });
 
   it.each([
@@ -197,5 +204,51 @@ describe("Talishar stats export (22 Oct 2026)", () => {
     ],
   ])("rejects %s rather than guessing", (_name, input) => {
     expect(() => parseGameStats(input)).toThrow(/Talishar/);
+  });
+});
+
+// Going second (the maintainer's export of 28 Oct 2026): the summary counts 6 turns but
+// there are 7 rows. The first row is the opponent's first turn, where the player can only
+// block; Talishar's stats screen calls it turn 0. Inferred from this one export.
+const second = readFileSync(
+  new URL("./fixtures/game-stats-2026-10-28T21-46-47.csv", import.meta.url),
+  "utf8",
+);
+
+describe("Talishar stats export, going second (28 Oct 2026)", () => {
+  it("reads the summary", () => {
+    expect(parseGameStats(second).summary).toEqual({
+      firstPlayer: false,
+      result: "loss",
+      turns: 6,
+      yourTimeSeconds: 655,
+      totalGameTimeSeconds: 1167,
+    });
+  });
+
+  it("keeps the opponent's first turn as the first of one more row than turns", () => {
+    const { turns } = parseGameStats(second);
+    expect(turns).toHaveLength(7);
+    expect(turns[0]).toMatchObject({
+      turn: 1,
+      cardsPlayed: 0,
+      cardsBlocked: 2,
+      damageThreatened: 0,
+      damageBlocked: 6,
+    });
+    expect(turns[3]).toMatchObject({ cardsPlayed: 7, damageThreatened: 30 });
+  });
+
+  it("builds a report whose averages use every row", () => {
+    expect(
+      createGameReport(parseGameStats(second), { startingLife: 40 }).checks
+        .averageValuePerTurn,
+    ).toMatchObject({ matches: true });
+  });
+
+  it("rejects a going-second export with only as many rows as turns", () => {
+    expect(() =>
+      parseGameStats(second.replace("7,3,0,1,0,0,3,0,14,14,0,0,0,0,12\n", "")),
+    ).toThrow("turn rows do not match the summary");
   });
 });

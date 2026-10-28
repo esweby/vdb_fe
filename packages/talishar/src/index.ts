@@ -24,6 +24,7 @@ export interface GameStats {
   statistics: GameStatistics;
   cardPlays: CardPlayStats[];
   cardActivations: CardActivationStats[];
+  /** One row per turn going first. Going second, the first row is the opponent's first turn. */
   turns: TurnStats[];
   opponentStats: "unavailable";
 }
@@ -264,8 +265,11 @@ export function parseGameStats(csv: string): GameStats {
         ]),
       ) as TurnStats,
   );
+  // Going second, the first row is the opponent's first turn (Talishar's "turn 0"), so
+  // there is one more row than the summary's turns. Seen in the 28 Oct 2026 export.
+  const expectedRows = first === "Yes" ? turnCount : turnCount + 1;
   if (
-    turns.length !== turnCount ||
+    turns.length !== expectedRows ||
     turns.some((turn, i) => turn.turn !== i + 1)
   )
     reject("turn rows do not match the summary");
