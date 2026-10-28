@@ -3,6 +3,7 @@
 //	fablazing game  <file.csv> [guid]                     print a Viserai game turn by turn
 //	fablazing chain [-cap n] <spec.json> <sets.json> <file.csv>... measure one chain across Viserai sides
 //	fablazing aggregate [-json] [-cap n] <file.csv>        the daily rows for one date and format
+//	fablazing turns [-cap n] [-rounds n] [-burst n] [-defend n] <file.csv>... turn types by round (UNVERIFIED)
 //
 // It prints counts and card ids only: never player hashes or anything secret.
 package main
@@ -42,7 +43,7 @@ var concession = aggregate.Concession
 
 func main() {
 	if len(os.Args) < 3 {
-		fmt.Fprintln(os.Stderr, "usage: fablazing game <file.csv> [guid] | fablazing chain [-cap n] <spec.json> <sets.json> <file.csv>... | fablazing aggregate [-json] [-cap n] <file.csv>")
+		fmt.Fprintln(os.Stderr, "usage: fablazing game <file.csv> [guid] | fablazing chain [-cap n] <spec.json> <sets.json> <file.csv>... | fablazing aggregate [-json] [-cap n] <file.csv> | fablazing turns [flags] <file.csv>...")
 		os.Exit(2)
 	}
 	var err error
@@ -53,6 +54,8 @@ func main() {
 		err = runChain(os.Args[2:])
 	case "aggregate":
 		err = runAggregate(os.Args[2:])
+	case "turns":
+		err = runTurns(os.Args[2:])
 	default:
 		err = fmt.Errorf("unknown command %q", os.Args[1])
 	}
