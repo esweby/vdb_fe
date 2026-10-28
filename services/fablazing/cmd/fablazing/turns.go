@@ -58,6 +58,18 @@ func printTurns(r turntypes.Result, o turntypes.Options) {
 	fmt.Printf("UNVERIFIED turn types: burst = %d+ threatened; defend = %d+ hand cards blocked; build = a hand card played; quiet = none. +flip = traversed to the Usurper, +back = to the Forsaken. Each own turn includes the opponent's turn before it.\n", o.BurstAt, o.DefendBlocks)
 	fmt.Println("(associations, not causes)")
 
+	fmt.Printf("\nown turns 1-%d by hand cards played  share  threatened/turn  flip\n", o.Rounds)
+	total := 0
+	for _, w := range r.Width {
+		total += w.Turns
+	}
+	for _, k := range turntypes.WidthBuckets {
+		if w := r.Width[k]; w.Turns > 0 {
+			fmt.Printf("  %-34s %5.1f%%  %15.1f  %3.0f%%\n", k, 100*float64(w.Turns)/float64(total),
+				float64(w.Threatened)/float64(w.Turns), 100*float64(w.Flips)/float64(w.Turns))
+		}
+	}
+
 	printBreakdown("all sides", &r.Breakdown, o)
 	printBreakdown("went first", r.ByFirst["first"], o)
 	printBreakdown("went second", r.ByFirst["second"], o)
@@ -81,6 +93,12 @@ func printBreakdown(title string, b *turntypes.Breakdown, o turntypes.Options) {
 		fmt.Printf("\nown turn %d             share   won\n", round+1)
 		for _, k := range byCount(m, 1) {
 			fmt.Printf("  %-18s %5.1f%%  %s\n", k, 100*float64(m[k].Sides)/float64(b.Kept), rate(m[k].Wins, m[k].Sides))
+		}
+	}
+	fmt.Printf("\nwidest own turn 1-%d (hand cards played)   won\n", o.Rounds)
+	for _, k := range turntypes.WidthBuckets {
+		if t := b.Widest[k]; t.Sides > 0 {
+			fmt.Printf("  %-34s %s\n", k, rate(t.Wins, t.Sides))
 		}
 	}
 	fmt.Printf("\nsequences of own turns 1-%d with %d+ sides\n", o.Rounds, minSample)

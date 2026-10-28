@@ -30,23 +30,49 @@ type Counts struct{ Games, ViseraiSides, Abandoned, WithoutDetail, Short, Capped
 // Tally is how many kept sides had something, and how many of them won.
 type Tally struct{ Sides, Wins int }
 
+// WidthTally is the own turns that played a number of hand cards: how many,
+// their damage threatened in total, and how many traversed to the Usurper.
+type WidthTally struct{ Turns, Threatened, Flips int }
+
+// WidthBucket groups a number of hand cards played in a turn.
+func WidthBucket(n int) string {
+	switch {
+	case n <= 2:
+		return "0-2"
+	case n == 3:
+		return "3"
+	case n <= 5:
+		return "4-5"
+	case n <= 7:
+		return "6-7"
+	}
+	return "8+"
+}
+
+// WidthBuckets are WidthBucket's groups, narrowest first.
+var WidthBuckets = []string{"0-2", "3", "4-5", "6-7", "8+"}
+
 // Breakdown is the round and sequence tallies for one group of kept sides.
+// Widest is by the most hand cards played in any own turn tallied.
 type Breakdown struct {
 	Kept      int
 	ByRound   []map[string]Tally
 	Sequences map[string]Tally
+	Widest    map[string]Tally
 }
 
 func newBreakdown(rounds int) *Breakdown {
-	b := &Breakdown{ByRound: make([]map[string]Tally, rounds), Sequences: map[string]Tally{}}
+	b := &Breakdown{ByRound: make([]map[string]Tally, rounds), Sequences: map[string]Tally{}, Widest: map[string]Tally{}}
 	for i := range b.ByRound {
 		b.ByRound[i] = map[string]Tally{}
 	}
 	return b
 }
 
-func (b *Breakdown) add(kinds []string, win int) {
+func (b *Breakdown) add(kinds []string, widest string, win int) {
 	b.Kept++
+	w := b.Widest[widest]
+	b.Widest[widest] = Tally{w.Sides + 1, w.Wins + win}
 	for round, kind := range kinds {
 		t := b.ByRound[round][kind]
 		b.ByRound[round][kind] = Tally{t.Sides + 1, t.Wins + win}
@@ -58,12 +84,14 @@ func (b *Breakdown) add(kinds []string, win int) {
 
 // Result is the tallies, pooled and split by who went first ("first" or
 // "second"). Cards is by turn type, then action (played, pitched, blocked),
-// then card id, over the rounds tallied.
+// then card id, over the rounds tallied. Width is every own turn tallied, by
+// hand cards played.
 type Result struct {
 	Counts Counts
 	Breakdown
 	ByFirst map[string]*Breakdown
 	Cards   map[string]map[string]map[string]int
+	Width   map[string]WidthTally
 }
 
 // tokens are logged like cards but aren't from the hand.
@@ -199,6 +227,7 @@ func Compute(games []game.Game, o Options) Result {
 		Breakdown: *newBreakdown(o.Rounds),
 		ByFirst:   map[string]*Breakdown{"first": newBreakdown(o.Rounds), "second": newBreakdown(o.Rounds)},
 		Cards:     map[string]map[string]map[string]int{},
+		Width:     map[string]WidthTally{},
 	}
 	ordered := append([]game.Game(nil), games...)
 	sort.SliceStable(ordered, func(i, j int) bool {
@@ -247,14 +276,22 @@ func (r *Result) add(s game.Side, o Options) {
 		win = 1
 	}
 	kinds := make([]string, o.Rounds)
+	widest := 0
 	for round := range kinds {
 		kind := Classify(s, round, o)
 		kinds[round] = kind
-		events, _ := ownTurn(s, round)
+		events, threatened := ownTurn(s, round)
+		played, flip := 0, 0
 		for _, e := range events {
+			if e.Action == "TRANSFORM" && e.Card == "viserai_usurper" {
+				flip = 1
+			}
 			a := action(e.Action)
 			if a == "" || !handCard(s, e.Card) {
 				continue
+			}
+			if a == "played" {
+				played++
 			}
 			if r.Cards[kind] == nil {
 				r.Cards[kind] = map[string]map[string]int{}
@@ -264,13 +301,16 @@ func (r *Result) add(s game.Side, o Options) {
 			}
 			r.Cards[kind][a][e.Card]++
 		}
+		w := r.Width[WidthBucket(played)]
+		r.Width[WidthBucket(played)] = WidthTally{w.Turns + 1, w.Threatened + threatened, w.Flips + flip}
+		widest = max(widest, played)
 	}
-	r.Breakdown.add(kinds, win)
+	r.Breakdown.add(kinds, WidthBucket(widest), win)
 	order := "second"
 	if s.WentFirst() {
 		order = "first"
 	}
-	r.ByFirst[order].add(kinds, win)
+	r.ByFirst[order].add(kinds, WidthBucket(widest), win)
 }
 
 func day(createdAt string) string {

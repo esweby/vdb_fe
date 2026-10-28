@@ -173,3 +173,40 @@ func TestGoingSecondNeedsARoundMoreForTheSameOwnTurns(t *testing.T) {
 		t.Fatalf("counts = %+v", r.Counts)
 	}
 }
+
+func TestWidthBuckets(t *testing.T) {
+	for n, want := range map[int]string{0: "0-2", 2: "0-2", 3: "3", 4: "4-5", 5: "4-5", 6: "6-7", 7: "6-7", 8: "8+", 11: "8+"} {
+		if got := WidthBucket(n); got != want {
+			t.Errorf("WidthBucket(%d) = %q, want %q", n, got, want)
+		}
+	}
+}
+
+func TestWidthCountsHandCardsPlayedPerOwnTurn(t *testing.T) {
+	wide := with(side("a", true, 20, 4, 0, 0), 0,
+		"M cull_red", "INSTANT cull_red", "M sinspeaker_gloomblade_red", "M runechant_of_greed_yellow",
+		"M bloodfrenzy_gloomblade_red", "M murmuring_gloomblade_red",
+		"M seven_sin_nebula", "M gate_to_iarathael", "P shadow_of_ursur_blue", "TRANSFORM viserai_usurper")
+	wide = with(wide, 1, "M enshrine_sin_blue", "M cull_red", "M sinspeaker_gloomblade_red")
+	narrow := with(side("b", false, 3, 3, 3, 3), 0, "M enshrine_sin_blue")
+	r := Compute([]game.Game{g(wide), g(narrow)}, opts())
+
+	if got := r.Widest["6-7"]; got != (Tally{Sides: 1, Wins: 1}) {
+		t.Fatalf("widest 6-7 = %+v (weapon and Gate token don't count)", got)
+	}
+	if got := r.Widest["0-2"]; got != (Tally{Sides: 1}) {
+		t.Fatalf("widest 0-2 = %+v", got)
+	}
+	if got := r.Width["6-7"]; got != (WidthTally{Turns: 1, Threatened: 20, Flips: 1}) {
+		t.Fatalf("width 6-7 = %+v", got)
+	}
+	if got := r.Width["3"]; got != (WidthTally{Turns: 1, Threatened: 4}) {
+		t.Fatalf("width 3 = %+v", got)
+	}
+	if got := r.Width["0-2"].Turns; got != 6 {
+		t.Fatalf("0-2 turns = %d, want 6", got)
+	}
+	if got := r.ByFirst["first"].Widest["6-7"]; got != (Tally{Sides: 1, Wins: 1}) {
+		t.Fatalf("first widest = %+v", got)
+	}
+}

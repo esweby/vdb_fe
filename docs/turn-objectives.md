@@ -114,6 +114,31 @@ Going first, the maintainer's 52-card list, 28 Oct:
 
 Turn 2 is the question. The hand was Arknight Descendancy (blue), Demonbound Gloomblade (red), Enshrine Sin (blue) and Murmuring Gloomblade (blue), with 1 Runechant carried and Runechant of Greed in the arsenal. The turn made 2 Runechants. Would playing Greed from the arsenal have made the 3rd and flipped on turn 2? Or was holding it right? The maintainer doesn't remember, so it stays open.
 
+## Going wide
+
+"Go wide" was one of the maintainer's first objectives. `fablazing turns` also counts the hand cards played in each own turn: cards from hand, the arsenal or banish, not the weapon, equipment or Gate and Runechant tokens. Real turns play 2.4 on average.
+
+| Hand cards played | Share of own turns 1–4 | Threatened per turn | Flip |
+| ----------------- | ---------------------- | ------------------- | ---- |
+| 0–2               | 54%                    | 5.0                 | 13%  |
+| 3                 | 24%                    | 11.0                | 40%  |
+| 4–5               | 20%                    | 14.9                | 59%  |
+| 6–7               | 2.2%                   | 19.6                | 76%  |
+| 8 or more         | 0.1%                   | 25.3                | 89%  |
+
+The widest own turn in turns 1–4, against winning:
+
+| Widest turn | Won, all | Went first | Went second |
+| ----------- | -------- | ---------- | ----------- |
+| 0–2         | 24%      | 23%        | 24%         |
+| 3           | 24%      | 24%        | 24%         |
+| 4–5         | 33%      | 33%        | 32%         |
+| 6–7         | 43%      | 47%        | 37%         |
+
+Reaching one turn of 4–5 cards goes with about 10 more points, and 6–7 with about 10 more again. In a one-off count, the cards most over-represented in turns of 6 or more were the sinchants (Runechant of Greed ×6.5, Sloth ×5.1), Sinspeaker Gloomblade (red, ×5.7), Revel in Runeblood (×7.1), red Enshrine Sin (×4.6), Cull (×4.1) and red Bloodfrenzy Gloomblade (×4.0).
+
+Draft, unverified: going wide could be a fourth thing a line is scored on, beside damage, what it leaves behind and coming back. In the data, width and damage rise together: each step wider adds about 4–5 damage threatened.
+
 ## The maintainer's answers (28 Oct 2026)
 
 1. **Do the objectives and their order match how you play?** "Sort of but not really, they're broad ideas based on game state." So the per-turn tables above are not approved. Objectives should come from the game state (Runechants, banished cards, side, hand), not from a fixed turn number.
