@@ -572,6 +572,8 @@ export function DeckPage() {
           <FullAnalysisPanel entries={entries} cards={cards} />
         ) : tab === "gaps" ? (
           <DeckGapsPanel
+            key={deck.id}
+            deckId={deck.id}
             entries={entries}
             pool={cards}
             onAdd={

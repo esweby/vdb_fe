@@ -2,7 +2,7 @@
 // moved off Stats at the maintainer's request, 19 Oct 2026).
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { fakeAuthService } from "../test/fakeAuthService.ts";
 import { fakeDeckRepository } from "../test/fakeDeckRepository.ts";
 import { renderApp } from "../test/renderApp.tsx";
@@ -32,62 +32,100 @@ const gaps = async () =>
   within(await screen.findByRole("region", { name: "Gaps" }));
 
 describe("gaps", () => {
-  it("names a role the deck relies on that's missing from a pitch it plays", async () => {
-    // Red: Hocus Pocus and Fate Foreseen; blue: Become the Shadow Lord (the only banisher).
-    // Gate makers are never a gap by colour (the maintainer, 20 Oct 2026).
+  beforeEach(() => localStorage.clear());
+  it("waits for goals and runs only the selected checks", async () => {
     await renderApp({
       path: "/decks/deck-1?tab=gaps",
       auth: auth(),
-      decks: withDeck([
-        card("hp1", 3),
-        card("bsl3", 3),
-        card("ff1", 2),
-        card("ff3", 2),
-      ]).repository,
+      decks: withDeck([card("hp3", 3), card("ff2", 5)]).repository,
     });
-    const gap = within(
-      (await gaps()).getByRole("article", { name: "No red banishers" }),
+    const panel = await gaps();
+    expect(panel.queryByRole("article")).toBeNull();
+    const user = userEvent.setup();
+    await user.click(
+      panel.getByRole("button", { name: "Runechant generation" }),
     );
+    await user.click(panel.getByRole("button", { name: "Run analysis" }));
     expect(
-      gap.getByText("You play 5 red cards and 3 banishers."),
+      panel.getByRole("article", { name: "Runechant generation" }),
     ).toBeInTheDocument();
     expect(
-      gap.getByText("Nothing in the card pool fills this yet."),
-    ).toBeInTheDocument();
+      panel.queryByRole("article", { name: "Gate generation" }),
+    ).toBeNull();
+    await user.click(panel.getByRole("button", { name: "Gate generation" }));
+    expect(panel.queryByRole("article")).toBeNull();
   });
 
-  it("offers cards that would fill it, and adds one", async () => {
-    // Blue Hocus Pocus is the only Runechant maker; yellow has 5 cards.
-    const fake = withDeck([card("hp3", 3), card("ff2", 5), card("ff3", 2)]);
+  it("shows sideboard support separately and offers additions from the pool", async () => {
+    const fake = withDeck([{ ...card("hp3", 3), sideboard: true }]);
     await renderApp({
       path: "/decks/deck-1?tab=gaps",
       auth: auth(),
       decks: fake.repository,
     });
-    const gap = within(
-      (await gaps()).getByRole("article", {
-        name: "No yellow Runechant makers",
-      }),
+    const panel = await gaps();
+    const user = userEvent.setup();
+    await user.click(
+      panel.getByRole("button", { name: "Runechant generation" }),
+    );
+    await user.click(panel.getByRole("button", { name: "Run analysis" }));
+    const result = within(
+      panel.getByRole("article", { name: "Runechant generation" }),
     );
     expect(
-      gap.getByText("You play 5 yellow cards and 3 Runechant makers."),
+      result.getByText("Main deck: 0 copies. Sideboard: 3 copies."),
     ).toBeInTheDocument();
-    await userEvent
-      .setup()
-      .click(gap.getByRole("button", { name: "Add Hocus Pocus (yellow)" }));
+    expect(result.getByText("Available in your sideboard")).toBeInTheDocument();
+    await user.click(
+      result.getByRole("button", { name: "Add Hocus Pocus (yellow)" }),
+    );
     await waitFor(() => expect(fake.saved).toContain("set deck-1 hp2 1 main"));
   });
 
-  it("says when there are none", async () => {
+  it("remembers goals for this deck and tolerates invalid stored preferences", async () => {
+    localStorage.setItem(
+      "vdb:gap-goals:deck-1",
+      JSON.stringify(["gate", "obsolete"]),
+    );
+    localStorage.setItem(
+      "vdb:gap-goals:another-deck",
+      JSON.stringify(["runechant"]),
+    );
     await renderApp({
       path: "/decks/deck-1?tab=gaps",
       auth: auth(),
-      decks: withDeck([card("hp1", 3), card("hp3", 3)]).repository,
+      decks: withDeck([]).repository,
     });
+    const panel = await gaps();
     expect(
-      (await gaps()).getByText(
-        "No gaps: every pitch you play has the makers your deck relies on.",
-      ),
+      panel.getByRole("button", { name: "Gate generation" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(
+      panel.getByRole("button", { name: "Runechant generation" }),
+    ).toHaveAttribute("aria-pressed", "false");
+    await userEvent
+      .setup()
+      .click(panel.getByRole("button", { name: "Disruption" }));
+    expect(JSON.parse(localStorage.getItem("vdb:gap-goals:deck-1")!)).toEqual([
+      "gate",
+      "disruption",
+    ]);
+  });
+
+  it("shows an absent selected goal without declaring the whole deck gap-free", async () => {
+    localStorage.setItem("vdb:gap-goals:deck-1", "invalid JSON");
+    await renderApp({
+      path: "/decks/deck-1?tab=gaps",
+      auth: auth(),
+      decks: withDeck([]).repository,
+    });
+    const panel = await gaps();
+    expect(panel.getByRole("button", { name: "Run analysis" })).toBeDisabled();
+    const user = userEvent.setup();
+    await user.click(panel.getByRole("button", { name: "Gate generation" }));
+    await user.click(panel.getByRole("button", { name: "Run analysis" }));
+    expect(
+      panel.getByText("No recorded support in this deck or sideboard"),
     ).toBeInTheDocument();
   });
 
