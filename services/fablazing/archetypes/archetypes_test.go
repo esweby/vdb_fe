@@ -222,7 +222,8 @@ func TestProfileTalliesOwnTurnsOneToFour(t *testing.T) {
 	c.Log = []game.Event{{Turn: 7, Card: "usurp_the_shadow_throne_blue", Action: "M"}} // Usurp counts any time in the game
 	c.Won = false
 	p := Profile([]game.Side{a, b, c}, ProfileOptions{Rounds: 4, Brick: 5, Big: 14, Peak: 18, Usurp: "usurp_the_shadow_throne_blue"})
-	want := ProfileTally{Sides: 3, Wins: 1, Turns: 11, Threatened: 2 + 9 + 14 + 20 + 0 + 4 + 18 + 12, Bricks: 7, Big: 3, Flips: 1, PeakSides: 2, UsurpSides: 2, UsurpWins: 1}
+	want := ProfileTally{Sides: 3, Wins: 1, Turns: 11, Threatened: 2 + 9 + 14 + 20 + 0 + 4 + 18 + 12, Bricks: 7, Big: 3, Flips: 1, PeakSides: 2, UsurpSides: 2, UsurpWins: 1,
+		FlipSides: 1, GameTurns: 5 + 3 + 8, GameFlips: 1, UsurperTurns: 3}
 	if p != want {
 		t.Fatalf("profile = %+v, want %+v", p, want)
 	}
@@ -234,5 +235,32 @@ func TestEachArchetypeHasATurnProfile(t *testing.T) {
 	r := Compute(styles(), o)
 	if a := r.Archetypes[0]; a.Turns.Sides != a.Sides || a.Turns.Wins != a.Wins {
 		t.Fatalf("profile = %+v for %d sides", a.Turns, a.Sides)
+	}
+}
+
+// Flips and returns: by own turn 4, and over the whole game how many own
+// turns began as the Usurper, to compare with how many flips there were.
+func TestProfileCountsFlipsReturnsAndTurnsAsTheUsurper(t *testing.T) {
+	d := own(5, 5, 5, 5, 5)
+	d.Log = []game.Event{
+		{Turn: 0, Card: "viserai_usurper", Action: "TRANSFORM"},
+		{Turn: 1, Card: "viserai_the_forsaken", Action: "TRANSFORM"},
+		{Turn: 2, Card: "viserai_usurper", Action: "TRANSFORM"},
+	}
+	p := Profile([]game.Side{d}, ProfileOptions{Rounds: 4, Brick: 5, Big: 14, Peak: 18})
+	// Own turns 2, 4 and 5 begin as the Usurper; turn 3 begins back as the Forsaken.
+	got := [7]int{p.Flips, p.Backs, p.FlipSides, p.BackSides, p.GameFlips, p.GameBacks, p.UsurperTurns}
+	if want := [7]int{2, 1, 1, 1, 2, 1, 3}; got != want {
+		t.Fatalf("flips, backs, flip sides, back sides, game flips, game backs, Usurper turns = %v, want %v", got, want)
+	}
+}
+
+func TestCopiesCountsACardInAList(t *testing.T) {
+	s := deck("p", true, "usurp_the_shadow_throne_blue")
+	if got := Copies(s, "usurp_the_shadow_throne_blue"); got != 3 {
+		t.Fatalf("copies = %d, want 3", got)
+	}
+	if got := Copies(s, "revel_in_runeblood_red"); got != 0 {
+		t.Fatalf("copies = %d, want 0", got)
 	}
 }

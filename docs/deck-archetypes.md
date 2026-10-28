@@ -70,8 +70,28 @@ FaBlazing doesn't log a game's last attack, so a Usurp that won the game can be 
 Against the write-up:
 
 1. **RG.** Partly borne out. Archetype 3 has the higher average (9.4 against 9.0) and slightly more bricks (29% against 28%). But it has the *higher* ceiling: 31% of its turns are big, and 46% of its sides reach 18, against 26% and 32% for the lookalikes. It also wins more (34.5% against 32.7%, with overlapping intervals).
-2. **Flipping.** Not measured here. The turn types (`fablazing turns`) count flips and returns, and could split them by archetype next.
-3. **Usurp every game.** Not borne out by the logs. The lookalikes played Usurp in 28% of games, and in 18% of losses. Even archetype 1 plays it in 22%. The earlier one-off count found the same: Usurp turns are big, about 20 threatened, but rare.
+2. **Staying in Usurper.** Borne out: see the split below.
+3. **Usurp every game.** Not borne out by the logs. The lookalikes played Usurp in 28% of games and 18% of losses, and even those running 3 played it in only 40%. The earlier one-off count found the same: Usurp turns are big, about 20 threatened, but rare.
+
+### Split by Usurp copies, flips and returns
+
+The lookalikes split by how many Usurp the Shadow Throne the recorded list runs. Flip and back are the sides that flipped to the Usurper, or came back to the Forsaken, by own turn 4. "Usurper turns per flip" is over the whole game: own turns that began as the Usurper, divided by flips.
+
+| Group | Sides | Players | Won | Played Usurp (losses) | Flip by t4 | Back by t4 | Backs per flip | Usurper turns per flip |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Lookalikes, 3 Usurp | 255 | 51 | **36.1%** [30.4–42.1] | 40% (26%) | 93% | 27% | 36% | **3.45** |
+| Lookalikes, 1–2 Usurp | 158 | 55 | 25.3% [19.2–32.6] | 11% (8%) | 91% | 49% | 53% | 1.95 |
+| 1: sinchants and Usurp | 8,241 | 750 | 29.8% | 22% (16%) | 91% | 44% | 52% | 2.31 |
+| 3: Vantom and Widespread | 5,281 | 517 | 34.5% | 1% (1%) | 97% | 61% | 64% | 1.62 |
+| 4: Widespread and Deadwood | 4,444 | 525 | 30.9% | 6% (4%) | 94% | 50% | 58% | 1.98 |
+| 6: defence reactions | 1,592 | 242 | 41.3% | 12% (11%) | 67% | 3% | 9% | 8.83 |
+| 7: Shadowrealm and Enshrine | 1,147 | 159 | 33.2% | 15% (11%) | 97% | 69% | 68% | 1.28 |
+
+Six lookalikes run no Usurp, too few to show.
+
+- **Three Usurp is the version that wins.** Lookalikes with 3 won 36%, against 25% with 1 or 2. The intervals don't overlap, but it's 51 players, so a few strong ones could carry it.
+- **It stays in Usurper about twice as long per flip.** 3.45 own turns against 1.62 for archetype 3, which fits the write-up's plan. It comes back to the Forsaken less: 27% by turn 4 against 61%. Earlier, coming back went with winning across all lists (`docs/turn-objectives.md`), so this list wins a different way.
+- **Archetype 6 barely comes back.** Once it flips, it stays: 8.8 own turns per flip. Only 67% flip by turn 4.
 
 Archetype 6 is the odd one out. It threatens half as much, bricks on 58% of turns, and still wins most. That fits a defensive plan that wins long games, not the burst model behind these thresholds.
 
@@ -84,6 +104,6 @@ Archetype 6 is the odd one out. It threatens half as much, bricks on 58% of turn
 
 ## Next
 
-- Split the lookalikes by whether they run 3 Usurp, and by flips and returns.
+- Weigh each player equally for the 3-Usurp lookalikes (51 players).
 - Weigh each player equally (one vote per player) to check archetype 6's 41%.
 - Split the top archetypes by opponent.

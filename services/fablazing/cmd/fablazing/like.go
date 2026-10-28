@@ -87,16 +87,53 @@ func runLike(args []string) error {
 		fmt.Printf("  %.0f%%+  %d\n", 100*at, len(archetypes.Lookalikes(games, target, o, at)))
 	}
 
-	fmt.Printf("\n%-24s %6s %8s  %-28s %6s %6s %6s %6s %6s %9s\n", "group", "sides", "players", "won", "thr/t", "brick", "big", "peak", "usurp", "in losses")
 	like := archetypes.Lookalikes(games, target, o, *min)
-	players := map[game.PlayerHash]bool{}
-	for _, s := range like {
-		players[s.Player] = true
+	type group struct {
+		label   string
+		players int
+		p       archetypes.ProfileTally
 	}
-	printProfile(fmt.Sprintf("lookalikes %.0f%%+", 100**min), len(players), archetypes.Profile(like, po))
+	profile := func(label string, sides []game.Side) group {
+		players := map[game.PlayerHash]bool{}
+		for _, s := range sides {
+			players[s.Player] = true
+		}
+		return group{label, len(players), archetypes.Profile(sides, po)}
+	}
+	byUsurp := map[string][]game.Side{}
+	for _, s := range like {
+		switch n := archetypes.Copies(s, po.Usurp); {
+		case n >= 3:
+			byUsurp["3"] = append(byUsurp["3"], s)
+		case n > 0:
+			byUsurp["1-2"] = append(byUsurp["1-2"], s)
+		default:
+			byUsurp["0"] = append(byUsurp["0"], s)
+		}
+	}
+	groups := []group{
+		profile(fmt.Sprintf("lookalikes %.0f%%+", 100**min), like),
+		profile("  with 3 Usurp", byUsurp["3"]),
+		profile("  with 1-2 Usurp", byUsurp["1-2"]),
+		profile("  with no Usurp", byUsurp["0"]),
+	}
 	for i, a := range r.Archetypes {
-		label := fmt.Sprintf("archetype %d", i+1)
-		printProfile(label, a.Players, a.Turns)
+		groups = append(groups, group{fmt.Sprintf("archetype %d", i+1), a.Players, a.Turns})
+	}
+
+	fmt.Printf("\n%-24s %6s %8s  %-28s %6s %6s %6s %6s %6s %9s\n", "group", "sides", "players", "won", "thr/t", "brick", "big", "peak", "usurp", "in losses")
+	for _, g := range groups {
+		printProfile(g.label, g.players, g.p)
+	}
+	fmt.Println("\nflips and returns: sides that flipped / came back by own turn 4; over the whole game, own turns that began as the Usurper per flip")
+	fmt.Printf("%-24s %6s %8s %8s %12s %14s\n", "group", "sides", "flip t4", "back t4", "back/flip", "Usurper t/flip")
+	for _, g := range groups {
+		p := g.p
+		if p.Sides == 0 || p.GameFlips == 0 {
+			continue
+		}
+		fmt.Printf("%-24s %6d %7.0f%% %7.0f%% %11.0f%% %14.2f\n", g.label, p.Sides, 100*float64(p.FlipSides)/float64(p.Sides), 100*float64(p.BackSides)/float64(p.Sides),
+			100*float64(p.GameBacks)/float64(p.GameFlips), float64(p.UsurperTurns)/float64(p.GameFlips))
 	}
 	return nil
 }
