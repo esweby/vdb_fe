@@ -105,6 +105,24 @@ Six lookalikes run no Usurp, too few to show.
 
 Archetype 6 is the odd one out. It threatens half as much, bricks on 58% of turns, and still wins most. That fits a defensive plan that wins long games, not the burst model behind these thresholds.
 
+## Placing the ultra aggro list
+
+On 28 Oct the maintainer shared a second list, "ultra aggro inspired" ([lists/ultra-aggro.txt](lists/ultra-aggro.txt)). It has 59 cards and 23 different cards in the main deck: Bloodfrenzy (red and yellow), Sinspeaker, Swarming Gloomveil, Embrace Ursur, Runic Reaving, Shadowrealm Ripper, all three sinchants and 3 Usurp, with no Pull from Beyond or Plundersong.
+
+It sits nearest **archetype 2** (Sinspeaker, Bloodfrenzy and Plundersong), the weakest big group at 25.7%. Few real lists are close to it. Among kept sides, by similarity to its main deck: 2,263 sides are at 50% or more, **151 (from 40 players) at 60%**, 1 at 70% and none at 80%.
+
+| Group                         | Sides  | Players | Won, by side      | Won, by player    | Threatened a turn | Brick   | Big | Peak | Usurper turns per flip |
+| ----------------------------- | ------ | ------- | ----------------- | ----------------- | ----------------- | ------- | --- | ---- | ---------------------- |
+| Aggro lookalikes (60%+)       | 151    | 40      | 32.5% [25.5–40.3] | 23.1% [13.1–34.4] | **9.7**           | **23%** | 27% | 40%  | 2.49                   |
+| Usurp lookalikes, 3 Usurp     | 255    | 51      | 36.1%             | 29.9% [20.1–40.0] | 8.8               | 30%     | 25% | 34%  | 3.45                   |
+| 2: Sinspeaker and Bloodfrenzy | 5,802  | 729     | 25.7%             |                   | 8.7               | 27%     | 23% | 30%  | 2.14                   |
+| 3: Vantom and Widespread      | 5,281  | 517     | 34.5%             |                   | 9.4               | 29%     | 31% | 46%  | 1.62                   |
+| All kept Viserai              | 29,223 | 1,707   | 30.5%             | 25.5% [24.3–26.8] |                   |         |     |      |                        |
+
+- **It does what it says on the turns.** The lookalikes threaten the most per turn of any group (9.7) and brick the least (23% of own turns 1 to 4).
+- **The win rate is one player's.** The busiest player has 23% of the sides and won 50%. The rest won 27.4%, and by player the group is 23.1%, at or below the Viserai baseline. There's too little data to say the list wins more.
+- Only 39 of the lookalikes run 3 Usurp, too few to split.
+
 ## Caveats
 
 - **Who plays it.** A deck that strong players choose will look strong. Archetype 6 has 242 players, about 6.6 sides each, so it isn't a handful of people, but its win rate isn't adjusted for player skill.
