@@ -51,4 +51,22 @@ with the main deck and the sideboard apart: a copy moved across shows on both si
 Each line says Added, Removed or Changed in words. Loadouts and pitch targets are not
 compared yet.
 
+## Games
+
+Each version has a **Games** list. Download a game's stats CSV from Talishar's stats
+screen and upload it onto the version you played, with an optional note. The site reads
+the file in your browser and stores what it found: the result, who went first, the turns,
+each card's plays, pitches and blocks, and the turn by turn breakdown. A file that isn't
+a Talishar stats export is refused.
+
+Talishar's export lists every card in the deck you played. If the version you chose
+doesn't have one of them, by name and pitch, main deck or sideboard, the site says which,
+and offers the newest version that has them all. You can still upload onto the version
+you chose.
+
+Games are private to the deck's owner, like versions. An uploaded game can't be edited:
+delete it and upload it again. Deleting a version's deck deletes its games.
+
+A report per game comes next ([test-loop.md](test-loop.md), step 3).
+
 A deck's strategy comes later.

@@ -5,6 +5,7 @@ import type {
   Matchup,
   PlanGoal,
   DeckVersion,
+  VersionGame,
 } from "../decks/deckRepository.ts";
 import type { FormatRules } from "../decks/deckRules.ts";
 import { sampleCards } from "./fakeCardRepository.ts";
@@ -32,6 +33,8 @@ export function fakeDeckRepository(
   } = {},
 ) {
   let versions: DeckVersion[] = [...(options.versions ?? [])];
+  let games: VersionGame[] = [];
+  let nextGame = 0;
   let matchups = [...(options.matchups ?? [])];
   let nextMatchup = 0;
   let goals = [...(options.goals ?? [])];
@@ -102,6 +105,23 @@ export function fakeDeckRepository(
       versions = versions.map((v) =>
         v.id === id ? { ...v, fabraryUrl: url } : v,
       );
+    },
+    listGames: async (versionId) =>
+      games.filter((game) => game.versionId === versionId),
+    async addGame(versionId, game) {
+      saved.push(`game ${versionId} ${game.fileName ?? ""}`);
+      const added: VersionGame = {
+        id: `game-${++nextGame}`,
+        versionId,
+        uploadedAt: "2026-10-28T12:00:00Z",
+        ...game,
+      };
+      games = [added, ...games];
+      return added;
+    },
+    async deleteGame(id) {
+      saved.push(`game delete ${id}`);
+      games = games.filter((game) => game.id !== id);
     },
     listMyDecks: async (userId) =>
       decks.filter((d) => d.ownerId === userId).map(summary),

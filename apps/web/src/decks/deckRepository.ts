@@ -1,5 +1,6 @@
 // Decks (yours, and anyone's public ones), behind an interface so tests can use a fake.
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { GameStats } from "@vdb/talishar";
 import type { FormatRules } from "./deckRules.ts";
 
 /**
@@ -98,6 +99,16 @@ export interface DeckVersion {
   fabraryUrl: string | null;
 }
 
+/** A Talishar game uploaded onto a version: its parsed stats and an optional note. */
+export interface VersionGame {
+  id: string;
+  versionId: string;
+  uploadedAt: string;
+  fileName: string | null;
+  note: string | null;
+  stats: GameStats;
+}
+
 export interface DeckRepository {
   /** The user's own decks, public and private, most recently changed first. */
   listMyDecks(userId: string): Promise<DeckSummary[]>;
@@ -139,6 +150,13 @@ export interface DeckRepository {
   listVersions(deckId: string): Promise<DeckVersion[]>;
   saveVersion(deckId: string): Promise<DeckVersion>;
   setVersionLink(versionId: string, url: string | null): Promise<void>;
+  /** A version's uploaded games, newest first (its owner's only). */
+  listGames(versionId: string): Promise<VersionGame[]>;
+  addGame(
+    versionId: string,
+    game: Pick<VersionGame, "fileName" | "note" | "stats">,
+  ): Promise<VersionGame>;
+  deleteGame(id: string): Promise<void>;
 }
 
 const GOAL =
@@ -148,6 +166,8 @@ const SUMMARY =
   "id, name, updatedAt:updated_at, visibility, ownerId:user_id, cards:deck_cards(variantId:variant_id, quantity, sideboard)";
 const VERSION =
   "id, deckId:deck_id, number, createdAt:created_at, snapshot, fabraryUrl:fabrary_url";
+const GAME =
+  "id, versionId:version_id, uploadedAt:uploaded_at, fileName:file_name, note, stats";
 
 export function supabaseDeckRepository(client: SupabaseClient): DeckRepository {
   /** Adds each owner's username, read through public.usernames() (profiles stay private). */
@@ -193,6 +213,36 @@ export function supabaseDeckRepository(client: SupabaseClient): DeckRepository {
         .from("deck_versions")
         .update({ fabrary_url: url })
         .eq("id", versionId);
+      if (error) throw error;
+    },
+    async listGames(versionId) {
+      const { data, error } = await client
+        .from("version_games")
+        .select(GAME)
+        .eq("version_id", versionId)
+        .order("uploaded_at", { ascending: false });
+      if (error) throw error;
+      return data as VersionGame[];
+    },
+    async addGame(versionId, game) {
+      const { data, error } = await client
+        .from("version_games")
+        .insert({
+          version_id: versionId,
+          file_name: game.fileName,
+          note: game.note,
+          stats: game.stats,
+        })
+        .select(GAME)
+        .single();
+      if (error) throw error;
+      return data as VersionGame;
+    },
+    async deleteGame(id) {
+      const { error } = await client
+        .from("version_games")
+        .delete()
+        .eq("id", id);
       if (error) throw error;
     },
     async listMyDecks(userId) {

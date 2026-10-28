@@ -2,13 +2,19 @@
 -- authenticated by default (local stacks do), so every grant must be explicit.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(93);
+select plan(96);
 
 select table_privs_are('public', 'deck_versions', 'anon', array[]::text[], 'anon has no access to deck versions');
 select table_privs_are('public', 'deck_versions', 'authenticated', array['SELECT'], 'owners read versions, with only column updates');
 select ok(has_column_privilege('authenticated', 'public.deck_versions', 'fabrary_url', 'UPDATE')
   and not has_column_privilege('authenticated', 'public.deck_versions', 'snapshot', 'UPDATE'),
   'only the optional FaBrary link can be updated');
+select table_privs_are('public', 'version_games', 'anon', array[]::text[], 'anon has no access to uploaded games');
+select table_privs_are('public', 'version_games', 'authenticated', array['SELECT', 'DELETE'], 'owners read and delete games, inserting only some columns');
+select ok(has_column_privilege('authenticated', 'public.version_games', 'stats', 'INSERT')
+  and not has_column_privilege('authenticated', 'public.version_games', 'uploaded_at', 'INSERT')
+  and not has_column_privilege('authenticated', 'public.version_games', 'id', 'INSERT'),
+  'clients insert a game''s version, file name, note and stats, not its id or upload time');
 
 -- Public reference data: readable by everyone
 select table_privs_are('public', t, 'anon', array['SELECT'], 'anon can only read ' || t)

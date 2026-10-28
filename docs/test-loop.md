@@ -1,6 +1,6 @@
 # The test loop
 
-A plan for testing a deck the way a player does: write the strategy down, export a version, play it on Talishar, upload the game, and see whether the plan happened. Drafted 22 Oct 2026 from a conversation with the maintainer and a review by the council of LLMs. On 23 Oct, the standalone CSV parser is merged ([PR #228](https://github.com/esweby/vdb_fe/pull/228)) and the pure TypeScript report is in review ([PR #231](https://github.com/esweby/vdb_fe/pull/231)); the rest of the loop is not built yet.
+A plan for testing a deck the way a player does: write the strategy down, export a version, play it on Talishar, upload the game, and see whether the plan happened. Drafted 22 Oct 2026 from a conversation with the maintainer and a review by the council of LLMs. On 23 Oct, the standalone CSV parser is merged ([PR #228](https://github.com/esweby/vdb_fe/pull/228)) and the pure TypeScript report is in review ([PR #231](https://github.com/esweby/vdb_fe/pull/231)). On 28 Oct, uploading a game onto a version (step 2) is built; see [deck-versions.md](deck-versions.md#games). The rest of the loop is not built yet.
 
 ## Why
 

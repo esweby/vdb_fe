@@ -3,6 +3,7 @@ import { useServices } from "../servicesContext.ts";
 import { Button, TextField } from "../ui/index.ts";
 import type { DeckVersion } from "./deckRepository.ts";
 import type { DeckEntry } from "./deckRules.ts";
+import { VersionGames } from "./VersionGames.tsx";
 import {
   compareLists,
   entryCards,
@@ -26,6 +27,7 @@ export function DeckVersions({
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const [uploads, setUploads] = useState(0);
   useEffect(() => {
     let live = true;
     setFailed(false);
@@ -65,7 +67,13 @@ export function DeckVersions({
       )}
       {shown.length > 0 && <Compare versions={shown} entries={entries} />}
       {shown.map((version) => (
-        <Version key={version.id} version={version} />
+        <Version
+          key={version.id}
+          version={version}
+          versions={shown}
+          uploads={uploads}
+          onUploaded={() => setUploads((n) => n + 1)}
+        />
       ))}
     </section>
   );
@@ -150,7 +158,17 @@ function Changes({ title, changes }: { title: string; changes: CardChange[] }) {
   );
 }
 
-function Version({ version }: { version: DeckVersion }) {
+function Version({
+  version,
+  versions,
+  uploads,
+  onUploaded,
+}: {
+  version: DeckVersion;
+  versions: DeckVersion[];
+  uploads: number;
+  onUploaded: () => void;
+}) {
   const { decks } = useServices();
   const [url, setUrl] = useState(version.fabraryUrl ?? "");
   const [error, setError] = useState<string | null>(null);
@@ -218,6 +236,12 @@ function Version({ version }: { version: DeckVersion }) {
         </Button>
         {saved && <p role="status">Link saved.</p>}
       </form>
+      <VersionGames
+        version={version}
+        versions={versions}
+        uploads={uploads}
+        onUploaded={onUploaded}
+      />
     </details>
   );
 }
