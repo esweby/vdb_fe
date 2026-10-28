@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import type { CardPlayStats } from "@vdb/talishar";
 import type { DeckVersion } from "./deckRepository.ts";
-import { checkGame } from "./gameUpload.ts";
+import { bestVersion, missingFrom, versionLabel } from "./gameUpload.ts";
 
 const played = (name: string, pitch: 1 | 2 | 3): CardPlayStats => ({
   name,
@@ -32,6 +32,7 @@ const version = (
   id: `version-${number}`,
   deckId: "deck-1",
   number,
+  name: null,
   createdAt: "2026-10-28T12:00:00Z",
   fabraryUrl: null,
   snapshot: {
@@ -45,36 +46,38 @@ const version = (
   },
 });
 
-describe("checkGame", () => {
+describe("missingFrom", () => {
   it("passes a game whose cards are all in the version, main deck or sideboard", () => {
     const v1 = version(1, [card("Cull", 1), card("Sink Below", 1, true)]);
     expect(
-      checkGame([played("Cull", 1), played("Sink Below", 1)], v1, [v1]),
-    ).toEqual({ missing: [], fits: null });
+      missingFrom([played("Cull", 1), played("Sink Below", 1)], v1),
+    ).toEqual([]);
   });
 
   it("names the cards the version doesn't have, by name and pitch", () => {
     const v1 = version(1, [card("Cull", 1)]);
     expect(
-      checkGame([played("Cull", 3), played("Murmuring Gloomblade", 2)], v1, [
-        v1,
-      ]).missing,
+      missingFrom([played("Cull", 3), played("Murmuring Gloomblade", 2)], v1),
     ).toEqual(["Cull (blue)", "Murmuring Gloomblade (yellow)"]);
   });
+});
 
-  it("suggests the newest other version that has every card", () => {
+describe("bestVersion", () => {
+  it("picks the newest version with every card, or none", () => {
     const v1 = version(1, [card("Cull", 1), card("Sink Below", 1)]);
     const v2 = version(2, [card("Cull", 1)]);
     const v3 = version(3, [card("Cull", 1), card("Sink Below", 1)]);
     const game = [played("Cull", 1), played("Sink Below", 1)];
-    expect(checkGame(game, v2, [v3, v2, v1]).fits).toBe(v3);
+    expect(bestVersion(game, [v1, v3, v2])).toBe(v3);
+    expect(bestVersion([played("Revel in Runeblood", 1)], [v1, v2])).toBe(null);
   });
+});
 
-  it("suggests nothing when no version fits", () => {
-    const v1 = version(1, [card("Cull", 1)]);
-    const v2 = version(2, [card("Cull", 1)]);
-    expect(
-      checkGame([played("Revel in Runeblood", 1)], v1, [v2, v1]).fits,
-    ).toBe(null);
+describe("versionLabel", () => {
+  it("is the number, with the name when there is one", () => {
+    expect(versionLabel(version(3, []))).toBe("Version 3");
+    expect(versionLabel({ ...version(3, []), name: "Levia tech" })).toBe(
+      "Version 3 · Levia tech",
+    );
   });
 });

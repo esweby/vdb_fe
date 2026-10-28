@@ -5,7 +5,7 @@ numbered version, even when the list has not changed. A failed save keeps you he
 offers another try. Saving records the export attempt; it cannot confirm that you pressed
 Import in FaBrary, or that you later kept the same list there.
 
-Versions have their own **Versions** tab on the deck page, shown only to the owner. After
+Versions have their own **Versions** tab on the deck page, shown only to the owner, next to the **Results** tab. After
 a save, a short note under the deck header links to it.
 
 ## What is saved
@@ -51,21 +51,28 @@ with the main deck and the sideboard apart: a copy moved across shows on both si
 Each line says Added, Removed or Changed in words. Loadouts and pitch targets are not
 compared yet.
 
-## Games
+## Names
 
-Each version has a **Games** list. Download a game's stats CSV from Talishar's stats
-screen and upload it onto the version you played, with an optional note. The site reads
-the file in your browser and stores what it found: the result, who went first, the turns,
-each card's plays, pitches and blocks, and the turn by turn breakdown. A file that isn't
-a Talishar stats export is refused.
+The owner can name a version ("Levia tech"), up to 80 characters, or clear the name by
+leaving it blank. The name shows wherever the version is listed: "Version 3 · Levia tech".
 
-Talishar's export lists every card in the deck you played. If the version you chose
-doesn't have one of them, by name and pitch, main deck or sideboard, the site says which,
-and offers the newest version that has them all. You can still upload onto the version
-you chose.
+## Results
 
-Games are private to the deck's owner, like versions. An uploaded game can't be edited:
-delete it and upload it again. Deleting a version's deck deletes its games.
+Uploaded games live on the deck's own **Results** tab, shown only to the owner. Download a
+game's stats CSV from Talishar's stats screen and upload it, with an optional note. The
+site reads the file in your browser and stores what it found: the result, who went first,
+the turns, each card's plays, pitches and blocks, and the turn by turn breakdown. A file
+that isn't a Talishar stats export is refused. Going second, the export has one more row
+than its turns: the first is the opponent's first turn.
+
+Each game can be tied to one of the deck's versions, or to none (the maintainer, 28 Oct
+2026). Talishar's export lists every card in the deck you played, so the upload picks the
+newest version that has them all, or none if no version does. If you choose a version
+that's missing some, by name and pitch, main deck or sideboard, the site names them, and
+you can still upload it there. A game's version can be changed later.
+
+Results are private to the deck's owner. An uploaded game can't be edited apart from its
+version: delete it and upload it again. Deleting the deck deletes its results.
 
 A report per game comes next ([test-loop.md](test-loop.md), step 3).
 

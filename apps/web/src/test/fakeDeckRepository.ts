@@ -5,7 +5,7 @@ import type {
   Matchup,
   PlanGoal,
   DeckVersion,
-  VersionGame,
+  DeckGame,
 } from "../decks/deckRepository.ts";
 import type { FormatRules } from "../decks/deckRules.ts";
 import { sampleCards } from "./fakeCardRepository.ts";
@@ -33,7 +33,7 @@ export function fakeDeckRepository(
   } = {},
 ) {
   let versions: DeckVersion[] = [...(options.versions ?? [])];
-  let games: VersionGame[] = [];
+  let games: DeckGame[] = [];
   let nextGame = 0;
   let matchups = [...(options.matchups ?? [])];
   let nextMatchup = 0;
@@ -60,6 +60,7 @@ export function fakeDeckRepository(
         deckId,
         number: versions.filter((v) => v.deckId === deckId).length + 1,
         createdAt: "2026-10-23T12:00:00Z",
+        name: null,
         fabraryUrl: null,
         snapshot: {
           schemaVersion: 1,
@@ -106,18 +107,29 @@ export function fakeDeckRepository(
         v.id === id ? { ...v, fabraryUrl: url } : v,
       );
     },
-    listGames: async (versionId) =>
-      games.filter((game) => game.versionId === versionId),
-    async addGame(versionId, game) {
-      saved.push(`game ${versionId} ${game.fileName ?? ""}`);
-      const added: VersionGame = {
+    async setVersionName(id, name) {
+      saved.push(`version name ${id} ${name ?? ""}`);
+      versions = versions.map((v) => (v.id === id ? { ...v, name } : v));
+    },
+    listGames: async (deckId) => games.filter((game) => game.deckId === deckId),
+    async addGame(deckId, game) {
+      saved.push(
+        `game ${deckId} ${game.versionId ?? "none"} ${game.fileName ?? ""}`,
+      );
+      const added: DeckGame = {
         id: `game-${++nextGame}`,
-        versionId,
+        deckId,
         uploadedAt: "2026-10-28T12:00:00Z",
         ...game,
       };
       games = [added, ...games];
       return added;
+    },
+    async setGameVersion(id, versionId) {
+      saved.push(`game version ${id} ${versionId ?? "none"}`);
+      games = games.map((game) =>
+        game.id === id ? { ...game, versionId } : game,
+      );
     },
     async deleteGame(id) {
       saved.push(`game delete ${id}`);

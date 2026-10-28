@@ -31,10 +31,12 @@ const fate = (quantity: number, sideboard = false) => ({
 const version = (
   number: number,
   cards: DeckVersion["snapshot"]["cards"],
+  name: string | null = null,
 ): DeckVersion => ({
   id: `version-${number}`,
   deckId: "deck-1",
   number,
+  name,
   createdAt: `2026-10-2${number}T12:00:00Z`,
   fabraryUrl: null,
   snapshot: {
@@ -148,5 +150,77 @@ describe("comparing versions", () => {
     expect(
       screen.queryByRole("region", { name: "Compare" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("names a version, and shows the name wherever the version is listed", async () => {
+    const fake = fakeDeckRepository(
+      [
+        {
+          id: "deck-1",
+          name: "Gate tempo",
+          updatedAt: "2026-10-14T10:00:00Z",
+          cards: [],
+          pitchTargets: {},
+        },
+      ],
+      { versions: [version(1, [hocus(2)])] },
+    );
+    await renderApp({
+      path: "/decks/deck-1?tab=versions",
+      auth: fakeAuthService({
+        users: { "u@test.local": { id: "u1", password: "pw", role: "user" } },
+        signedIn: { id: "u1", email: "u@test.local" },
+      }).service,
+      decks: fake.repository,
+    });
+    const user = userEvent.setup();
+    await user.click(
+      await screen.findByText("Version 1", { selector: "summary" }),
+    );
+    await user.type(
+      screen.getByLabelText("Name for version 1"),
+      "  Levia tech ",
+    );
+    await user.click(screen.getByRole("button", { name: "Save name" }));
+    expect(await screen.findByText("Name saved.")).toBeInTheDocument();
+    expect(fake.saved).toContain("version name version-1 Levia tech");
+    expect(
+      screen.getByText("Version 1 · Levia tech", { selector: "summary" }),
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByRole("region", { name: "Compare" })).getByLabelText(
+        "Compare",
+      ),
+    ).toHaveDisplayValue("Version 1 · Levia tech");
+  });
+
+  it("clears a name when it's left blank", async () => {
+    const fake = fakeDeckRepository(
+      [
+        {
+          id: "deck-1",
+          name: "Gate tempo",
+          updatedAt: "2026-10-14T10:00:00Z",
+          cards: [],
+          pitchTargets: {},
+        },
+      ],
+      { versions: [version(1, [hocus(2)], "Old name")] },
+    );
+    await renderApp({
+      path: "/decks/deck-1?tab=versions",
+      auth: fakeAuthService({
+        users: { "u@test.local": { id: "u1", password: "pw", role: "user" } },
+        signedIn: { id: "u1", email: "u@test.local" },
+      }).service,
+      decks: fake.repository,
+    });
+    const user = userEvent.setup();
+    await user.click(
+      await screen.findByText("Version 1 · Old name", { selector: "summary" }),
+    );
+    await user.clear(screen.getByLabelText("Name for version 1"));
+    await user.click(screen.getByRole("button", { name: "Save name" }));
+    expect(fake.saved).toContain("version name version-1 ");
   });
 });
