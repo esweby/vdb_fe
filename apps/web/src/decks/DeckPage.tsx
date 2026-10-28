@@ -27,6 +27,7 @@ import { DeckVersions } from "./DeckVersions.tsx";
 import { MatchupsPanel } from "./MatchupsPanel.tsx";
 import { entriesForMatchup } from "./matchupEntries.ts";
 import { Goldfish } from "./Goldfish.tsx";
+import { FullAnalysisPanel } from "./FullAnalysisPanel.tsx";
 import { fabraryImportLink } from "./fabraryLink.ts";
 import { ScopedSynergies } from "../synergy/SynergyExplorer.tsx";
 import type {
@@ -61,6 +62,7 @@ type Tab =
   | "scenarios"
   | "matchups"
   | "goldfish"
+  | "analysis"
   | "versions";
 type View = "tiles" | "list";
 const TABS: { id: Tab; label: string }[] = [
@@ -71,6 +73,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "scenarios", label: "Scenarios" },
   { id: "matchups", label: "Matchups" },
   { id: "goldfish", label: "Goldfish" },
+  { id: "analysis", label: "Analysis" },
   // The owner's private copies, saved each time the deck opens in FaBrary.
   { id: "versions", label: "Versions" },
 ];
@@ -564,6 +567,8 @@ export function DeckPage() {
             canEdit={canEdit}
             deckSize={rules?.deckMin}
           />
+        ) : tab === "analysis" ? (
+          <FullAnalysisPanel entries={entries} cards={cards} />
         ) : tab === "gaps" ? (
           <DeckGapsPanel
             entries={entries}

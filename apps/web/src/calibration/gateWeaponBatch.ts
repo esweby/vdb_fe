@@ -10,7 +10,7 @@ import {
   type Script,
   type ScriptRun,
 } from "@vdb/engine/rules";
-import { baselineScript } from "../ranking/scenarioRuns.ts";
+import { baselineScript } from "../ranking/baselineScript.ts";
 import { GATE_WEAPON_EXAMPLES } from "./gateWeaponExamples.ts";
 import { selectDescendancyPlan } from "./descendancySetup.ts";
 import { withBanishPolicy } from "./banishPolicy.ts";

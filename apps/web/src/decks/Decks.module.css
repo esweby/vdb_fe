@@ -1174,3 +1174,56 @@
 .saved:not(:empty)::before {
   content: "✓ ";
 }
+/* Full analysis: the goldfish comparison is deliberately separate from ordinary deck stats. */
+.fullAnalysis {
+  display: grid;
+  gap: var(--space-4);
+  padding-block: var(--space-5);
+}
+
+.analysisHeading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.analysisHeading h2,
+.analysisHeading p,
+.analysisNote {
+  margin: 0;
+}
+
+.analysisNote {
+  color: var(--muted);
+  max-width: 76ch;
+}
+
+.analysisResults {
+  display: grid;
+  gap: var(--space-3);
+  overflow-x: auto;
+}
+
+.analysisResults table {
+  border-collapse: collapse;
+  min-width: 56rem;
+  text-align: right;
+}
+
+.analysisResults th,
+.analysisResults td {
+  border-bottom: 1px solid var(--border);
+  padding: var(--space-3);
+}
+
+.analysisResults th:first-child {
+  text-align: left;
+}
+
+.analysisResults th small,
+.analysisResults td small {
+  display: block;
+  color: var(--muted);
+  font-weight: normal;
+}
