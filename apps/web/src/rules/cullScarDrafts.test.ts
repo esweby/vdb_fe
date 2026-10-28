@@ -1,6 +1,6 @@
 // Final-pair rules approved by the maintainer on 24 Oct 2026.
 import { describe, expect, it } from "vitest";
-import { parseTriggers, verifiedRulesFor } from "@vdb/engine/rules";
+import { parseTriggers, verifiedRulesFor } from "@esweby/fab-engine/rules";
 import { allAuthored } from "../../../../packages/importer/src/authored/index.ts";
 import { sampleCards } from "../test/fakeCardRepository.ts";
 import { draftQueue } from "./draftQueue.ts";

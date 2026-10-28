@@ -2,7 +2,7 @@
 // save, edit, share, delete, and run them all against this deck with each result's inputs
 // recorded, so a later run can say what changed. Compare decks (README "Saved scenarios",
 // phase two step 8): run them on another of your decks too, side by side, with the same seed.
-import { ENGINE_VERSION, type ScenarioDefinition } from "@vdb/engine";
+import { ENGINE_VERSION, type ScenarioDefinition } from "@esweby/fab-engine";
 import { useCallback, useEffect, useState } from "react";
 import { selectRole } from "../auth/authSlice.ts";
 import { useCards } from "../cards/useCards.ts";

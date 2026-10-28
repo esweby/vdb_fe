@@ -13,7 +13,7 @@ import {
   VISERAI,
   type RulesCard,
   type RulesState,
-} from "@vdb/engine/rules";
+} from "@esweby/fab-engine/rules";
 import { GATE_WEAPON_EXAMPLES } from "./gateWeaponExamples.ts";
 import * as examples from "./gateWeaponExamples.ts";
 import * as selection from "./gateWeaponSelection.ts";

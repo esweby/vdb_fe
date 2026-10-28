@@ -1,6 +1,6 @@
 // The effect drafts for one deck (main deck and sideboard), so one real deck can play by verified
 // rules before the rest of the pool.
-import { verifiedRulesFor } from "@vdb/engine/rules";
+import { verifiedRulesFor } from "@esweby/fab-engine/rules";
 import type { CardSummary } from "../cards/cardRepository.ts";
 import type { DeckCard } from "../decks/deckRepository.ts";
 

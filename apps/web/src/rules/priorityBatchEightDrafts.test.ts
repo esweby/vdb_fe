@@ -1,6 +1,6 @@
 // Runic Reaving and Vantom Banshee approved by the maintainer on 27 Oct 2026.
 // The other eight effect drafts remain UNVERIFIED.
-import { verifiedRulesFor } from "@vdb/engine/rules";
+import { verifiedRulesFor } from "@esweby/fab-engine/rules";
 import { describe, expect, it } from "vitest";
 import { runechantCreators } from "../../../../packages/importer/src/authored/01-runechant-creators.ts";
 import { bloodDebtAndBanish } from "../../../../packages/importer/src/authored/03-blood-debt-and-banish.ts";

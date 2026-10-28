@@ -10,7 +10,7 @@ import {
   type Effect,
   type Trigger,
   type RulesCard,
-} from "@vdb/engine/rules";
+} from "@esweby/fab-engine/rules";
 import type { CardSummary, VariantSummary } from "../cards/cardRepository.ts";
 import { CONDITION_PLAIN } from "../decks/conditionAvailability.ts";
 

@@ -17,7 +17,7 @@ import {
   VISERAI,
   type BatchReport,
   type BatchSetup,
-} from "@vdb/engine/rules";
+} from "@esweby/fab-engine/rules";
 import { supabaseCardRepository } from "../src/cards/cardRepository.ts";
 import { parseDeckList } from "../src/calibration/deckList.ts";
 import { resolveDeck } from "../src/calibration/resolveDeck.ts";

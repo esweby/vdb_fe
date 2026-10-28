@@ -2,7 +2,7 @@
 // pitches whose drafts match shown once. Cards whose facts give nothing to draft or note are
 // left out; cards with verified rules are marked, so nobody checks them twice. Each draft has a
 // hash, and an admin's verdict applies only to the draft it was given on.
-import { verifiedRulesFor } from "@vdb/engine/rules";
+import { verifiedRulesFor } from "@esweby/fab-engine/rules";
 import type { CardSummary } from "../cards/cardRepository.ts";
 import { draftEffects, type EffectDraft } from "./draftEffects.ts";
 import type { DraftReview } from "./draftReviewRepository.ts";

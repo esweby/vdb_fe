@@ -6,8 +6,8 @@ import type {
   RulesEvent,
   RulesState,
   RunSummary,
-} from "@vdb/engine/rules";
-import { BLOOD_DEBT, RUNECHANT, VISERAI } from "@vdb/engine/rules";
+} from "@esweby/fab-engine/rules";
+import { BLOOD_DEBT, RUNECHANT, VISERAI } from "@esweby/fab-engine/rules";
 import { runGateWeaponBatch } from "../calibration/gateWeaponBatch.ts";
 import { wilson } from "../fablazing/stats.ts";
 import {

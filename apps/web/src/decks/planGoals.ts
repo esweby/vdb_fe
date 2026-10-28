@@ -7,7 +7,7 @@ import {
   ScenarioCannotRun,
   type EngineCard,
   type ScenarioDefinition,
-} from "@vdb/engine";
+} from "@esweby/fab-engine";
 import { wilson } from "../fablazing/stats.ts";
 
 const Z = 1.96;

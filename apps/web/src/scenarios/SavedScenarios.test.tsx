@@ -2,7 +2,7 @@
 // run them all against a deck with their inputs recorded, share by link, and the library.
 import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { ScenarioDefinition } from "@vdb/engine";
+import type { ScenarioDefinition } from "@esweby/fab-engine";
 import { describe, expect, it } from "vitest";
 import type { DeckCard } from "../decks/deckRepository.ts";
 import { fakeAuthService } from "../test/fakeAuthService.ts";

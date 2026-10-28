@@ -4,7 +4,7 @@ Status, 28 Oct 2026: steps 1, 2 and 4 are done; step 3's pipeline is live, its f
 
 ## Decision
 
-**Go handles the data pipeline. TypeScript owns the single rules engine** (`packages/engine`). There will be no second rules engine in Go. Simulation and replay checks share that one rules core.
+**Go handles the data pipeline. TypeScript owns the single rules engine** ([fab-engine](https://github.com/esweby/fab-engine)). There will be no second rules engine in Go. Simulation and replay checks share that one rules core.
 
 The decision is closed. It's reopened only if **all three** of these hold:
 

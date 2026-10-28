@@ -1,8 +1,8 @@
 // Turn recaps for the goldfish tool (README "Goldfishing": a short summary of each turn: cards
 // played and pitched, weapon attacks, tokens created, damage dealt, and whether the side
 // changed). Worked out from the rules engine's events (docs/rules-engine.md, step 8).
-import type { HeroSide } from "@vdb/engine";
-import type { RulesEvent } from "@vdb/engine/rules";
+import type { HeroSide } from "@esweby/fab-engine";
+import type { RulesEvent } from "@esweby/fab-engine/rules";
 
 const TOKEN_NAMES: Record<string, [string, string]> = {
   runechant: ["Runechant", "Runechants"],

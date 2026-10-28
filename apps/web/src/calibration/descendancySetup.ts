@@ -5,7 +5,7 @@ import {
   type RulesState,
   type Script,
   type Selector,
-} from "@vdb/engine/rules";
+} from "@esweby/fab-engine/rules";
 
 const descendancy = {
   name: "Arknight Descendancy",

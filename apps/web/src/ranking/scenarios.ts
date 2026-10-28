@@ -1,7 +1,7 @@
 // Built-in scenarios (README "Scenarios") and how a card becomes an engine card.
 // UNVERIFIED: the scenarios and their thresholds are a first pass for the scoring group.
 import { rolesOf, type RoleId } from "@vdb/cards";
-import type { EngineCard, ScenarioDefinition } from "@vdb/engine";
+import type { EngineCard, ScenarioDefinition } from "@esweby/fab-engine";
 import type { CardSummary, VariantSummary } from "../cards/cardRepository.ts";
 
 export interface BuiltInScenario {

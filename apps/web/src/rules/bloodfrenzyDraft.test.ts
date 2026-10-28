@@ -10,7 +10,7 @@ import {
   verifiedRulesFor,
   type RulesCard,
   type RulesState,
-} from "@vdb/engine/rules";
+} from "@esweby/fab-engine/rules";
 import type { CardSummary } from "../cards/cardRepository.ts";
 import { sampleCards } from "../test/fakeCardRepository.ts";
 import { draftQueue } from "./draftQueue.ts";

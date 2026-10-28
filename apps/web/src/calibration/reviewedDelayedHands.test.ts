@@ -8,7 +8,7 @@ import {
   VISERAI,
   type RulesCard,
   type RulesState,
-} from "@vdb/engine/rules";
+} from "@esweby/fab-engine/rules";
 import { runGateWeaponPolicyFromState } from "./gateWeaponBatch.ts";
 
 const fact = (

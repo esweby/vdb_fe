@@ -3,7 +3,7 @@ import {
   parseEffects,
   parseTriggers,
   verifiedRulesFor,
-} from "@vdb/engine/rules";
+} from "@esweby/fab-engine/rules";
 import { describe, expect, it } from "vitest";
 import type { CardSummary } from "../cards/cardRepository.ts";
 import { sampleCards } from "../test/fakeCardRepository.ts";

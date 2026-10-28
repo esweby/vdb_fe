@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { EngineCard, ScenarioDefinition } from "@vdb/engine";
+import type { EngineCard, ScenarioDefinition } from "@esweby/fab-engine";
 import {
   differenceVerdict,
   goalVerdict,

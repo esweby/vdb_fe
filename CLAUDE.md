@@ -18,6 +18,10 @@ The design is in [README.md](README.md), and the current plan is in [docs/phase-
 
 - Hosted Supabase doesn't grant table access to `anon` or `authenticated` by default, and local is set up to match. Every new table needs explicit `grant` statements in its migration, and an entry in `supabase/tests/06_privileges.test.sql`.
 
+## Rules engine
+
+- The rules engine is its own project, [esweby/fab-engine](https://github.com/esweby/fab-engine), since 28 Oct 2026. `apps/web` depends on it as `@esweby/fab-engine`, pinned to a git tag. Engine changes go through a PR there, then a new tag, then a PR here that moves the pin.
+
 ## Game logic
 
 - Flesh and Blood rules, card interactions and synergy rules are checked by the maintainer or an experienced player. Anything drafted without that check is marked unverified.

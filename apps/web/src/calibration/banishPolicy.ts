@@ -1,4 +1,4 @@
-import type { Script } from "@vdb/engine/rules";
+import type { Script } from "@esweby/fab-engine/rules";
 
 export function withBanishPolicy(
   choices: Script["choices"],

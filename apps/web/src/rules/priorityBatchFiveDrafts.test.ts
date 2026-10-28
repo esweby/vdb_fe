@@ -1,6 +1,6 @@
 // Fallen Herald and Haunting Rendition approved by the maintainer on 27 Oct 2026.
 // The other three effect drafts remain UNVERIFIED.
-import { parseEffects, verifiedRulesFor } from "@vdb/engine/rules";
+import { parseEffects, verifiedRulesFor } from "@esweby/fab-engine/rules";
 import { describe, expect, it } from "vitest";
 import { remaining } from "../../../../packages/importer/src/authored/05-remaining.ts";
 import type { CardSummary } from "../cards/cardRepository.ts";

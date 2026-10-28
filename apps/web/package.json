@@ -24,7 +24,7 @@
     "@supabase/supabase-js": "^2.117.3",
     "@tanstack/react-router": "^1.170.44",
     "@vdb/cards": "*",
-    "@vdb/engine": "*",
+    "@esweby/fab-engine": "github:esweby/fab-engine#setup-package",
     "@vdb/scoring": "*",
     "graphology": "^0.26.0",
     "graphology-layout": "^0.6.1",

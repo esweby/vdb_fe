@@ -1,5 +1,5 @@
 // Drafts approved by the maintainer on 27 Oct 2026.
-import { parseEffects, verifiedRulesFor } from "@vdb/engine/rules";
+import { parseEffects, verifiedRulesFor } from "@esweby/fab-engine/rules";
 import { describe, expect, it } from "vitest";
 import type { CardSummary } from "../cards/cardRepository.ts";
 import { sampleCards } from "../test/fakeCardRepository.ts";

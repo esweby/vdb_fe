@@ -1,7 +1,7 @@
 // Play by the rules (docs/rules-engine.md, step 7b): the rules engine's baseline script run on
 // this deck, with coverage shown before anything runs. A preview: only cards with signed-off
 // rules are played; the rest can be pitched or held.
-import { coverage, type RulesCard } from "@vdb/engine/rules";
+import { coverage, type RulesCard } from "@esweby/fab-engine/rules";
 import { useMemo, useState } from "react";
 import { sectionOf, type DeckEntry } from "../decks/deckRules.ts";
 import { runByTheRules } from "../ranking/runScenarios.ts";
