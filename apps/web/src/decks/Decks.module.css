@@ -359,6 +359,24 @@
 .versionLinkForm > div {
   flex: 1 1 24rem;
 }
+/* Games uploaded onto a version: the file and its note side by side, stacked when narrow. */
+.versionGames {
+  margin-block: var(--space-4);
+}
+.versionGameForm {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-block: var(--space-3);
+}
+.versionGameForm > div {
+  flex: 1 1 20rem;
+}
+.versionGameForm input[type="file"] {
+  display: block;
+  margin-block-start: var(--space-2);
+}
 /* Public or private, rename and delete, for the deck's owner (the maintainer, 20 Oct 2026). */
 .deckSettings {
   display: flex;
