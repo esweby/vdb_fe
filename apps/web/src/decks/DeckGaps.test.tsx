@@ -56,6 +56,31 @@ describe("gaps", () => {
     expect(panel.queryByRole("article")).toBeNull();
   });
 
+  it("says when the results are current and when a goal change needs a rerun", async () => {
+    await renderApp({
+      path: "/decks/deck-1?tab=gaps",
+      auth: auth(),
+      decks: withDeck([card("hp3", 3)]).repository,
+    });
+    const panel = await gaps();
+    const user = userEvent.setup();
+    await user.click(
+      panel.getByRole("button", { name: "Runechant generation" }),
+    );
+    await user.click(panel.getByRole("button", { name: "Run analysis" }));
+    expect(
+      panel.getByRole("button", { name: "Analysis up to date" }),
+    ).toBeDisabled();
+    expect(panel.getByRole("status")).toHaveTextContent(
+      "Showing results for 1 goal.",
+    );
+    await user.click(panel.getByRole("button", { name: "Gate generation" }));
+    expect(panel.getByRole("button", { name: "Run analysis" })).toBeEnabled();
+    expect(panel.getByRole("status")).toHaveTextContent(
+      "Goals changed. Run the analysis to see results.",
+    );
+  });
+
   it("shows sideboard support separately and offers additions from the pool", async () => {
     const fake = withDeck([{ ...card("hp3", 3), sideboard: true }]);
     await renderApp({

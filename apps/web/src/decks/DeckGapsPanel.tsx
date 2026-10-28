@@ -31,7 +31,8 @@ export function DeckGapsPanel(props: {
   const [selected, setSelected] = useState<GoalId[]>(() =>
     savedGoals(storageKey),
   );
-  const [hasRun, setHasRun] = useState(false);
+  const [run, setRun] = useState<"never" | "current" | "stale">("never");
+  const hasRun = run === "current";
   const data = useScoreData();
   const results = useMemo(
     () => (hasRun ? analyseGoals(entries, selected) : []),
@@ -42,7 +43,7 @@ export function DeckGapsPanel(props: {
       ? selected.filter((goal) => goal !== id)
       : [...selected, id];
     setSelected(next);
-    setHasRun(false);
+    if (run === "current") setRun("stale");
     try {
       localStorage.setItem(storageKey, JSON.stringify(next));
     } catch {
@@ -101,21 +102,24 @@ export function DeckGapsPanel(props: {
       </div>
       <Button
         variant="primary"
-        disabled={selected.length === 0}
-        onClick={() => setHasRun(true)}
+        disabled={selected.length === 0 || hasRun}
+        onClick={() => setRun("current")}
       >
-        Run analysis
+        {hasRun ? "Analysis up to date" : "Run analysis"}
       </Button>
+      <p role="status" className={styles.muted}>
+        {hasRun
+          ? `Showing results for ${results.length} ${results.length === 1 ? "goal" : "goals"}.`
+          : run === "stale"
+            ? "Goals changed. Run the analysis to see results."
+            : "Choose your goals, then run the analysis."}
+      </p>
       <p className={styles.muted}>
         Unverified: these checks use recorded card roles and printed values.
         Conditions, draw order and opponent pressure can change how much support
         you get. Copies show available support, not whether it is enough.
       </p>
-      {!hasRun ? (
-        <p className={styles.muted}>
-          Choose your goals, then run the analysis.
-        </p>
-      ) : (
+      {hasRun && (
         <div className={styles.gapCards}>
           {results.map((result) => {
             const { goal } = result;
@@ -168,7 +172,7 @@ export function DeckGapsPanel(props: {
                 {result.main.length > 0 && (
                   <>
                     <h4>Main-deck evidence</h4>
-                    <ul>
+                    <ul className={styles.gapEvidence}>
                       {result.main.map((entry) => (
                         <li key={entry.variant.id}>
                           {entry.quantity} ×{" "}
@@ -181,7 +185,7 @@ export function DeckGapsPanel(props: {
                 {result.sideboard.length > 0 && (
                   <>
                     <h4>Sideboard options</h4>
-                    <ul>
+                    <ul className={styles.gapEvidence}>
                       {result.sideboard.map((entry) => (
                         <li key={entry.variant.id}>
                           {entry.quantity} ×{" "}
