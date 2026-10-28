@@ -1,0 +1,33 @@
+# An "ultra aggro inspired" list the maintainer shared on 28 Oct 2026.
+# Card ids as FaBlazing logs them.
+# Equipment: Seven Sin Nebula, Face Purgatory, Fyendal's Spring Tunic,
+# Reach of the Abyss, Snapdragon Scalers.
+3 bloodfrenzy_gloomblade_red
+2 cull_red
+3 cullingsong_gloomblade_red
+2 demonbound_gloomblade_red
+3 embrace_ursur_red
+3 malefic_incantation_red
+3 murmuring_gloomblade_red
+2 painful_passage_red
+2 runic_reaving_red
+2 shadowrealm_ripper_red
+3 sinspeaker_gloomblade_red
+3 swarming_gloomveil_red
+2 widespread_ruin_red
+2 bloodfrenzy_gloomblade_yellow
+3 runechant_of_greed_yellow
+2 runechant_of_lust_yellow
+3 runechant_of_sloth_yellow
+2 succumb_to_temptation_yellow
+3 arknight_descendancy_blue
+3 become_the_shadow_lord_blue
+3 murmuring_gloomblade_blue
+2 shadow_of_ursur_blue
+3 usurp_the_shadow_throne_blue
+sideboard
+2 bloodsong_gloomblade_red
+2 call_for_backup_red
+2 plundersong_gloomblade_red
+2 fallen_herald_yellow
+3 pull_from_beyond_blue
