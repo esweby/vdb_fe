@@ -3,7 +3,7 @@ import { useServices } from "../servicesContext.ts";
 import { Button, TextField } from "../ui/index.ts";
 import type { DeckVersion } from "./deckRepository.ts";
 import type { DeckEntry } from "./deckRules.ts";
-import { VersionGames } from "./VersionGames.tsx";
+import { versionLabel } from "./gameUpload.ts";
 import {
   compareLists,
   entryCards,
@@ -27,7 +27,8 @@ export function DeckVersions({
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
-  const [uploads, setUploads] = useState(0);
+  // Names saved here since the list loaded, by version id.
+  const [names, setNames] = useState<Record<string, string | null>>({});
   useEffect(() => {
     let live = true;
     setFailed(false);
@@ -43,10 +44,11 @@ export function DeckVersions({
       live = false;
     };
   }, [decks, deckId, latest, attempt]);
-  const shown =
+  const shown = (
     latest && !versions.some((v) => v.id === latest.id)
       ? [latest, ...versions]
-      : versions;
+      : versions
+  ).map((v) => (v.id in names ? { ...v, name: names[v.id] ?? null } : v));
   return (
     <section className={styles.versions} aria-label="Versions">
       <p>
@@ -70,9 +72,9 @@ export function DeckVersions({
         <Version
           key={version.id}
           version={version}
-          versions={shown}
-          uploads={uploads}
-          onUploaded={() => setUploads((n) => n + 1)}
+          onNamed={(name) =>
+            setNames((saved) => ({ ...saved, [version.id]: name }))
+          }
         />
       ))}
     </section>
@@ -102,7 +104,7 @@ function Compare({
   const changes = compareLists(cardsOf(fromId), cardsOf(toId));
   const options = versions.map((version) => (
     <option key={version.id} value={version.id}>
-      Version {version.number}
+      {versionLabel(version)}
     </option>
   ));
   return (
@@ -160,16 +162,30 @@ function Changes({ title, changes }: { title: string; changes: CardChange[] }) {
 
 function Version({
   version,
-  versions,
-  uploads,
-  onUploaded,
+  onNamed,
 }: {
   version: DeckVersion;
-  versions: DeckVersion[];
-  uploads: number;
-  onUploaded: () => void;
+  onNamed: (name: string | null) => void;
 }) {
   const { decks } = useServices();
+  const [name, setName] = useState(version.name ?? "");
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [namedState, setNamedState] = useState<"idle" | "saving" | "saved">(
+    "idle",
+  );
+  async function saveName() {
+    const next = name.trim() || null;
+    setNamedState("saving");
+    setNameError(null);
+    try {
+      await decks.setVersionName(version.id, next);
+      onNamed(next);
+      setNamedState("saved");
+    } catch {
+      setNameError("Couldn't save the name. Try again.");
+      setNamedState("idle");
+    }
+  }
   const [url, setUrl] = useState(version.fabraryUrl ?? "");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -198,11 +214,34 @@ function Version({
   }
   return (
     <details className={styles.version}>
-      <summary>Version {version.number}</summary>
+      <summary>{versionLabel(version)}</summary>
       <p>
         {version.snapshot.name} ·{" "}
         {new Date(version.createdAt).toLocaleString("en-GB")}
       </p>
+      <form
+        className={styles.versionLinkForm}
+        onSubmit={(event) => {
+          event.preventDefault();
+          void saveName();
+        }}
+      >
+        <TextField
+          label={`Name for version ${version.number}`}
+          value={name}
+          maxLength={80}
+          hint="Optional, like “Levia tech”. Leave it blank for none."
+          error={nameError}
+          onChange={(event) => {
+            setName(event.target.value);
+            setNamedState("idle");
+          }}
+        />
+        <Button type="submit" disabled={namedState === "saving"}>
+          {namedState === "saving" ? "Saving…" : "Save name"}
+        </Button>
+        {namedState === "saved" && <p role="status">Name saved.</p>}
+      </form>
       <ul>
         {version.snapshot.cards.map((card) => (
           <li key={`${card.variantId}-${card.sideboard}`}>
@@ -236,12 +275,6 @@ function Version({
         </Button>
         {saved && <p role="status">Link saved.</p>}
       </form>
-      <VersionGames
-        version={version}
-        versions={versions}
-        uploads={uploads}
-        onUploaded={onUploaded}
-      />
     </details>
   );
 }

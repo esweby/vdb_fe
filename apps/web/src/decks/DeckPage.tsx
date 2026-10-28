@@ -15,6 +15,7 @@ import { DeckGapsPanel } from "./DeckGapsPanel.tsx";
 import { DeckScenarios } from "./DeckScenarios.tsx";
 import { DeckSettings } from "./DeckSettings.tsx";
 import { visibilityLabel } from "./visibility.ts";
+import { DeckResults } from "./DeckResults.tsx";
 import { DeckVersions } from "./DeckVersions.tsx";
 import { MatchupsPanel } from "./MatchupsPanel.tsx";
 import { entriesForMatchup } from "./matchupEntries.ts";
@@ -55,6 +56,7 @@ type Tab =
   | "matchups"
   | "goldfish"
   | "analysis"
+  | "results"
   | "versions";
 type View = "tiles" | "list";
 const TABS: { id: Tab; label: string }[] = [
@@ -66,7 +68,9 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "matchups", label: "Matchups" },
   { id: "goldfish", label: "Goldfish" },
   { id: "analysis", label: "Analysis" },
-  // The owner's private copies, saved each time the deck opens in FaBrary.
+  // The owner's uploaded Talishar games, and private copies saved each time the deck opens
+  // in FaBrary.
+  { id: "results", label: "Results" },
   { id: "versions", label: "Versions" },
 ];
 
@@ -328,9 +332,10 @@ export function DeckPage() {
 
   // Only the owner changes a deck; anyone else sees a public one read only.
   const canEdit = user?.id === deck.ownerId;
-  // Versions are private to the owner: anyone else following a link lands on the cards.
-  const tab: Tab =
-    requestedTab === "versions" && !canEdit ? "cards" : requestedTab;
+  // Results and versions are private to the owner: anyone else following a link lands on
+  // the cards.
+  const ownerOnly = (t: Tab) => t === "results" || t === "versions";
+  const tab: Tab = ownerOnly(requestedTab) && !canEdit ? "cards" : requestedTab;
   // The plan being played, if any: its cards are the main deck for goldfish and scenarios.
   const playing = planId
     ? plans.matchups.find((matchup) => matchup.id === planId)
@@ -446,7 +451,7 @@ export function DeckPage() {
       )}
 
       <div role="tablist" aria-label="Deck views" className={styles.tabs}>
-        {TABS.filter((t) => t.id !== "versions" || canEdit).map((t) => (
+        {TABS.filter((t) => !ownerOnly(t.id) || canEdit).map((t) => (
           <button
             key={t.id}
             type="button"
@@ -504,7 +509,9 @@ export function DeckPage() {
             )}
           </div>
         )}
-        {tab === "versions" ? (
+        {tab === "results" ? (
+          <DeckResults key={deck.id} deckId={deck.id} />
+        ) : tab === "versions" ? (
           <DeckVersions
             key={deck.id}
             deckId={deck.id}

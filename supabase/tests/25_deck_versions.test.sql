@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(40);
+select plan(45);
 
 select has_table('public', 'deck_versions', 'exports have saved versions');
 select has_function('public', 'save_deck_version', array['uuid'], 'the owner can save a version of the stored deck');
@@ -66,6 +66,11 @@ select throws_ok($$update public.deck_versions set number = 99$$, '42501', null,
 select throws_ok($$insert into public.deck_versions (deck_id, number, snapshot) values ('30000000-0000-0000-0000-0000000025d1', 99, '{}')$$, '42501', null, 'clients cannot supply snapshots');
 select throws_ok($$delete from public.deck_versions$$, '42501', null, 'individual versions cannot be deleted');
 select lives_ok($$update public.deck_versions set fabrary_url = null$$, 'the link can be cleared');
+select lives_ok($$update public.deck_versions set name = 'Levia tech' where number = 1 and deck_id = '30000000-0000-0000-0000-0000000025d1'$$, 'the owner names a version');
+select is((select name from public.deck_versions where number = 1 and deck_id = '30000000-0000-0000-0000-0000000025d1'), 'Levia tech', 'the name is stored');
+select throws_ok($$update public.deck_versions set name = repeat('x', 81)$$, '23514', null, 'names are at most 80 characters');
+select throws_ok($$update public.deck_versions set name = ''$$, '23514', null, 'a name is not empty: clear it instead');
+select throws_ok($$update public.deck_versions set name = '   '$$, '23514', null, 'a name is not only spaces');
 select throws_ok($$select public.save_deck_version('30000000-0000-0000-0000-0000000025d9')$$, '42501', null, 'a missing deck cannot be exported');
 reset role;
 select throws_ok($$insert into public.deck_versions (deck_id, number, snapshot) values ('30000000-0000-0000-0000-0000000025d1', 0, '{}')$$, '23514', null, 'numbers must be positive');

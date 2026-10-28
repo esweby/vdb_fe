@@ -2,19 +2,26 @@
 -- authenticated by default (local stacks do), so every grant must be explicit.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(96);
+select plan(98);
 
 select table_privs_are('public', 'deck_versions', 'anon', array[]::text[], 'anon has no access to deck versions');
 select table_privs_are('public', 'deck_versions', 'authenticated', array['SELECT'], 'owners read versions, with only column updates');
 select ok(has_column_privilege('authenticated', 'public.deck_versions', 'fabrary_url', 'UPDATE')
   and not has_column_privilege('authenticated', 'public.deck_versions', 'snapshot', 'UPDATE'),
   'only the optional FaBrary link can be updated');
-select table_privs_are('public', 'version_games', 'anon', array[]::text[], 'anon has no access to uploaded games');
-select table_privs_are('public', 'version_games', 'authenticated', array['SELECT', 'DELETE'], 'owners read and delete games, inserting only some columns');
-select ok(has_column_privilege('authenticated', 'public.version_games', 'stats', 'INSERT')
-  and not has_column_privilege('authenticated', 'public.version_games', 'uploaded_at', 'INSERT')
-  and not has_column_privilege('authenticated', 'public.version_games', 'id', 'INSERT'),
-  'clients insert a game''s version, file name, note and stats, not its id or upload time');
+select ok(has_column_privilege('authenticated', 'public.deck_versions', 'name', 'UPDATE'),
+  'owners can name a version');
+select table_privs_are('public', 'deck_games', 'anon', array[]::text[], 'anon has no access to results');
+select table_privs_are('public', 'deck_games', 'authenticated', array['SELECT', 'DELETE'], 'owners read and delete results, inserting and updating only some columns');
+select ok(has_column_privilege('authenticated', 'public.deck_games', 'stats', 'INSERT')
+  and has_column_privilege('authenticated', 'public.deck_games', 'deck_id', 'INSERT')
+  and not has_column_privilege('authenticated', 'public.deck_games', 'uploaded_at', 'INSERT')
+  and not has_column_privilege('authenticated', 'public.deck_games', 'id', 'INSERT'),
+  'clients insert a game''s deck, version, file name, note and stats, not its id or upload time');
+select ok(has_column_privilege('authenticated', 'public.deck_games', 'version_id', 'UPDATE')
+  and not has_column_privilege('authenticated', 'public.deck_games', 'stats', 'UPDATE')
+  and not has_column_privilege('authenticated', 'public.deck_games', 'deck_id', 'UPDATE'),
+  'only a game''s version can be changed');
 
 -- Public reference data: readable by everyone
 select table_privs_are('public', t, 'anon', array['SELECT'], 'anon can only read ' || t)

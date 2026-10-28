@@ -94,15 +94,21 @@ export interface DeckVersion {
   id: string;
   deckId: string;
   number: number;
+  /** The owner's name for it ("Levia tech"), if any. */
+  name: string | null;
   createdAt: string;
   snapshot: DeckSnapshot;
   fabraryUrl: string | null;
 }
 
-/** A Talishar game uploaded onto a version: its parsed stats and an optional note. */
-export interface VersionGame {
+/**
+ * A Talishar game uploaded onto a deck: its parsed stats and an optional note, tied to
+ * one of the deck's versions if the owner chose one.
+ */
+export interface DeckGame {
   id: string;
-  versionId: string;
+  deckId: string;
+  versionId: string | null;
   uploadedAt: string;
   fileName: string | null;
   note: string | null;
@@ -150,12 +156,16 @@ export interface DeckRepository {
   listVersions(deckId: string): Promise<DeckVersion[]>;
   saveVersion(deckId: string): Promise<DeckVersion>;
   setVersionLink(versionId: string, url: string | null): Promise<void>;
-  /** A version's uploaded games, newest first (its owner's only). */
-  listGames(versionId: string): Promise<VersionGame[]>;
+  /** Names a version, or clears its name with null. */
+  setVersionName(versionId: string, name: string | null): Promise<void>;
+  /** A deck's uploaded games, newest first (its owner's only). */
+  listGames(deckId: string): Promise<DeckGame[]>;
   addGame(
-    versionId: string,
-    game: Pick<VersionGame, "fileName" | "note" | "stats">,
-  ): Promise<VersionGame>;
+    deckId: string,
+    game: Pick<DeckGame, "versionId" | "fileName" | "note" | "stats">,
+  ): Promise<DeckGame>;
+  /** Ties a game to one of its deck's versions, or to none. */
+  setGameVersion(id: string, versionId: string | null): Promise<void>;
   deleteGame(id: string): Promise<void>;
 }
 
@@ -165,9 +175,9 @@ const INVALID_UUID = "22P02";
 const SUMMARY =
   "id, name, updatedAt:updated_at, visibility, ownerId:user_id, cards:deck_cards(variantId:variant_id, quantity, sideboard)";
 const VERSION =
-  "id, deckId:deck_id, number, createdAt:created_at, snapshot, fabraryUrl:fabrary_url";
+  "id, deckId:deck_id, number, name, createdAt:created_at, snapshot, fabraryUrl:fabrary_url";
 const GAME =
-  "id, versionId:version_id, uploadedAt:uploaded_at, fileName:file_name, note, stats";
+  "id, deckId:deck_id, versionId:version_id, uploadedAt:uploaded_at, fileName:file_name, note, stats";
 
 export function supabaseDeckRepository(client: SupabaseClient): DeckRepository {
   /** Adds each owner's username, read through public.usernames() (profiles stay private). */
@@ -215,20 +225,28 @@ export function supabaseDeckRepository(client: SupabaseClient): DeckRepository {
         .eq("id", versionId);
       if (error) throw error;
     },
-    async listGames(versionId) {
+    async setVersionName(versionId, name) {
+      const { error } = await client
+        .from("deck_versions")
+        .update({ name })
+        .eq("id", versionId);
+      if (error) throw error;
+    },
+    async listGames(deckId) {
       const { data, error } = await client
-        .from("version_games")
+        .from("deck_games")
         .select(GAME)
-        .eq("version_id", versionId)
+        .eq("deck_id", deckId)
         .order("uploaded_at", { ascending: false });
       if (error) throw error;
-      return data as VersionGame[];
+      return data as DeckGame[];
     },
-    async addGame(versionId, game) {
+    async addGame(deckId, game) {
       const { data, error } = await client
-        .from("version_games")
+        .from("deck_games")
         .insert({
-          version_id: versionId,
+          deck_id: deckId,
+          version_id: game.versionId,
           file_name: game.fileName,
           note: game.note,
           stats: game.stats,
@@ -236,13 +254,17 @@ export function supabaseDeckRepository(client: SupabaseClient): DeckRepository {
         .select(GAME)
         .single();
       if (error) throw error;
-      return data as VersionGame;
+      return data as DeckGame;
+    },
+    async setGameVersion(id, versionId) {
+      const { error } = await client
+        .from("deck_games")
+        .update({ version_id: versionId })
+        .eq("id", id);
+      if (error) throw error;
     },
     async deleteGame(id) {
-      const { error } = await client
-        .from("version_games")
-        .delete()
-        .eq("id", id);
+      const { error } = await client.from("deck_games").delete().eq("id", id);
       if (error) throw error;
     },
     async listMyDecks(userId) {

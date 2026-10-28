@@ -170,6 +170,7 @@ const routeTree = rootRoute.addChildren([
         | "matchups"
         | "goldfish"
         | "analysis"
+        | "results"
         | "versions";
       view?: "list";
       /** Goldfish: the shuffle to start from. */
@@ -192,6 +193,7 @@ const routeTree = rootRoute.addChildren([
       search.tab === "matchups" ||
       search.tab === "goldfish" ||
       search.tab === "analysis" ||
+      search.tab === "results" ||
       search.tab === "versions"
         ? {
             tab: search.tab as
@@ -201,6 +203,7 @@ const routeTree = rootRoute.addChildren([
               | "scenarios"
               | "goldfish"
               | "analysis"
+              | "results"
               | "versions",
           }
         : {}),
