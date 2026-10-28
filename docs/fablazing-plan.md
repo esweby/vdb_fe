@@ -1,6 +1,6 @@
 # FaBlazing game data: plan
 
-Status, 23 Oct 2026: steps 1, 2 and 4 are done; step 3's pipeline is live. Step 5 has compared T1–T4 on the maintainer's deck, with incomplete coverage. T1–T5 were approved on 21 Oct; T5 waits for the Gate-target list and T6 remains a draft. See [engine-calibration.md](engine-calibration.md) for the results and next steps. The operational checklist below dates from 21 Oct; items without a recorded outcome remain to be checked. Any reading of game logic is **unverified** until the maintainer checks it.
+Status, 28 Oct 2026: steps 1, 2 and 4 are done; step 3's pipeline is live, its first scheduled run and the hosted history load are confirmed, and three backfill files are still missing (see [Operations check, 28 Oct 2026](#operations-check-28-oct-2026)). Step 5 has compared T1–T4 on the maintainer's deck, with incomplete coverage. T1–T5 were approved on 21 Oct; T5 waits for the Gate-target list and T6 remains a draft. See [engine-calibration.md](engine-calibration.md) for the results and next steps. The operational checklist below dates from 21 Oct; items without a recorded outcome remain to be checked. Any reading of game logic is **unverified** until the maintainer checks it.
 
 ## Decision
 
@@ -143,28 +143,74 @@ There's no general synergy framework until the chains show what the data actuall
 
 ## Status of steps
 
-| #   | Step                      | State                                                                                                                                                                                                              | Waiting on                                                                              |
-| --- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
-| 1   | Data audit                | Written ([fablazing-data-dictionary.md](fablazing-data-dictionary.md)); FaBlazing answered on 21 Oct                                                                                                               | What the action codes mean: a question for Talishar's developers                        |
-| 2   | One chain through the CLI | Done (PR 200)                                                                                                                                                                                                      | —                                                                                       |
-| 3   | Quick-win stats           | **Pipeline live** (PRs 201, 203–206): a Go Lambda daily, raw games in S3, aggregates in Supabase as `fablazing_ingest`. History load (PR 211) and app views (PR 212) are merging; the hosted history load follows. | The first live run's check                                                              |
-| 4   | Chain library             | Eleven chains measured on 30 days, with and without the player cap ([fablazing-chains.md](fablazing-chains.md)); card sets come from the importer (PR 209)                                                         | —                                                                                       |
-| 5   | Engine calibration        | T1–T5 approved; T1–T4 compared on the maintainer's deck. Coverage is incomplete (54% of copies). Results in [engine-calibration.md](engine-calibration.md).                                                        | More verified cards; Gate targets and caveats for T5; weapon policy; approve or drop T6 |
-| 6   | Expand                    | —                                                                                                                                                                                                                  | Evidence from steps 4 and 5                                                             |
+| #   | Step                      | State                                                                                                                                                                                                                                                      | Waiting on                                                                              |
+| --- | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| 1   | Data audit                | Written ([fablazing-data-dictionary.md](fablazing-data-dictionary.md)); FaBlazing answered on 21 Oct                                                                                                                                                       | What the action codes mean: a question for Talishar's developers                        |
+| 2   | One chain through the CLI | Done (PR 200)                                                                                                                                                                                                                                              | —                                                                                       |
+| 3   | Quick-win stats           | **Pipeline live** (PRs 201, 203–206): a Go Lambda daily, raw games in S3, aggregates in Supabase as `fablazing_ingest`. History load (PR 211) and app views (PR 212) merged; the hosted history load ran on 21 Oct; first scheduled run checked on 28 Oct. | Three missing backfill files                                                            |
+| 4   | Chain library             | Eleven chains measured on 30 days, with and without the player cap ([fablazing-chains.md](fablazing-chains.md)); card sets come from the importer (PR 209)                                                                                                 | —                                                                                       |
+| 5   | Engine calibration        | T1–T5 approved; T1–T4 compared on the maintainer's deck. Coverage is incomplete (54% of copies). Results in [engine-calibration.md](engine-calibration.md).                                                                                                | More verified cards; Gate targets and caveats for T5; weapon policy; approve or drop T6 |
+| 6   | Expand                    | —                                                                                                                                                                                                                                                          | Evidence from steps 4 and 5                                                             |
 
 ## Next steps
 
 In the maintainer's order (21 Oct 2026):
 
-1. **Check the first live run** (22 Oct, after 10:00 UTC): the Lambda logs, the `fablazing_runs` row, the aggregate rows and the S3 object.
-2. **Retry the three missing backfill files:** 18 Oct format 1, and 19 Oct formats 0 and 1. FaBlazing rate-limited us (HTTP 429), so leave a minute between files and back off on a 429.
-3. **Load history into Supabase** from the 30 days we downloaded (`~/.cache/vdb/fablazing/viserai/`). Those files hold only games with Viserai, so they're complete for Viserai's cards, turns, traverses and Viserai's own matchups and meta share. **Other heroes' matchups must not be written from them,** because those would be partial. Full matchups build up from the daily runs.
+1. **Check the first live run** (22 Oct, after 10:00 UTC): the Lambda logs, the `fablazing_runs` row, the aggregate rows and the S3 object. **Done (28 Oct):** it ran at 17:30 UTC on 22 Oct, as planned, and succeeded.
+2. **Retry the three missing backfill files:** 18 Oct format 1, and 19 Oct formats 0 and 1. FaBlazing rate-limited us (HTTP 429), so leave a minute between files and back off on a 429. **Not done (28 Oct):** still missing locally, in S3 and in Supabase.
+3. **Load history into Supabase** from the 30 days we downloaded (`~/.cache/vdb/fablazing/viserai/`). Those files hold only games with Viserai, so they're complete for Viserai's cards, turns, traverses and Viserai's own matchups and meta share. **Other heroes' matchups must not be written from them,** because those would be partial. Full matchups build up from the daily runs. **Done (28 Oct):** loaded on 21 Oct, Viserai's matchups only.
 4. **Step 3's app views:** "In real games" on card pages; Viserai's real win rates and meta share on matchups; Effect drafts ordered by real plays per game; how fresh the data is. Guardrails: n ≥ 50, matchup context, Wilson intervals.
 5. **Tidy the chain library:** the player cap in the chain tool, card sets moved to the importer's export, and the two Open the Gate chains (expectations first). **Done (PR 209).**
 6. **Step 5, engine calibration:** thresholds written and T1–T5 approved before comparison; T1–T4 results recorded on 23 Oct. Next: raise card coverage, agree the Gate and weapon policy, decide T6 and run again on the same seed. Thresholds stay fixed.
 7. **Housekeeping:** narrow the `viserai.decks` IAM user from AdministratorAccess now that the stack exists. **Done (PR 213):** day-to-day `--profile vdb` is narrowed; admin is `--profile vdb-admin`.
 
 Items 1 and 2 wait for 22 Oct. Items 3 to 7 can run in parallel.
+
+### Operations check, 28 Oct 2026
+
+Checked read-only on 28 Oct 2026. AWS evidence is from eu-west-1 as `viserai.decks` (`--profile vdb`). Supabase evidence is from the hosted project (`gmqdtqgkqygepsbrgomk`) through its public REST API, which can read every FaBlazing table. S3 times below are UTC.
+
+**1. The first scheduled run: done, 22 Oct 17:30 UTC, succeeded.**
+
+The first run was moved to 17:30 UTC on 22 Oct on purpose (commit `b9cd262`: FaBlazing's egress alert counts a rolling 24 hours, and the backfill ran until about 16:45 on 21 Oct). The stack went back to `cron(0 10 * * ? *)` at 19:00 UTC on 22 Oct (`8f6ee5f`). So there was no 10:00 run on 22 Oct, by design.
+
+- **Log stream** `2026/10/22/vdb-fablazing-ingest[$LATEST]7e5a83e5313b4c92881c43e18201cfe0`, 17:30:48–17:31:05 UTC, request `bb6ada48-18d6-401a-b96e-5b557f3313d3`, 17.3 s, 578 MB of 1,024 MB. It wrote 21 Oct:
+  - format 0: 4,637 rows, 4,555 games, 481 kept, 487 Viserai sides; 304 card, 1,118 matchup, 37 turn and 42 traverse rows
+  - format 1: 2,973 rows, 2,967 games, 286 kept, 291 Viserai sides; 226 card, 944 matchup, 27 turn and 42 traverse rows
+- **S3:** `raw/date=2026-10-21/format=0.ndjson.gz` (1,154,211 bytes) and `format=1.ndjson.gz` (676,546 bytes), both 17:31 UTC.
+- **Supabase:** `fablazing_runs` for 21 Oct, both formats `succeeded`, `scope = all`, no unmatched slugs, written 17:30:59 and 17:31:05.
+- **Scheduler and alarm:** EventBridge Scheduler shows one invocation attempt a day from 22 Oct and no target errors or dropped invocations. Lambda `Errors` is 0 every day from 21 to 27 Oct. The alarm `vdb-fablazing-ingest-errors` has only ever gone from INSUFFICIENT_DATA to OK (21 Oct 15:51 UTC).
+
+The daily runs since then, all `succeeded` with no unmatched slugs:
+
+| Data for | Run (UTC), log stream         | S3 format 0 / 1 (bytes) | Games, format 0 / 1 |
+| -------- | ----------------------------- | ----------------------- | ------------------- |
+| 22 Oct   | 23 Oct 10:00:48, `…a1cc3c80…` | 1,215,505 / 560,337     | 4,671 / 2,984       |
+| 23 Oct   | 24 Oct 10:00:48, `…d6e459bc…` | 1,027,543 / 569,149     | 4,218 / 2,842       |
+| 24 Oct   | 25 Oct 10:00:48, `…f7fee3fb…` | 763,459 / 296,749       | 3,297 / 2,053       |
+| 25 Oct   | 26 Oct 10:00:48, `…e9ab8ebd…` | 886,601 / 292,800       | 3,318 / 2,046       |
+| 26 Oct   | 27 Oct 10:00:48, `…5a1a928e…` | 1,048,347 / 452,922     | 4,583 / 2,944       |
+| 27 Oct   | 28 Oct 10:00:48, `…57efaa01…` | 1,200,300 / 506,576     | 4,754 / 3,017       |
+
+Short log stream names are the run id's first 8 characters; each is `YYYY/MM/DD/vdb-fablazing-ingest[$LATEST]<id>`.
+
+**2. The three missing backfill files: not fetched.**
+
+- The local cache `~/.cache/vdb/fablazing/viserai/` has 57 of the 60 files. `format1_2026-10-18.csv`, `format0_2026-10-19.csv` and `format1_2026-10-19.csv` are still missing (newest file there: 21 Oct 17:42).
+- Hosted Supabase has no rows for 19 Oct in any FaBlazing table, and none for 18 Oct format 1.
+- S3 has no raw files before 20 Oct: the bucket holds `raw/date=2026-10-20` to `raw/date=2026-10-27` only. The Lambda writes S3, and the backfill was never stored there.
+
+**3. The hosted history load: done, Viserai only.**
+
+- `fablazing_runs` has 55 rows with `scope = viserai`, 21 Sep to 18 Oct, all `succeeded`, written 21 Oct 19:27:46–19:28:01 UTC. That is 57 files less the 20 Oct pair, which was loaded whole (`scope = all`, 19:27:44–45).
+- Row counts on 28 Oct before that day's run, 21 Sep to 18 Oct / 20 to 26 Oct: `fablazing_card_daily` 16,459 / 3,890; `fablazing_matchup_daily` 2,269 / 14,474; `fablazing_turn_daily` 1,646 / 415; `fablazing_traverse_daily` 2,456 / 554. Totals: 20,349, 16,743, 2,061 and 3,010. `fablazing_card_map` has 1,095 rows and `fablazing_rules_windows` 1.
+- **Other heroes' matchups weren't written from the Viserai-only files:** of the 2,269 matchup rows from 21 Sep to 18 Oct, none has a `hero` other than `viserai`. From 20 Oct on, 14,003 of 14,474 do, as expected for whole days.
+- The gaps follow item 2: 19 Oct (both formats) and 18 Oct format 1 have no rows.
+
+**For the maintainer:**
+
+- Fetch the three missing files, a minute apart and backing off on a 429, then load them with `-scope viserai`. Or invoke the Lambda with `{"date":"2026-10-19"}` and `{"date":"2026-10-18"}`, which would store both days whole rather than Viserai only (18 Oct format 0 would be fetched again and replace its Viserai-only rows). Whether FaBlazing still serves those dates hasn't been checked.
+- Nothing is broken: no failed runs, no errors and no alarms.
 
 ## Risks
 
