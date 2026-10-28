@@ -26,6 +26,7 @@ type Options struct {
 	MinShare   float64 // fewest lists, as a share, a card needs to count for clustering
 	MinSample  int     // fewest sides with, and without, a card for its lift
 	Seed       uint64
+	Profile    ProfileOptions // each archetype's turn profile
 }
 
 // restarts is how many k-means runs are tried; the tightest is kept.
@@ -54,6 +55,7 @@ type Archetype struct {
 	Sides, Wins int
 	Players     int     // distinct players behind its sides
 	MeanCards   float64 // copies per list, which can include the sideboard
+	Turns       ProfileTally
 	ByFormat    map[int]Tally
 	ByFirst     map[string]Tally // "first" or "second"
 	Inclusion   map[string]float64
@@ -62,12 +64,72 @@ type Archetype struct {
 
 // Result is the archetypes, largest first. Inclusion is over every kept list.
 // Spread is the clustering's mean squared distance from a list to its
-// archetype's centre: lower is tighter, for comparing values of K.
+// archetype's centre: lower is tighter, for comparing values of K. Dims is
+// the cards clustered on.
 type Result struct {
 	Counts     Counts
 	Archetypes []Archetype
 	Inclusion  map[string]float64
 	Spread     float64
+	Dims       []string
+}
+
+// Similarity is the cards two lists share over the cards either runs
+// (Jaccard), 0 for two empty lists.
+func Similarity(a, b map[string]bool) float64 {
+	shared := 0
+	for c := range a {
+		if b[c] {
+			shared++
+		}
+	}
+	all := len(a) + len(b) - shared
+	if all == 0 {
+		return 0
+	}
+	return float64(shared) / float64(all)
+}
+
+// Nearest is the index of the archetype whose centre, over the cards
+// clustered on, is closest to a list.
+func (r Result) Nearest(list map[string]bool) int {
+	best, bestD := -1, math.Inf(1)
+	for i, a := range r.Archetypes {
+		d := 0.0
+		for _, c := range r.Dims {
+			x := 0.0
+			if list[c] {
+				x = 1
+			}
+			d += (x - a.Inclusion[c]) * (x - a.Inclusion[c])
+		}
+		if d < bestD {
+			best, bestD = i, d
+		}
+	}
+	return best
+}
+
+// Lookalikes is the kept Viserai sides whose list is at least min similar to target.
+func Lookalikes(games []game.Game, target map[string]bool, o Options, min float64) []game.Side {
+	sides, _, _ := kept(games, o)
+	var out []game.Side
+	for _, s := range sides {
+		if Similarity(listOf(s), target) >= min {
+			out = append(out, s)
+		}
+	}
+	return out
+}
+
+func listOf(s game.Side) map[string]bool {
+	l := map[string]bool{}
+	for _, c := range s.Cards {
+		if c.Copies > 0 {
+			l[c.ID] = true
+		}
+	}
+	return l
 }
 
 // Core is the cards in at least share of the archetype's lists, by name.
@@ -167,12 +229,7 @@ func Compute(games []game.Game, o Options) Result {
 	}
 	lists := make([]map[string]bool, len(sides))
 	for i, s := range sides {
-		lists[i] = map[string]bool{}
-		for _, c := range s.Cards {
-			if c.Copies > 0 {
-				lists[i][c.ID] = true
-			}
-		}
+		lists[i] = listOf(s)
 	}
 	r.Inclusion = inclusion(lists, nil)
 
@@ -183,6 +240,7 @@ func Compute(games []game.Game, o Options) Result {
 		}
 	}
 	sort.Strings(dims)
+	r.Dims = dims
 	points := make([][]float64, len(lists))
 	for i, l := range lists {
 		points[i] = make([]float64, len(dims))
@@ -238,6 +296,11 @@ func inclusion(lists []map[string]bool, members []int) map[string]float64 {
 
 func archetype(members []int, sides []game.Side, formats []int, lists []map[string]bool, o Options) Archetype {
 	a := Archetype{ByFormat: map[int]Tally{}, ByFirst: map[string]Tally{}, Inclusion: inclusion(lists, members)}
+	group := make([]game.Side, len(members))
+	for j, i := range members {
+		group[j] = sides[i]
+	}
+	a.Turns = Profile(group, o.Profile)
 	with := map[string]Tally{}
 	players := map[game.PlayerHash]bool{}
 	var all Tally

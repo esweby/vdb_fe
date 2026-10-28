@@ -1,6 +1,8 @@
 package main
 
 import (
+	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/esweby/vdb_fe/services/fablazing/game"
@@ -55,5 +57,18 @@ func TestByCountListsCommonestFirstAboveTheMinimum(t *testing.T) {
 	want := []string{"d", "b", "c"}
 	if len(got) != len(want) || got[0] != want[0] || got[1] != want[1] || got[2] != want[2] {
 		t.Errorf("byCount: %v, want %v", got, want)
+	}
+}
+
+func TestReadListSplitsMainFromSideboard(t *testing.T) {
+	main, side, err := readList(strings.NewReader("# a comment\n3 cull_red\n2 sinspeaker_gloomblade_red\n\nsideboard\n1 sinspeaker_gloomblade_red\n2 call_for_backup_red\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(main, map[string]int{"cull_red": 3, "sinspeaker_gloomblade_red": 2}) || !reflect.DeepEqual(side, map[string]int{"sinspeaker_gloomblade_red": 1, "call_for_backup_red": 2}) {
+		t.Fatalf("main = %v, side = %v", main, side)
+	}
+	if _, _, err := readList(strings.NewReader("three cull_red\n")); err == nil {
+		t.Fatal("a line without a count should fail")
 	}
 }

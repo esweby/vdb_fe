@@ -161,3 +161,78 @@ func TestArchetypesAverageListSize(t *testing.T) {
 		t.Fatalf("mean cards = %v and %v, want 19 and 18", a.MeanCards, b.MeanCards)
 	}
 }
+
+func set(cards ...string) map[string]bool {
+	out := map[string]bool{}
+	for _, c := range cards {
+		out[c] = true
+	}
+	return out
+}
+
+func TestSimilarityIsSharedCardsOverAllCards(t *testing.T) {
+	if got := Similarity(set("a", "b", "c"), set("b", "c", "d")); got != 0.5 {
+		t.Fatalf("similarity = %v, want 0.5", got)
+	}
+	if got := Similarity(set(), set()); got != 0 {
+		t.Fatalf("empty similarity = %v", got)
+	}
+}
+
+func TestNearestPlacesAListInItsArchetype(t *testing.T) {
+	r := Compute(styles(), opts())
+	sinchants := set(append(core, "runechant_of_lust_yellow", "vantom_wraith_red")...)
+	widespread := set(append(core, "widespread_ruin_red", "deadwood_dirge_red", "cull_red")...)
+	if got := r.Nearest(sinchants); got != 0 {
+		t.Errorf("sinchant list placed in %d, want 0", got)
+	}
+	if got := r.Nearest(widespread); got != 1 {
+		t.Errorf("widespread list placed in %d, want 1", got)
+	}
+}
+
+func TestLookalikesAreKeptSidesAtLeastThatSimilar(t *testing.T) {
+	games := styles()
+	games = append(games, g(deck("near", true, "runechant_of_lust_yellow", "runechant_of_sloth_yellow")))
+	target := set(append(core, "runechant_of_lust_yellow", "runechant_of_sloth_yellow", "vantom_wraith_red")...)
+	sides := Lookalikes(games, target, opts(), 0.8)
+	// 30 sinchant lists match exactly; "near" shares 5 of 6 (0.83); Widespread shares 3 of 9.
+	if len(sides) != 31 {
+		t.Fatalf("lookalikes = %d, want 31", len(sides))
+	}
+}
+
+// own is a detailed Viserai side going first with damage threatened per own turn.
+func own(threatened ...int) game.Side {
+	s := deck("p", true)
+	s.TurnStats = make([]game.TurnStats, len(threatened))
+	for i, d := range threatened {
+		s.TurnStats[i] = game.TurnStats{DamageThreatened: d, Recorded: true}
+	}
+	s.Turns = len(threatened)
+	return s
+}
+
+func TestProfileTalliesOwnTurnsOneToFour(t *testing.T) {
+	a := own(2, 9, 14, 20, 30) // turn 5 is past the window
+	a.Log = []game.Event{{Turn: 1, Card: "viserai_usurper", Action: "TRANSFORM"}, {Turn: 3, Card: "usurp_the_shadow_throne_blue", Action: "M"}}
+	b := own(0, 4, 18)
+	b.Won = false
+	c := own(3, 3, 3, 3, 3, 3, 3, 3)
+	c.Log = []game.Event{{Turn: 7, Card: "usurp_the_shadow_throne_blue", Action: "M"}} // Usurp counts any time in the game
+	c.Won = false
+	p := Profile([]game.Side{a, b, c}, ProfileOptions{Rounds: 4, Brick: 5, Big: 14, Peak: 18, Usurp: "usurp_the_shadow_throne_blue"})
+	want := ProfileTally{Sides: 3, Wins: 1, Turns: 11, Threatened: 2 + 9 + 14 + 20 + 0 + 4 + 18 + 12, Bricks: 7, Big: 3, Flips: 1, PeakSides: 2, UsurpSides: 2, UsurpWins: 1}
+	if p != want {
+		t.Fatalf("profile = %+v, want %+v", p, want)
+	}
+}
+
+func TestEachArchetypeHasATurnProfile(t *testing.T) {
+	o := opts()
+	o.Profile = ProfileOptions{Rounds: 4, Brick: 5, Big: 14, Peak: 18}
+	r := Compute(styles(), o)
+	if a := r.Archetypes[0]; a.Turns.Sides != a.Sides || a.Turns.Wins != a.Wins {
+		t.Fatalf("profile = %+v for %d sides", a.Turns, a.Sides)
+	}
+}

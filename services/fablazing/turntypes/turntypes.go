@@ -124,17 +124,23 @@ func action(code string) string {
 	return ""
 }
 
-// ownTurn is the side's own turn (0 for its first) with the opponent's turn
+// Round is the round (turn index) an own turn (0 for the first) takes its
+// damage threatened from: the same going first, one later going second.
+func Round(s game.Side, turn int) int {
+	if s.WentFirst() {
+		return turn
+	}
+	return turn + 1
+}
+
+// OwnTurn is the side's own turn (0 for its first) with the opponent's turn
 // before it, and the damage it threatened. Going first, that's one round: round
 // 0 is only the first turn, and later rounds are the opponent's turn, then
 // yours. Going second, round 0 is only the opponent's first turn and later
 // rounds are yours, then the opponent's, split at the first block. Inferred
 // from the logs, not documented by FaBlazing.
-func ownTurn(s game.Side, turn int) (events []game.Event, threatened int) {
-	round := turn
-	if !s.WentFirst() {
-		round = turn + 1
-	}
+func OwnTurn(s game.Side, turn int) (events []game.Event, threatened int) {
+	round := Round(s, turn)
 	if round < len(s.TurnStats) {
 		threatened = s.TurnStats[round].DamageThreatened
 	}
@@ -177,7 +183,7 @@ func splitRound(s game.Side, round int) (opp, own []game.Event) {
 // "+flip" when Viserai traversed to the Usurper and "+back" when it traversed
 // to the Forsaken.
 func Classify(s game.Side, turn int, o Options) string {
-	events, threatened := ownTurn(s, turn)
+	events, threatened := OwnTurn(s, turn)
 	var plays, blocks int
 	flip, back := false, false
 	for _, e := range events {
@@ -280,7 +286,7 @@ func (r *Result) add(s game.Side, o Options) {
 	for round := range kinds {
 		kind := Classify(s, round, o)
 		kinds[round] = kind
-		events, threatened := ownTurn(s, round)
+		events, threatened := OwnTurn(s, round)
 		played, flip := 0, 0
 		for _, e := range events {
 			if e.Action == "TRANSFORM" && e.Card == "viserai_usurper" {

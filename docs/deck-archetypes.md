@@ -41,6 +41,40 @@ It has no core: no card outside the shared Viserai cards is in 80% of its lists.
 
 The strongest big group. Inside it, Arknight Shard (36% against 29%) and Widespread Annihilation go with winning. Bloodfrenzy Gloomblade (red) goes with losing: 28% against 37% (n=1,396).
 
+## Placing the Sinspeaker and Usurp list
+
+On 28 Oct the maintainer shared a list ([lists/sinspeaker-usurp.txt](lists/sinspeaker-usurp.txt)): 54 cards with 3 Usurp the Shadow Throne, Sinspeaker, Plundersong, Pull from Beyond, 3 Lust and 2 Sloth, and no Revel, Mordred or Annihilation. Its write-up argued:
+
+1. Against Revel, Mordred and Widespread ("RG") builds: RG has a stronger average turn, but more acute failure states and a lower ceiling.
+2. Against flip-focused builds: Gate makers are weak, so this list uses banish effects to stay in Usurper longer instead.
+3. It resolves a Usurp the Shadow Throne "essentially every game".
+
+```
+go run ./cmd/fablazing like ../../docs/lists/sinspeaker-usurp.txt ~/.cache/vdb/fablazing/viserai/*.csv
+```
+
+It sits nearest **archetype 1** (sinchants with Usurp and Pull from Beyond). Nobody plays exactly this list. Among kept sides, by similarity to its 20 main deck cards (shared over all cards, and a recorded list can include the sideboard): 4,285 sides are at 50% or more, 419 at 60%, 51 at 70% and 1 at 80%.
+
+Own turns 1 to 4. Brick means under 5 threatened, big means 14 or more, and peak means a side's best turn reached 18. The thresholds are a guess, UNVERIFIED.
+
+| Group | Sides | Players | Won | Threatened a turn | Brick | Big | Peak | Played Usurp | In losses |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Lookalikes (60%+) | 419 | 92 | 32.7% [28.4–37.3] | 9.0 | 28% | 26% | 32% | 28% | 18% |
+| 1: sinchants and Usurp | 8,241 | 750 | 29.8% | 9.0 | 26% | 24% | 34% | 22% | 16% |
+| 3: Vantom and Widespread | 5,281 | 517 | 34.5% | 9.4 | 29% | 31% | 46% | 1% | 1% |
+| 4: Widespread and Deadwood | 4,444 | 525 | 30.9% | 8.7 | 30% | 26% | 36% | 6% | 4% |
+| 6: defence reactions | 1,592 | 242 | 41.3% | 4.7 | 58% | 6% | 6% | 12% | 11% |
+
+FaBlazing doesn't log a game's last attack, so a Usurp that won the game can be missed. Losses are the cleaner count, which is why they get their own column.
+
+Against the write-up:
+
+1. **RG.** Partly borne out. Archetype 3 has the higher average (9.4 against 9.0) and slightly more bricks (29% against 28%). But it has the *higher* ceiling: 31% of its turns are big, and 46% of its sides reach 18, against 26% and 32% for the lookalikes. It also wins more (34.5% against 32.7%, with overlapping intervals).
+2. **Flipping.** Not measured here. The turn types (`fablazing turns`) count flips and returns, and could split them by archetype next.
+3. **Usurp every game.** Not borne out by the logs. The lookalikes played Usurp in 28% of games, and in 18% of losses. Even archetype 1 plays it in 22%. The earlier one-off count found the same: Usurp turns are big, about 20 threatened, but rare.
+
+Archetype 6 is the odd one out. It threatens half as much, bricks on 58% of turns, and still wins most. That fits a defensive plan that wins long games, not the burst model behind these thresholds.
+
 ## Caveats
 
 - **Who plays it.** A deck that strong players choose will look strong. Archetype 6 has 242 players, about 6.6 sides each, so it isn't a handful of people, but its win rate isn't adjusted for player skill.
@@ -50,6 +84,6 @@ The strongest big group. Inside it, Arknight Shard (36% against 29%) and Widespr
 
 ## Next
 
-- Find which archetype the maintainer's own list sits in, and what the stronger archetypes run that it doesn't.
+- Split the lookalikes by whether they run 3 Usurp, and by flips and returns.
 - Weigh each player equally (one vote per player) to check archetype 6's 41%.
 - Split the top archetypes by opponent.

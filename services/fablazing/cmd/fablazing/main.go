@@ -43,7 +43,7 @@ var concession = aggregate.Concession
 
 func main() {
 	if len(os.Args) < 3 {
-		fmt.Fprintln(os.Stderr, "usage: fablazing game <file.csv> [guid] | fablazing chain [-cap n] <spec.json> <sets.json> <file.csv>... | fablazing aggregate [-json] [-cap n] <file.csv> | fablazing turns [flags] <file.csv>... | fablazing decks [flags] <file.csv>...")
+		fmt.Fprintln(os.Stderr, "usage: fablazing game <file.csv> [guid] | fablazing chain [-cap n] <spec.json> <sets.json> <file.csv>... | fablazing aggregate [-json] [-cap n] <file.csv> | fablazing turns [flags] <file.csv>... | fablazing decks [flags] <file.csv>... | fablazing like [flags] <list.txt> <file.csv>...")
 		os.Exit(2)
 	}
 	var err error
@@ -58,6 +58,8 @@ func main() {
 		err = runTurns(os.Args[2:])
 	case "decks":
 		err = runDecks(os.Args[2:])
+	case "like":
+		err = runLike(os.Args[2:])
 	default:
 		err = fmt.Errorf("unknown command %q", os.Args[1])
 	}
