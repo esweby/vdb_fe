@@ -151,7 +151,9 @@ describe("plan goals", () => {
       await goals.findByRole("table", { name: "Goal results" }),
     );
     expect(table.getByText("Not met")).toBeTruthy();
-    expect(table.getByText(/^No clear difference/)).toBeTruthy();
+    expect(
+      table.getByText("No clear difference: the same result in every run"),
+    ).toBeTruthy();
   });
 
   it("compares with another plan on the same seeds", async () => {

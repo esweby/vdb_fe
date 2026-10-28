@@ -400,7 +400,9 @@ function GoalResults(props: {
                 </td>
                 <td data-verdict={verdict}>
                   {verdict === "no clear difference"
-                    ? `No clear difference (${interval})`
+                    ? d.low === 0 && d.high === 0
+                      ? "No clear difference: the same result in every run"
+                      : `No clear difference (${interval})`
                     : `${verdict === "higher" ? "Higher" : "Lower"} by ${Math.abs(d.difference * 100).toFixed(1)} points (${interval})`}
                   <small>{` · ${props.otherName} ${percent(p.b / p.runs)}`}</small>
                 </td>

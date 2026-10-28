@@ -1283,7 +1283,17 @@
 }
 .goalForm .matchupPick {
   flex: 1 1 18rem;
+  min-width: 0;
   max-width: 32rem;
+}
+.goalForm .matchupPick select {
+  width: 100%;
+  min-width: 0;
+  padding: var(--space-2);
+}
+/* The text field's own bottom margin would lift it off the row's baseline. */
+.goalForm > div {
+  margin-bottom: 0;
 }
 .goalResults {
   overflow-x: auto;
