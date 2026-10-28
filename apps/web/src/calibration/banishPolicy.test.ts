@@ -6,7 +6,7 @@ import {
   setUp,
   VISERAI,
   type RulesCard,
-} from "@vdb/engine/rules";
+} from "@esweby/fab-engine/rules";
 import { runGateWeaponPolicyFromState } from "./gateWeaponBatch.ts";
 const card = (name: string, overrides: Partial<RulesCard> = {}): RulesCard =>
   cardWithRules({

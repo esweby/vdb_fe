@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import type { RulesCard, RulesEvent, RunSummary } from "@vdb/engine/rules";
+import type {
+  RulesCard,
+  RulesEvent,
+  RunSummary,
+} from "@esweby/fab-engine/rules";
 import {
   analysisCases,
   answerQuestions,

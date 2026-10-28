@@ -3,7 +3,7 @@
 import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
-import type { ScenarioDefinition } from "@vdb/engine";
+import type { ScenarioDefinition } from "@esweby/fab-engine";
 import { fakeAuthService } from "../test/fakeAuthService.ts";
 import { fakeDeckRepository } from "../test/fakeDeckRepository.ts";
 import { fakeCardRepository, sampleCards } from "../test/fakeCardRepository.ts";

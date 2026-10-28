@@ -5,7 +5,7 @@ import type {
   ConditionGroup,
   ScenarioDefinition,
   Step,
-} from "@vdb/engine";
+} from "@esweby/fab-engine";
 import { filterWords } from "./blocks.ts";
 
 const ZONE_WORDS: Record<ScenarioDefinition["access"][number], string> = {

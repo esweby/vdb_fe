@@ -9,7 +9,7 @@ import {
   VISERAI,
   type RulesCard,
   type RulesState,
-} from "@vdb/engine/rules";
+} from "@esweby/fab-engine/rules";
 import { runGateWeaponPolicyFromState } from "./gateWeaponBatch.ts";
 import { selectDescendancyPlan } from "./descendancySetup.ts";
 

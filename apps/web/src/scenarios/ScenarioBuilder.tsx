@@ -1,7 +1,7 @@
 // Build a scenario from blocks and run it against a deck (README "Building a rule" and "Running
 // a scenario", phase two step 6), and save it (README "Saved scenarios"). Steps are stage 2.
 import { ROLES } from "@vdb/cards";
-import type { EngineCard, ScenarioDefinition } from "@vdb/engine";
+import type { EngineCard, ScenarioDefinition } from "@esweby/fab-engine";
 import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { encodeFixed } from "../decks/goldfishLink.ts";

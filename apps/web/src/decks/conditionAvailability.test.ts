@@ -1,7 +1,7 @@
 // Condition availability (README "Deck analysis", phase two step 7): each condition a deck's
 // cards record becomes a built-in scenario. With the card in hand, is what the condition needs
 // in the opening hand too?
-import { scenarioSchema } from "@vdb/engine";
+import { scenarioSchema } from "@esweby/fab-engine";
 import { describe, expect, it } from "vitest";
 import type { CardSummary } from "../cards/cardRepository.ts";
 import { sampleCards } from "../test/fakeCardRepository.ts";

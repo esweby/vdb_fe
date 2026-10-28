@@ -1,6 +1,6 @@
-import { scenarioSchema } from "@vdb/engine";
+import { scenarioSchema } from "@esweby/fab-engine";
 import { lacking, runOne } from "./scenarioRuns.ts";
-import { buildDeck } from "@vdb/engine";
+import { buildDeck } from "@esweby/fab-engine";
 import { describe, expect, it } from "vitest";
 import { sampleCards } from "../test/fakeCardRepository.ts";
 import { BUILT_IN_SCENARIOS, engineCardOf, toEngineCard } from "./scenarios.ts";

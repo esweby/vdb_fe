@@ -1,5 +1,5 @@
 // UNVERIFIED effect drafts. The maintainer must approve these seven cards before they gain rules.
-import { verifiedRulesFor } from "@vdb/engine/rules";
+import { verifiedRulesFor } from "@esweby/fab-engine/rules";
 import { describe, expect, it } from "vitest";
 import { runechantCreators } from "../../../../packages/importer/src/authored/01-runechant-creators.ts";
 import { gateCreators } from "../../../../packages/importer/src/authored/02-gate-creators.ts";

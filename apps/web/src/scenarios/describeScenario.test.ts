@@ -1,6 +1,6 @@
 // The scenarios form reads back as one sentence (the maintainer, 19 Oct 2026: the old form was
 // hard to read back), built from the definition the run will use.
-import type { ScenarioDefinition } from "@vdb/engine";
+import type { ScenarioDefinition } from "@esweby/fab-engine";
 import { describe, expect, it } from "vitest";
 import { describeScenario } from "./describeScenario.ts";
 

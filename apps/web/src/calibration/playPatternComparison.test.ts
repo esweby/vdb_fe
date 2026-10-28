@@ -5,7 +5,7 @@ import {
   type BatchSetup,
   type RulesCard,
   type Script,
-} from "@vdb/engine/rules";
+} from "@esweby/fab-engine/rules";
 import {
   comparePlayPatterns,
   priorityPatterns,

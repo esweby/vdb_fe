@@ -1,6 +1,6 @@
 // Usurp the Shadow Throne's draft, accepted by the maintainer on 24 Oct 2026.
 import { describe, expect, it } from "vitest";
-import { verifiedRulesFor } from "@vdb/engine/rules";
+import { verifiedRulesFor } from "@esweby/fab-engine/rules";
 import type { CardSummary } from "../cards/cardRepository.ts";
 import { sampleCards } from "../test/fakeCardRepository.ts";
 import { draftEffects } from "./draftEffects.ts";

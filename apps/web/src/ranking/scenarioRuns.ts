@@ -9,11 +9,11 @@ import {
   type ConditionGroup,
   type EngineCard,
   type ScenarioResult,
-} from "@vdb/engine";
+} from "@esweby/fab-engine";
 import {
   runTraverse,
   type TraverseResult,
-} from "@vdb/engine/rulesets/viseraiTraverse";
+} from "@esweby/fab-engine/rulesets/viseraiTraverse";
 import { BUILT_IN_SCENARIOS } from "./scenarios.ts";
 import {
   BLOOD_DEBT,
@@ -22,7 +22,7 @@ import {
   VISERAI,
   type BatchReport,
   type RulesCard,
-} from "@vdb/engine/rules";
+} from "@esweby/fab-engine/rules";
 import { baselineScript } from "./baselineScript.ts";
 
 export { baselineScript } from "./baselineScript.ts";

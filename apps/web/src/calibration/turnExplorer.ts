@@ -1,6 +1,6 @@
 // UNVERIFIED exploration scope and ordering; legal transitions use the existing rules engine.
 import { z } from "zod";
-import { ENGINE_VERSION } from "@vdb/engine";
+import { ENGINE_VERSION } from "@esweby/fab-engine";
 import {
   applySessionAction,
   checkInvariants,
@@ -13,7 +13,7 @@ import {
   type RulesState,
   type Selector,
   type SessionAction,
-} from "@vdb/engine/rules";
+} from "@esweby/fab-engine/rules";
 import {
   summarisePatternTurns,
   visiblePatternState,

@@ -1,4 +1,8 @@
-import { ScenarioCannotRun, type HeroSide, type Zone } from "@vdb/engine";
+import {
+  ScenarioCannotRun,
+  type HeroSide,
+  type Zone,
+} from "@esweby/fab-engine";
 import {
   applySessionAction,
   BLOOD_DEBT,
@@ -13,7 +17,7 @@ import {
   type RulesSetup,
   type RulesState,
   type SessionAction,
-} from "@vdb/engine/rules";
+} from "@esweby/fab-engine/rules";
 import {
   useEffect,
   useMemo,

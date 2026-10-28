@@ -163,7 +163,7 @@ At 14, the 9 to 13 turns count as build or defend, so the two columns aren't fro
 
 ## Scoring settings
 
-**UNVERIFIED.** Task 7, built by Claude on 28 Oct 2026. `chooseLine(state, settings)` in `packages/engine/src/rules/objectives.ts` runs the [turn search](turn-search.md) and plays the line with the highest score. Ties go to the first line in the search's order, so the choice is deterministic. `playByObjectives` plays a game turn by turn with it, and `objectivePolicy` runs it as a batch policy on the same seeds as a script, ready for the full analysis to switch to (task 10).
+**UNVERIFIED.** Task 7, built by Claude on 28 Oct 2026. `chooseLine(state, settings)` in `src/rules/objectives.ts` of [fab-engine](https://github.com/esweby/fab-engine) runs the [turn search](https://github.com/esweby/fab-engine/blob/main/docs/turn-search.md) and plays the line with the highest score. Ties go to the first line in the search's order, so the choice is deterministic. `playByObjectives` plays a game turn by turn with it, and `objectivePolicy` runs it as a batch policy on the same seeds as a script, ready for the full analysis to switch to (task 10).
 
 A line's score is the sum of these, each from the game state the line leaves, not from the turn number. The settings are the maintainer's ideas; every default weight is Claude's guess, for the maintainer to check.
 
@@ -186,7 +186,7 @@ The engine has no opponent, so "defend" is `holdBack`: a variable with no defaul
 
 ### The goldfish game against the chooser
 
-The maintainer's four turns, with the default settings (`packages/engine/test/rules/line-scoring-goldfish.test.ts`):
+The maintainer's four turns, with the default settings (`test/rules/line-scoring-goldfish.test.ts` in fab-engine):
 
 | Turn | Maintainer                                      | Chooser                                                                                   | Same? |
 | ---- | ----------------------------------------------- | ----------------------------------------------------------------------------------------- | ----- |

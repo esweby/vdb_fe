@@ -6,7 +6,7 @@
 // UNVERIFIED: which conditions a hand can show, and what each needs, are a first pass for the
 // maintainer or an experienced player to check (README "Condition definitions").
 import { conditionsOf, type Condition } from "@vdb/cards";
-import type { ScenarioDefinition } from "@vdb/engine";
+import type { ScenarioDefinition } from "@esweby/fab-engine";
 import { engineCardOf } from "../ranking/scenarios.ts";
 import { sectionOf, type DeckEntry } from "./deckRules.ts";
 

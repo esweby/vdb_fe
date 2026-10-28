@@ -1,6 +1,6 @@
 // Drafts matched to the blue rules approved by the maintainer on 24 Oct 2026.
 import { describe, expect, it } from "vitest";
-import { parseTriggers, verifiedRulesFor } from "@vdb/engine/rules";
+import { parseTriggers, verifiedRulesFor } from "@esweby/fab-engine/rules";
 import type { CardSummary } from "../cards/cardRepository.ts";
 import { sampleCards } from "../test/fakeCardRepository.ts";
 import { draftQueue } from "./draftQueue.ts";

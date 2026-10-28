@@ -1,6 +1,6 @@
 // UNVERIFIED priority experiments; the runner compares declared policies, not optimal play.
 import { z } from "zod";
-import { ENGINE_VERSION } from "@vdb/engine";
+import { ENGINE_VERSION } from "@esweby/fab-engine";
 import {
   checkInvariants,
   parseScript,
@@ -13,7 +13,7 @@ import {
   type Script,
   type ScriptRun,
   type ScriptStep,
-} from "@vdb/engine/rules";
+} from "@esweby/fab-engine/rules";
 import { runGateWeaponPolicyFromState } from "./gateWeaponBatch.ts";
 import { TRAVERSE_TRIGGER } from "./traverseBackPolicy.ts";
 

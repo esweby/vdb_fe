@@ -1,7 +1,7 @@
 // Approved red rules with synthetic display names to isolate the choice interface.
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { CARD_RULES, verifiedRulesFor } from "@vdb/engine/rules";
+import { CARD_RULES, verifiedRulesFor } from "@esweby/fab-engine/rules";
 import { expect, it } from "vitest";
 import { sampleCards } from "../test/fakeCardRepository.ts";
 import { Goldfish } from "./Goldfish.tsx";

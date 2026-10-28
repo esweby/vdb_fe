@@ -1,4 +1,4 @@
-import { parseScript } from "@vdb/engine/rules";
+import { parseScript } from "@esweby/fab-engine/rules";
 
 /**
  * The baseline script: each turn, play every card the rules allow (the scripted policy's order:

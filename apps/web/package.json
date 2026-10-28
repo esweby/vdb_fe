@@ -19,12 +19,12 @@
     "vite": "^8.3.4"
   },
   "dependencies": {
+    "@esweby/fab-engine": "github:esweby/fab-engine#v0.1.0",
     "@reduxjs/toolkit": "^2.13.0",
     "@sigma/node-border": "^3.0.0",
     "@supabase/supabase-js": "^2.117.3",
     "@tanstack/react-router": "^1.170.44",
     "@vdb/cards": "*",
-    "@vdb/engine": "*",
     "@vdb/scoring": "*",
     "graphology": "^0.26.0",
     "graphology-layout": "^0.6.1",

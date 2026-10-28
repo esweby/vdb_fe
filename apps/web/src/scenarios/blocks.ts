@@ -1,7 +1,7 @@
 // Condition blocks in plain words. Failures are grouped by block (README "Why runs failed"), so
 // a block's label is what the user reads there.
 import { ROLES } from "@vdb/cards";
-import type { Block, ConditionGroup, Step } from "@vdb/engine";
+import type { Block, ConditionGroup, Step } from "@esweby/fab-engine";
 import { TYPE_LABELS } from "../cards/filterCards.ts";
 import { PITCH_NAMES } from "../decks/deckRules.ts";
 

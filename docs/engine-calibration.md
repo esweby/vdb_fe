@@ -1,6 +1,6 @@
 # Engine calibration
 
-Step 5 of [fablazing-plan.md](fablazing-plan.md): checking the TypeScript rules engine (`packages/engine`) against real games from FaBlazing.
+Step 5 of [fablazing-plan.md](fablazing-plan.md): checking the TypeScript rules engine ([fab-engine](https://github.com/esweby/fab-engine)) against real games from FaBlazing.
 
 Status, 26 Oct 2026: **T1–T4 and T6 compared at full verified-rule coverage**, using four explicit-answer cases approved by the maintainer; results at the end of this document. T1–T5 were approved on 21 Oct 2026, before anything was compared, and haven't moved. **T6 (threatened damage) was approved as written on 24 Oct**, after its draft results had been reported separately. [T5's opt-in chain measurement](t5-chain-measurement.md) is now implemented; a formal verdict still requires an agreed Gate script. A divergence is something to investigate (a missing rule, a scripted decision or a difference in the data). It never means moving a threshold.
 

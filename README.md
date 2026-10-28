@@ -472,7 +472,7 @@ Ideally, decks created here can be played on Talishar, with match data collected
 The repo is a workspace (monorepo) so logic is written once:
 
 - `packages/scoring`: score resolution (review and blank rules, fringe default). Used by the frontend for personal scores and by the community score Edge Function.
-- `packages/engine`: the game engine and scenario runner (phase two), and the rules engine in `src/rules` (phase three).
+- [`@esweby/fab-engine`](https://github.com/esweby/fab-engine): the game engine and scenario runner (phase two), and the rules engine in `src/rules` (phase three). Its own repository since 28 Oct 2026; `apps/web` pins a git tag.
 - `packages/cards`: card types and attribute types, shared by everything.
 
 Edge Functions run on Deno, so how they import a workspace package (bundling, an import map or a relative import) needs to be confirmed during setup, before any scoring code is written.

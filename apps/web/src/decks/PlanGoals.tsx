@@ -2,7 +2,7 @@
 // A check runs each goal's scenario on the plan and on the main deck (or another plan) with the
 // same seed, so the runs pair up. Which targets matter is the owner's call; the app suggests none.
 import { useEffect, useMemo, useState } from "react";
-import type { ScenarioDefinition } from "@vdb/engine";
+import type { ScenarioDefinition } from "@esweby/fab-engine";
 import { useAppSelector } from "../hooks.ts";
 import { runPlanGoals } from "../ranking/runScenarios.ts";
 import { RUNS } from "../ranking/scenarioRuns.ts";

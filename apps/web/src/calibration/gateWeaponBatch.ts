@@ -9,7 +9,7 @@ import {
   type RulesState,
   type Script,
   type ScriptRun,
-} from "@vdb/engine/rules";
+} from "@esweby/fab-engine/rules";
 import { baselineScript } from "../ranking/baselineScript.ts";
 import { GATE_WEAPON_EXAMPLES } from "./gateWeaponExamples.ts";
 import { selectDescendancyPlan } from "./descendancySetup.ts";

@@ -1,5 +1,5 @@
 // Maintainer-approved lines and bounded Descendancy extension, not a default policy change.
-import { parseScript, type Script } from "@vdb/engine/rules";
+import { parseScript, type Script } from "@esweby/fab-engine/rules";
 
 export interface GateWeaponExample {
   id: string;

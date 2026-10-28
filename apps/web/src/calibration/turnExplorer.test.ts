@@ -8,7 +8,7 @@ import {
   VISERAI,
   type RulesCard,
   type RulesState,
-} from "@vdb/engine/rules";
+} from "@esweby/fab-engine/rules";
 import { exploreTurn } from "./turnExplorer.ts";
 
 const fact = (name: string, overrides: Partial<RulesCard> = {}): RulesCard => ({

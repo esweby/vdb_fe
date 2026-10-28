@@ -2,7 +2,7 @@
 // security keeps each person to their own, plus the library; a link-shared scenario is read
 // by id through shared_scenario().
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { scenarioSchema, type ScenarioDefinition } from "@vdb/engine";
+import { scenarioSchema, type ScenarioDefinition } from "@esweby/fab-engine";
 
 export type Visibility = "private" | "link" | "library";
 

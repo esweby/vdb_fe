@@ -1,7 +1,7 @@
 // A deck list as the rules engine plays it (docs/engine-calibration.md): the app's own card
 // mapping, weapons and equipment in their slots, and the main deck's coverage by verified rules,
 // by distinct card and by copy. Unverified cards can be pitched or held, never played.
-import type { RulesCard } from "@vdb/engine/rules";
+import type { RulesCard } from "@esweby/fab-engine/rules";
 import type { CardSummary } from "../cards/cardRepository.ts";
 import { PITCH_NAMES } from "../decks/deckRules.ts";
 import { rulesCardOf } from "../scenarios/rulesCards.ts";

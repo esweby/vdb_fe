@@ -7,7 +7,7 @@ import {
   type ConditionGroup,
   type ScenarioDefinition,
   type Step,
-} from "@vdb/engine";
+} from "@esweby/fab-engine";
 import { blockLabel } from "./blocks.ts";
 
 export type Measure = "cards" | "distinct" | "runechants" | "gates";

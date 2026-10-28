@@ -1,6 +1,6 @@
 // Step 9 (docs/rules-engine.md): effects drafted from a card's recorded facts, marked unverified,
 // for a player to check against the printed text. What can't be drafted is listed, never guessed.
-import { CARD_RULES, describeEffects } from "@vdb/engine/rules";
+import { CARD_RULES, describeEffects } from "@esweby/fab-engine/rules";
 import { describe, expect, it } from "vitest";
 import type { CardSummary } from "../cards/cardRepository.ts";
 import { sampleCards } from "../test/fakeCardRepository.ts";

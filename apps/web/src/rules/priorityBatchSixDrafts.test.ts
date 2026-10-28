@@ -1,6 +1,6 @@
 // Funeral Moon and Rattle Bones approved by the maintainer on 27 Oct 2026.
 // The other three effect drafts remain UNVERIFIED.
-import { parseEffects, verifiedRulesFor } from "@vdb/engine/rules";
+import { parseEffects, verifiedRulesFor } from "@esweby/fab-engine/rules";
 import { describe, expect, it } from "vitest";
 import { runechantCreators } from "../../../../packages/importer/src/authored/01-runechant-creators.ts";
 import { bloodDebtAndBanish } from "../../../../packages/importer/src/authored/03-blood-debt-and-banish.ts";

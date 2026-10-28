@@ -4,7 +4,7 @@ import {
   type RulesState,
   type Script,
   type Selector,
-} from "@vdb/engine/rules";
+} from "@esweby/fab-engine/rules";
 import { TRAVERSE_TRIGGER } from "./traverseBackPolicy.ts";
 
 export const REVIEWED_DELAYED_HAND_IDS = [
