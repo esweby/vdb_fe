@@ -1,15 +1,21 @@
 import { useMemo, useState } from "react";
 import type { CardSummary } from "../cards/cardRepository.ts";
 import { runDeckAnalysis } from "../ranking/runScenarios.ts";
-import { Tag } from "../ui/index.ts";
+import { Button, Tag } from "../ui/index.ts";
+import { formatWindow } from "../fablazing/stats.ts";
 import { resolveDeck } from "../calibration/resolveDeck.ts";
 import type { DeckEntry } from "./deckRules.ts";
 import benchmarkData from "./fablazing-viserai-benchmarks.json";
 import {
+  answerQuestions,
+  DEFAULT_ANSWER_TURN,
   FULL_ANALYSIS_RUNS,
   FULL_ANALYSIS_TURNS,
+  questions,
+  type Answer,
   type FullAnalysisInput,
   type FullAnalysisOutput,
+  type ListDifference,
 } from "./fullAnalysis.ts";
 import styles from "./Decks.module.css";
 
@@ -38,6 +44,30 @@ export interface BenchmarkSnapshot {
 }
 
 const percent = (share: number) => String(Math.round(share * 100)) + "%";
+const amount = (mean: number) => String(Math.round(mean * 10) / 10);
+const TURNS = Array.from({ length: FULL_ANALYSIS_TURNS }, (_, i) => i + 1);
+
+/** "+3 points (95%: +1 to +5)" or "+1.5 damage (95%: …)". */
+function formatDifference(d: ListDifference, kind: Answer["numbers"]["kind"]) {
+  if (!d.pairs) return "No games to compare";
+  const signed = (x: number) =>
+    !Number.isFinite(x)
+      ? "?"
+      : (x > 0 ? "+" : x < 0 ? "−" : "") +
+        (kind === "share"
+          ? String(Math.round(Math.abs(x) * 100))
+          : amount(Math.abs(x)));
+  const unit = kind === "share" ? " points" : " damage";
+  return (
+    signed(d.difference.difference) +
+    unit +
+    " (95%: " +
+    signed(d.difference.low) +
+    " to " +
+    signed(d.difference.high) +
+    ")"
+  );
+}
 
 export function FullAnalysisPanel(props: {
   entries: DeckEntry[];
@@ -98,6 +128,7 @@ export function FullAnalysisPanel(props: {
     return { decks, missing };
   }, [benchmarks, props.cards, props.entries]);
   const [output, setOutput] = useState<FullAnalysisOutput | null>(null);
+  const [turn, setTurn] = useState(DEFAULT_ANSWER_TURN);
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -121,98 +152,188 @@ export function FullAnalysisPanel(props: {
     }
   }
 
-  const observedSameTurn =
-    benchmarks.observedChain.byDelay[0] / benchmarks.observedChain.completed;
+  const answers = output
+    ? answerQuestions(output, turn, benchmarks.observedChain)
+    : null;
+  const stated =
+    answers ??
+    questions(
+      turn,
+      props.entries.filter((e) => !e.sideboard).map((e) => e.card.name),
+    );
+  const failed = output
+    ? output.rows.map((row) => ({
+        label: row.label,
+        count: row.runs.filter((run) => !run.completed).length,
+      }))
+    : [];
   return (
     <section aria-label="Full analysis" className={styles.fullAnalysis}>
-      <div className={styles.analysisHeading}>
+      <header className={styles.analysisHeading}>
         <div>
           <h2>Full analysis</h2>
           <p>
-            Compare this deck's goldfish setup with three common real Viserai
-            lists. No opponent, blocking or incoming damage is simulated.
+            Questions about how this deck plays, answered from practice games
+            and compared with three common Viserai lists from real games (
+            {formatWindow(benchmarks.window.startsOn, benchmarks.window.endsOn)}
+            ).
           </p>
         </div>
         <Tag tone="neutral">UNVERIFIED</Tag>
+      </header>
+      <div className={styles.analysisControls}>
+        <Button
+          variant="primary"
+          disabled={running || prepared.missing.length > 0}
+          onClick={() => void start()}
+        >
+          {running ? "Running…" : output ? "Run again" : "Run analysis"}
+        </Button>
+        <label className={styles.analysisTurn}>
+          By turn
+          <select
+            value={turn}
+            onChange={(event) => setTurn(Number(event.target.value))}
+          >
+            {TURNS.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
+        </label>
+        <p className={styles.analysisNote}>
+          {FULL_ANALYSIS_RUNS.toLocaleString()} practice games per deck, in your
+          browser; about half a minute. No opponent: nothing is blocked and no
+          damage is taken.
+        </p>
       </div>
-      <p className={styles.analysisNote}>
-        Each list gets {FULL_ANALYSIS_RUNS.toLocaleString()} runs over eight
-        turns in your browser. The real-game same-turn figure is{" "}
-        {(observedSameTurn * 100).toFixed(2)}% (
-        {benchmarks.observedChain.completed.toLocaleString()} completed chains);
-        use it as context, not a target. The common lists come from{" "}
-        {benchmarks.window.startsOn} to {benchmarks.window.endsOn}.
-      </p>
       {prepared.missing.length > 0 && (
         <p role="alert">
           Analysis data is missing: {prepared.missing.join(", ")}.
         </p>
       )}
-      <button
-        type="button"
-        disabled={running || prepared.missing.length > 0}
-        onClick={() => void start()}
-      >
-        {running ? "Running full analysis…" : "Full analysis"}
-      </button>
       {error && <p role="alert">{error}</p>}
-      {output && (
-        <div className={styles.analysisResults}>
-          <table aria-label="Setup comparison">
-            <thead>
-              <tr>
-                <th scope="col">Deck</th>
-                <th scope="col">Rule coverage</th>
-                <th scope="col">By turn 4</th>
-                <th scope="col">By turn 6</th>
-                <th scope="col">By turn 8</th>
-                <th scope="col">Typical turn</th>
-                <th scope="col">Not set up</th>
-                <th scope="col">Same turn</th>
-              </tr>
-            </thead>
-            <tbody>
+      <ol className={styles.analysisQuestions} aria-busy={running}>
+        {stated.map((q, i) => {
+          const a = answers?.[i];
+          return (
+            <li key={q.id}>
+              <h3>{q.question}</h3>
+              {a ? (
+                <>
+                  <p className={styles.analysisAnswer}>{a.answer}</p>
+                  {a.comparison && <p>{a.comparison}</p>}
+                  {a.notes.map((note) => (
+                    <p key={note} className={styles.analysisNote}>
+                      {note}
+                    </p>
+                  ))}
+                </>
+              ) : (
+                <p className={styles.analysisNote}>
+                  {running ? "Working it out…" : "Run the analysis to answer."}
+                </p>
+              )}
+            </li>
+          );
+        })}
+      </ol>
+      {answers && output && (
+        <>
+          <details className={styles.analysisDetails}>
+            <summary>Show the numbers</summary>
+            {answers.map((a) => (
+              <div key={a.id} className={styles.analysisTable}>
+                <table>
+                  <caption>{a.numbers.caption}</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Deck</th>
+                      {TURNS.map((t) => (
+                        <th scope="col" key={t}>
+                          {t}
+                        </th>
+                      ))}
+                      <th scope="col">Difference by turn {turn}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {a.numbers.rows.map((row) => {
+                      const diff = a.differences.find(
+                        (d) => d.label === row.label,
+                      );
+                      return (
+                        <tr key={row.label}>
+                          <th scope="row">{row.label}</th>
+                          {row.values.map((value, t) => (
+                            <td key={t}>
+                              {value === null
+                                ? "—"
+                                : a.numbers.kind === "share"
+                                  ? percent(value)
+                                  : amount(value)}
+                            </td>
+                          ))}
+                          <td>
+                            {diff
+                              ? formatDifference(diff, a.numbers.kind)
+                              : "—"}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ))}
+            <p className={styles.analysisNote}>
+              Difference is this deck minus the list, over games both finished
+              with the same shuffles. Where the 95% range includes 0 there’s no
+              clear difference.
+            </p>
+          </details>
+          <details className={styles.analysisDetails}>
+            <summary>How this was worked out</summary>
+            <ul>
+              <li>
+                Each deck plays {output.runs.toLocaleString()} games of{" "}
+                {output.turns} turns with the reviewed goldfish play pattern,
+                split evenly across the four Cull and Scar answers. Every deck
+                gets the same shuffles (seed {output.seed}).
+              </li>
               {output.rows.map((row) => (
-                <tr key={row.id}>
-                  <th scope="row">
-                    {row.label}
-                    {row.sides !== undefined && (
-                      <small>{row.sides.toLocaleString()} real sides</small>
-                    )}
-                  </th>
-                  <td>
-                    {percent(
-                      row.coverage.total
-                        ? row.coverage.modelled / row.coverage.total
-                        : 0,
-                    )}{" "}
-                    covered
-                    {row.coverage.unmodelled.length > 0 && (
-                      <small>
-                        Not covered: {row.coverage.unmodelled.join(", ")}
-                      </small>
-                    )}
-                  </td>
-                  <td>{percent(row.summary.byTurn[4])}</td>
-                  <td>{percent(row.summary.byTurn[6])}</td>
-                  <td>{percent(row.summary.byTurn[8])}</td>
-                  <td>{row.summary.medianTurn ?? "—"}</td>
-                  <td>{percent(row.summary.incompleteByTurn8)}</td>
-                  <td>
-                    {row.summary.sameTurn === null
-                      ? "—"
-                      : percent(row.summary.sameTurn)}
-                  </td>
-                </tr>
+                <li key={row.id}>
+                  {row.label}
+                  {row.sides !== undefined &&
+                    ` (seen in ${row.sides.toLocaleString()} real games)`}
+                  :{" "}
+                  {percent(
+                    row.coverage.total
+                      ? row.coverage.modelled / row.coverage.total
+                      : 0,
+                  )}{" "}
+                  of cards have checked rules.
+                  {row.coverage.unmodelled.length > 0 &&
+                    ` Not covered: ${row.coverage.unmodelled.join(", ")}.`}
+                </li>
               ))}
-            </tbody>
-          </table>
-          <p className={styles.analysisNote}>
-            <Tag tone="neutral">UNVERIFIED</Tag> “Typical turn” is the median
-            among completed chains. “Not set up” includes runs without a full
-            BSL → Gate → blood debt chain by turn 8.
-          </p>
-        </div>
+              {failed.some((f) => f.count > 0) && (
+                <li>
+                  Games that stopped early and are left out:{" "}
+                  {failed
+                    .filter((f) => f.count > 0)
+                    .map((f) => `${f.label} ${f.count}`)
+                    .join(", ")}
+                  .
+                </li>
+              )}
+              <li>
+                Which turn matters and what counts as good are for you to judge.
+              </li>
+            </ul>
+          </details>
+        </>
       )}
     </section>
   );

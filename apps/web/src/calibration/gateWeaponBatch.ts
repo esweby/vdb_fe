@@ -42,6 +42,8 @@ export interface GateWeaponBatchOptions extends GateWeaponPolicyOptions {
   runs: number;
   seed: number;
   queries?: BatchOptions["queries"];
+  /** Sees each policy run, in the same order as the report's perRun, before it's summarised. */
+  onRun?: (run: ScriptRun) => void;
 }
 export interface GateWeaponPolicyRun extends ScriptRun {
   policyMatches: Record<string, number>;
@@ -321,7 +323,11 @@ export function runGateWeaponBatch(
     policy: {
       id: "reviewed-delayed-hands-v2",
       assumptions,
-      run: (input) => runGateWeaponPolicyFromState(setUp(input), options),
+      run: (input) => {
+        const run = runGateWeaponPolicyFromState(setUp(input), options);
+        options.onRun?.(run);
+        return run;
+      },
     },
   });
 }

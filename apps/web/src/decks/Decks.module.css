@@ -1221,34 +1221,121 @@
   max-width: 76ch;
 }
 
-.analysisResults {
-  display: grid;
-  gap: var(--space-3);
-  overflow-x: auto;
+.analysisControls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-4);
 }
 
-.analysisResults table {
+.analysisTurn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.analysisTurn select {
+  font: inherit;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.analysisControls .analysisNote {
+  flex: 1 1 20rem;
+  font-size: var(--text-sm);
+}
+
+/* The questions: two columns on wide screens, one on narrow. */
+.analysisQuestions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.analysisQuestions li {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--surface);
+}
+
+.analysisQuestions h3,
+.analysisQuestions p {
+  margin: 0;
+}
+
+.analysisQuestions h3 {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.analysisAnswer {
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.analysisQuestions .analysisNote {
+  font-size: var(--text-sm);
+}
+
+.analysisDetails {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.analysisDetails summary {
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.analysisDetails ul {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0;
+  padding-left: var(--space-5);
+}
+
+.analysisTable {
+  overflow-x: auto;
+  margin-top: var(--space-3);
+}
+
+.analysisTable table {
+  width: 100%;
   border-collapse: collapse;
-  min-width: 56rem;
+  font-size: var(--text-sm);
   text-align: right;
 }
 
-.analysisResults th,
-.analysisResults td {
-  border-bottom: 1px solid var(--border);
-  padding: var(--space-3);
-}
-
-.analysisResults th:first-child {
+.analysisTable caption {
   text-align: left;
+  font-weight: 500;
+  padding-bottom: var(--space-2);
 }
 
-.analysisResults th small,
-.analysisResults td small {
-  display: block;
-  color: var(--muted);
+.analysisTable th,
+.analysisTable td {
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.analysisTable th:first-child {
+  text-align: left;
   font-weight: normal;
 }
+
 /* Plan goals (task 7c): the list, the add form and the results, stacking on narrow screens. */
 .planGoals {
   display: grid;
