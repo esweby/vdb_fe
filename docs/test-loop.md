@@ -35,7 +35,7 @@ From the maintainer's export of 22 Oct 2026 (`game-stats-<timestamp>.csv`, one p
 
 **Not in the CSV:** the order of plays (so which turn a card was played, and when the hero flipped), the opponent's hero, life lost to yourself by turn, copies of each card, banishes and Runechants.
 
-Self-loss has no separate turn column, but can be recovered from Total Value using the inspected export formula: subtract damage threatened, damage blocked, damage prevented and life gained. These signed per-row losses are **Assumed**, checked against the **Observed** signed game total. The summary averages also support the total, allowing for rounding; neither check proves the timing. See the [worked example and pinned source](../packages/talishar/report-example.md). The CSV row numbers are positions in the export, not confirmed game-turn numbers.
+Self-loss has no separate turn column, but can be recovered from Total Value using the inspected export formula: subtract damage threatened, damage blocked, damage prevented and life gained. These signed per-row losses are **Assumed**, checked against the **Observed** signed game total. The summary averages also support the total, allowing for rounding; neither check proves the timing. See the [worked example and pinned source](../packages/talishar/report-example.md). The CSV row numbers are positions in the export, not confirmed game-turn numbers. Going second, the export has one more row than the summary's turns: the first row is the opponent's first turn, which Talishar's stats screen calls turn 0 (seen in the maintainer's export of 28 Oct 2026).
 
 The format is Talishar's and can change without notice, so the parser is tested against real files, starting with this one.
 
