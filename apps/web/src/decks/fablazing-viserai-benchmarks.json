@@ -1,0 +1,133 @@
+{
+  "label": "UNVERIFIED FaBlazing Viserai benchmarks",
+  "window": {
+    "startsOn": "2026-09-21",
+    "endsOn": "2026-10-20",
+    "exports": 57,
+    "generatedOn": "2026-10-27"
+  },
+  "observedChain": {
+    "population": 24789,
+    "completed": 6152,
+    "byDelay": [2551, 2068, 1533]
+  },
+  "lists": [
+    {
+      "id": "common-60-a",
+      "label": "Common 60-card list A",
+      "sides": 345,
+      "loadoutSides": 238,
+      "weapons": [{ "copies": 1, "name": "Seven Sin Nebula", "pitch": null }],
+      "equipment": [
+        { "copies": 1, "name": "Face Purgatory", "pitch": null },
+        { "copies": 1, "name": "Fyendal's Spring Tunic", "pitch": null },
+        { "copies": 1, "name": "Grasp of the Arknight", "pitch": null },
+        { "copies": 1, "name": "Spellbound Creepers", "pitch": null }
+      ],
+      "cards": [
+        { "copies": 3, "name": "Arknight Descendancy", "pitch": 3 },
+        { "copies": 1, "name": "Arknight Shard", "pitch": 3 },
+        { "copies": 3, "name": "Become the Shadow Lord", "pitch": 3 },
+        { "copies": 3, "name": "Deadwood Dirge", "pitch": 1 },
+        { "copies": 3, "name": "Embrace Ursur", "pitch": 1 },
+        { "copies": 1, "name": "Eye of Ophidia", "pitch": 3 },
+        { "copies": 3, "name": "Malefic Incantation", "pitch": 1 },
+        { "copies": 3, "name": "Malefic Incantation", "pitch": 2 },
+        { "copies": 3, "name": "Mordred Tide", "pitch": 1 },
+        { "copies": 3, "name": "Murmuring Gloomblade", "pitch": 1 },
+        { "copies": 3, "name": "Murmuring Gloomblade", "pitch": 3 },
+        { "copies": 3, "name": "Open the Gate to i'Arathael", "pitch": 1 },
+        { "copies": 3, "name": "Otherworldly Sins", "pitch": 1 },
+        { "copies": 2, "name": "Pull from Beyond", "pitch": 1 },
+        { "copies": 3, "name": "Pull from Beyond", "pitch": 3 },
+        { "copies": 3, "name": "Revel in Runeblood", "pitch": 1 },
+        { "copies": 3, "name": "Runechant of Lust", "pitch": 2 },
+        { "copies": 3, "name": "Vantom Wraith", "pitch": 1 },
+        { "copies": 2, "name": "Vantom Wraith", "pitch": 3 },
+        { "copies": 3, "name": "Widespread Annihilation", "pitch": 3 },
+        { "copies": 3, "name": "Widespread Destruction", "pitch": 2 },
+        { "copies": 3, "name": "Widespread Ruin", "pitch": 1 }
+      ]
+    },
+    {
+      "id": "common-60-b",
+      "label": "Common 60-card list B",
+      "sides": 222,
+      "loadoutSides": 95,
+      "weapons": [{ "copies": 1, "name": "Seven Sin Nebula", "pitch": null }],
+      "equipment": [
+        { "copies": 1, "name": "Dyadic Carapace", "pitch": null },
+        { "copies": 1, "name": "Face Purgatory", "pitch": null },
+        { "copies": 1, "name": "Grasp of the Arknight", "pitch": null },
+        { "copies": 1, "name": "Spellbound Creepers", "pitch": null }
+      ],
+      "cards": [
+        { "copies": 3, "name": "Arknight Descendancy", "pitch": 3 },
+        { "copies": 1, "name": "Arknight Shard", "pitch": 3 },
+        { "copies": 3, "name": "Become the Shadow Lord", "pitch": 3 },
+        { "copies": 3, "name": "Bloodfrenzy Gloomblade", "pitch": 3 },
+        { "copies": 3, "name": "Cull", "pitch": 1 },
+        { "copies": 3, "name": "Cullingsong Gloomblade", "pitch": 1 },
+        { "copies": 3, "name": "Deadwood Dirge", "pitch": 1 },
+        { "copies": 1, "name": "Demonbound Gloomblade", "pitch": 3 },
+        { "copies": 3, "name": "Embrace Ursur", "pitch": 1 },
+        { "copies": 2, "name": "Embrace Ursur", "pitch": 3 },
+        { "copies": 3, "name": "Malefic Incantation", "pitch": 1 },
+        { "copies": 3, "name": "Murmuring Gloomblade", "pitch": 1 },
+        { "copies": 1, "name": "Murmuring Gloomblade", "pitch": 3 },
+        { "copies": 3, "name": "Open the Gate to i'Arathael", "pitch": 1 },
+        { "copies": 3, "name": "Otherworldly Sins", "pitch": 1 },
+        { "copies": 3, "name": "Revel in Runeblood", "pitch": 1 },
+        { "copies": 3, "name": "Runechant of Lust", "pitch": 2 },
+        { "copies": 2, "name": "Shadowrealm Walker", "pitch": 1 },
+        { "copies": 2, "name": "Shadowrealm Walker", "pitch": 3 },
+        { "copies": 3, "name": "Succumb to Temptation", "pitch": 2 },
+        { "copies": 3, "name": "Vantom Wraith", "pitch": 1 },
+        { "copies": 3, "name": "Widespread Annihilation", "pitch": 3 },
+        { "copies": 3, "name": "Widespread Destruction", "pitch": 2 }
+      ]
+    },
+    {
+      "id": "common-70",
+      "label": "Common 70-card list",
+      "sides": 220,
+      "loadoutSides": 105,
+      "weapons": [{ "copies": 1, "name": "Seven Sin Nebula", "pitch": null }],
+      "equipment": [
+        { "copies": 1, "name": "Face Purgatory", "pitch": null },
+        { "copies": 1, "name": "Fyendal's Spring Tunic", "pitch": null },
+        { "copies": 1, "name": "Grasp of the Arknight", "pitch": null },
+        { "copies": 1, "name": "Spellbound Creepers", "pitch": null }
+      ],
+      "cards": [
+        { "copies": 3, "name": "Arknight Descendancy", "pitch": 3 },
+        { "copies": 1, "name": "Arknight Shard", "pitch": 3 },
+        { "copies": 1, "name": "Become the Arknight", "pitch": 3 },
+        { "copies": 3, "name": "Become the Shadow Lord", "pitch": 3 },
+        { "copies": 1, "name": "Bloodfrenzy Gloomblade", "pitch": 1 },
+        { "copies": 2, "name": "Cull", "pitch": 1 },
+        { "copies": 3, "name": "Cullingsong Gloomblade", "pitch": 1 },
+        { "copies": 3, "name": "Deadwood Dirge", "pitch": 1 },
+        { "copies": 3, "name": "Embrace Ursur", "pitch": 1 },
+        { "copies": 1, "name": "Eye of Ophidia", "pitch": 3 },
+        { "copies": 3, "name": "Malefic Incantation", "pitch": 1 },
+        { "copies": 3, "name": "Malefic Incantation", "pitch": 2 },
+        { "copies": 3, "name": "Mordred Tide", "pitch": 1 },
+        { "copies": 3, "name": "Murmuring Gloomblade", "pitch": 1 },
+        { "copies": 3, "name": "Murmuring Gloomblade", "pitch": 3 },
+        { "copies": 3, "name": "Open the Gate to i'Arathael", "pitch": 1 },
+        { "copies": 3, "name": "Otherworldly Sins", "pitch": 1 },
+        { "copies": 2, "name": "Pull from Beyond", "pitch": 1 },
+        { "copies": 3, "name": "Pull from Beyond", "pitch": 3 },
+        { "copies": 3, "name": "Revel in Runeblood", "pitch": 1 },
+        { "copies": 3, "name": "Runechant of Lust", "pitch": 2 },
+        { "copies": 3, "name": "Succumb to Temptation", "pitch": 2 },
+        { "copies": 3, "name": "Vantom Wraith", "pitch": 1 },
+        { "copies": 2, "name": "Vantom Wraith", "pitch": 3 },
+        { "copies": 3, "name": "Widespread Annihilation", "pitch": 3 },
+        { "copies": 3, "name": "Widespread Destruction", "pitch": 2 },
+        { "copies": 3, "name": "Widespread Ruin", "pitch": 1 }
+      ]
+    }
+  ]
+}

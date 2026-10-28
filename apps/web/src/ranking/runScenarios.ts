@@ -11,6 +11,11 @@ import {
   type ScenarioInput,
   type ScenarioOutput,
 } from "./scenarioRuns.ts";
+import {
+  runFullAnalysis,
+  type FullAnalysisInput,
+  type FullAnalysisOutput,
+} from "../decks/fullAnalysis.ts";
 
 /** In a Web Worker where the browser has them; in the page otherwise (tests). */
 function inWorker<I, O>(input: I, here: (input: I) => O): Promise<O> {
@@ -49,4 +54,11 @@ export function runScenarioBatch(input: ManyInput): Promise<OneOutput[]> {
 /** A deck played by the rules engine. */
 export function runByTheRules(input: RulesInput): Promise<RulesOutput> {
   return inWorker(input, runRules);
+}
+
+/** The deck-page comparison, using the same worker as scenarios. */
+export function runDeckAnalysis(
+  input: FullAnalysisInput,
+): Promise<FullAnalysisOutput> {
+  return inWorker(input, runFullAnalysis);
 }

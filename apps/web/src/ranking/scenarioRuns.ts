@@ -17,13 +17,15 @@ import {
 import { BUILT_IN_SCENARIOS } from "./scenarios.ts";
 import {
   BLOOD_DEBT,
-  parseScript,
   RUNECHANT,
   runBatch,
   VISERAI,
   type BatchReport,
   type RulesCard,
 } from "@vdb/engine/rules";
+import { baselineScript } from "./baselineScript.ts";
+
+export { baselineScript } from "./baselineScript.ts";
 
 export const RUNS = 10_000;
 export const TRAVERSE_TURNS = 6;
@@ -191,26 +193,6 @@ export interface RulesInput {
 export type RulesOutput = Omit<BatchReport, "perRun">;
 
 export const RULES_RUNS = 1_000;
-
-/**
- * The baseline script: each turn, play every card the rules allow (the scripted policy's order:
- * lowest pitch first), then end the turn. A policy, not the best play.
- */
-export function baselineScript(turns: number) {
-  return parseScript({
-    version: 1,
-    steps: [
-      {
-        do: "repeat",
-        times: turns,
-        steps: [
-          { do: "repeat", times: 10, steps: [{ do: "play", card: {} }] },
-          { do: "endTurn" },
-        ],
-      },
-    ],
-  });
-}
 
 export function runRules(input: RulesInput): RulesOutput {
   const { perRun: _, ...report } = runBatch(
