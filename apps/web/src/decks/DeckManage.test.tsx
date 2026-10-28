@@ -199,7 +199,9 @@ describe("opening a deck in FaBrary", () => {
       await user.click(screen.getByRole("button", { name: "Open in FaBrary" }));
       await screen.findByText(/Saved version 1\./);
       await user.click(screen.getByRole("tab", { name: "Versions" }));
-      await user.click(await screen.findByText("Version 1"));
+      await user.click(
+        await screen.findByText("Version 1", { selector: "summary" }),
+      );
       const field = screen.getByRole("textbox", {
         name: "FaBrary link for version 1",
       });
@@ -279,7 +281,9 @@ describe("the Versions tab", () => {
       await user.click(within(status).getByRole("link", { name: "Versions" }));
       expect(router.state.location.search).toMatchObject({ tab: "versions" });
       expect(
-        await within(screen.getByRole("tabpanel")).findByText("Version 1"),
+        await within(screen.getByRole("tabpanel")).findByText("Version 1", {
+          selector: "summary",
+        }),
       ).toBeInTheDocument();
     } finally {
       openWindow.mockRestore();

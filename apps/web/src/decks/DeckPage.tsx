@@ -518,6 +518,7 @@ export function DeckPage() {
             key={deck.id}
             deckId={deck.id}
             latest={latestVersion?.deckId === deck.id ? latestVersion : null}
+            entries={entries}
           />
         ) : tab === "goldfish" ? (
           <Goldfish

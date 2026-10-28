@@ -42,4 +42,13 @@ resulting `https://fabrary.net/decks/<id>` link onto a version, or leave it blan
 The link can be replaced or cleared. It is a reference supplied by the player;
 we do not claim to have checked that the lists match.
 
-CSV upload, a deck's strategy and version comparisons come later.
+## Comparing versions
+
+Once there is a version, the Versions tab can compare one version with another, or
+with the deck as it is now (the default: the newest version against the current deck).
+It lists the cards added, removed and changed in quantity, as `Hocus Pocus (red) 2 → 3`,
+with the main deck and the sideboard apart: a copy moved across shows on both sides.
+Each line says Added, Removed or Changed in words. Loadouts and pitch targets are not
+compared yet.
+
+A deck's strategy comes later.
