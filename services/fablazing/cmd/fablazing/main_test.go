@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/esweby/vdb_fe/services/fablazing/game"
+	"github.com/esweby/vdb_fe/services/fablazing/turntypes"
 )
 
 func side(hero, player string) game.Side {
@@ -45,5 +46,14 @@ func TestChainSidesLeaveOutAbandonedGames(t *testing.T) {
 	c := chainSides(games, 20, func(game.Game, game.Side) { n++ })
 	if n != 0 || c.abandoned != 1 {
 		t.Errorf("abandoned: called %d times, %+v", n, c)
+	}
+}
+
+func TestByCountListsCommonestFirstAboveTheMinimum(t *testing.T) {
+	m := map[string]turntypes.Tally{"a": {Sides: 5}, "b": {Sides: 60}, "c": {Sides: 60}, "d": {Sides: 70}}
+	got := byCount(m, 50)
+	want := []string{"d", "b", "c"}
+	if len(got) != len(want) || got[0] != want[0] || got[1] != want[1] || got[2] != want[2] {
+		t.Errorf("byCount: %v, want %v", got, want)
 	}
 }
