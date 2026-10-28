@@ -264,3 +264,27 @@ func TestCopiesCountsACardInAList(t *testing.T) {
 		t.Fatalf("copies = %d, want 0", got)
 	}
 }
+
+// One busy winner shouldn't carry a group: each player's own win rate counts once.
+func TestByPlayerWeighsEachPlayerEqually(t *testing.T) {
+	var sides []game.Side
+	for range 8 {
+		sides = append(sides, deck("busy", true))
+	}
+	sides = append(sides, deck("a", false), deck("b", false), deck("c", true), deck("c", false))
+	w := ByPlayer(sides, 200, 1)
+	// busy 1, a 0, b 0, c 0.5: a mean of 0.375, against 9 wins in 12 sides.
+	if w.Players != 4 || w.Rate != 0.375 {
+		t.Fatalf("players %d, rate %v; want 4 and 0.375", w.Players, w.Rate)
+	}
+	if !(w.Low <= w.Rate && w.Rate <= w.High && w.Low < w.High) {
+		t.Fatalf("interval [%v, %v] should hold %v", w.Low, w.High, w.Rate)
+	}
+	// The busiest player's share of the sides.
+	if w.TopShare != 8.0/12 || w.TopRate != 1 || w.RestRate != 0.25 {
+		t.Fatalf("top share %v, top rate %v, the rest by side %v", w.TopShare, w.TopRate, w.RestRate)
+	}
+	if again := ByPlayer(sides, 200, 1); again != w {
+		t.Fatal("the same seed should give the same interval")
+	}
+}

@@ -92,13 +92,14 @@ func runLike(args []string) error {
 		label   string
 		players int
 		p       archetypes.ProfileTally
+		sides   []game.Side // nil for an archetype
 	}
 	profile := func(label string, sides []game.Side) group {
 		players := map[game.PlayerHash]bool{}
 		for _, s := range sides {
 			players[s.Player] = true
 		}
-		return group{label, len(players), archetypes.Profile(sides, po)}
+		return group{label, len(players), archetypes.Profile(sides, po), sides}
 	}
 	byUsurp := map[string][]game.Side{}
 	for _, s := range like {
@@ -118,7 +119,7 @@ func runLike(args []string) error {
 		profile("  with no Usurp", byUsurp["0"]),
 	}
 	for i, a := range r.Archetypes {
-		groups = append(groups, group{fmt.Sprintf("archetype %d", i+1), a.Players, a.Turns})
+		groups = append(groups, group{fmt.Sprintf("archetype %d", i+1), a.Players, a.Turns, nil})
 	}
 
 	fmt.Printf("\n%-24s %6s %8s  %-28s %6s %6s %6s %6s %6s %9s\n", "group", "sides", "players", "won", "thr/t", "brick", "big", "peak", "usurp", "in losses")
@@ -134,6 +135,18 @@ func runLike(args []string) error {
 		}
 		fmt.Printf("%-24s %6d %7.0f%% %7.0f%% %11.0f%% %14.2f\n", g.label, p.Sides, 100*float64(p.FlipSides)/float64(p.Sides), 100*float64(p.BackSides)/float64(p.Sides),
 			100*float64(p.GameBacks)/float64(p.GameFlips), float64(p.UsurperTurns)/float64(p.GameFlips))
+	}
+
+	fmt.Println("\neach player counted once: the mean of each player's win rate, with a 95% bootstrap interval over players")
+	fmt.Printf("%-24s %6s %8s %-26s %-22s %10s %10s %9s\n", "group", "sides", "players", "won, by side", "won, by player", "top player", "their won", "rest won")
+	all := profile("all kept Viserai", archetypes.Lookalikes(games, target, o, 0))
+	for _, g := range append(groups[:4:4], all) {
+		if len(g.sides) < minSample {
+			continue
+		}
+		w := archetypes.ByPlayer(g.sides, 2000, 1)
+		fmt.Printf("%-24s %6d %8d %-26s %5.1f%% [%4.1f-%4.1f]     %9.0f%% %9.0f%% %8.1f%%\n", g.label, len(g.sides), w.Players, rate(g.p.Wins, g.p.Sides),
+			100*w.Rate, 100*w.Low, 100*w.High, 100*w.TopShare, 100*w.TopRate, 100*w.RestRate)
 	}
 	return nil
 }
