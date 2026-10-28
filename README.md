@@ -329,7 +329,7 @@ The default depends on what the engine can do:
 - **Filters**: by pitch, dimension and card type together, for example "blue Gate creators" or "red cards that create Runechants".
 - **Sort by dimension**: within the current filter, using the user's score source (mine, community or blend).
 - **Gaps** (phase two): highlight roles the deck relies on that are missing from a pitch colour it plays (for example "no yellow banishers"), red first, each with the cards that would fill it. Gate makers aren't needed in every colour, so they're never a gap by colour.
-- **Condition availability** (phase two): sort or filter by how often a card's condition is available in this deck.
+  Condition availability stays in the Stats tab. The Cards tab focuses on building the deck.
 
 ### Matchups
 
