@@ -17,7 +17,9 @@ export interface MatchedList {
   /** One row per card, pitch and side: repeated lines are added up. */
   cards: DeckCard[];
   unmatched: UnmatchedLine[];
-  /** Every line matched, and there's at least one card. */
+  /** Why the list's hero can't be imported, or null. */
+  hero: string | null;
+  /** Every line matched, the hero is Viserai or not named, and there's at least one card. */
   ready: boolean;
 }
 
@@ -61,10 +63,12 @@ export function matchDeckList(
     });
   }
   unmatched.sort((a, b) => a.line - b.line);
+  const hero = heroProblem(list.hero);
   return {
     cards: [...rows.values()],
     unmatched,
-    ready: unmatched.length === 0 && rows.size > 0,
+    hero,
+    ready: unmatched.length === 0 && hero === null && rows.size > 0,
   };
 }
 
@@ -80,12 +84,12 @@ function pitchHint(card: CardSummary, coloured: boolean) {
 }
 
 /**
- * Every deck here is Viserai's, so a list for another hero imports as a Viserai deck, with this
- * warning. Null for Viserai, or when the list names no hero.
+ * Every deck here is Viserai's, so a list for another hero can't be imported, for a new deck or a
+ * replaced pool (the maintainer, 27 Oct 2026). Null for Viserai, or when the list names no hero.
  */
-export function heroWarning(hero: string | null): string | null {
+export function heroProblem(hero: string | null): string | null {
   if (!hero || /^viserai\b/i.test(hero.trim())) return null;
-  return `This list is for ${hero}. Decks here are Viserai's, so it imports as a Viserai deck.`;
+  return `This list is for ${hero}. This app builds Viserai decks only.`;
 }
 
 /** The text without one of its lines (numbered from 1). */

@@ -109,15 +109,17 @@ describe("importing a list as a new deck", () => {
     expect(dialog.getByText("1 line matched.")).toBeInTheDocument();
   });
 
-  it("warns when the list is for another hero, without blocking", async () => {
+  it("won't import a list for another hero", async () => {
     const { user, dialog } = await openImport();
     await user.type(dialog.getByLabelText("Deck name"), "Imported");
     await user.click(dialog.getByLabelText("Deck list"));
     await user.paste("Hero: Dorinthea Ironsong\n3 Hocus Pocus (red)");
     expect(
-      dialog.getByText(/This list is for Dorinthea Ironsong\./),
+      dialog.getByText(
+        "This list is for Dorinthea Ironsong. This app builds Viserai decks only.",
+      ),
     ).toBeInTheDocument();
-    expect(dialog.getByRole("button", { name: "Create deck" })).toBeEnabled();
+    expect(dialog.getByRole("button", { name: "Create deck" })).toBeDisabled();
   });
 
   it("imports a list that breaks the deck rules as given", async () => {
@@ -170,14 +172,18 @@ describe("replacing a deck's pool from a list", () => {
     ).toBeInTheDocument();
   });
 
-  it("warns when the list's hero isn't the deck's", async () => {
+  it("won't replace the pool with a list for another hero", async () => {
     const { user, dialog } = await openReplace();
     await user.click(dialog.getByLabelText("Deck list"));
     await user.paste("Hero: Dorinthea Ironsong\n2 Hocus Pocus (blue)");
     expect(
-      dialog.getByText(/This list is for Dorinthea Ironsong\./),
+      dialog.getByText(
+        "This list is for Dorinthea Ironsong. This app builds Viserai decks only.",
+      ),
     ).toBeInTheDocument();
-    expect(dialog.getByRole("button", { name: "Replace cards" })).toBeEnabled();
+    expect(
+      dialog.getByRole("button", { name: "Replace cards" }),
+    ).toBeDisabled();
   });
 
   it("only the owner can replace the cards", async () => {
