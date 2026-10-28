@@ -2,7 +2,7 @@
 // import waits until every line matches or is removed.
 import { describe, expect, it } from "vitest";
 import type { CardSummary } from "../cards/cardRepository.ts";
-import { heroWarning, matchDeckList, removeLine } from "./deckImport.ts";
+import { heroProblem, matchDeckList, removeLine } from "./deckImport.ts";
 import { readDeckList } from "./deckList.ts";
 
 const variant = (id: string, pitch: number | null) => ({
@@ -111,18 +111,27 @@ describe("removeLine", () => {
   });
 });
 
-// Every deck here is Viserai's (DeckPage's HERO). A list for another hero still imports, with a
-// warning (the maintainer's call on how to handle a hero line is pending).
-describe("heroWarning", () => {
+// Every deck here is Viserai's (DeckPage's HERO). A list for another hero can't be imported, for
+// a new deck or a replaced pool; a list with no hero line is fine (the maintainer, 27 Oct 2026).
+describe("heroProblem", () => {
   it("says nothing for Viserai, or when the list names no hero", () => {
-    expect(heroWarning(null)).toBeNull();
-    expect(heroWarning("Viserai")).toBeNull();
-    expect(heroWarning("Viserai, the Forsaken")).toBeNull();
+    expect(heroProblem(null)).toBeNull();
+    expect(heroProblem("Viserai")).toBeNull();
+    expect(heroProblem("Viserai, the Forsaken")).toBeNull();
   });
 
-  it("warns when the list is for another hero", () => {
-    expect(heroWarning("Dorinthea Ironsong")).toBe(
-      "This list is for Dorinthea Ironsong. Decks here are Viserai's, so it imports as a Viserai deck.",
+  it("names another hero", () => {
+    expect(heroProblem("Dorinthea Ironsong")).toBe(
+      "This list is for Dorinthea Ironsong. This app builds Viserai decks only.",
     );
+  });
+
+  it("stops the import when the list is for another hero", () => {
+    const result = match("Hero: Dorinthea Ironsong\n3 Hocus Pocus (red)");
+    expect(result.hero).toBe(
+      "This list is for Dorinthea Ironsong. This app builds Viserai decks only.",
+    );
+    expect(result.ready).toBe(false);
+    expect(match("Hero: Viserai\n3 Hocus Pocus (red)").ready).toBe(true);
   });
 });

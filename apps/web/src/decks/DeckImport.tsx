@@ -4,7 +4,7 @@
 import { useId, useMemo, useState, type FormEvent } from "react";
 import { useCards } from "../cards/useCards.ts";
 import { Button, Dialog, TextField } from "../ui/index.ts";
-import { heroWarning, matchDeckList, removeLine } from "./deckImport.ts";
+import { matchDeckList, removeLine } from "./deckImport.ts";
 import styles from "./DeckImport.module.css";
 import { readDeckList } from "./deckList.ts";
 import type { DeckCard, Visibility } from "./deckRepository.ts";
@@ -50,7 +50,6 @@ export function ImportListDialog(props: {
   const list = useMemo(() => readDeckList(text), [text]);
   const matched = useMemo(() => matchDeckList(list, items), [list, items]);
   const total = list.cards.length + list.unreadable.length;
-  const warning = heroWarning(list.hero);
   const creating = props.mode === "create";
 
   function changeText(next: string) {
@@ -171,7 +170,9 @@ export function ImportListDialog(props: {
                   {matched.unmatched.length > 0 &&
                     ` ${lines(matched.unmatched.length)} to fix or remove.`}
                 </p>
-                {warning && <p className={styles.warning}>{warning}</p>}
+                {matched.hero && (
+                  <p className={styles.warning}>{matched.hero}</p>
+                )}
                 {matched.unmatched.length > 0 && (
                   <ul className={styles.problems} aria-label="Lines to fix">
                     {matched.unmatched.map((u) => (
