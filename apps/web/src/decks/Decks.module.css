@@ -1249,6 +1249,13 @@
   color: var(--muted);
   font-weight: normal;
 }
+
+.goalButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
 /* Plan goals (task 7c): the list, the add form and the results, stacking on narrow screens. */
 .planGoals {
   display: grid;

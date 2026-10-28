@@ -1,30 +1,56 @@
-// Gaps (README "Deck analysis", phase two step 3), on their own tab with each gap a card (the
-// maintainer, 19 Oct 2026): a kind of maker the deck relies on that's missing from a pitch it
-// plays, and the best-rated cards in the pool that would fill it.
-import { useMemo } from "react";
+// UNVERIFIED: goal support uses existing card attributes, not simulated outcomes.
+import { useMemo, useState } from "react";
 import type { CardSummary } from "../cards/cardRepository.ts";
 import { rankVariants } from "../ranking/rank.ts";
 import { formatScore } from "../scoring/scoreFormat.ts";
 import { Button } from "../ui/index.ts";
-import { PITCH_NAMES, variantName, type DeckEntry } from "./deckRules.ts";
-import { fillersFor, findGaps } from "./gaps.ts";
+import { variantName, type DeckEntry } from "./deckRules.ts";
+import { analyseGoals, GOALS, supportsGoal, type GoalId } from "./goalGaps.ts";
 import { useScoreData } from "./useScoreData.ts";
 import styles from "./Decks.module.css";
 
-const capitalise = (s: string) => s[0]!.toUpperCase() + s.slice(1);
+function savedGoals(key: string): GoalId[] {
+  try {
+    const saved: unknown = JSON.parse(localStorage.getItem(key) ?? "[]");
+    return Array.isArray(saved)
+      ? GOALS.filter((goal) => saved.includes(goal.id)).map((goal) => goal.id)
+      : [];
+  } catch {
+    return [];
+  }
+}
 
 export function DeckGapsPanel(props: {
+  deckId: string;
   entries: DeckEntry[];
-  /** Every card, for what would fill a gap. */
   pool: CardSummary[];
-  /** Adds one copy of a card; without it (someone else's deck) fillers can't be added. */
   onAdd?: (variantId: string) => void;
 }) {
   const { entries } = props;
+  const storageKey = `vdb:gap-goals:${props.deckId}`;
+  const [selected, setSelected] = useState<GoalId[]>(() =>
+    savedGoals(storageKey),
+  );
+  const [hasRun, setHasRun] = useState(false);
   const data = useScoreData();
-  const gaps = useMemo(() => findGaps(entries), [entries]);
+  const results = useMemo(
+    () => (hasRun ? analyseGoals(entries, selected) : []),
+    [entries, selected, hasRun],
+  );
+  function toggle(id: GoalId) {
+    const next = selected.includes(id)
+      ? selected.filter((goal) => goal !== id)
+      : [...selected, id];
+    setSelected(next);
+    setHasRun(false);
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(next));
+    } catch {
+      /* Analysis still works without browser storage. */
+    }
+  }
   const poolValues = useMemo(() => {
-    if (!data || gaps.length === 0) return new Map<string, number>();
+    if (!data || results.length === 0) return new Map<string, number>();
     return new Map(
       rankVariants({
         variants: props.pool.flatMap((c) =>
@@ -44,81 +70,172 @@ export function DeckGapsPanel(props: {
         minRatingCount: data.minRatingCount,
       }).map((r) => [r.variantId, r.value]),
     );
-  }, [data, gaps.length, props.pool]);
-  const inDeck = new Set(entries.map((e) => e.variant.id));
+  }, [data, results.length, props.pool]);
 
+  const inDeck = new Set(entries.map((entry) => entry.variant.id));
   return (
     <section aria-label="Gaps" className={styles.gapsTab}>
       <header>
         <h2>Gaps</h2>
         <p className={styles.muted}>
-          A gap is a kind of maker your deck relies on (3 or more copies)
-          missing from a pitch you play (5 or more cards). Unverified: a first
-          pass to tune.
+          What do you want this deck to do? Choose the goals to check against
+          your main deck and sideboard. Choices are remembered for this deck in
+          this browser.
         </p>
       </header>
-      {gaps.length === 0 ? (
+      <div
+        role="group"
+        aria-label="Analysis goals"
+        className={styles.goalButtons}
+      >
+        {GOALS.map((goal) => (
+          <Button
+            key={goal.id}
+            aria-pressed={selected.includes(goal.id)}
+            variant={selected.includes(goal.id) ? "primary" : "secondary"}
+            onClick={() => toggle(goal.id)}
+          >
+            {goal.label}
+          </Button>
+        ))}
+      </div>
+      <Button
+        variant="primary"
+        disabled={selected.length === 0}
+        onClick={() => setHasRun(true)}
+      >
+        Run analysis
+      </Button>
+      <p className={styles.muted}>
+        Unverified: these checks use recorded card roles and printed values.
+        Conditions, draw order and opponent pressure can change how much support
+        you get. Copies show available support, not whether it is enough.
+      </p>
+      {!hasRun ? (
         <p className={styles.muted}>
-          No gaps: every pitch you play has the makers your deck relies on.
+          Choose your goals, then run the analysis.
         </p>
       ) : (
         <div className={styles.gapCards}>
-          {gaps.map((g) => {
-            const pitch = PITCH_NAMES[g.pitch]!;
-            const title = `No ${pitch} ${g.role.label}`;
-            const fillers = fillersFor(g, props.pool, poolValues, inDeck);
+          {results.map((result) => {
+            const { goal } = result;
+            const candidates = props.pool
+              .flatMap((card) =>
+                card.variants
+                  .filter(
+                    (variant) =>
+                      !inDeck.has(variant.id) &&
+                      supportsGoal({ card, variant }, goal.id),
+                  )
+                  .map((variant) => ({ card, variant })),
+              )
+              .sort(
+                (a, b) =>
+                  (poolValues.get(b.variant.id) ?? -1) -
+                    (poolValues.get(a.variant.id) ?? -1) ||
+                  a.card.name.localeCompare(b.card.name) ||
+                  (a.variant.pitch ?? 0) - (b.variant.pitch ?? 0),
+              )
+              .slice(0, 3);
+            const title =
+              result.status === "present"
+                ? "Main-deck support to review"
+                : result.status === "sideboard"
+                  ? "Available in your sideboard"
+                  : "No recorded support in this deck or sideboard";
             return (
               <article
-                key={`${g.role.id}-${g.pitch}`}
-                aria-label={title}
-                className={`${styles.gapCard} ${styles[`pitch${g.pitch}Edge`] ?? ""}`}
+                key={goal.id}
+                aria-label={goal.label}
+                className={styles.gapCard}
               >
-                <h3>{title}</h3>
-                <p>
-                  {`You play ${g.pitchCopies} ${pitch} cards and ${g.roleCopies} ${g.role.label}.`}
-                </p>
-                {fillers.length === 0 ? (
-                  <p className={styles.muted}>
-                    Nothing in the card pool fills this yet.
+                <h3>{goal.label}</h3>
+                <h4>{title}</h4>
+                <p>{`Main deck: ${result.mainCopies} copies. Sideboard: ${result.sideboardCopies} copies.`}</p>
+                {goal.id === "damage" && (
+                  <p>
+                    Counts cards with positive printed power. This does not
+                    measure damage dealt, arcane damage or the effect of adding
+                    a card.
                   </p>
-                ) : (
+                )}
+                {goal.id === "defence" && (
+                  <p>
+                    Counts cards with positive printed defence. This does not
+                    measure how much damage the deck can prevent in a game.
+                  </p>
+                )}
+                {result.main.length > 0 && (
                   <>
-                    <h4>{`${capitalise(pitch)} cards that would fill it`}</h4>
-                    <ul className={styles.fillerTiles}>
-                      {fillers.map((f) => {
-                        const label = variantName(f.card, f.variant);
-                        return (
-                          <li key={f.variant.id}>
-                            {f.variant.imageUrl ? (
-                              <img
-                                src={f.variant.imageUrl}
-                                alt=""
-                                loading="lazy"
-                              />
-                            ) : (
-                              <span className={styles.fillerStandIn}>
-                                {label}
-                              </span>
-                            )}
-                            <span className={styles.fillerName}>{label}</span>
-                            {f.value !== undefined && (
-                              <span className={styles.muted}>
-                                {formatScore(f.value)}
-                              </span>
-                            )}
-                            {props.onAdd && (
-                              <Button
-                                aria-label={`Add ${label}`}
-                                onClick={() => props.onAdd!(f.variant.id)}
-                              >
-                                Add
-                              </Button>
-                            )}
-                          </li>
-                        );
-                      })}
+                    <h4>Main-deck evidence</h4>
+                    <ul>
+                      {result.main.map((entry) => (
+                        <li key={entry.variant.id}>
+                          {entry.quantity} ×{" "}
+                          {variantName(entry.card, entry.variant)}
+                        </li>
+                      ))}
                     </ul>
                   </>
+                )}
+                {result.sideboard.length > 0 && (
+                  <>
+                    <h4>Sideboard options</h4>
+                    <ul>
+                      {result.sideboard.map((entry) => (
+                        <li key={entry.variant.id}>
+                          {entry.quantity} ×{" "}
+                          {variantName(entry.card, entry.variant)}
+                        </li>
+                      ))}
+                    </ul>
+                    <p>
+                      Bringing these in changes your deck. Check what you would
+                      take out and which other goals those cards support.
+                    </p>
+                  </>
+                )}
+                <h4>Cards to consider</h4>
+                <p className={styles.muted}>
+                  Matches to this goal, ordered by available ratings. These are
+                  options to review, not proven improvements.
+                </p>
+                {candidates.length === 0 ? (
+                  <p className={styles.muted}>
+                    No additional matching cards in the available pool.
+                  </p>
+                ) : (
+                  <ul className={styles.fillerTiles}>
+                    {candidates.map(({ card, variant }) => {
+                      const label = variantName(card, variant);
+                      const value = poolValues.get(variant.id);
+                      return (
+                        <li key={variant.id}>
+                          {variant.imageUrl ? (
+                            <img src={variant.imageUrl} alt="" loading="lazy" />
+                          ) : (
+                            <span className={styles.fillerStandIn}>
+                              {label}
+                            </span>
+                          )}
+                          <span className={styles.fillerName}>{label}</span>
+                          {value !== undefined && (
+                            <span className={styles.muted}>
+                              {formatScore(value)}
+                            </span>
+                          )}
+                          {props.onAdd && (
+                            <Button
+                              aria-label={`Add ${label}`}
+                              onClick={() => props.onAdd!(variant.id)}
+                            >
+                              Add
+                            </Button>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
                 )}
               </article>
             );
