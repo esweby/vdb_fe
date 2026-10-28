@@ -30,13 +30,40 @@ type Counts struct{ Games, ViseraiSides, Abandoned, WithoutDetail, Short, Capped
 // Tally is how many kept sides had something, and how many of them won.
 type Tally struct{ Sides, Wins int }
 
-// Result is the tallies. Cards is by turn type, then action (played, pitched,
-// blocked), then card id, over the rounds tallied.
-type Result struct {
-	Counts    Counts
+// Breakdown is the round and sequence tallies for one group of kept sides.
+type Breakdown struct {
+	Kept      int
 	ByRound   []map[string]Tally
 	Sequences map[string]Tally
-	Cards     map[string]map[string]map[string]int
+}
+
+func newBreakdown(rounds int) *Breakdown {
+	b := &Breakdown{ByRound: make([]map[string]Tally, rounds), Sequences: map[string]Tally{}}
+	for i := range b.ByRound {
+		b.ByRound[i] = map[string]Tally{}
+	}
+	return b
+}
+
+func (b *Breakdown) add(kinds []string, win int) {
+	b.Kept++
+	for round, kind := range kinds {
+		t := b.ByRound[round][kind]
+		b.ByRound[round][kind] = Tally{t.Sides + 1, t.Wins + win}
+	}
+	seq := strings.Join(kinds, " > ")
+	t := b.Sequences[seq]
+	b.Sequences[seq] = Tally{t.Sides + 1, t.Wins + win}
+}
+
+// Result is the tallies, pooled and split by who went first ("first" or
+// "second"). Cards is by turn type, then action (played, pitched, blocked),
+// then card id, over the rounds tallied.
+type Result struct {
+	Counts Counts
+	Breakdown
+	ByFirst map[string]*Breakdown
+	Cards   map[string]map[string]map[string]int
 }
 
 // tokens are logged like cards but aren't from the hand.
@@ -122,12 +149,9 @@ type capKey struct {
 // sides per day and format.
 func Compute(games []game.Game, o Options) Result {
 	r := Result{
-		ByRound:   make([]map[string]Tally, o.Rounds),
-		Sequences: map[string]Tally{},
+		Breakdown: *newBreakdown(o.Rounds),
+		ByFirst:   map[string]*Breakdown{"first": newBreakdown(o.Rounds), "second": newBreakdown(o.Rounds)},
 		Cards:     map[string]map[string]map[string]int{},
-	}
-	for i := range r.ByRound {
-		r.ByRound[i] = map[string]Tally{}
 	}
 	ordered := append([]game.Game(nil), games...)
 	sort.SliceStable(ordered, func(i, j int) bool {
@@ -179,8 +203,6 @@ func (r *Result) add(s game.Side, o Options) {
 	for round := range kinds {
 		kind := Classify(s, round, o)
 		kinds[round] = kind
-		t := r.ByRound[round][kind]
-		r.ByRound[round][kind] = Tally{t.Sides + 1, t.Wins + win}
 		for _, e := range s.Log {
 			a := action(e.Action)
 			if e.Turn != round || a == "" || !handCard(s, e.Card) {
@@ -195,9 +217,12 @@ func (r *Result) add(s game.Side, o Options) {
 			r.Cards[kind][a][e.Card]++
 		}
 	}
-	seq := strings.Join(kinds, " > ")
-	t := r.Sequences[seq]
-	r.Sequences[seq] = Tally{t.Sides + 1, t.Wins + win}
+	r.Breakdown.add(kinds, win)
+	order := "second"
+	if s.WentFirst() {
+		order = "first"
+	}
+	r.ByFirst[order].add(kinds, win)
 }
 
 func day(createdAt string) string {

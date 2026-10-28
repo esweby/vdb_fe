@@ -58,20 +58,9 @@ func printTurns(r turntypes.Result, o turntypes.Options) {
 	fmt.Printf("UNVERIFIED turn types: burst = %d+ threatened; defend = %d+ hand cards blocked; build = a hand card played; quiet = none. +flip = traversed to the Usurper.\n", o.BurstAt, o.DefendBlocks)
 	fmt.Println("(associations, not causes; a round is both players' turns)")
 
-	for round, m := range r.ByRound {
-		fmt.Printf("\nround %d                share   won\n", round)
-		for _, k := range byCount(m, 1) {
-			fmt.Printf("  %-18s %5.1f%%  %s\n", k, 100*float64(m[k].Sides)/float64(c.Kept), rate(m[k].Wins, m[k].Sides))
-		}
-	}
-
-	fmt.Printf("\nsequences of rounds 0-%d with %d+ sides\n", o.Rounds-1, minSample)
-	for i, k := range byCount(r.Sequences, minSample) {
-		if i == 25 {
-			break
-		}
-		fmt.Printf("  %-52s %s\n", k, rate(r.Sequences[k].Wins, r.Sequences[k].Sides))
-	}
+	printBreakdown("all sides", &r.Breakdown, o)
+	printBreakdown("went first", r.ByFirst["first"], o)
+	printBreakdown("went second", r.ByFirst["second"], o)
 
 	kinds := make([]string, 0, len(r.Cards))
 	for k := range r.Cards {
@@ -83,5 +72,22 @@ func printTurns(r turntypes.Result, o turntypes.Options) {
 		for _, a := range []string{"played", "pitched", "blocked"} {
 			fmt.Printf("  %-8s %v\n", a, top(r.Cards[k][a], 6))
 		}
+	}
+}
+
+func printBreakdown(title string, b *turntypes.Breakdown, o turntypes.Options) {
+	fmt.Printf("\n== %s: %d sides\n", title, b.Kept)
+	for round, m := range b.ByRound {
+		fmt.Printf("\nround %d                share   won\n", round)
+		for _, k := range byCount(m, 1) {
+			fmt.Printf("  %-18s %5.1f%%  %s\n", k, 100*float64(m[k].Sides)/float64(b.Kept), rate(m[k].Wins, m[k].Sides))
+		}
+	}
+	fmt.Printf("\nsequences of rounds 0-%d with %d+ sides\n", o.Rounds-1, minSample)
+	for i, k := range byCount(b.Sequences, minSample) {
+		if i == 15 {
+			break
+		}
+		fmt.Printf("  %-52s %s\n", k, rate(b.Sequences[k].Wins, b.Sequences[k].Sides))
 	}
 }

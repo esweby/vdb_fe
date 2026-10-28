@@ -115,3 +115,18 @@ func TestPlayerCapLeavesOutLaterSides(t *testing.T) {
 		t.Fatalf("counts = %+v", r.Counts)
 	}
 }
+
+func TestTalliesSplitByWhoWentFirst(t *testing.T) {
+	first := with(side("a", true, 0, 0, 0, 0), 0, "B cull_red", "B murmuring_gloomblade_red")
+	second := with(side("b", false, 0, 0, 0, 0), 0, "B cull_red", "B murmuring_gloomblade_red")
+	second.FirstPlayer = 0
+	r := Compute([]game.Game{g(first), g(second)}, opts())
+
+	if got := r.ByFirst["first"]; got.Kept != 1 || got.ByRound[0]["defend"] != (Tally{Sides: 1, Wins: 1}) {
+		t.Fatalf("first = %+v", got)
+	}
+	if got := r.ByFirst["second"]; got.Kept != 1 || got.ByRound[0]["defend"] != (Tally{Sides: 1}) ||
+		got.Sequences["defend > quiet > quiet > quiet"] != (Tally{Sides: 1}) {
+		t.Fatalf("second = %+v", got)
+	}
+}
