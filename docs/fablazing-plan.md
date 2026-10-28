@@ -1,6 +1,6 @@
 # FaBlazing game data: plan
 
-Status, 28 Oct 2026: steps 1, 2 and 4 are done; step 3's pipeline is live, its first scheduled run and the hosted history load are confirmed, and three backfill files are still missing (see [Operations check, 28 Oct 2026](#operations-check-28-oct-2026)). Step 5 has compared T1–T4 on the maintainer's deck, with incomplete coverage. T1–T5 were approved on 21 Oct; T5 waits for the Gate-target list and T6 remains a draft. See [engine-calibration.md](engine-calibration.md) for the results and next steps. The operational checklist below dates from 21 Oct; items without a recorded outcome remain to be checked. Any reading of game logic is **unverified** until the maintainer checks it.
+Status, 28 Oct 2026: steps 1, 2 and 4 are done; step 3's pipeline is live, its first scheduled run and the hosted history load are confirmed, and the three missing backfill days were fetched whole by the Lambda later the same day (see [Operations check, 28 Oct 2026](#operations-check-28-oct-2026)). Step 5 has compared T1–T4 on the maintainer's deck, with incomplete coverage. T1–T5 were approved on 21 Oct; T5 waits for the Gate-target list and T6 remains a draft. See [engine-calibration.md](engine-calibration.md) for the results and next steps. The operational checklist below dates from 21 Oct; items without a recorded outcome remain to be checked. Any reading of game logic is **unverified** until the maintainer checks it.
 
 ## Decision
 
@@ -147,7 +147,7 @@ There's no general synergy framework until the chains show what the data actuall
 | --- | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
 | 1   | Data audit                | Written ([fablazing-data-dictionary.md](fablazing-data-dictionary.md)); FaBlazing answered on 21 Oct                                                                                                                                                       | What the action codes mean: a question for Talishar's developers                        |
 | 2   | One chain through the CLI | Done (PR 200)                                                                                                                                                                                                                                              | —                                                                                       |
-| 3   | Quick-win stats           | **Pipeline live** (PRs 201, 203–206): a Go Lambda daily, raw games in S3, aggregates in Supabase as `fablazing_ingest`. History load (PR 211) and app views (PR 212) merged; the hosted history load ran on 21 Oct; first scheduled run checked on 28 Oct. | Three missing backfill files                                                            |
+| 3   | Quick-win stats           | **Pipeline live** (PRs 201, 203–206): a Go Lambda daily, raw games in S3, aggregates in Supabase as `fablazing_ingest`. History load (PR 211) and app views (PR 212) merged; the hosted history load ran on 21 Oct; first scheduled run checked on 28 Oct. | —                                                                                       |
 | 4   | Chain library             | Eleven chains measured on 30 days, with and without the player cap ([fablazing-chains.md](fablazing-chains.md)); card sets come from the importer (PR 209)                                                                                                 | —                                                                                       |
 | 5   | Engine calibration        | T1–T5 approved; T1–T4 compared on the maintainer's deck. Coverage is incomplete (54% of copies). Results in [engine-calibration.md](engine-calibration.md).                                                                                                | More verified cards; Gate targets and caveats for T5; weapon policy; approve or drop T6 |
 | 6   | Expand                    | —                                                                                                                                                                                                                                                          | Evidence from steps 4 and 5                                                             |
@@ -157,7 +157,7 @@ There's no general synergy framework until the chains show what the data actuall
 In the maintainer's order (21 Oct 2026):
 
 1. **Check the first live run** (22 Oct, after 10:00 UTC): the Lambda logs, the `fablazing_runs` row, the aggregate rows and the S3 object. **Done (28 Oct):** it ran at 17:30 UTC on 22 Oct, as planned, and succeeded.
-2. **Retry the three missing backfill files:** 18 Oct format 1, and 19 Oct formats 0 and 1. FaBlazing rate-limited us (HTTP 429), so leave a minute between files and back off on a 429. **Not done (28 Oct):** still missing locally, in S3 and in Supabase.
+2. **Retry the three missing backfill files:** 18 Oct format 1, and 19 Oct formats 0 and 1. FaBlazing rate-limited us (HTTP 429), so leave a minute between files and back off on a 429. **Done (28 Oct):** 18 and 19 Oct were fetched whole by the Lambda instead.
 3. **Load history into Supabase** from the 30 days we downloaded (`~/.cache/vdb/fablazing/viserai/`). Those files hold only games with Viserai, so they're complete for Viserai's cards, turns, traverses and Viserai's own matchups and meta share. **Other heroes' matchups must not be written from them,** because those would be partial. Full matchups build up from the daily runs. **Done (28 Oct):** loaded on 21 Oct, Viserai's matchups only.
 4. **Step 3's app views:** "In real games" on card pages; Viserai's real win rates and meta share on matchups; Effect drafts ordered by real plays per game; how fresh the data is. Guardrails: n ≥ 50, matchup context, Wilson intervals.
 5. **Tidy the chain library:** the player cap in the chain tool, card sets moved to the importer's export, and the two Open the Gate chains (expectations first). **Done (PR 209).**
@@ -194,7 +194,7 @@ The daily runs since then, all `succeeded` with no unmatched slugs:
 
 Short log stream names are the run id's first 8 characters; each is `YYYY/MM/DD/vdb-fablazing-ingest[$LATEST]<id>`.
 
-**2. The three missing backfill files: not fetched.**
+**2. The three missing backfill files: not fetched at first; done later on 28 Oct (below).**
 
 - The local cache `~/.cache/vdb/fablazing/viserai/` has 57 of the 60 files. `format1_2026-10-18.csv`, `format0_2026-10-19.csv` and `format1_2026-10-19.csv` are still missing (newest file there: 21 Oct 17:42).
 - Hosted Supabase has no rows for 19 Oct in any FaBlazing table, and none for 18 Oct format 1.
@@ -209,8 +209,21 @@ Short log stream names are the run id's first 8 characters; each is `YYYY/MM/DD/
 
 **For the maintainer:**
 
-- Fetch the three missing files, a minute apart and backing off on a 429, then load them with `-scope viserai`. Or invoke the Lambda with `{"date":"2026-10-19"}` and `{"date":"2026-10-18"}`, which would store both days whole rather than Viserai only (18 Oct format 0 would be fetched again and replace its Viserai-only rows). Whether FaBlazing still serves those dates hasn't been checked.
 - Nothing is broken: no failed runs, no errors and no alarms.
+
+**Backfill of 18 and 19 Oct, 28 Oct 2026.** On the maintainer's go-ahead, the Lambda was invoked with `{"date":"2026-10-19"}` at 10:10:53 UTC and with `{"date":"2026-10-18"}` at 10:14:34, 3½ minutes apart. Both runs were in log stream `2026/10/28/vdb-fablazing-ingest[$LATEST]e454cb1ca9e5407b9aed3398f2b77fa6` and both succeeded:
+
+| Date   | Request    | Format | Games | Viserai sides | S3 key (bytes)                                       | Card / matchup / turn / traverse rows | Unmatched slugs       |
+| ------ | ---------- | ------ | ----- | ------------- | ---------------------------------------------------- | ------------------------------------- | --------------------- |
+| 19 Oct | `b0a3f1f7` | 0      | 4,132 | 487           | `raw/date=2026-10-19/format=0.ndjson.gz` (1,121,193) | 301 / 1,138 / 25 / 46                 | —                     |
+| 19 Oct | `b0a3f1f7` | 1      | 2,820 | 267           | `raw/date=2026-10-19/format=1.ndjson.gz` (606,324)   | 269 / 974 / 31 / 35                   | `jarl_vetreidi~BLIND` |
+| 18 Oct | `4ae3feef` | 0      | 3,441 | 342           | `raw/date=2026-10-18/format=0.ndjson.gz` (800,060)   | 276 / 1,124 / 26 / 44                 | `redwood_hammer`      |
+| 18 Oct | `4ae3feef` | 1      | 1,951 | 221           | `raw/date=2026-10-18/format=1.ndjson.gz` (478,304)   | 188 / 919 / 22 / 36                   | —                     |
+
+- All four `fablazing_runs` rows are `succeeded` with `scope = all`, so these days hold every game, not only Viserai's. 18 Oct format 0 replaced its Viserai-only rows; its Viserai side count is the same as before (342).
+- The alarm `vdb-fablazing-ingest-errors` stayed OK.
+- The history now has no gaps from 21 Sep to 27 Oct. 21 Sep to 17 Oct is Viserai only; 18 Oct on is whole.
+- Two slugs aren't mapped yet (`redwood_hammer`, `jarl_vetreidi~BLIND`). They're left for the importer's card map.
 
 ## Risks
 
