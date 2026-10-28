@@ -66,6 +66,45 @@ describe("In real games, on the card page", () => {
     ).toBeInTheDocument();
   });
 
+  it("calls the two rates different only when their intervals don't overlap", async () => {
+    const close = await cardPage(
+      fakeFablazingRepository({ windows: [WINDOW], cards: [cardStat()] }),
+    );
+    expect(
+      await close.findByText(
+        "No clear difference from all of Viserai's decks.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("names the higher rate when the intervals are apart", async () => {
+    const apart = await cardPage(
+      fakeFablazingRepository({
+        windows: [WINDOW],
+        cards: [cardStat({ wins: 50 })],
+      }),
+    );
+    expect(
+      await apart.findByText(
+        "Higher than all of Viserai's decks: the intervals don't overlap.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("won't compare with a baseline under 50 games", async () => {
+    const thin = await cardPage(
+      fakeFablazingRepository({
+        windows: [WINDOW],
+        cards: [cardStat({ baseResultDecks: 40, baseWins: 20 })],
+      }),
+    );
+    expect(
+      await thin.findByText(
+        "Not enough data to compare with all of Viserai's decks.",
+      ),
+    ).toBeInTheDocument();
+  });
+
   it("says where the numbers come from and how fresh they are", async () => {
     const panel = await cardPage(
       fakeFablazingRepository({ windows: [WINDOW], cards: [cardStat()] }),

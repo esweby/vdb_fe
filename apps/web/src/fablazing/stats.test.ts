@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   MIN_GAMES,
   cardEvidence,
+  compareRealRates,
   formatRate,
   formatWindow,
   matchupEvidence,
@@ -129,5 +130,34 @@ describe("formatWindow", () => {
     expect(formatWindow("2026-09-25", "2026-10-21")).toBe(
       "25 Sep – 21 Oct 2026",
     );
+  });
+});
+
+describe("compareRealRates", () => {
+  it("says not enough data when either side has fewer than 50 games", () => {
+    expect(
+      compareRealRates({ wins: 40, games: 49 }, { wins: 10, games: 200 }),
+    ).toBe("not enough data");
+    expect(
+      compareRealRates({ wins: 40, games: 200 }, { wins: 10, games: 49 }),
+    ).toBe("not enough data");
+  });
+
+  it("calls a difference only when the Wilson intervals don't overlap", () => {
+    expect(
+      compareRealRates({ wins: 70, games: 100 }, { wins: 40, games: 100 }),
+    ).toBe("higher");
+    expect(
+      compareRealRates({ wins: 40, games: 100 }, { wins: 70, games: 100 }),
+    ).toBe("lower");
+  });
+
+  it("says no clear difference when the intervals overlap", () => {
+    expect(
+      compareRealRates({ wins: 55, games: 100 }, { wins: 45, games: 100 }),
+    ).toBe("no clear difference");
+    expect(
+      compareRealRates({ wins: 30, games: 50 }, { wins: 30, games: 50 }),
+    ).toBe("no clear difference");
   });
 });

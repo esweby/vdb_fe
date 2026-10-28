@@ -329,7 +329,7 @@ The default depends on what the engine can do:
 - **Filters**: by pitch, dimension and card type together, for example "blue Gate creators" or "red cards that create Runechants".
 - **Sort by dimension**: within the current filter, using the user's score source (mine, community or blend).
 - **Gaps** (phase two): choose Runechant generation, Gate generation, more damage, disruption, defence, go again or banish support, then run checks for those goals. Choices are remembered per deck in this browser. Each result separates main-deck evidence from sideboard options and offers matching cards from the pool, ordered by available ratings. Missing recorded support is a potential gap; some support does not prove that a goal is satisfied. Unverified: these are card-data checks, not simulations. Damage and defence count cards with positive printed power or defence; they do not predict damage dealt or prevented. There is no requirement to cover every pitch colour.
-- **Condition availability** (phase two): sort or filter by how often a card's condition is available in this deck.
+  Condition availability stays in the Stats tab. The Cards tab focuses on building the deck.
 
 ### Matchups
 

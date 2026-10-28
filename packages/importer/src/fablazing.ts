@@ -95,6 +95,14 @@ const DEMI_HEROES: Record<string, string> = {
   "Teklovossen, the Mechropotent": "Teklovossen, Esteemed Magnate",
 };
 
+/**
+ * Other FaBlazing ids for a hero, as written. `~BLIND` was seen once, 19 Oct 2026, probably
+ * Talishar's hidden-hero mode. The maintainer's call, 28 Oct 2026.
+ */
+const HERO_ID_ALIASES: Record<string, string> = {
+  "jarl_vetreidi~BLIND": "Jarl Vetreiði",
+};
+
 /** FaBlazing hero ids left out of matchups and the unmatched list. The maintainer's call, 21 Oct 2026. */
 const IGNORED_SLUGS = [
   // Arakni, Marionette became a Living Legend on 19 Oct 2026, and its Agents of Chaos with it.
@@ -109,11 +117,13 @@ const IGNORED_SLUGS = [
   "azalea_ace_of_spades",
   // FaBlazing's id for a hero it couldn't read.
   "UNKNOWNHERO",
+  // A weapon recorded as a side's hero in one game on 18 Oct 2026 (the maintainer, 28 Oct 2026).
+  "redwood_hammer",
 ];
 
 /**
- * Rows for fablazing_card_map: every variant by its slug, every hero side and Demi-Hero to its
- * hero row, and the ignored ids. A slug is mapped once; a hero wins over a card of the same name,
+ * Rows for fablazing_card_map: every variant by its slug, every hero side, Demi-Hero and other
+ * hero id to its hero row, and the ignored ids. A slug is mapped once; a hero wins over a card of the same name,
  * and an ignored id wins over both.
  */
 export function cardMapRows(
@@ -136,6 +146,12 @@ export function cardMapRows(
     if (!hero)
       throw new Error(`${demi} counts as ${heroName}, which isn't imported`);
     const slug = fablazingSlug(demi, null);
+    rows.set(slug, { slug, heroExternalId: hero.externalId });
+  }
+  for (const [slug, heroName] of Object.entries(HERO_ID_ALIASES)) {
+    const hero = heroes.find((h) => h.name === heroName);
+    if (!hero)
+      throw new Error(`${slug} counts as ${heroName}, which isn't imported`);
     rows.set(slug, { slug, heroExternalId: hero.externalId });
   }
   for (const slug of IGNORED_SLUGS) rows.set(slug, { slug, ignored: true });

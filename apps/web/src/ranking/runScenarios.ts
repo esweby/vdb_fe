@@ -16,6 +16,11 @@ import {
   type FullAnalysisInput,
   type FullAnalysisOutput,
 } from "../decks/fullAnalysis.ts";
+import {
+  runGoals,
+  type GoalOutput,
+  type GoalsInput,
+} from "../decks/planGoals.ts";
 
 /** In a Web Worker where the browser has them; in the page otherwise (tests). */
 function inWorker<I, O>(input: I, here: (input: I) => O): Promise<O> {
@@ -61,4 +66,9 @@ export function runDeckAnalysis(
   input: FullAnalysisInput,
 ): Promise<FullAnalysisOutput> {
   return inWorker(input, runFullAnalysis);
+}
+
+/** A sideboard plan's goals, paired run by run with the main deck or another plan. */
+export function runPlanGoals(input: GoalsInput): Promise<GoalOutput[]> {
+  return inWorker(input, runGoals);
 }

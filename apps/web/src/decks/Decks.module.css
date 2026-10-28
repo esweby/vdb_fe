@@ -1256,3 +1256,81 @@
   gap: var(--space-2);
   margin-bottom: var(--space-3);
 }
+/* Plan goals (task 7c): the list, the add form and the results, stacking on narrow screens. */
+.planGoals {
+  display: grid;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+.planGoals h4,
+.planGoals p {
+  margin: 0;
+}
+.goalList {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.goalList li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--space-3);
+  overflow-wrap: anywhere;
+}
+.goalForm,
+.goalCheck {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-3);
+}
+.goalForm .matchupPick {
+  flex: 1 1 18rem;
+  min-width: 0;
+  max-width: 32rem;
+}
+.goalForm .matchupPick select {
+  width: 100%;
+  min-width: 0;
+  padding: var(--space-2);
+}
+/* The text field's own bottom margin would lift it off the row's baseline. */
+.goalForm > div {
+  margin-bottom: 0;
+}
+.goalResults {
+  overflow-x: auto;
+}
+.goalResults table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.goalResults th,
+.goalResults td {
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+.goalResults th[scope="row"] {
+  font-weight: normal;
+}
+.goalResults small {
+  color: var(--muted);
+}
+.goalResults [data-verdict="met"],
+.goalResults [data-verdict="higher"] {
+  font-weight: 600;
+}
+@media (max-width: 40rem) {
+  .goalList li {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .goalList li > span:first-child {
+    grid-column: 1 / -1;
+  }
+}

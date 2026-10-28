@@ -54,6 +54,18 @@ export interface Matchup {
   cards: { variantId: string; quantity: number }[];
 }
 
+/**
+ * A plan goal (task 7c): a target success rate, as a whole percentage, for a built-in scenario
+ * (by name) or a saved one (by id) on a sideboard plan.
+ */
+export interface PlanGoal {
+  id: string;
+  planId: string;
+  scenarioId: string | null;
+  builtIn: string | null;
+  target: number;
+}
+
 export interface DeckSnapshot {
   schemaVersion: 1;
   name: string;
@@ -120,11 +132,17 @@ export interface DeckRepository {
     plan: Omit<Matchup, "id" | "deckId"> & { id?: string },
   ): Promise<Matchup>;
   deleteMatchup(id: string): Promise<void>;
+  /** A plan's goals (its owner's only). */
+  listPlanGoals(planId: string): Promise<PlanGoal[]>;
+  addPlanGoal(goal: Omit<PlanGoal, "id">): Promise<PlanGoal>;
+  deletePlanGoal(id: string): Promise<void>;
   listVersions(deckId: string): Promise<DeckVersion[]>;
   saveVersion(deckId: string): Promise<DeckVersion>;
   setVersionLink(versionId: string, url: string | null): Promise<void>;
 }
 
+const GOAL =
+  "id, planId:loadout_id, scenarioId:scenario_id, builtIn:built_in, target";
 const INVALID_UUID = "22P02";
 const SUMMARY =
   "id, name, updatedAt:updated_at, visibility, ownerId:user_id, cards:deck_cards(variantId:variant_id, quantity, sideboard)";
@@ -321,6 +339,33 @@ export function supabaseDeckRepository(client: SupabaseClient): DeckRepository {
         .from("deck_loadouts")
         .delete()
         .eq("id", id);
+      if (error) throw error;
+    },
+    async listPlanGoals(planId) {
+      const { data, error } = await client
+        .from("plan_goals")
+        .select(GOAL)
+        .eq("loadout_id", planId)
+        .order("created_at");
+      if (error) throw error;
+      return data as PlanGoal[];
+    },
+    async addPlanGoal(goal) {
+      const { data, error } = await client
+        .from("plan_goals")
+        .insert({
+          loadout_id: goal.planId,
+          scenario_id: goal.scenarioId,
+          built_in: goal.builtIn,
+          target: goal.target,
+        })
+        .select(GOAL)
+        .single();
+      if (error) throw error;
+      return data as PlanGoal;
+    },
+    async deletePlanGoal(id) {
+      const { error } = await client.from("plan_goals").delete().eq("id", id);
       if (error) throw error;
     },
     async getFormatRules() {

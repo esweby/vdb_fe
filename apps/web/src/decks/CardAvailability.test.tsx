@@ -1,7 +1,5 @@
-// Condition availability in the Cards tab's card list (README "Deck builder"): worked out on
-// demand, then shown on each card, and the deck sorted or filtered by it.
+// Keep the Cards tab focused on building the deck.
 import { screen, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { fakeAuthService } from "../test/fakeAuthService.ts";
 import { fakeDeckRepository } from "../test/fakeDeckRepository.ts";
@@ -38,90 +36,33 @@ async function open(view: "tiles" | "list", cards: Row[] = UNFINISHED) {
   return { deck: within(deck), names };
 }
 
-describe("condition availability in the card list", () => {
-  it("isn't worked out until asked, then shows on a card with a condition", async () => {
-    const { deck } = await open("list");
-    expect(deck.queryByText(/available \d+%/)).not.toBeInTheDocument();
-    expect(
-      screen.getByRole("combobox", { name: "Sort the deck" }),
-    ).toBeDisabled();
-
-    await userEvent
-      .setup()
-      .click(screen.getByRole("button", { name: "Work out availability" }));
-    const shown = await deck.findByText(/^available \d+%$/);
-    // Become the Shadow Lord has two conditions; the lowest is shown, each in the title.
-    expect(shown.closest("li")).toHaveTextContent("Become the Shadow Lord");
-    expect(shown).toHaveAttribute(
-      "title",
-      expect.stringMatching(/the banished card is Shadow: \d+%/),
-    );
-    // Hocus Pocus has no condition to measure.
-    expect(deck.getAllByText(/^available \d+%$/)).toHaveLength(1);
-  });
-
-  it("sorts the deck by availability and filters it to rarely available cards", async () => {
-    const { names } = await open("tiles");
-    const user = userEvent.setup();
-    // By pitch: Hocus Pocus (red) first.
-    expect(names()).toEqual(["Hocus Pocus", "Become the Shadow Lord"]);
-
-    await user.click(
-      screen.getByRole("button", { name: "Work out availability" }),
-    );
-    const sort = screen.getByRole("combobox", { name: "Sort the deck" });
-    await screen.findByText(/^available \d+%$/);
-    await user.selectOptions(sort, "Availability, lowest first");
-    expect(names()).toEqual(["Become the Shadow Lord", "Hocus Pocus"]);
-
-    // Three copies in 60 cards: another Shadow card is rarely in hand with it.
-    await user.click(
-      screen.getByRole("checkbox", {
-        name: /Only rarely available \(under 25%\)/,
-      }),
-    );
-    expect(names()).toEqual(["Become the Shadow Lord"]);
-  });
-
-  it("says when the deck was measured with sideboard cards filling it", async () => {
-    const { deck } = await open("list", [
-      { variantId: "hp1", quantity: 3, sideboard: false },
-      { variantId: "bsl3", quantity: 2, sideboard: false },
-      { variantId: "bsl3", quantity: 1, sideboard: true },
-      { variantId: "ff1", quantity: 3, sideboard: true },
-    ]);
-    await userEvent
-      .setup()
-      .click(screen.getByRole("button", { name: "Work out availability" }));
-    await deck.findByText(/^available \d+%$/);
-    expect(
-      screen.getByText(
-        "Measured with 4 sideboard cards and 51 blanks making the deck up to 60, as it isn't finished.",
-      ),
-    ).toBeInTheDocument();
-  });
-
-  it("says nothing about filling when there's no sideboard to fill from", async () => {
-    const { deck } = await open("list");
-    await userEvent
-      .setup()
-      .click(screen.getByRole("button", { name: "Work out availability" }));
-    await deck.findByText(/^available \d+%$/);
-    expect(screen.queryByText(/^Measured with/)).not.toBeInTheDocument();
-  });
-
-  it("never shows a sideboard card as counted", async () => {
-    await open("list", [
-      { variantId: "hp1", quantity: 3, sideboard: false },
-      { variantId: "bsl3", quantity: 2, sideboard: false },
-      { variantId: "bsl3", quantity: 1, sideboard: true },
-    ]);
-    await userEvent
-      .setup()
-      .click(screen.getByRole("button", { name: "Work out availability" }));
-    await screen.findByText(/^Measured with/);
-    const sideboard = within(screen.getByRole("region", { name: "Sideboard" }));
-    expect(sideboard.getByText("Become the Shadow Lord")).toBeInTheDocument();
-    expect(sideboard.queryByText(/available \d+%/)).not.toBeInTheDocument();
-  });
+describe("Cards tab", () => {
+  it.each(["tiles", "list"] as const)(
+    "keeps %s focused on the deck without opening-hand analysis",
+    async (view) => {
+      const { deck, names } = await open(view);
+      expect(names()).toEqual(["Hocus Pocus", "Become the Shadow Lord"]);
+      expect(
+        screen.getByRole("button", { name: "Card view" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "List view" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("region", { name: "Support in opening hands" }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", {
+          name: /Check support|Work out availability/,
+        }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("combobox", { name: "Sort the deck" }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("checkbox", { name: /Only rarely/ }),
+      ).not.toBeInTheDocument();
+      expect(deck.queryByText(/available \d+%/)).not.toBeInTheDocument();
+    },
+  );
 });
