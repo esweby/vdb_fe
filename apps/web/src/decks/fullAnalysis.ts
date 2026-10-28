@@ -364,8 +364,22 @@ export interface Question {
   card?: string;
 }
 
+/**
+ * Questions the practice player can't answer honestly yet. It plays far below real players
+ * (docs/turn-objectives.md), so these stay hidden until it plays to turn objectives.
+ */
+export const HIDDEN_QUESTIONS: ReadonlySet<string> = new Set([
+  "damage",
+  "gate",
+  "usurper",
+]);
+
 /** The questions, stated before anything runs. Card questions only for cards the deck plays. */
-export function questions(turn: number, cardNames: string[]): Question[] {
+export function questions(
+  turn: number,
+  cardNames: string[],
+  hidden: ReadonlySet<string> = HIDDEN_QUESTIONS,
+): Question[] {
   const list: Question[] = [
     {
       id: "damage",
@@ -409,7 +423,7 @@ export function questions(turn: number, cardNames: string[]): Question[] {
         hit: (run, t) => by(run.cards[card]?.turn ?? null, t),
       },
     });
-  return list;
+  return list.filter((q) => !hidden.has(q.id));
 }
 
 const STOPS = [
@@ -452,11 +466,12 @@ export function answerQuestions(
   output: FullAnalysisOutput,
   turn: number,
   observed: { completed: number; byDelay: [number, number, number] },
+  hidden: ReadonlySet<string> = HIDDEN_QUESTIONS,
 ): Answer[] {
   const player = output.rows.find((row) => row.source === "player");
   if (!player) return [];
   const lists = output.rows.filter((row) => row.source !== "player");
-  return questions(turn, player.cardNames).map((q) => {
+  return questions(turn, player.cardNames, hidden).map((q) => {
     const value = measured(player.runs, q.measure, turn) ?? 0;
     const format = q.measure.kind === "share" ? pct : amount;
     const playing = q.card
