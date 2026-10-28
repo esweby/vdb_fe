@@ -2,7 +2,7 @@
 -- authenticated by default (local stacks do), so every grant must be explicit.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(91);
+select plan(93);
 
 select table_privs_are('public', 'deck_versions', 'anon', array[]::text[], 'anon has no access to deck versions');
 select table_privs_are('public', 'deck_versions', 'authenticated', array['SELECT'], 'owners read versions, with only column updates');
@@ -42,6 +42,10 @@ select table_privs_are('public', t, 'anon', array[]::text[], 'anon has no access
   from unnest(array['scenarios', 'scenario_results']) t;
 select table_privs_are('public', 'scenarios', 'authenticated', array['SELECT', 'INSERT', 'UPDATE', 'DELETE'], 'signed-in users manage their own scenarios');
 select table_privs_are('public', 'scenario_results', 'authenticated', array['SELECT', 'INSERT', 'UPDATE', 'DELETE'], 'signed-in users manage their own scenario_results');
+
+-- Plan goals (task 7c): owner only, like the plans (row level security).
+select table_privs_are('public', 'plan_goals', 'anon', array[]::text[], 'anon has no access to plan_goals');
+select table_privs_are('public', 'plan_goals', 'authenticated', array['SELECT', 'INSERT', 'UPDATE', 'DELETE'], 'signed-in users manage their own plan_goals');
 
 -- Heroes (matchups): reference data the importer writes; everyone reads.
 select table_privs_are('public', 'heroes', 'anon', array['SELECT'], 'anon can only read heroes');

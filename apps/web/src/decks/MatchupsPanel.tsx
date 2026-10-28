@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useServices } from "../servicesContext.ts";
 import { Button, Dialog, Loading, TextField } from "../ui/index.ts";
 import { RealMatchups } from "../fablazing/RealGames.tsx";
+import { PlanGoals } from "./PlanGoals.tsx";
 import type { Hero, Matchup } from "./deckRepository.ts";
 import {
   poolEntries,
@@ -499,6 +500,19 @@ export function MatchupsPanel(props: {
               <p
                 className={styles.matchupWarning}
               >{`${props.deckSize - mainCount} below the ${props.deckSize}-card minimum.`}</p>
+            )}
+            {selectedId ? (
+              <PlanGoals
+                planId={selectedId}
+                entries={props.entries}
+                plan={plan}
+                plans={matchups}
+              />
+            ) : (
+              <section aria-label="Goals" className={styles.planGoals}>
+                <h4>Goals</h4>
+                <p className={styles.muted}>Save the plan to add goals.</p>
+              </section>
             )}
           </section>
         </div>

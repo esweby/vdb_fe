@@ -3,6 +3,7 @@ import type {
   DeckRepository,
   Hero,
   Matchup,
+  PlanGoal,
   DeckVersion,
 } from "../decks/deckRepository.ts";
 import type { FormatRules } from "../decks/deckRules.ts";
@@ -26,12 +27,15 @@ export function fakeDeckRepository(
     userId?: string;
     heroes?: Hero[];
     matchups?: Matchup[];
+    goals?: PlanGoal[];
     versions?: DeckVersion[];
   } = {},
 ) {
   let versions: DeckVersion[] = [...(options.versions ?? [])];
   let matchups = [...(options.matchups ?? [])];
   let nextMatchup = 0;
+  let goals = [...(options.goals ?? [])];
+  let nextGoal = 0;
   let decks: Deck[] = initial.map((d) => ({
     visibility: "private",
     ownerId: "u1",
@@ -203,6 +207,29 @@ export function fakeDeckRepository(
     async deleteMatchup(id) {
       saved.push(`delete matchup ${id}`);
       matchups = matchups.filter((m) => m.id !== id);
+      goals = goals.filter((g) => g.planId !== id);
+    },
+    listPlanGoals: async (planId) => goals.filter((g) => g.planId === planId),
+    async addPlanGoal(goal) {
+      saved.push(
+        `goal ${goal.planId} ${goal.scenarioId ?? goal.builtIn} ${goal.target}`,
+      );
+      if (
+        goals.some(
+          (g) =>
+            g.planId === goal.planId &&
+            g.scenarioId === goal.scenarioId &&
+            g.builtIn === goal.builtIn,
+        )
+      )
+        throw Object.assign(new Error("duplicate"), { code: "23505" });
+      const added = { ...goal, id: `goal-${++nextGoal}` };
+      goals = [...goals, added];
+      return added;
+    },
+    async deletePlanGoal(id) {
+      saved.push(`delete goal ${id}`);
+      goals = goals.filter((g) => g.id !== id);
     },
   };
   return { repository, saved };
