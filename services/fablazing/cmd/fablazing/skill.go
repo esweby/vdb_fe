@@ -74,6 +74,7 @@ func runFetchSides(args []string) error {
 	}
 	in := &ingest.Ingester{BaseURL: "https://fab-insights.azurewebsites.net", APIKey: key, HTTP: &http.Client{Timeout: 10 * time.Minute},
 		Logger: slog.New(slog.NewTextHandler(os.Stderr, nil))}
+	var failed []string
 	for d := start; !d.After(end); d = d.AddDate(0, 0, 1) {
 		date := d.Format(time.DateOnly)
 		for _, format := range []int{0, 1} {
@@ -83,10 +84,16 @@ func runFetchSides(args []string) error {
 			}
 			n, err := fetchDay(in, date, format, o, out)
 			if err != nil {
-				return fmt.Errorf("%s format %d: %w", date, format, err)
+				// FaBlazing answers 500 for some days; skip them and say which.
+				fmt.Fprintf(os.Stderr, "%s format %d: %v\n", date, format, err)
+				failed = append(failed, fmt.Sprintf("%s/%d", date, format))
+				continue
 			}
 			fmt.Fprintf(os.Stderr, "%s format %d: %d kept sides\n", date, format, n)
 		}
+	}
+	if len(failed) > 0 {
+		return fmt.Errorf("%d day-formats failed, rerun to retry: %v", len(failed), failed)
 	}
 	return nil
 }
@@ -175,7 +182,7 @@ func runSkill(args []string) error {
 			return fmt.Errorf("%s: %w", p, err)
 		}
 		for _, r := range rows {
-			dates[r.Date] = true
+			dates[fmt.Sprintf("%s/%d", r.Date, r.Format)] = true
 			if !r.Fatigue && !game.IsViserai(r.Hero) {
 				others = append(others, r.Side())
 			}
@@ -187,7 +194,7 @@ func runSkill(args []string) error {
 	slop := ceiling.BlockSlopArchetype(r, ceiling.BlockSlopMarkers)
 	kept := map[string]bool{}
 	for _, g := range games {
-		if dates[g.CreatedAt[:min(10, len(g.CreatedAt))]] {
+		if dates[fmt.Sprintf("%s/%d", g.CreatedAt[:min(10, len(g.CreatedAt))], g.Format)] {
 			kept[g.GUID] = true
 		}
 	}
@@ -200,7 +207,7 @@ func runSkill(args []string) error {
 	split := ceiling.Split(archetypes.Kept(sub, o), func(s game.Side) bool { return r.Nearest(archetypes.ListOf(s)) == slop })
 	players := skill.Records(split.Main, others)
 
-	fmt.Printf("UNVERIFIED. %d days of whole files; %d Viserai sides without block slop or fatigue on those days, %d other-hero sides.\n", len(dates), len(split.Main), len(others))
+	fmt.Printf("UNVERIFIED. %d day-formats of whole files; %d Viserai sides without block slop or fatigue on those days, %d other-hero sides.\n", len(dates), len(split.Main), len(others))
 	fmt.Println("(associations, not causes: other heroes face a different field)")
 	g := skill.Paired(players, *minEach, 2000, *seed)
 	fmt.Printf("\nplayers with %d+ sides on both: %d\n", *minEach, g.Players)

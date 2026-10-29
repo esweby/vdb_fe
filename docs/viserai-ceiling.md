@@ -53,6 +53,32 @@ So the lists don't carry the pilots' results. The archetype 4 list (Widespread A
 go run ./cmd/fablazing ceiling [-like-top 5] [-share 0.5] ~/.cache/vdb/fablazing/viserai/*.csv
 ```
 
+### Skill across heroes
+
+Whole FaBlazing days for 21–24 Sep and 14–27 Oct 2026, both formats: 33 day-formats. FaBlazing answers status 500 for 25 Sep format 0, 14 Oct format 0, 18 Oct format 1 and 19 Oct format 0, so those are left out on both sides of the comparison. Each day keeps one small row per kept side, every hero, in `~/.cache/vdb/fablazing/sides/`; the day's CSV is deleted after.
+
+```
+FABLAZING_API_KEY=... go run ./cmd/fablazing fetch-sides -from 2026-10-14 -to 2026-10-27
+go run ./cmd/fablazing skill ~/.cache/vdb/fablazing/viserai/*.csv
+```
+
+10,496 Viserai sides without block slop or fatigue on those days, and 166,141 sides on other heroes.
+
+- **53 players** have 20 or more sides on both Viserai and other heroes. They win 33.0% on Viserai and 51.8% on their other heroes: **a gap of −18.8 points [−22.7 to −14.8]**, each player counted once.
+- By the player's win rate on other heroes:
+  - under 40%: Viserai 23.6% (11 players)
+  - 40–50%: 30.4% (10)
+  - 50–55%: 35.6% (6)
+  - 55–60%: 37.4% (9)
+  - 60–65%: 35.0% (9)
+  - 65% and up: 34.8% (8)
+- Players who win 60% or more elsewhere win about 35% on Viserai. Viserai's rate rises with skill up to about 55% elsewhere, then flattens.
+- The top Viserai pilots mostly play nothing else, so they can't be adjusted: of the top 10 on these days, only 2 have 50+ sides on other heroes, at 47.7% and 53.8% there against 43.7% and 38.4% on Viserai.
+
+Other heroes queue against much the same field, so the gap isn't mainly a different set of opponents. But players who split their games may not be typical Viserai players, and 53 is a small group.
+
+The Viserai cap counts only games with Viserai in them, from the Viserai cache; the other heroes' cap counts every game. A player who hits 20 games in a day is capped slightly later on Viserai than elsewhere.
+
 ### Matchups
 
 Viserai without block slop or fatigue, by opponent with 50 or more sides:
@@ -64,10 +90,11 @@ Viserai without block slop or fatigue, by opponent with 50 or more sides:
 
 - No archetype as a whole is near 55% once block slop is set aside. The best real group is archetype 3, at 34.5% in [deck-archetypes.md](deck-archetypes.md).
 - A handful of pilots reach 55–68% over 50 to 70 games, so a 55%+ result **in some hands** isn't ruled out. Their lists don't travel: in other players' hands the best one wins about 40%, so it's mostly the pilot.
+- Players who also play other heroes lose about 19 points by switching to Viserai, and the strongest of them (60%+ elsewhere) win about 35% on it. At that gap, a 55% Viserai would need a pilot winning about 74% elsewhere.
 - The players with the most Viserai games top out just under 50%. That points to a hero that's playable but well short of 55% in the current field. It's especially weak into the aggressive heroes that make up most of it.
 
 ## Not yet answered
 
 1. **Deck or pilot** is answered above: mostly the pilot. The archetype 4 list is the best lead, at about 40% for others.
-2. **Skill adjustment across heroes.** The S3 store and the cache hold Viserai games only, so there's no record of how these players do on other heroes. That needs the full daily files (about 200 MB a day) from FaBlazing, which is the maintainer's call.
+2. **Skill adjustment across heroes** is answered above for two weeks and four September days. The top Viserai pilots play almost nothing else, so their own skill is still unmeasured.
 3. **The fatigue reading** of `count_loser_deck` needs confirming with FaBlazing.
