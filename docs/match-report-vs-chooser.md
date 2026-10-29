@@ -1,6 +1,6 @@
-# One real game against the line chooser
+# Real games against the line chooser
 
-**UNVERIFIED, and not a calibration: this is one game.** Written by Claude on 28 Oct 2026. It sets the maintainer's Talishar match report beside the [line chooser](turn-objectives.md#scoring-settings) (`chooseLine`, `playByObjectives` in `packages/engine/src/rules/objectives.ts`, default settings, main at dc6c3a5). It sorts each gap by where it comes from: the chooser's choices, or what the engine doesn't model. Flesh and Blood rules and card readings here are for the maintainer to check.
+**UNVERIFIED, and not a calibration: these are two games.** Written by Claude on 28 Oct 2026, with a [second game](#second-game-vs-marlynn-29-oct-2026) added on 29 Oct. It sets the maintainer's Talishar match reports beside the [line chooser](turn-objectives.md#scoring-settings) (`chooseLine`, `playByObjectives` in `packages/engine/src/rules/objectives.ts`, default settings, main at dc6c3a5). It sorts each gap by where it comes from: the chooser's choices, or what the engine doesn't model. Flesh and Blood rules and card readings here are for the maintainer to check.
 
 ## The game
 
@@ -89,8 +89,43 @@ The game's turns 13 and 14 are left out so the spans match the 12 the engine ran
 5. **The sideboard.** The game had Cull ×2, Razor Reflex, Weeping Battleground and Embrace Sin, and Call for Backup blocked. The engine ran the main 52. Razor Reflex, Weeping Battleground and Call for Backup aren't modelled in any case.
 6. **Counting.** If Talishar's "threatened" leaves arcane out, the right engine figure is the lower, no-arcane one.
 
+## Second game: vs Marlynn, 29 Oct 2026
+
+Talishar's stats export (`game-stats-2026-10-29T08-18-18.csv`). The maintainer played Viserai against Marlynn, went first and lost in round 6. The opponent's stats weren't exported.
+
+- **The list.** This was a different list of 57 cards, given by the maintainer from Talishar and saved as `apps/web/scripts/fixtures/marlynn-57.txt`. It adds Malefic Incantation, Painful Passage, Runic Reaving, Succumb to Temptation and yellow Bloodfrenzy Gloomblade, and replaces Grasp of the Arknight with Reach of the Abyss. Pitch colours are inferred from the list's order (reds, then yellows, then blues) and agree with the colours in the report. The engine (`@esweby/fab-engine` v0.1.0) models all 57 cards. As with the other pieces, it doesn't model Reach of the Abyss. Fallen Herald was played in the game but is in the list's inventory, not the deck. How it came into play isn't known.
+- **Value.** It works out as before, plus damage prevented: round 6 is 0 + 3 + 4 prevented = 7. Self-lost isn't a CSV column, so it's worked out from the value on each row.
+
+| Own turn | Played | Pitched | Resources used | Threatened | Dealt | Self-lost | Cards blocked (their turn) | Taken |
+| -------: | -----: | ------: | -------------: | ---------: | ----: | --------: | -------------------------: | ----: |
+|        1 |      2 |       1 |              2 |          4 |     0 |        −1 |                          0 |     0 |
+|        2 |      3 |       1 |              1 |          9 |     0 |        −3 |                          1 |     8 |
+|        3 |      5 |       1 |              2 |         14 |    14 |        −3 |                          0 |     7 |
+|        4 |      4 |       1 |              1 |         12 |     8 |        −2 |                          0 |     0 |
+|        5 |      2 |       0 |              0 |          8 |     8 |        −4 |                          1 |    10 |
+|        6 |      1 |       0 |              0 |          0 |     0 |         0 |                          1 |     6 |
+
+The chooser on the same 57 cards: 200 goldfish games, going first, seed 20261028, 6 turns, default settings.
+
+| Turns 1–4                | vs Marlynn         | Chooser, same 57         |
+| ------------------------ | ------------------ | ------------------------ |
+| Threatened               | 9.8 (4, 9, 14, 12) | 9.4 (8.0 without arcane) |
+| Burst (9+)               | 3 of 4             | 56%                      |
+| Big burst (14+)          | 1 of 4             | 23%                      |
+| Cards played             | 3.5                | 2.8                      |
+| Resources used / pitched | 1.5 used           | 2.4 pitched              |
+| Life self-lost by turn 5 | 13                 | 11.6                     |
+
+On the same seed the 57 does more for the chooser than the main 52: 9.4 a turn against 8.9 over turns 1–4.
+
+What this game adds:
+
+1. **Here the chooser looks like the maintainer.** Damage threatened and life lost are close. The maintainer went all-in from turn 2, as the chooser does. So the life loss flagged in the first game isn't only the chooser's: it's what this kind of turn costs. Marlynn's 31 damage on top of it decided the race. The engine can't see that, because it has no opponent (UNVERIFIED reading).
+2. **The maintainer played wider for less.** They played about 1 card more a turn than the chooser for about 1 resource less, with turns of 5 and 4 cards for 2 and 1 resources. That's probably zero-cost plays the chooser doesn't find or doesn't value enough (width is worth 0.5 a card). One game can't say which.
+3. **Choosing between the two shapes needs the opponent.** The slow first game was won and the fast second one lost. Whether to set up or race is the matchup's call. That's the `holdBack` question, and the chooser can't answer it without an opponent.
+
 ## Not concluded
 
-- Nothing here changes a weight. One game against 200 goldfish games can show which direction the gaps go, not how big they are.
+- Nothing here changes a weight. Two games against 200 goldfish games each can show which direction the gaps go, not how big they are.
 - Whether the maintainer's slow first four turns were the hand, the opponent's pressure or a choice can't be read from the report. The turn-by-turn log of plays would answer it, and so would the FaBlazing data, which shows building early goes with worse results from turn 2 (`turn-objectives.md`).
-- How the scratch figures were made: a throwaway script around `playByObjectives` over `runBatch`'s seeds, plus `compare-line-scoring.ts --runs 200`. Neither is checked in.
+- How the scratch figures were made: a throwaway script around `playByObjectives` over `runBatch`'s seeds, plus `compare-line-scoring.ts --runs 200`. The script isn't checked in.
