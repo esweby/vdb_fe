@@ -19,7 +19,7 @@
     "vite": "^8.3.4"
   },
   "dependencies": {
-    "@esweby/fab-engine": "github:esweby/fab-engine#v0.1.0",
+    "@esweby/fab-engine": "github:esweby/fab-engine#v0.2.0",
     "@reduxjs/toolkit": "^2.13.0",
     "@sigma/node-border": "^3.0.0",
     "@supabase/supabase-js": "^2.117.3",
