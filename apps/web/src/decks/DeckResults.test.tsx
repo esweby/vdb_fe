@@ -101,9 +101,15 @@ describe("the Results tab", () => {
       version(1, exported),
     ]);
     expect(
-      await screen.findByText("No games uploaded yet."),
+      await screen.findByText(/^No games uploaded yet\./),
     ).toBeInTheDocument();
     const upload = await choose(user);
+    // The file is read before uploading, so you can see which game it is.
+    expect(within(upload).getByText(FILE)).toBeInTheDocument();
+    expect(within(upload).getByText("Lost")).toBeInTheDocument();
+    expect(
+      within(upload).getByText("Went first · 6 turns"),
+    ).toBeInTheDocument();
     expect(within(upload).getByLabelText("Version")).toHaveDisplayValue(
       "Version 1",
     );
@@ -112,12 +118,38 @@ describe("the Results tab", () => {
       within(upload).getByRole("button", { name: "Upload game" }),
     );
 
-    const games = await screen.findByRole("region", { name: "Games" });
+    const table = await screen.findByRole("table", { name: "Games" });
+    const [, row] = within(table).getAllByRole("row");
     expect(
-      await within(games).findByText(/Lost · went first · 6 turns/),
-    ).toBeInTheDocument();
-    expect(within(games).getByText(/Kept a slow hand/)).toBeInTheDocument();
+      within(row!)
+        .getAllByRole("cell")
+        .slice(0, 7)
+        .map((cell) => cell.textContent),
+    ).toEqual(["Lost", "First", "6", "49", "27", "−18", "Kept a slow hand"]);
     expect(fake.saved).toContain(`game deck-1 version-1 ${FILE}`);
+  });
+
+  it("sums up the record: played, won, win rate, and by who went first", async () => {
+    const { user } = await open([version(1, exported)]);
+    for (const text of [csv, csv.replace("Result,Loser", "Result,Winner")]) {
+      await choose(user, text);
+      await user.click(screen.getByRole("button", { name: "Upload game" }));
+      await screen.findByText("Game uploaded.");
+    }
+    const record = await screen.findByRole("region", { name: "Record" });
+    expect(within(record).getByText("Played").nextSibling).toHaveTextContent(
+      "2",
+    );
+    expect(within(record).getByText("Won").nextSibling).toHaveTextContent("1");
+    expect(within(record).getByText("Win rate").nextSibling).toHaveTextContent(
+      "50%",
+    );
+    expect(
+      within(record).getByText("Going first").nextSibling,
+    ).toHaveTextContent("1 of 2");
+    expect(
+      within(record).getByText("Going second").nextSibling,
+    ).toHaveTextContent("–");
   });
 
   it("names the cards a chosen version doesn't have, and still uploads", async () => {
@@ -170,7 +202,7 @@ describe("the Results tab", () => {
     ]);
     await choose(user);
     await user.click(screen.getByRole("button", { name: "Upload game" }));
-    const games = await screen.findByRole("region", { name: "Games" });
+    const games = await screen.findByRole("table", { name: "Games" });
     const select = await within(games).findByLabelText(
       /^Version for the game uploaded/,
     );
@@ -189,7 +221,7 @@ describe("the Results tab", () => {
       await screen.findByRole("button", { name: /^Delete the game uploaded/ }),
     );
     expect(
-      await screen.findByText("No games uploaded yet."),
+      await screen.findByText(/^No games uploaded yet\./),
     ).toBeInTheDocument();
     expect(await fake.repository.listGames("deck-1")).toEqual([]);
   });

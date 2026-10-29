@@ -1,20 +1,35 @@
 // The Results tab (docs/test-loop.md, step 2; the maintainer, 28 Oct 2026): Talishar stats
 // CSVs parsed here and stored on the deck with an optional note, each tied to one of the
-// deck's versions if the owner chooses one.
+// deck's versions if the owner chooses one. The record sits on top, the upload under it,
+// then a table of the games.
 import { useEffect, useId, useState } from "react";
 import { parseGameStats, type GameStats } from "@vdb/talishar";
 import { useServices } from "../servicesContext.ts";
 import { Button, TextField } from "../ui/index.ts";
 import type { DeckGame, DeckVersion } from "./deckRepository.ts";
 import { bestVersion, missingFrom, versionLabel } from "./gameUpload.ts";
-import styles from "./Decks.module.css";
+import styles from "./DeckResults.module.css";
 
 const NONE = "none";
-const when = (iso: string) => new Date(iso).toLocaleString("en-GB");
 
+/** "28 Oct, 22:19". */
+const when = (iso: string) =>
+  new Date(iso).toLocaleString("en-GB", {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+const won = (stats: GameStats) => stats.summary.result === "win";
+
+/** A signed number with a real minus sign: −18. */
+const signed = (n: number) => (n < 0 ? `−${-n}` : String(n));
+
+/** "Went second · 6 turns": the result has its own badge. */
 function describeGame(stats: GameStats) {
-  const { result, firstPlayer, turns } = stats.summary;
-  return `${result === "win" ? "Won" : "Lost"} · went ${firstPlayer ? "first" : "second"} · ${turns} turns`;
+  const { firstPlayer, turns } = stats.summary;
+  return `Went ${firstPlayer ? "first" : "second"} · ${turns} turns`;
 }
 
 function VersionOptions({ versions }: { versions: DeckVersion[] }) {
@@ -27,6 +42,14 @@ function VersionOptions({ versions }: { versions: DeckVersion[] }) {
         </option>
       ))}
     </>
+  );
+}
+
+function ResultBadge({ stats }: { stats: GameStats }) {
+  return (
+    <span className={won(stats) ? styles.win : styles.loss}>
+      {won(stats) ? "Won" : "Lost"}
+    </span>
   );
 }
 
@@ -74,62 +97,138 @@ export function DeckResults({ deckId }: { deckId: string }) {
     }
   }
 
-  const won = games.filter((game) => game.stats.summary.result === "win");
   return (
-    <section className={styles.results} aria-label="Results">
-      <p>
-        Upload the stats CSV from a game's stats screen on Talishar. Results are
-        private to you.
-      </p>
+    <div className={styles.results}>
+      <Record games={games} />
       <Upload
         deckId={deckId}
         versions={versions}
         onUploaded={(game) => setGames((rows) => [game, ...rows])}
       />
-      <section aria-label="Games">
-        <h3>Games</h3>
-        {loaded && games.length === 0 && (
-          <p className={styles.versionsEmpty}>No games uploaded yet.</p>
-        )}
-        {games.length > 0 && (
-          <>
-            <p>
-              Won {won.length} of {games.length}.
-            </p>
-            <ul className={styles.resultsList}>
+      {error && (
+        <p role="alert" className={styles.error}>
+          {error}
+        </p>
+      )}
+      {loaded && games.length === 0 && (
+        <p className={styles.empty}>
+          No games uploaded yet. Your first upload starts the record.
+        </p>
+      )}
+      {games.length > 0 && (
+        <div className={styles.scroll}>
+          <table className={styles.table} aria-label="Games">
+            <thead>
+              <tr>
+                <th scope="col">Result</th>
+                <th scope="col">Went</th>
+                <th scope="col" className={styles.number}>
+                  Turns
+                </th>
+                <th scope="col" className={styles.number}>
+                  Threatened
+                </th>
+                <th scope="col" className={styles.number}>
+                  Dealt
+                </th>
+                <th scope="col" className={styles.number}>
+                  Self-lost
+                </th>
+                <th scope="col">Note</th>
+                <th scope="col">Version</th>
+                <th scope="col">Uploaded</th>
+                <th scope="col">
+                  <span className={styles.visuallyHidden}>Delete</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
               {games.map((game) => (
-                <li key={game.id}>
-                  <span>
-                    {describeGame(game.stats)} · uploaded{" "}
-                    {when(game.uploadedAt)}
-                    {game.note && <> · {game.note}</>}
-                  </span>
-                  <select
-                    aria-label={`Version for the game uploaded ${when(game.uploadedAt)}`}
-                    value={game.versionId ?? NONE}
-                    onChange={(event) =>
-                      void move(
-                        game,
-                        event.target.value === NONE ? null : event.target.value,
-                      )
-                    }
-                  >
-                    <VersionOptions versions={versions} />
-                  </select>
-                  <Button
-                    variant="ghost"
-                    aria-label={`Delete the game uploaded ${when(game.uploadedAt)}`}
-                    onClick={() => void remove(game)}
-                  >
-                    Delete
-                  </Button>
-                </li>
+                <tr key={game.id}>
+                  <td>
+                    <ResultBadge stats={game.stats} />
+                  </td>
+                  <td>{game.stats.summary.firstPlayer ? "First" : "Second"}</td>
+                  <td className={styles.number}>{game.stats.summary.turns}</td>
+                  <td className={styles.number}>
+                    {game.stats.statistics.totalDamageThreatened}
+                  </td>
+                  <td className={styles.number}>
+                    {game.stats.statistics.totalDamageDealt}
+                  </td>
+                  <td className={styles.number}>
+                    {signed(game.stats.statistics.totalLifeSelfLost)}
+                  </td>
+                  <td className={styles.note}>{game.note ?? ""}</td>
+                  <td>
+                    <select
+                      className={styles.select}
+                      aria-label={`Version for the game uploaded ${when(game.uploadedAt)}`}
+                      value={game.versionId ?? NONE}
+                      onChange={(event) =>
+                        void move(
+                          game,
+                          event.target.value === NONE
+                            ? null
+                            : event.target.value,
+                        )
+                      }
+                    >
+                      <VersionOptions versions={versions} />
+                    </select>
+                  </td>
+                  <td className={styles.muted}>{when(game.uploadedAt)}</td>
+                  <td>
+                    <Button
+                      variant="ghost"
+                      className={styles.delete}
+                      aria-label={`Delete the game uploaded ${when(game.uploadedAt)}`}
+                      onClick={() => void remove(game)}
+                    >
+                      Delete
+                    </Button>
+                  </td>
+                </tr>
               ))}
-            </ul>
-          </>
-        )}
-      </section>
-      {error && <p role="alert">{error}</p>}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Played, won, win rate, and the split by who went first. */
+function Record({ games }: { games: DeckGame[] }) {
+  const wins = games.filter((game) => won(game.stats)).length;
+  const split = (first: boolean) => {
+    const these = games.filter(
+      (game) => game.stats.summary.firstPlayer === first,
+    );
+    return these.length === 0
+      ? "–"
+      : `${these.filter((game) => won(game.stats)).length} of ${these.length}`;
+  };
+  const figures: [string, string][] = [
+    ["Played", String(games.length)],
+    ["Won", String(wins)],
+    [
+      "Win rate",
+      games.length === 0 ? "–" : `${Math.round((100 * wins) / games.length)}%`,
+    ],
+    ["Going first", split(true)],
+    ["Going second", split(false)],
+  ];
+  return (
+    <section aria-label="Record">
+      <dl className={styles.record}>
+        {figures.map(([label, value]) => (
+          <div key={label} className={styles.figure}>
+            <dt>{label}</dt>
+            <dd>{value}</dd>
+          </div>
+        ))}
+      </dl>
     </section>
   );
 }
@@ -174,6 +273,12 @@ function Upload({
     setVersionId(bestVersion(stats.cardPlays, versions)?.id ?? NONE);
   }
 
+  function reset() {
+    setPending(null);
+    setNote("");
+    setFileKey((n) => n + 1);
+  }
+
   async function upload() {
     if (!pending) return;
     setBusy(true);
@@ -187,9 +292,7 @@ function Upload({
       });
       onUploaded(game);
       setDone(true);
-      setPending(null);
-      setNote("");
-      setFileKey((n) => n + 1);
+      reset();
     } catch {
       setError("Couldn't upload the game. Try again.");
     } finally {
@@ -201,52 +304,95 @@ function Upload({
   const missing =
     pending && chosen ? missingFrom(pending.stats.cardPlays, chosen) : [];
   return (
-    <section className={styles.resultsUpload} aria-label="Upload a game">
-      <h3>Upload a game</h3>
-      <div className={styles.versionGameForm}>
-        <div>
-          <label htmlFor={`${id}-file`}>Talishar stats CSV</label>
-          <input
-            key={fileKey}
-            id={`${id}-file`}
-            type="file"
-            accept=".csv,text/csv"
-            onChange={(event) => void choose(event.target.files?.[0])}
-          />
-        </div>
-        {pending && (
-          <div>
-            <label htmlFor={`${id}-version`}>Version</label>
-            <select
-              id={`${id}-version`}
-              value={versionId}
-              onChange={(event) => setVersionId(event.target.value)}
-            >
-              <VersionOptions versions={versions} />
-            </select>
-          </div>
-        )}
-        <TextField
-          label="Note"
-          value={note}
-          maxLength={500}
-          hint="Optional. Anything you want to remember about the game."
-          onChange={(event) => setNote(event.target.value)}
-        />
+    <section className={styles.upload} aria-label="Upload a game">
+      <div className={styles.uploadHead}>
+        <h3>Upload a game</h3>
+        <p className={styles.muted}>
+          Download the stats CSV from the game's stats screen on Talishar.
+          Results are private to you.
+        </p>
       </div>
-      {pending && missing.length > 0 && chosen && (
-        <p role="status">
-          Version {chosen.number} doesn't have: {missing.join(", ")}. You can
-          still upload it there.
+      <div className={styles.pick}>
+        <input
+          key={fileKey}
+          id={`${id}-file`}
+          className={styles.visuallyHidden}
+          aria-label="Talishar stats CSV"
+          type="file"
+          accept=".csv,text/csv"
+          onChange={(event) => void choose(event.target.files?.[0])}
+        />
+        <label htmlFor={`${id}-file`} className={styles.pickButton}>
+          {pending ? "Choose another file" : "Choose a CSV"}
+        </label>
+        {pending ? (
+          <div className={styles.picked}>
+            <span className={styles.fileName}>{pending.fileName}</span>
+            <span>
+              <ResultBadge stats={pending.stats} />{" "}
+              <span className={styles.muted}>
+                {describeGame(pending.stats)}
+              </span>
+            </span>
+          </div>
+        ) : (
+          <span className={styles.muted}>No file chosen</span>
+        )}
+      </div>
+      {pending && (
+        <>
+          <div className={styles.fields}>
+            <div className={styles.field}>
+              <label htmlFor={`${id}-version`}>Version</label>
+              <select
+                id={`${id}-version`}
+                className={styles.select}
+                value={versionId}
+                onChange={(event) => setVersionId(event.target.value)}
+              >
+                <VersionOptions versions={versions} />
+              </select>
+            </div>
+            <div className={styles.noteField}>
+              <TextField
+                label="Note"
+                value={note}
+                maxLength={500}
+                placeholder="Optional. Anything you want to remember."
+                onChange={(event) => setNote(event.target.value)}
+              />
+            </div>
+          </div>
+          {missing.length > 0 && chosen && (
+            <p role="status" className={styles.warning}>
+              Version {chosen.number} doesn't have: {missing.join(", ")}. You
+              can still upload it there.
+            </p>
+          )}
+          <div className={styles.actions}>
+            <Button
+              variant="primary"
+              disabled={busy}
+              onClick={() => void upload()}
+            >
+              {busy ? "Uploading…" : "Upload game"}
+            </Button>
+            <Button variant="ghost" disabled={busy} onClick={reset}>
+              Cancel
+            </Button>
+          </div>
+        </>
+      )}
+      {done && (
+        <p role="status" className={styles.done}>
+          Game uploaded.
         </p>
       )}
-      {pending && (
-        <Button disabled={busy} onClick={() => void upload()}>
-          {busy ? "Uploading…" : "Upload game"}
-        </Button>
+      {error && (
+        <p role="alert" className={styles.error}>
+          {error}
+        </p>
       )}
-      {done && <p role="status">Game uploaded.</p>}
-      {error && <p role="alert">{error}</p>}
     </section>
   );
 }
