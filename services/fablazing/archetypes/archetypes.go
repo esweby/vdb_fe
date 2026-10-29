@@ -460,3 +460,12 @@ func day(createdAt string) string {
 	}
 	return createdAt
 }
+
+// Kept is the kept Viserai sides, by the same rules Compute clusters.
+func Kept(games []game.Game, o Options) []game.Side {
+	sides, _, _ := kept(games, o)
+	return sides
+}
+
+// ListOf is the set of cards a side's list runs.
+func ListOf(s game.Side) map[string]bool { return listOf(s) }
