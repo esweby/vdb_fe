@@ -62,3 +62,38 @@ func TestTheBlockSlopArchetypeRunsTheMostDefenceMarkers(t *testing.T) {
 		t.Errorf("got %d, want 1", got)
 	}
 }
+
+func listed(player string, won bool, cards ...string) game.Side {
+	s := side(player, won)
+	for _, c := range cards {
+		s.Cards = append(s.Cards, game.Card{ID: c, Copies: 1})
+	}
+	return s
+}
+
+func TestAPilotsSignatureIsTheCardsInMostOfTheirLists(t *testing.T) {
+	sides := []game.Side{
+		listed("top", true, "a", "b", "c"),
+		listed("top", true, "a", "b", "d"),
+		listed("top", false, "a", "e"),
+		listed("other", true, "x", "y", "z"),
+	}
+	got := Signature(sides, "top", 0.5)
+	if len(got) != 2 || !got["a"] || !got["b"] {
+		t.Errorf("got %v, want a and b", got)
+	}
+}
+
+func TestLookalikesByOthersLeaveThePilotOut(t *testing.T) {
+	sig := map[string]bool{"a": true, "b": true, "c": true}
+	sides := []game.Side{
+		listed("top", true, "a", "b", "c"),       // the pilot
+		listed("copy", false, "a", "b", "c"),     // identical
+		listed("near", true, "a", "b", "c", "d"), // 3/4
+		listed("far", true, "a", "x", "y"),       // 1/5
+	}
+	got := LookalikesByOthers(sides, "top", sig, 0.7)
+	if len(got) != 2 || got[0].Player != "copy" || got[1].Player != "near" {
+		t.Errorf("got %+v", got)
+	}
+}

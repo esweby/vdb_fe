@@ -94,3 +94,37 @@ func Pilots(sides []game.Side, minGames int) []Pilot {
 	})
 	return out
 }
+
+// Signature is the cards in at least share of a player's lists: the list they
+// settled on, for finding the same list in other hands.
+func Signature(sides []game.Side, player game.PlayerHash, share float64) map[string]bool {
+	count, n := map[string]int{}, 0
+	for _, s := range sides {
+		if s.Player != player {
+			continue
+		}
+		n++
+		for c := range archetypes.ListOf(s) {
+			count[c]++
+		}
+	}
+	out := map[string]bool{}
+	for c, k := range count {
+		if float64(k) >= share*float64(n) {
+			out[c] = true
+		}
+	}
+	return out
+}
+
+// LookalikesByOthers is the sides by anyone but player whose list is at least
+// min similar to target, so a list's record isn't the pilot's own.
+func LookalikesByOthers(sides []game.Side, player game.PlayerHash, target map[string]bool, min float64) []game.Side {
+	var out []game.Side
+	for _, s := range sides {
+		if s.Player != player && archetypes.Similarity(archetypes.ListOf(s), target) >= min {
+			out = append(out, s)
+		}
+	}
+	return out
+}

@@ -38,6 +38,21 @@ go run ./cmd/fablazing ceiling [-min-games 50] [-top 15] ~/.cache/vdb/fablazing/
 
 With 128 pilots, one or two runs this high can happen by chance even if nobody is truly above 50%. So these two are leads, not proof.
 
+### Deck or pilot
+
+Each of the top 5 pilots' **signature** is the cards in at least half of their lists (18 to 24 cards). Lookalikes are other players' sides whose list is at least 50%, 60% or 70% similar to it (shared cards over all cards). The pilot's own sides are left out.
+
+- **Pilot 1** (66.7%, archetype 4): at 70%+, 101 sides by 8 other players won 40.6% [31.5–50.3], or 28.9% counting each player once. Pilot 14 played 30% of them at 50%.
+- **Pilot 2** (68.0%): almost nobody plays the list. 18 sides at 60%+, none at 70%+.
+- **Pilot 3** (56.9%, archetype 4): at 70%+, 125 sides by 9 players won 56.0%. But 44% of those are pilot 1's, at 71%. Without pilot 1, the rest win about 44%, and 37.2% counting each player once.
+- **Pilots 4 and 5** (51.7% and 49.3%, archetype 1): hundreds of other players run close lists, at 30–32%, the same as Viserai overall.
+
+So the lists don't carry the pilots' results. The archetype 4 list (Widespread Annihilation, Ruin, Deadwood Dirge) does about 40% in other strong hands, above the 30% average, but nowhere near 55%. Players who copy a strong list may themselves be stronger than average, so even 40% may flatter the list.
+
+```
+go run ./cmd/fablazing ceiling [-like-top 5] [-share 0.5] ~/.cache/vdb/fablazing/viserai/*.csv
+```
+
 ### Matchups
 
 Viserai without block slop or fatigue, by opponent with 50 or more sides:
@@ -48,11 +63,11 @@ Viserai without block slop or fatigue, by opponent with 50 or more sides:
 ## What this says so far
 
 - No archetype as a whole is near 55% once block slop is set aside. The best real group is archetype 3, at 34.5% in [deck-archetypes.md](deck-archetypes.md).
-- A handful of pilots reach 55–68% over 50 to 70 games, so a 55%+ result **in some hands** isn't ruled out. Whether that's the deck or the pilot is the next question.
+- A handful of pilots reach 55–68% over 50 to 70 games, so a 55%+ result **in some hands** isn't ruled out. Their lists don't travel: in other players' hands the best one wins about 40%, so it's mostly the pilot.
 - The players with the most Viserai games top out just under 50%. That points to a hero that's playable but well short of 55% in the current field. It's especially weak into the aggressive heroes that make up most of it.
 
 ## Not yet answered
 
-1. **Deck or pilot.** Take the top pilots' lists and measure the win rate of lookalike lists played by *other* players (`fablazing like`). If lookalikes win near 30%, it's the pilot.
+1. **Deck or pilot** is answered above: mostly the pilot. The archetype 4 list is the best lead, at about 40% for others.
 2. **Skill adjustment across heroes.** The S3 store and the cache hold Viserai games only, so there's no record of how these players do on other heroes. That needs the full daily files (about 200 MB a day) from FaBlazing, which is the maintainer's call.
 3. **The fatigue reading** of `count_loser_deck` needs confirming with FaBlazing.

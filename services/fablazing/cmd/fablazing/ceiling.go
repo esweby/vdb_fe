@@ -8,6 +8,7 @@ import (
 	"github.com/esweby/vdb_fe/services/fablazing/archetypes"
 	"github.com/esweby/vdb_fe/services/fablazing/ceiling"
 	"github.com/esweby/vdb_fe/services/fablazing/game"
+	"github.com/esweby/vdb_fe/services/fablazing/measure"
 )
 
 // runCeiling asks whether any Viserai pilot or matchup reaches 55–65%, with
@@ -20,6 +21,8 @@ func runCeiling(args []string) error {
 	minGames := fs.Int("min-games", 50, "fewest sides before a pilot is listed")
 	top := fs.Int("top", 15, "pilots to print")
 	seed := fs.Uint64("seed", 1, "clustering seed")
+	likeTop := fs.Int("like-top", 5, "top pilots whose lists are measured in other hands")
+	share := fs.Float64("share", 0.5, "share of a pilot's lists a card needs to be in their signature")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -73,6 +76,26 @@ func runCeiling(args []string) error {
 		fmt.Printf("  %4d  %5.1f%%  [%4.1f-%4.1f]  %5d  %s\n", i+1, 100*p.Rate, 100*p.Low, 100*p.High, p.Games, mostPlayed(r, g.Main, p.Player))
 	}
 
+	fmt.Printf("\nDeck or pilot: each top pilot's signature (cards in %.0f%%+ of their lists), played by other players\n", 100**share)
+	fmt.Println("  rank  pilot won  cards  similarity  sides  players  won by side               won by player          top player: share, won, a top pilot?")
+	for i, p := range pilots {
+		if i == *likeTop {
+			break
+		}
+		sig := ceiling.Signature(g.Main, p.Player, *share)
+		for _, min := range []float64{0.5, 0.6, 0.7} {
+			like := ceiling.LookalikesByOthers(g.Main, p.Player, sig, min)
+			if len(like) == 0 {
+				fmt.Printf("  %4d  %8.1f%%  %5d  %9.0f%%+  %5d\n", i+1, 100*p.Rate, len(sig), 100*min, 0)
+				continue
+			}
+			w := archetypes.ByPlayer(like, 1000, *seed)
+			lo, hi := measure.Wilson(wins(like), len(like))
+			fmt.Printf("  %4d  %8.1f%%  %5d  %9.0f%%+  %5d  %7d  %5.1f%% [%4.1f-%4.1f]       %5.1f%% [%4.1f-%4.1f]  %4.0f%% %4.0f%% %s\n", i+1, 100*p.Rate, len(sig), 100*min, len(like), w.Players,
+				100*float64(wins(like))/float64(len(like)), 100*lo, 100*hi, 100*w.Rate, 100*w.Low, 100*w.High, 100*w.TopShare, 100*w.TopRate, pilotRank(pilots, topPlayer(like)))
+		}
+	}
+
 	fmt.Printf("\nMatchups, Viserai without either, %d+ sides:\n", minSample)
 	by := map[string][]game.Side{}
 	for _, s := range g.Main {
@@ -121,4 +144,27 @@ func mostPlayed(r archetypes.Result, sides []game.Side, player game.PlayerHash) 
 		}
 	}
 	return fmt.Sprintf("%d (%.0f%% of their sides)", best+1, 100*float64(count[best])/float64(n))
+}
+
+// topPlayer is the player with the most sides.
+func topPlayer(sides []game.Side) game.PlayerHash {
+	count := map[game.PlayerHash]int{}
+	var best game.PlayerHash
+	for _, s := range sides {
+		count[s.Player]++
+		if count[s.Player] > count[best] || (count[s.Player] == count[best] && s.Player < best) {
+			best = s.Player
+		}
+	}
+	return best
+}
+
+// pilotRank names a player by their rank among the pilots, never by hash.
+func pilotRank(pilots []ceiling.Pilot, player game.PlayerHash) string {
+	for i, p := range pilots {
+		if p.Player == player {
+			return fmt.Sprintf("pilot %d", i+1)
+		}
+	}
+	return "-"
 }
