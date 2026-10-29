@@ -176,6 +176,11 @@ type capKey struct {
 // abandoned, and within each player's earliest PlayerCap sides per day and
 // format.
 func kept(games []game.Game, o Options) ([]game.Side, []int, Counts) {
+	return keptBy(games, o, game.IsViserai)
+}
+
+// keptBy is kept for the heroes hero accepts.
+func keptBy(games []game.Game, o Options, hero func(string) bool) ([]game.Side, []int, Counts) {
 	ordered := append([]game.Game(nil), games...)
 	sort.SliceStable(ordered, func(i, j int) bool {
 		if ordered[i].CreatedAt != ordered[j].CreatedAt {
@@ -197,7 +202,7 @@ func kept(games []game.Game, o Options) ([]game.Side, []int, Counts) {
 				perPlayer[k]++
 				capped = perPlayer[k] > o.PlayerCap
 			}
-			if !game.IsViserai(s.Hero) {
+			if !hero(s.Hero) {
 				continue
 			}
 			c.ViseraiSides++
@@ -469,3 +474,9 @@ func Kept(games []game.Game, o Options) []game.Side {
 
 // ListOf is the set of cards a side's list runs.
 func ListOf(s game.Side) map[string]bool { return listOf(s) }
+
+// KeptAny is every hero's kept sides, by the same rules as kept.
+func KeptAny(games []game.Game, o Options) []game.Side {
+	sides, _, _ := keptBy(games, o, func(string) bool { return true })
+	return sides
+}

@@ -151,6 +151,15 @@ func (in *Ingester) runFormat(ctx context.Context, date string, format int) (For
 	return r, nil
 }
 
+// Fetch writes a day and format's whole CSV to w, without storing anything.
+func (in *Ingester) Fetch(ctx context.Context, date string, format int, w io.Writer) error {
+	link, err := in.downloadURL(ctx, date, format)
+	if err != nil {
+		return err
+	}
+	return in.download(ctx, link, w)
+}
+
 // downloadURL asks the API for the day's signed URL.
 func (in *Ingester) downloadURL(ctx context.Context, date string, format int) (string, error) {
 	q := url.Values{"format": {strconv.Itoa(format)}, "date": {date}}

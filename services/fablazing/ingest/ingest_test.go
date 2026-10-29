@@ -365,3 +365,20 @@ func keys(m map[string][]byte) []string {
 	}
 	return out
 }
+
+// Fetch writes a whole day's CSV without storing it, for local analysis.
+func TestFetchWritesTheWholeDay(t *testing.T) {
+	f := newFakeFaBlazing(t)
+	store := &fakeStore{}
+	in := newIngester(t, f, store, &bytes.Buffer{})
+	var got bytes.Buffer
+	if err := in.Fetch(context.Background(), "2026-10-20", 1, &got); err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(got.Bytes(), f.csv) {
+		t.Errorf("got %d bytes, want the %d-byte day", got.Len(), len(f.csv))
+	}
+	if len(f.apiCalls) != 1 || f.apiCalls[0] != "2026-10-20/1" {
+		t.Errorf("api calls %v", f.apiCalls)
+	}
+}
