@@ -1,6 +1,6 @@
 // Command ingest-lambda is the daily FaBlazing ingest: an AWS Lambda that
 // fetches yesterday's final file for each format, writes the day's aggregates
-// to Supabase and stores the Viserai games in S3. See docs/fablazing-plan.md, "Pipeline", and services/fablazing/README.md.
+// to Supabase and stores every game in S3. See docs/fablazing-plan.md, "Pipeline", and services/fablazing/README.md.
 //
 // Environment:
 //

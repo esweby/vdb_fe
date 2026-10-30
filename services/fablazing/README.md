@@ -22,12 +22,12 @@ At 10:00 UTC each day, EventBridge Scheduler runs the Lambda `vdb-fablazing-inge
 2. asks the FaBlazing API for yesterday's file (UTC), with the key from SSM, and downloads it
 3. parses it with `game.ReadAll`, which keeps the latest copy of each guid
 4. aggregates every game (`aggregate.Run`, with the player cap of 20 and the provisional concession rule) and writes the day to Supabase with `fablazing_replace_day`, as the `fablazing_ingest` role. Matchups and the run summary cover every game, so the aggregator gets them all, not only Viserai's
-5. keeps every game with Viserai on either side, with both sides, and writes their raw CSV rows, every column as text, as gzipped NDJSON to `s3://vdb-fablazing-raw-<account>/raw/date=YYYY-MM-DD/format=N.ndjson.gz`
-6. logs counts only: rows, games, kept games, Viserai sides and rows written. Never a player hash or the payload
+5. writes every game's raw CSV row, both sides, every column as text, as gzipped NDJSON to `s3://vdb-fablazing-raw-<account>/games/date=YYYY-MM-DD/format=N.ndjson.gz`, about 10 to 15 MB a format a day. Days stored before 30 Oct 2026 are under `raw/date=…` and hold only games with Viserai on either side; they're kept as they are
+6. logs counts only: rows, games, stored games (`kept`), Viserai sides and rows written. Never a player hash or the payload
 
 The rows are stored raw so that a parser change can rebuild everything without downloading again. They include the hashed player names, which are only for capping one player's weight and are never shown. The bucket is private.
 
-**Supabase comes before S3.** A day is stored in S3 only once its aggregates are written, so a failed write leaves nothing for a rerun to skip. Replacing a day is idempotent, so writing it twice is harmless. The raw records hold only Viserai's games, so they can't rebuild the matchups: a day whose write failed has to be fetched again.
+**Supabase comes before S3.** A day is stored in S3 only once its aggregates are written, so a failed write leaves nothing for a rerun to skip. Replacing a day is idempotent, so writing it twice is harmless. From 30 Oct 2026 the raw records hold every game, so they could rebuild a day's aggregates; nothing does that yet, so a day whose write failed is still fetched again.
 
 **There are no automatic retries.** An error emails the alarm address. To rerun a day, invoke the function with a date; formats already stored are skipped:
 

@@ -1,5 +1,5 @@
-// Package ingest fetches a final day of FaBlazing games, keeps the Viserai
-// games and stores their raw records.
+// Package ingest fetches a final day of FaBlazing games and stores every
+// game's raw record.
 //
 // It never logs or returns the API key or the signed download URL: logs carry
 // counts only.
@@ -50,16 +50,18 @@ type Ingester struct {
 }
 
 // FormatResult counts one format's day. Rows are CSV rows, Games are distinct
-// guids, Kept are games with Viserai on either side.
+// guids, Kept are the games stored (all of them since 30 Oct 2026; Viserai's
+// only before), ViseraiSides are Viserai sides among them.
 type FormatResult struct {
 	Format                          int
 	Skipped                         bool // already stored, so not fetched again
 	Rows, Games, Kept, ViseraiSides int
 }
 
-// Key is where a day and format's raw records live.
+// Key is where a day and format's raw records live: every game. Days stored
+// before 30 Oct 2026 are under raw/ instead and hold Viserai's games only.
 func Key(date string, format int) string {
-	return fmt.Sprintf("raw/date=%s/format=%d.ndjson.gz", date, format)
+	return fmt.Sprintf("games/date=%s/format=%d.ndjson.gz", date, format)
 }
 
 // Run ingests each format for a final date. A format already in the store is
@@ -114,21 +116,15 @@ func (in *Ingester) runFormat(ctx context.Context, date string, format int) (For
 	}
 	r.Games = len(games)
 	keep := map[string]string{} // guid → created_at of the copy ReadAll kept
-	kept := 0
 	for _, g := range games {
-		sides := 0
+		keep[g.GUID] = g.CreatedAt
 		for _, s := range g.Sides {
 			if game.IsViserai(s.Hero) {
-				sides++
+				r.ViseraiSides++
 			}
 		}
-		if sides > 0 {
-			keep[g.GUID] = g.CreatedAt
-			kept++
-			r.ViseraiSides += sides
-		}
 	}
-	r.Kept = kept
+	r.Kept = len(keep)
 
 	if _, err := file.Seek(0, io.SeekStart); err != nil {
 		return r, err
