@@ -173,7 +173,7 @@ const FRESH = 1_000_000;
 const confirmed = [];
 for (const c of climbs) {
   const row: Record<string, unknown> = {
-    start: c.start.name,
+    name: c.start.name,
     filled: c.start.filled,
   };
   for (const [which, deck] of [
