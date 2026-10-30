@@ -98,3 +98,5 @@ Viserai without block slop or fatigue, by opponent with 50 or more sides:
 1. **Deck or pilot** is answered above: mostly the pilot. The archetype 4 list is the best lead, at about 40% for others.
 2. **Skill adjustment across heroes** is answered above for two weeks and four September days. The top Viserai pilots play almost nothing else, so their own skill is still unmeasured.
 3. **The fatigue reading** of `count_loser_deck` needs confirming with FaBlazing.
+
+See [viserai-gaps.md](viserai-gaps.md) for where Viserai lists *aren't*: how it loses, the shapes nobody plays and the legal cards other heroes beat it with.
