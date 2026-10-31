@@ -225,6 +225,14 @@ Short log stream names are the run id's first 8 characters; each is `YYYY/MM/DD/
 - The history now has no gaps from 21 Sep to 27 Oct. 21 Sep to 17 Oct is Viserai only; 18 Oct on is whole.
 - Two slugs aren't mapped yet (`redwood_hammer`, `jarl_vetreidi~BLIND`). They're left for the importer's card map.
 
+### Every game stored, from 30 Oct 2026
+
+The Lambda now stores every game's raw row in S3, not only games with Viserai, under `games/date=YYYY-MM-DD/format=N.ndjson.gz`. The maintainer asked for it on 30 Oct 2026, to study how other heroes win in general and how to target them. Viserai's matchups are about 20% against Fang, Jarl, Ira and Boltyn, and the Viserai-only files only show those heroes against Viserai.
+
+- Days before are under `raw/` and stay Viserai only. There's no backfill: FaBlazing is run by a volunteer and answers status 500 for some past days.
+- About 13 MB a format a day (format 0 on 20 Oct: 4,898 games, 13.4 MB). Measured locally, storing that day peaked under 700 MB with extra copies held by the test, against the Lambda's 1,024 MB. **Check "Max Memory Used" in the first run's CloudWatch REPORT line.**
+- The Lambda's S3 permission moved from `raw/*` to `games/*`.
+
 ## Risks
 
 - **Rate limits.** The 30-day backfill hit HTTP 429 and a 500 from FaBlazing. Fetch slowly, and back off on errors.

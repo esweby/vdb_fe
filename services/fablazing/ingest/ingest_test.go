@@ -146,7 +146,7 @@ func assertNoSecrets(t *testing.T, where, text string) {
 	}
 }
 
-func TestRunWritesViseraiGamesAsGzippedNDJSON(t *testing.T) {
+func TestRunWritesEveryGameAsGzippedNDJSON(t *testing.T) {
 	f := newFakeFaBlazing(t)
 	store := &fakeStore{objects: map[string][]byte{}}
 	var logs bytes.Buffer
@@ -159,37 +159,38 @@ func TestRunWritesViseraiGamesAsGzippedNDJSON(t *testing.T) {
 	if got := strings.Join(f.apiCalls, " "); got != "2026-10-20/0 2026-10-20/1" {
 		t.Errorf("API calls = %q", got)
 	}
-	body, ok := store.objects["raw/date=2026-10-20/format=0.ndjson.gz"]
+	body, ok := store.objects["games/date=2026-10-20/format=0.ndjson.gz"]
 	if !ok {
 		t.Fatalf("nothing written for format 0; keys: %v", keys(store.objects))
 	}
 	rows := readNDJSON(t, body)
-	if len(rows) != 2 {
-		t.Fatalf("got %d rows, want the 2 Viserai games", len(rows))
+	if len(rows) != 3 {
+		t.Fatalf("got %d rows, want all 3 games", len(rows))
 	}
-	// Whole raw rows: both sides, every column, the latest copy of a duplicate.
-	if rows[0]["game_guid"] != "g-vis-first" || rows[1]["game_guid"] != "g-vis-second" {
-		t.Errorf("guids = %s, %s", rows[0]["game_guid"], rows[1]["game_guid"])
+	// Whole raw rows: both sides, every column, every game whatever the
+	// heroes, the latest copy of a duplicate.
+	if rows[0]["game_guid"] != "g-vis-first" || rows[1]["game_guid"] != "g-other" || rows[2]["game_guid"] != "g-vis-second" {
+		t.Errorf("guids = %s, %s, %s", rows[0]["game_guid"], rows[1]["game_guid"], rows[2]["game_guid"])
 	}
-	if rows[1]["created_at"] != "2026-10-20 12:30:00.0" {
-		t.Errorf("duplicate kept the copy from %s, want the latest", rows[1]["created_at"])
+	if rows[2]["created_at"] != "2026-10-20 12:30:00.0" {
+		t.Errorf("duplicate kept the copy from %s, want the latest", rows[2]["created_at"])
 	}
-	if !strings.Contains(rows[1]["deck1_json"], "'kano'") || !strings.Contains(rows[1]["deck2_json"], "viserai_usurper") {
-		t.Errorf("opponent's side missing: %v", rows[1])
+	if !strings.Contains(rows[2]["deck1_json"], "'kano'") || !strings.Contains(rows[2]["deck2_json"], "viserai_usurper") {
+		t.Errorf("opponent's side missing: %v", rows[2])
 	}
 	if len(rows[0]) != 15 {
 		t.Errorf("row has %d columns, want all 15", len(rows[0]))
 	}
-	if _, ok := store.objects["raw/date=2026-10-20/format=1.ndjson.gz"]; !ok {
+	if _, ok := store.objects["games/date=2026-10-20/format=1.ndjson.gz"]; !ok {
 		t.Error("nothing written for format 1")
 	}
 
-	want := FormatResult{Format: 0, Rows: 4, Games: 3, Kept: 2, ViseraiSides: 2}
+	want := FormatResult{Format: 0, Rows: 4, Games: 3, Kept: 3, ViseraiSides: 2}
 	if len(results) != 2 || results[0].Format != want.Format || results[0].Rows != want.Rows ||
 		results[0].Games != want.Games || results[0].Kept != want.Kept || results[0].ViseraiSides != want.ViseraiSides {
 		t.Errorf("results[0] = %+v, want counts %+v", results, want)
 	}
-	if !strings.Contains(logs.String(), `"kept":2`) {
+	if !strings.Contains(logs.String(), `"kept":3`) {
 		t.Errorf("logs don't report counts: %s", logs.String())
 	}
 	assertNoSecrets(t, "logs", logs.String())
@@ -197,7 +198,7 @@ func TestRunWritesViseraiGamesAsGzippedNDJSON(t *testing.T) {
 
 func TestRunSkipsADayAlreadyStored(t *testing.T) {
 	f := newFakeFaBlazing(t)
-	store := &fakeStore{objects: map[string][]byte{"raw/date=2026-10-20/format=0.ndjson.gz": []byte("kept")}}
+	store := &fakeStore{objects: map[string][]byte{"games/date=2026-10-20/format=0.ndjson.gz": []byte("kept")}}
 	var logs bytes.Buffer
 	in := newIngester(t, f, store, &logs)
 
@@ -208,7 +209,7 @@ func TestRunSkipsADayAlreadyStored(t *testing.T) {
 	if got := strings.Join(f.apiCalls, " "); got != "2026-10-20/1" {
 		t.Errorf("API calls = %q, want only format 1 (format 0 is already stored)", got)
 	}
-	if string(store.objects["raw/date=2026-10-20/format=0.ndjson.gz"]) != "kept" {
+	if string(store.objects["games/date=2026-10-20/format=0.ndjson.gz"]) != "kept" {
 		t.Error("overwrote the stored day")
 	}
 	if !results[0].Skipped || results[1].Skipped {
@@ -233,8 +234,8 @@ func TestRunPassesEveryGameToTheAggregator(t *testing.T) {
 	if got := strings.Join(agg.calls, " "); got != "2026-10-20/0:g-vis-first,g-other,g-vis-second" {
 		t.Errorf("aggregator calls = %q, want every game including g-other", got)
 	}
-	if rows := readNDJSON(t, store.objects["raw/date=2026-10-20/format=0.ndjson.gz"]); len(rows) != 2 {
-		t.Errorf("stored %d raw rows, want only the 2 Viserai games", len(rows))
+	if rows := readNDJSON(t, store.objects["games/date=2026-10-20/format=0.ndjson.gz"]); len(rows) != 3 {
+		t.Errorf("stored %d raw rows, want all 3 games", len(rows))
 	}
 }
 
@@ -364,4 +365,22 @@ func keys(m map[string][]byte) []string {
 		out = append(out, k)
 	}
 	return out
+}
+
+// Days before 30 Oct 2026 were stored under raw/ with Viserai's games only.
+// One there doesn't count as the whole day stored.
+func TestRunStoresTheWholeDayOverAViseraiOnlyOne(t *testing.T) {
+	f := newFakeFaBlazing(t)
+	store := &fakeStore{objects: map[string][]byte{"raw/date=2026-10-20/format=0.ndjson.gz": []byte("viserai only")}}
+	in := newIngester(t, f, store, &bytes.Buffer{})
+	in.Formats = []int{0}
+	if _, err := in.Run(context.Background(), "2026-10-20"); err != nil {
+		t.Fatal(err)
+	}
+	if rows := readNDJSON(t, store.objects["games/date=2026-10-20/format=0.ndjson.gz"]); len(rows) != 3 {
+		t.Errorf("stored %d rows, want all 3 games", len(rows))
+	}
+	if string(store.objects["raw/date=2026-10-20/format=0.ndjson.gz"]) != "viserai only" {
+		t.Error("the old Viserai-only file was changed")
+	}
 }

@@ -96,7 +96,7 @@ Resources:
                 Action:
                   - s3:GetObject
                   - s3:PutObject
-                Resource: !Sub ${RawBucket.Arn}/raw/*
+                Resource: !Sub ${RawBucket.Arn}/games/*
               # Lets HeadObject answer 404 rather than 403 for a day not yet stored.
               - Effect: Allow
                 Action: s3:ListBucket
