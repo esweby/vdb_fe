@@ -16,6 +16,8 @@ The FaBlazing data pipeline in Go. The plan is [docs/fablazing-plan.md](../../do
 
 ## The daily ingest
 
+**Paused since 31 Oct 2026.** The `vdb-fablazing-daily` schedule is `State: DISABLED` in [template.yaml](template.yaml). To resume, set it to `ENABLED` and update the test in `cmd/ingest-lambda/template_test.go`. A manual invoke still works while paused.
+
 At 10:00 UTC each day, EventBridge Scheduler runs the Lambda `vdb-fablazing-ingest` in eu-west-1. For formats 0 and 1 it:
 
 1. skips the format if that day is already in S3, so a stored day is never fetched from FaBlazing again
