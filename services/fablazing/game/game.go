@@ -41,6 +41,9 @@ type Side struct {
 	Cards     []Card
 	Log       []Event
 	TurnStats []TurnStats // indexed by turn number
+	// Fatigue is true for both sides of a game the loser ended with an empty
+	// deck (count_loser_deck 0; inferred to be the cards left, 29 Oct 2026).
+	Fatigue bool
 }
 
 // PlayerHash is a hashed player name from the CSV. It's used only for capping
@@ -205,6 +208,9 @@ func parseRow(rec []string, col map[string]int) (Game, error) {
 		}
 		g.Sides[i] = parseSide(m)
 		g.Sides[i].Player = PlayerHash(get([]string{"player1_name", "player2_name"}[i]))
+	}
+	if left, err := strconv.Atoi(get("count_loser_deck")); err == nil && left == 0 {
+		g.Sides[0].Fatigue, g.Sides[1].Fatigue = true, true
 	}
 	return g, nil
 }

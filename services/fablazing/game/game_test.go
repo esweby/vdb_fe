@@ -175,3 +175,27 @@ func TestWentFirst(t *testing.T) {
 		t.Error("g-a's first side has firstPlayer 1")
 	}
 }
+
+// count_loser_deck is the cards left in the loser's deck at the end (0 and 2
+// after a 19-round game, 50 and 56 after one; inferred, 29 Oct 2026). An empty
+// loser's deck marks a game decided by fatigue, which the maintainer has the
+// ceiling analysis report apart (29 Oct 2026).
+func TestAGameIsDecidedByFatigueWhenTheLosersDeckIsEmpty(t *testing.T) {
+	const csv = `game_guid,game_id,format,deck1_json,deck2_json,created_at,conceded,count_winner_deck,count_loser_deck
+f,1,1,"{'playerHero': 'viserai_usurper', 'result': 1}","{'playerHero': 'x', 'result': 0}",2026-10-20 10:00:00,False,3,0
+n,2,1,"{'playerHero': 'viserai_usurper', 'result': 1}","{'playerHero': 'x', 'result': 0}",2026-10-20 10:01:00,False,3,12
+u,3,1,"{'playerHero': 'viserai_usurper', 'result': 1}","{'playerHero': 'x', 'result': 0}",2026-10-20 10:02:00,False,,
+`
+	games, err := ReadAll(strings.NewReader(csv))
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := map[string]bool{"f": true, "n": false, "u": false}
+	for _, g := range games {
+		for i, s := range g.Sides {
+			if s.Fatigue != want[g.GUID] {
+				t.Errorf("game %s side %d: fatigue %v, want %v", g.GUID, i, s.Fatigue, want[g.GUID])
+			}
+		}
+	}
+}

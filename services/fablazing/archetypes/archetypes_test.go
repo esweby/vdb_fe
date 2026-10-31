@@ -288,3 +288,21 @@ func TestByPlayerWeighsEachPlayerEqually(t *testing.T) {
 		t.Fatal("the same seed should give the same interval")
 	}
 }
+
+// The skill check compares a player's Viserai record with their other heroes',
+// so the other heroes' sides are kept by the same rules.
+func TestKeptAnyKeepsEveryHeroBySameRules(t *testing.T) {
+	kano := deck("k", true)
+	kano.Hero = "kano"
+	short := deck("k", false)
+	short.Hero, short.Turns = "kano", 3
+	got := KeptAny([]game.Game{g(kano), g(short), g(deck("v", true))}, opts())
+	heroes := map[string]int{}
+	for _, s := range got {
+		heroes[s.Hero]++
+	}
+	// The opponent sides from g are kano too, and 4 turns long but by "opp".
+	if heroes["kano"] != 3 || heroes["viserai_the_forsaken"] != 1 || len(got) != 4 {
+		t.Errorf("got %v", heroes)
+	}
+}
