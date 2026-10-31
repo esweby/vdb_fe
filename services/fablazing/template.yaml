@@ -140,8 +140,8 @@ Resources:
             ScheduleExpression: cron(0 10 * * ? *)
             ScheduleExpressionTimezone: UTC
             RoleArn: !GetAtt SchedulerRole.Arn
-            # Paused 31 Oct 2026. ENABLED resumes it; a manual invoke still works.
-            State: DISABLED
+            # Paused 31 Oct 2026, resumed 1 Nov. DISABLED pauses it; a manual invoke still works.
+            State: ENABLED
 
   SchedulerRole:
     Type: AWS::IAM::Role

@@ -6,9 +6,9 @@ import (
 	"testing"
 )
 
-// The daily FaBlazing pull is paused (31 Oct 2026). The schedule's state lives
-// in template.yaml, so a deploy keeps it paused; flip this test to resume.
-func TestDailyScheduleIsDisabled(t *testing.T) {
+// The daily FaBlazing pull was paused on 31 Oct 2026 and resumed on 1 Nov. The
+// schedule's state lives in template.yaml, so a deploy sets it; flip this test to pause.
+func TestDailyScheduleIsEnabled(t *testing.T) {
 	raw, err := os.ReadFile("../../template.yaml")
 	if err != nil {
 		t.Fatal(err)
@@ -20,8 +20,8 @@ func TestDailyScheduleIsDisabled(t *testing.T) {
 	if !strings.Contains(block, "Name: vdb-fablazing-daily") {
 		t.Fatalf("Daily event isn't vdb-fablazing-daily:\n%s", block)
 	}
-	if !strings.Contains(block, "State: DISABLED") {
-		t.Errorf("vdb-fablazing-daily should be State: DISABLED:\n%s", block)
+	if !strings.Contains(block, "State: ENABLED") {
+		t.Errorf("vdb-fablazing-daily should be State: ENABLED:\n%s", block)
 	}
 }
 
